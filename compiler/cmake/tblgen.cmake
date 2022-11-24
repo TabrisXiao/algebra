@@ -2,13 +2,14 @@
 # MLIR/LLVM Table Generator utility function. These functions are inspired from mlir cmake modules (mlir/cmake/modules/AddMLIR.cmake)
 function(generate_tblgen_command)
 # PROJECT: either llmv or mlir
+# MODE: -gen-dialect-decls  -gen-dialect-defs etc.
 # SOURCE: the source file input to tblgen
 # OUTPUT: the output folder from the tblgen
 # EXTRA_INCLUDE : includes from other IRs
     cmake_parse_arguments(
         tblgen
         ""
-        "PROJECT;OUTPUT"
+        "PROJECT;OUTPUT;MODE"
         "EXTRA_INCLUDE"
         ${ARGN})
     set(ofn ${tblgen_OUTPUT})
@@ -55,8 +56,10 @@ function(generate_tblgen_command)
         set(tblgen_change_flag "--write-if-changed")
     endif()
 
-    get_directory_property(tblgen_includes ${tblgen_PROJECT}-tblgen INCLUDE_DIRECTORIES)
-    list(APPEND tblgen_includes ${tblgen_EXTRA_INCLUDE})
+    get_directory_property(tblgen_includes INCLUDE_DIRECTORIES)
+    list(APPEND tblgen_includes ${tblgen_EXTRA_INCLUDES})
+    #get_directory_property(tblgen_includes ${tblgen_PROJECT}-tblgen INCLUDE_DIRECTORIES)
+    #list(APPEND tblgen_includes ${tblgen_EXTRA_INCLUDE})
     # Filter out empty items before prepending each entry with -I
     list(REMOVE_ITEM tblgen_includes "")
     list(TRANSFORM tblgen_includes PREPEND -I)
@@ -72,9 +75,9 @@ function(generate_tblgen_command)
     # dependency twice in the result file when
     # ("${${project}_TABLEGEN_TARGET}" STREQUAL "${${project}_TABLEGEN_EXE}")
     # but lets us having smaller and cleaner code here.
-    
+    message("------------" ${tblgen_MODE})
     add_custom_command(OUTPUT ${ofn}
-        COMMAND ${tablegen_exe} ${ARG_UNPARSED_ARGUMENTS} -I ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMAND ${tablegen_exe} ${tblgen_MODE} -I${CMAKE_CURRENT_SOURCE_DIR}
         ${tblgen_includes}
         ${LLVM_TABLEGEN_FLAGS}
         ${tblgen_SOURCE_ABSOLUTE}
@@ -83,7 +86,7 @@ function(generate_tblgen_command)
         # The file in LLVM_TARGET_DEFINITIONS may be not in the current
         # directory and local_tds may not contain it, so we must
         # explicitly list it here:
-        DEPENDS ${ARG_DEPENDS} ${tablegen_depends}
+        DEPENDS ${tablegen_exe}
         ${local_tds} ${global_tds}
         ${tblgen_SOURCE_ABSOLUTE}
         ${LLVM_TARGET_DEPENDS}
@@ -104,7 +107,7 @@ function(add_tblgen_command)
         "SRCS;OUTPUT;PROJECT;MODE"
         "EXTRA"
         ${ARGN})
-
+    # set up the absolute path for source and output
     if(IS_ABSOLUTE ${tblgen_SRCS})
         set(tblgen_SOURCE_ABSOLUTE ${tblgen_SRCS})
     else()
@@ -117,9 +120,11 @@ function(add_tblgen_command)
         set(tblgen_OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${tblgen_OUTPUT})
     endif()
 
+    # make the output folder
     get_filename_component(OUTPUT_FOLDER ${tblgen_OUTPUT} DIRECTORY)
     file(MAKE_DIRECTORY ${OUTPUT_FOLDER})
 
+    # sequence the EXTRA include together
     set(args ${tblgen_EXTRA})
     foreach(hdrs IN LISTS LLVM_INCLUDE_DIRS MLIR_INCLUDE_DIRS TBLGEN_INCLUDES)
         list(APPEND args -I ${hdrs})
@@ -130,6 +135,7 @@ function(add_tblgen_command)
 
     generate_tblgen_command(
         OUTPUT ${tblgen_OUTPUT}
+        MODE ${tblgen_MODE}
         PROJECT ${tblgen_PROJECT}
         EXTRA_INCLUDE ${args}
         )
@@ -142,14 +148,14 @@ macro(add_dialect dialect)
         MODE -gen-dialect-decls
         EXTRA -dialect=dialect
         SRCS ${tblgen_src_base}/dialect/${dialect}/op.td
-        OUTPUT ${tblgen_hdrs_output}/dialect/${dialect}/generated/dialected.hpp.inc
+        OUTPUT ${tblgen_hdrs_output}/dialect/${dialect}/generated/dialect.hpp.inc
     )
     add_tblgen_command(
         PROJECT MLIR
         MODE -gen-dialect-defs
         EXTRA -dialect=${dialect}
         SRCS ${tblgen_src_base}/dialect/${dialect}/op.td
-        OUTPUT ${tblgen_hdrs_output}/dialect/${dialect}/generated/dialected.cpp.inc
+        OUTPUT ${tblgen_hdrs_output}/dialect/${dialect}/generated/dialect.cpp.inc
     )
     add_tblgen_command(
         PROJECT MLIR
@@ -165,12 +171,12 @@ macro(add_dialect dialect)
         SRCS ${tblgen_src_base}/dialect/${dialect}/op.td
         OUTPUT ${tblgen_hdrs_output}/dialect/${dialect}/generated/op.cpp.inc
     )
-    add_tblgen_command(
-        PROJECT MLIR
-        MODE "-gen-dialect-doc"
-        EXTRA "-dialect=${dialect}"
-        SRCS ${tblgen_src_base}/dialect/${dialect}/op.td
-        OUTPUT ${tblgen_docs_output}/dialect/${dialect}/${dialect}.md
-    )
+    # add_tblgen_command(
+    #     PROJECT MLIR
+    #     MODE "-gen-dialect-doc"
+    #     EXTRA "-dialect=${dialect}"
+    #     SRCS ${tblgen_src_base}/dialect/${dialect}/op.td
+    #     OUTPUT ${tblgen_docs_output}/dialect/${dialect}/${dialect}.md
+    # )
     set(TBLGEN_OUTPUT_FILE ${TBLGEN_OUTPUT_FILE} ${TBLGEN_OUTPUT} PARENT_SCOPE)
 endmacro()

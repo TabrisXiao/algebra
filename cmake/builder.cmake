@@ -3,9 +3,10 @@ include(CMakeParseArguments)
 function(create_cpp_library)
 # TYPE: STATIC
 # COPT: The option for compiler
+# DEPS: the libraries this target dependent
     cmake_parse_arguments(
         RULE
-        "PUBLIC;ALWAYSLINK;TESTONLY;WHOLEARCHIVE"
+        "ALWAYSLINK;TESTONLY;WHOLEARCHIVE"
         "NAME;TYPE"
         "HDRS;TEXTUAL_HDRS;SRCS;COPTS;DEFINES;LINKOPTS;DATA;DEPS;INCLUDES;PROPS;PRIVATE_DEPS;COMPONENTS"
         ${ARGN})
@@ -18,10 +19,19 @@ function(create_cpp_library)
         ${RULE_SRCS}
         ${RULE_HDRS}
     )
-
+    # set the linker language to be cxx to avoid cmake failed to spot the linker
+    # language
+    set_target_properties(
+        ${RULE_NAME}
+        PROPERTIES LINKER_LANGUAGE CXX
+    )
+    target_link_libraries(${RULE_NAME}
+        PUBLIC ${RULE_DEPS}
+        PRIVATE ${RULE_PRIVATE_DEPS}
+    )
     target_include_directories(${RULE_NAME}
         PUBLIC
-        $<BUILD_INTERFACE:${RULE_INCLUDES}>
+        ${RULE_INCLUDES}
     )
     target_compile_options(${RULE_NAME}
         PRIVATE
@@ -40,7 +50,6 @@ function(create_cpp_library)
             COMPONENT ${_COMPONENT}
         )
     endforeach()
-
 endfunction() # create_cpp_library
 
 function(create_cpp_binary)

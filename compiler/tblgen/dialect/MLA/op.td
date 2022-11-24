@@ -8,8 +8,13 @@ include "mlir/IR/SymbolInterfaces.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
 
 def MLA_Dialect : Dialect{
-    let name = "mla";
-    let cppNamespace = "SC::MLA";
+    let name = "MLA";
+    let cppNamespace = "MC::MLA";
 }
+
+class MLA_Op<string mnemonic, list<Trait> traits = []>:
+    Op<MLA_Dialect, mnemonic, traits>;
+
+
 
 #endif //MLA_OPS
