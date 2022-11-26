@@ -6,3 +6,16 @@ cmake ..\llvm -G "Visual Studio 17 2022" -DLLVM_ENABLE_PROJECTS=mlir -DLLVM_BUIL
 
 cmake --build . --target tools/mlir/test/check-mlir --config Debug
 ```
+
+## Operation list
+
+### For tensor algebra
+
+Objects:
+* Tensor up
+
+Operations:
+* AddOp
+* ContractOp
+* Permute
+* Symmetrize/anti-symmetrize

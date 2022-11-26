@@ -17,4 +17,7 @@ include(builder)
 include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories(${PROJECT_BINARY_DIR}/include)
 
+
+set(COMPILER_MODULE "mlir_xsymbolic_compiler")
 add_subdirectory(compiler)
+add_subdirectory(test)
