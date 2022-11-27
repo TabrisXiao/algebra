@@ -12,14 +12,14 @@ class MLA_Type<string name, list<Trait> traits = []>
     let mnemonic = ?;// name;
 }
 
-//def MLA_TensorBasisType : MLA_Type<"xTensorBasis">{
-//    let parameters = (ins
-//        ArrayRefParameter<"int64_t">:$shape,
-//        "Attribute":$encoding
-//    );
-//    //let assemblyFormat = "`<` $shape `>`";
-//}
-//
+def MLA_TensorBasisType : MLA_Type<"xTensorBasis">{
+    let parameters = (ins
+        ArrayRefParameter<"int64_t">:$shape,
+        "Attribute":$encoding
+    );
+    //let assemblyFormat = "`<` $shape `>`";
+}
+
 //def MLA_TensorType : MLA_Type<"xTensor">{
 //    let parameters = (ins
 //        ArrayRefParameter<"int64_t">:$shape,
