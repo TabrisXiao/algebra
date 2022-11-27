@@ -97,7 +97,7 @@ function(generate_tblgen_command)
     )
     # `make clean' must remove all those generated files:
     set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES ${ofn})
-    set(TABLEGEN_OUTPUT ${TABLEGEN_OUTPUT} ${ofn}       PARENT_SCOPE)
+    set(TABLEGEN_OUTPUT ${TABLEGEN_OUTPUT} ${ofn}  PARENT_SCOPE)
     set_source_files_properties(
         ${ofn} PROPERTIES
         GENERATED 1)
@@ -134,7 +134,6 @@ function(add_tblgen_command)
     endforeach()
     list(APPEND args ${CMAKE_CURRENT_SOURCE_DIR}/tblgen)
     set(LLVM_TARGET_DEFINITIONS ${tblgen_SRCS})
-    set(TABLEGEN_OUTPUT)
 
     generate_tblgen_command(
         OUTPUT ${tblgen_OUTPUT}
@@ -143,7 +142,8 @@ function(add_tblgen_command)
         PROJECT ${tblgen_PROJECT}
         EXTRA_INCLUDE ${args}
         )
-    set(TBLGEN_OUTPUT_FILE ${TBLGEN_OUTPUT_FILE} ${TABLEGEN_OUTPUT} PARENT_SCOPE)
+    # propagate the variable TABLEGEN_OUTPUT to the callsite scope since llvm will need it
+    set(TABLEGEN_OUTPUT ${TABLEGEN_OUTPUT} PARENT_SCOPE)
 endfunction()
 
 macro(add_dialect dialect)
@@ -182,7 +182,9 @@ macro(add_dialect dialect)
     #     SRCS ${tblgen_src_base}/dialect/${dialect}/op.td
     #     OUTPUT ${tblgen_docs_output}/dialect/${dialect}/${dialect}.md
     # )
-    set(TBLGEN_OUTPUT_FILE ${TBLGEN_OUTPUT_FILE} ${TBLGEN_OUTPUT} PARENT_SCOPE)
+
+    # propagate the variable TABLEGEN_OUTPUT to the callsite scope since llvm will need it
+    set(TABLEGEN_OUTPUT ${TABLEGEN_OUTPUT} PARENT_SCOPE)
 endmacro()
 
 
@@ -199,4 +201,6 @@ macro(add_types dialect)
         SRCS ${tblgen_src_base}/dialect/${dialect}/type.td
         OUTPUT ${tblgen_hdrs_output}/dialect/${dialect}/generated/type.cpp.inc
     )
+    # propagate the variable TABLEGEN_OUTPUT to the callsite scope since llvm will need it
+    set(TABLEGEN_OUTPUT ${TABLEGEN_OUTPUT} PARENT_SCOPE)
 endmacro()

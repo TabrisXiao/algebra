@@ -1,4 +1,6 @@
+
 #include "dialect/MLA/op.hpp"
+#include "dialect/MLA/generated/op.hpp.inc"
 
 #define GET_OP_CLASSES
 #include "dialect/MLA/generated/op.cpp.inc"

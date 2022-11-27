@@ -18,6 +18,6 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories(${PROJECT_BINARY_DIR}/include)
 
 
-set(COMPILER_MODULE "mlir_xsymbolic_compiler")
+set(algebra_dialect_library "algebra_dialect_library")
 add_subdirectory(compiler)
 add_subdirectory(test)
