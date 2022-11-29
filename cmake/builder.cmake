@@ -3,12 +3,14 @@ include(CMakeParseArguments)
 function(create_cpp_library)
 # TYPE: STATIC
 # COPT: The option for compiler
-# DEPS: the libraries this target dependent
+# DEPENDS: add_dependecis for this targe
+# LINK_LIBS: link the libraries to this target by "target_link_libraries"
+# COPTS : The compiler options
     cmake_parse_arguments(
         RULE
         "ALWAYSLINK;TESTONLY;WHOLEARCHIVE"
         "NAME;TYPE"
-        "HDRS;TEXTUAL_HDRS;SRCS;COPTS;DEFINES;LINKOPTS;DATA;DEPS;INCLUDES;PROPS;PRIVATE_DEPS;COMPONENTS"
+        "HDRS;TEXTUAL_HDRS;SRCS;COPTS;DEFINES;LINKOPTS;DATA;DEPENDS;INCLUDES;PROPS;COMPONENTS;LINK_LIBS"
         ${ARGN})
     
     add_library(${RULE_NAME} ${RULE_TYPE} "")
@@ -25,14 +27,20 @@ function(create_cpp_library)
         ${RULE_NAME}
         PROPERTIES LINKER_LANGUAGE CXX
     )
-    target_link_libraries(${RULE_NAME}
-        PUBLIC ${RULE_DEPS}
-        PRIVATE ${RULE_PRIVATE_DEPS}
-    )
-    target_include_directories(${RULE_NAME}
-        PUBLIC
-        ${RULE_INCLUDES}
-    )
+    if(RULE_LINK_LIBS)
+        target_link_libraries(${RULE_NAME}
+            PUBLIC ${RULE_DEPS}
+        )
+    endif()
+    if(RULE_INCLUDES)
+        target_include_directories(${RULE_NAME}
+            PUBLIC
+            ${RULE_INCLUDES}
+        )
+    endif()
+    if(RULE_DEPENDS)
+        add_dependencies(${RULE_NAME} ${RULE_DEPENDS})
+    endif()
     target_compile_options(${RULE_NAME}
         PRIVATE
         ${RULE_COPTS}
@@ -57,7 +65,7 @@ function(create_cpp_binary)
         RULE
         "TESTONLY"
         "NAME;OUT"
-        "SRCS;COPTS;DEFINES;LINKOPTS;DATA;DEPS"
+        "SRCS;COPTS;DEFINES;LINKOPTS;DATA;DEPENDS;LINK_LIBS"
         ${ARGN})
     
     add_executable(${RULE_NAME} "")
@@ -83,9 +91,16 @@ function(create_cpp_binary)
         PRIVATE
         ${RULE_LINKOPTS}
     )
-    target_link_libraries(${RULE_NAME} 
-        PUBLIC 
-        ${RULE_DEPS})
+    if(RULE_LINK_LIBS)
+        target_link_libraries(${RULE_NAME} 
+            PUBLIC 
+            ${RULE_LINK_LIBS})
+    endif()
+    if(DEPENDS)
+        add_dependencies(${RULE_NAME} 
+            PUBLIC 
+            ${DEPENDS})
+    endif()
     target_compile_options(
         ${RULE_NAME}
         PRIVATE
