@@ -1,7 +1,7 @@
 
 #include <iostream>
 #include "mlir/IR/Builders.h"
-#include "dialect/MLA/op.hpp"
+#include "dialect/MLA/dialect.hpp"
 
 
 int main(){
