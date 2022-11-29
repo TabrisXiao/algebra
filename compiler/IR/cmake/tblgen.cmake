@@ -204,3 +204,20 @@ macro(add_types dialect)
     # propagate the variable TABLEGEN_OUTPUT to the callsite scope since llvm will need it
     set(TABLEGEN_OUTPUT ${TABLEGEN_OUTPUT} PARENT_SCOPE)
 endmacro()
+
+macro(add_attr dialect)
+    add_tblgen_command(
+        PROJECT MLIR
+        MODE "-gen-attrdef-decls"
+        SRCS ${tblgen_src_base}/dialect/${dialect}/attribute.td
+        OUTPUT ${tblgen_hdrs_output}/dialect/${dialect}/generated/attribute.hpp.inc
+    )
+    add_tblgen_command(
+        PROJECT MLIR
+        MODE "-gen-attrdef-defs"
+        SRCS ${tblgen_src_base}/dialect/${dialect}/attribute.td
+        OUTPUT ${tblgen_hdrs_output}/dialect/${dialect}/generated/attribute.cpp.inc
+    )
+    # propagate the variable TABLEGEN_OUTPUT to the callsite scope since llvm will need it
+    set(TABLEGEN_OUTPUT ${TABLEGEN_OUTPUT} PARENT_SCOPE)
+endmacro()

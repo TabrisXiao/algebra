@@ -3,6 +3,7 @@
 #define MLA_OPS
 
 include "mlir/IR/OpBase.td"
+include "mlir/IR/AttrTypeBase.td"
 include "mlir/IR/BuiltinAttributes.td"
 include "mlir/IR/BuiltinTypes.td"
 include "mlir/IR/FunctionInterfaces.td"
@@ -10,7 +11,6 @@ include "mlir/IR/SymbolInterfaces.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
 
 include "dialect/MLA/type.td"
-
 
 def MLA_Dialect : Dialect{
     let name = "MLA";
@@ -20,27 +20,27 @@ def MLA_Dialect : Dialect{
             //void registerAttributes();
             //void registerLocationAttributes();
             void registerTypes();
-        public:
+        //public:
             }];
 }
 
 class MLA_Op<string mnemonic, list<Trait> traits = []>:
     Op<MLA_Dialect, mnemonic, traits>;
 
-class MLA_ObjDeclOp <string mnemonic>: 
+class MLA_ObjDecl <string mnemonic>: 
     MLA_Op<mnemonic, [NoSideEffect]>{
         let summary = "the base operation to define MLA objects";
         ///let assemblyFormat = "attr-dict 
 }
 
-def MLA_TensorBasisDecl : MLA_ObjDeclOp<"TensorDeclOp">{
+def MLA_TensorBasisDecl : MLA_ObjDecl<"xTensorBasisDecl">{
     let summary = "The operation declaring a tensor";
-    let arguments = (ins ArrayAttr :$shape);
+    let arguments = (ins DenseI64ArrayAttr:$shape);
     let results = (outs MLA_TensorBasisType:$output);
 }
 
 
-//def MLA_TensorDeclOp : MLA_ObjDeclOp<"TensorDeclOp">{
+//def MLA_TensorDecl : MLA_ObjDecl<"TensorDecl">{
 //    let summary = "The operation declaring a tensor";
 //    let arguments = (ins xTensorBasisType:$basis);
 //    let results = (outs AnyRankedTensor:$output);

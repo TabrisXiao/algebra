@@ -8,6 +8,7 @@ set(tblgen_docs_output "docs/generated")
 
 add_dialect("MLA")
 add_types("MLA")
+add_attr("MLA")
 file(GLOB_RECURSE TBGLEN_SOURCE "*.td")
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${TBGLEN_SOURCE})
 
