@@ -151,14 +151,14 @@ macro(add_dialect dialect)
         PROJECT MLIR
         MODE -gen-dialect-decls
         EXTRA -dialect=${dialect}
-        SRCS ${tblgen_src_base}/dialect/${dialect}/op.td
+        SRCS ${tblgen_src_base}/dialect/${dialect}/dialect.td
         OUTPUT ${tblgen_hdrs_output}/dialect/${dialect}/generated/dialect.hpp.inc
     )
     add_tblgen_command(
         PROJECT MLIR
         MODE -gen-dialect-defs
         EXTRA -dialect=${dialect}
-        SRCS ${tblgen_src_base}/dialect/${dialect}/op.td
+        SRCS ${tblgen_src_base}/dialect/${dialect}/dialect.td
         OUTPUT ${tblgen_hdrs_output}/dialect/${dialect}/generated/dialect.cpp.inc
     )
     add_tblgen_command(

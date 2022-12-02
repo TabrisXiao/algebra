@@ -1,6 +1,8 @@
 
 #include "dialect/MLA/type.hpp"
-#include "dialect/MLA/dialect.hpp"
+#include "mlir/IR/DialectImplementation.h"
+#include "mlir/IR/Builders.h"
+#include "llvm/ADT/TypeSwitch.h"
 
 #define GET_TYPEDEF_CLASSES
 #include "dialect/MLA/generated/type.cpp.inc"

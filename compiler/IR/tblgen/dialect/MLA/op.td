@@ -1,8 +1,7 @@
 
-#ifndef MLA_OPS
-#define MLA_OPS
+#ifndef MLA_OPS_TD_
+#define MLA_OPS_TD_
 
-include "mlir/IR/OpBase.td"
 include "mlir/IR/AttrTypeBase.td"
 include "mlir/IR/BuiltinAttributes.td"
 include "mlir/IR/BuiltinTypes.td"
@@ -10,19 +9,8 @@ include "mlir/IR/FunctionInterfaces.td"
 include "mlir/IR/SymbolInterfaces.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
 
+include "dialect/MLA/dialect.td"
 include "dialect/MLA/type.td"
-
-def MLA_Dialect : Dialect{
-    let name = "MLA";
-    let cppNamespace = "::MC::MLA";
-    let extraClassDeclaration = [{
-        private:
-            //void registerAttributes();
-            //void registerLocationAttributes();
-            void registerTypes();
-        //public:
-            }];
-}
 
 class MLA_Op<string mnemonic, list<Trait> traits = []>:
     Op<MLA_Dialect, mnemonic, traits>;
@@ -35,7 +23,8 @@ class MLA_ObjDecl <string mnemonic>:
 
 def MLA_TensorBasisDecl : MLA_ObjDecl<"xTensorBasisDecl">{
     let summary = "The operation declaring a tensor";
-    let arguments = (ins DenseI64ArrayAttr:$shape);
+    let arguments = (ins DenseI32ArrayAttr:$shape,
+                    FlatSymbolRefAttr:$encoding);
     let results = (outs MLA_TensorBasisType:$output);
 }
 
@@ -53,4 +42,4 @@ def MLA_TensorBasisDecl : MLA_ObjDecl<"xTensorBasisDecl">{
 //    let results = (outs AnyRankedTensor:$output);
 //}
 
-#endif //MLA_OPS
+#endif //MLA_OPS_TD_
