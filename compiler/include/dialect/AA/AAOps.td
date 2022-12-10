@@ -29,9 +29,9 @@ class AA_ObjDecl <string mnemonic, list<Trait> traits = []>:
 
 def AA_AElemDecl : AA_ObjDecl<"AElemDecl", []>{
     let summary = "The operation declaring an abstract algebra element";
-    let arguments = (ins FlatSymbolRefAttr:$symbol);
+    let arguments = (ins FlatSymbolRefAttr:$encoding);
     let results = (outs AA_AElemType:$output);
-    let assemblyFormat = "`(` attr-dict `)` `:`type(results)";
+    let assemblyFormat = [{ attr-dict `->`type($output)}];
 }
 
 class AA_BinaryOp <string mnemonic, list<Trait> traits = []>: 
@@ -64,6 +64,8 @@ def AA_Inverse : AA_Op<"Inverse",
     let summary = "Operation return the inverse of the input";
     let arguments = (ins AA_AElemType:$input);
     let results = (outs AA_AElemType:$output);
+    let hasCanonicalizer = 1;
+    let assemblyFormat = "`(`$input`)` attr-dict `:` type($input) `->`type($output)";
 }
 
 def AA_Negative : AA_Op<"Negative", 
@@ -73,6 +75,7 @@ def AA_Negative : AA_Op<"Negative",
     let summary = "Operation return the inverse of input respect to the addition operation";
     let arguments = (ins AA_AElemType:$input);
     let results = (outs AA_AElemType:$output);
+    let hasCanonicalizer = 1;
 }
 
 #endif //AA_OPS_TD_

@@ -31,10 +31,8 @@ void MC::AA::AADialect::registerTypes() {
 
 void  MC::AA::AElemType::print(::mlir::AsmPrinter &odsPrinter) const
 {
-    odsPrinter << "<@";
+    odsPrinter << "AElemType <Symbol: ";
     odsPrinter<<getEncoding();
-    // llvm::StringRef id = getEncoding().dyn_cast<mlir::FlatSymbolRefAttr>().getLeafReference().getValue();
-    // odsPrinter << id;
     odsPrinter << ">";
 }
 
