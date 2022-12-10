@@ -1,3 +1,3 @@
 
-add_subdirectory(IR)
-add_subdirectory(opt)
+add_subdirectory(include)
+add_subdirectory(src)

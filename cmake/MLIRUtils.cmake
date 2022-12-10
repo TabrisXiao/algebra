@@ -1,0 +1,17 @@
+
+function(x_add_ir_dialect dialect_name dialect_namespace)
+    set(LLVM_TARGET_DEFINITIONS ${dialect_name}Dialect.td)
+    mlir_tablegen(${dialect_name}Dialect.h.inc -gen-dialect-decls -dialect=${dialect_namespace})
+    mlir_tablegen(${dialect_name}Dialect.cpp.inc -gen-dialect-defs -dialect=${dialect_namespace})
+    set(LLVM_TARGET_DEFINITIONS ${dialect_name}Ops.td)
+    mlir_tablegen(${dialect_name}Ops.h.inc -gen-op-decls)
+    mlir_tablegen(${dialect_name}Ops.cpp.inc -gen-op-defs)
+    set(TABLEGEN_OUTPUT ${TABLEGEN_OUTPUT} PARENT_SCOPE)
+endfunction()
+
+function(x_add_ir_type dialect_name dialect_namespace)
+    set(LLVM_TARGET_DEFINITIONS ${dialect_name}Types.td)
+    mlir_tablegen(${dialect_name}Types.h.inc -gen-typedef-decls -typedefs-dialect=${dialect_namespace})
+    mlir_tablegen(${dialect_name}Types.cpp.inc -gen-typedef-defs -typedefs-dialect=${dialect_namespace})
+    set(TABLEGEN_OUTPUT ${TABLEGEN_OUTPUT} PARENT_SCOPE)
+endfunction()
