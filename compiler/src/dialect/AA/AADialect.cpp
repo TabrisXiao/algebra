@@ -15,6 +15,8 @@
 #include "dialect/AA/AAOps.h"
 
 #include "dialect/AA/AADialect.cpp.inc"
+
+#include <iostream>
 using namespace mlir;
 void MC::AA::AADialect::initialize(){
     registerTypes();

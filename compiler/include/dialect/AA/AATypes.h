@@ -6,6 +6,7 @@
 #include "mlir/IR/BuiltinAttributes.h"
 #include "mlir/IR/BuiltinAttributeInterfaces.h"
 #include "mlir/IR/SubElementInterfaces.h"
+#include "mlir/IR/Types.h"
 
 #include "dialect/AA/AADialect.h"
 

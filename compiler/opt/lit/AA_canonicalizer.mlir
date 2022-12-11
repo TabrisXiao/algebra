@@ -1,4 +1,6 @@
 
-func.func @main (%arg0: AElemType <Symbol: @abel >) -> (){
-    %0 = AA.Inverse (%arg0) : AElemType <Symbol: @Abel> -> AElemType <Symbol: @Abel>
+func.func @main () -> (AElement <Symbol: @Abel>){
+    %cst0 = AA.AElemDecl {encoding = @Abel} -> AElement <Symbol: @Abel>
+    %0 = AA.Inverse (%cst0) : AElement <Symbol: @Abel> -> AElement <Symbol: @Abel>
+    return %0 : AElement <Symbol: @Abel>
 }

@@ -3,6 +3,7 @@
 #include "mlir/IR/DialectImplementation.h"
 #include "mlir/IR/Builders.h"
 #include "llvm/ADT/TypeSwitch.h"
+#include <iostream>
 
 using namespace mlir;
 void MC::AA::AADialect::registerTypes() {
@@ -15,23 +16,37 @@ void MC::AA::AADialect::registerTypes() {
 ::mlir::Type MC::AA::AElemType::parse(::mlir::AsmParser & parser)
 {
     MC::AA::AElemType type;
-    llvm::StringRef identifier;
-    if(parser.parseLess()) return Type();
-    if (succeeded(parser.parseKeyword(&identifier))){
-        if (!identifier.consume_front("@")) {
-            parser.emitError(parser.getCurrentLocation(), "illegal symbolic prefix");
+    NamedAttrList attrList;
+    StringAttr nameId;
+    if (succeeded(parser.parseOptionalKeyword(getMnemonic().data()))){
+        if(failed(parser.parseLess())){
+            parser.emitError(parser.getCurrentLocation(), "expected `<`");
             return nullptr;
         }
-        auto ctx = parser.getBuilder().getContext();
-        type = MC::AA::AElemType::get(ctx, mlir::FlatSymbolRefAttr::get(ctx, identifier));
+        if (succeeded(parser.parseOptionalKeyword("Symbol"))){
+            if(failed(parser.parseColon())){
+                parser.emitError(parser.getCurrentLocation(), "expected `:`");
+                return nullptr;
+            }
+            if(succeeded(parser.parseSymbolName(nameId,"Symbol", attrList))){
+                auto ctx = parser.getBuilder().getContext();
+                type = MC::AA::AElemType::get(ctx, mlir::FlatSymbolRefAttr::get(ctx, nameId));
+            }
+        }
+        if(failed(parser.parseGreater())){
+            parser.emitError(parser.getCurrentLocation(), "expected `>`");
+            return nullptr;
+        }
     }
-    if(parser.parseGreater()) return Type();
+    else {
+        return nullptr;
+    }
     return type;
 }
 
 void  MC::AA::AElemType::print(::mlir::AsmPrinter &odsPrinter) const
 {
-    odsPrinter << "AElemType <Symbol: ";
+    odsPrinter << "AElement <Symbol: ";
     odsPrinter<<getEncoding();
     odsPrinter << ">";
 }

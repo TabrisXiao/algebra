@@ -15,7 +15,7 @@ class AA_Type<string name, string typeMnemonic, list<Trait> traits = []>
     let mnemonic = typeMnemonic;
 }
 
-def AA_AElemType : AA_Type<"AElem", "AElemType">{
+def AA_AElemType : AA_Type<"AElem", "AElement">{
     let description = [{
         The type for distinguish different abstract elements.
     }];
