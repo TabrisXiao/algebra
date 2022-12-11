@@ -29,7 +29,7 @@ function(create_cpp_library)
     )
     if(RULE_LINK_LIBS)
         target_link_libraries(${RULE_NAME}
-            PUBLIC ${RULE_DEPS}
+            PUBLIC ${RULE_LINK_LIBS}
         )
     endif()
     if(RULE_INCLUDES)

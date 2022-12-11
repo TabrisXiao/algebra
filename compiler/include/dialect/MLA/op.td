@@ -1,46 +1,42 @@
 
-#ifndef MLA_OPS
-#define MLA_OPS
+#ifndef MLA_OPS_TD_
+#define MLA_OPS_TD_
 
-include "mlir/IR/OpBase.td"
+include "mlir/IR/AttrTypeBase.td"
 include "mlir/IR/BuiltinAttributes.td"
 include "mlir/IR/BuiltinTypes.td"
 include "mlir/IR/FunctionInterfaces.td"
 include "mlir/IR/SymbolInterfaces.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
+include "mlir/Interfaces/InferTypeOpInterface.td"
 
+include "dialect/MLA/dialect.td"
 include "dialect/MLA/type.td"
-
-
-def MLA_Dialect : Dialect{
-    let name = "MLA";
-    let cppNamespace = "::MC::MLA";
-    let extraClassDeclaration = [{
-        private:
-            //void registerAttributes();
-            //void registerLocationAttributes();
-            void registerTypes();
-        public:
-            }];
-}
+//include "general/op_interface.td"
 
 class MLA_Op<string mnemonic, list<Trait> traits = []>:
     Op<MLA_Dialect, mnemonic, traits>;
 
-class MLA_ObjDeclOp <string mnemonic>: 
-    MLA_Op<mnemonic, [NoSideEffect]>{
+class MLA_ObjDecl <string mnemonic, list<Trait> traits = []>: 
+    MLA_Op<mnemonic, 
+    traits # [
+        NoSideEffect, 
+        DeclareOpInterfaceMethods<InferTypeOpInterface>
+    ]>{
         let summary = "the base operation to define MLA objects";
         ///let assemblyFormat = "attr-dict 
 }
 
-def MLA_TensorBasisDecl : MLA_ObjDeclOp<"TensorDeclOp">{
-    let summary = "The operation declaring a tensor";
-    let arguments = (ins ArrayAttr :$shape);
-    let results = (outs MLA_TensorBasisType:$output);
-}
+//def MLA_TensorBasisDecl : MLA_ObjDecl<"xTensorBasisDecl", []>{
+//    let summary = "The operation declaring a tensor";
+//    let arguments = (ins DenseI32ArrayAttr:$shape,
+//                    FlatSymbolRefAttr:$encoding);
+//    let results = (outs MLA_TensorBasisType:$output);
+//    let assemblyFormat = "`(` attr-dict `)` `:`type(results)";
+//
+//}
 
-
-//def MLA_TensorDeclOp : MLA_ObjDeclOp<"TensorDeclOp">{
+//def MLA_TensorDecl : MLA_ObjDecl<"TensorDecl">{
 //    let summary = "The operation declaring a tensor";
 //    let arguments = (ins xTensorBasisType:$basis);
 //    let results = (outs AnyRankedTensor:$output);
@@ -53,4 +49,4 @@ def MLA_TensorBasisDecl : MLA_ObjDeclOp<"TensorDeclOp">{
 //    let results = (outs AnyRankedTensor:$output);
 //}
 
-#endif //MLA_OPS
+#endif //MLA_OPS_TD_
