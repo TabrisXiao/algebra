@@ -7,21 +7,30 @@ cmake ..\llvm -G "Visual Studio 17 2022" -DLLVM_ENABLE_PROJECTS=mlir -DLLVM_BUIL
 cmake --build . --target tools/mlir/test/check-mlir --config Debug
 ```
 
+Configure, Build and test:
+```
+.\run.bat
+```
+
 ## The bell is ringing!
 
-* make a beautiful assembly print for basis
-* create tensor declaration
-* add op interface for MLA_Op
+* make a beautiful assembly print for basis:
+    * Make a nicer parse and print for AA dialect
+    * Make lit test for AA Ops
+* Make a symbolic table to store the type ID
 
-## Operation list
+## Architecture
+1. Concrete math object definition -> Schedule lowering/optimizing passes
+2. Construct the operations from abstract math operation.
+    * Bind the abstract types to concrete object types
+4. Lowering/optimizing through scheduled passes to a concrete operation list
+3. Serializing to a executable
 
-### For tensor algebra
+### Abstract Algebra Dialect (AADialect)
 
-Objects:
-* Tensor up
-
-Operations:
-* AddOp
-* ContractOp
-* Permute
-* Symmetrize/anti-symmetrize
+The Ops:
+* Multiply 
+* Add
+* Inverse
+* Negative
+* AElemDecl
