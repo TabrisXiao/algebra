@@ -1,7 +1,7 @@
 
-#include "dialect/AA/AADialect.h"
-#include "dialect/AA/AAOps.h"
-#include "dialect/AA/AATypes.h"
+#include "AA/AADialect.h"
+#include "AA/AAOps.h"
+#include "AA/AATypes.h"
 #include "mlir/IR/Operation.h"
 #include "mlir/IR/PatternMatch.h"
 

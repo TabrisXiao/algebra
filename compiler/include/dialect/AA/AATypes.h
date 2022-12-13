@@ -8,9 +8,9 @@
 #include "mlir/IR/SubElementInterfaces.h"
 #include "mlir/IR/Types.h"
 
-#include "dialect/AA/AADialect.h"
+#include "AA/AADialect.h"
 
 #define GET_TYPEDEF_CLASSES
-#include "dialect/AA/AATypes.h.inc"
+#include "AA/AATypes.h.inc"
 
 #endif

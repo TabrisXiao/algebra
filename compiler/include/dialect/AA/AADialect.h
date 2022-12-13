@@ -14,6 +14,6 @@
 #include "llvm/Support/PointerLikeTypeTraits.h"
 // type needs to be imported before the generated dialect.hpp.inc
 
-#include "dialect/AA/AADialect.h.inc"
+#include "AA/AADialect.h.inc"
 
 #endif

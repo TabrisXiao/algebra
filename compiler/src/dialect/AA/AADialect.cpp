@@ -10,11 +10,11 @@
 #include "mlir/IR/OpImplementation.h"
 #include "mlir/Transforms/InliningUtils.h"
 
-#include "dialect/AA/AATypes.h"
-#include "dialect/AA/AADialect.h"
-#include "dialect/AA/AAOps.h"
+#include "AA/AATypes.h"
+#include "AA/AADialect.h"
+#include "AA/AAOps.h"
 
-#include "dialect/AA/AADialect.cpp.inc"
+#include "AA/AADialect.cpp.inc"
 
 #include <iostream>
 using namespace mlir;
@@ -22,7 +22,7 @@ void MC::AA::AADialect::initialize(){
     registerTypes();
     addOperations<
         #define GET_OP_LIST
-        #include "dialect/AA/AAOps.cpp.inc"
+        #include "AA/AAOps.cpp.inc"
     >();
 }
 /*
@@ -75,4 +75,4 @@ void MC::AA::AADialect::printType(::mlir::Type type,  ::mlir::DialectAsmPrinter 
 */
 
 #define GET_OP_CLASSES
-#include "dialect/AA/AAOps.cpp.inc"
+#include "AA/AAOps.cpp.inc"

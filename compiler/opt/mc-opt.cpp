@@ -1,8 +1,8 @@
 
 #include <iostream>
-#include "frame/init.h"
-#include "dialect/AA/AADialect.h"
-#include "dialect/AA/AATypes.h"
+#include "init.h"
+#include "AA/AADialect.h"
+#include "AA/AATypes.h"
 #include "mlir/IR/Diagnostics.h"
 #include "mlir/Support/LogicalResult.h"
 #include "mlir/Tools/mlir-opt/MlirOptMain.h"
