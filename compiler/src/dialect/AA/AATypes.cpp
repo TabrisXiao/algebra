@@ -1,5 +1,5 @@
 
-#include "dialect/AA/AATypes.h"
+#include "AA/AATypes.h"
 #include "mlir/IR/DialectImplementation.h"
 #include "mlir/IR/Builders.h"
 #include "llvm/ADT/TypeSwitch.h"
@@ -9,7 +9,7 @@ using namespace mlir;
 void MC::AA::AADialect::registerTypes() {
     addTypes<
         #define GET_TYPEDEF_LIST
-        #include "dialect/AA/AATypes.cpp.inc"
+        #include "AA/AATypes.cpp.inc"
     >();
 }
 
@@ -57,4 +57,4 @@ void  MC::AA::AElemType::print(::mlir::AsmPrinter &odsPrinter) const
 }
 
 #define GET_TYPEDEF_CLASSES
-#include "dialect/AA/AATypes.cpp.inc"
+#include "AA/AATypes.cpp.inc"

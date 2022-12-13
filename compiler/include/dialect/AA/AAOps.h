@@ -10,9 +10,9 @@
 #include "mlir/Interfaces/InferTypeOpInterface.h"
 
 
-#include "dialect/AA/AADialect.h"
-#include "dialect/AA/AATypes.h"
+#include "AA/AADialect.h"
+#include "AA/AATypes.h"
 
 #define GET_OP_CLASSES
-#include "dialect/AA/AAOps.h.inc"
+#include "AA/AAOps.h.inc"
 #endif

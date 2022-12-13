@@ -31,7 +31,7 @@ def AA_AElemDecl : AA_ObjDecl<"AElemDecl", []>{
     let summary = "The operation declaring an abstract algebra element";
     let arguments = (ins FlatSymbolRefAttr:$encoding);
     let results = (outs AA_AElemType:$output);
-    let assemblyFormat = [{ attr-dict `:` type($output)}];
+    let assemblyFormat = [{ attr-dict `:` type(results)}];
 }
 
 class AA_BinaryOp <string mnemonic, list<Trait> traits = []>: 
