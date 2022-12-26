@@ -3,6 +3,7 @@
 #include "init.h"
 #include "AA/AADialect.h"
 #include "AA/AATypes.h"
+#include "AA/AAPasses.h"
 #include "mlir/IR/Diagnostics.h"
 #include "mlir/Support/LogicalResult.h"
 #include "mlir/Tools/mlir-opt/MlirOptMain.h"
@@ -17,6 +18,7 @@ int main(int argc, char* argv[])
     mlir::registerAllPasses();
     mlir::DialectRegistry reg;
     MC::registerDialect(reg);
+    MC::AA::registerAAPasses();
 
     return mlir::asMainReturnCode(mlir::MlirOptMain(argc, argv, "MC OPT Test tool", reg, false));
 }
