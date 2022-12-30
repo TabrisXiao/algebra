@@ -9,8 +9,8 @@ set(
 
 create_cpp_library(
     NAME logic_abstract_lib
-    HDRS
-    ${headers}
+    #HDRS
+    #${headers}
     SRCS
     ${sources}
     INCLUDES

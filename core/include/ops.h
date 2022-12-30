@@ -5,29 +5,31 @@
 
 namespace aog
 {
+
+
 class defOp : public operation{
 public: 
-    defOp(context *ctx, std::string id_="UnknownType") {
+    defOp(context *ctx, std::string id_="Unknown") : operation(ctx) {
         attachTo(_output);
+        _output.setID(id_);
         ctx->registerOp(this);
-        opName = "Def";
+        setID("Def");
     }
     element& output(){return _output;}
     void represent(std::ostream &os){
         _output.represent(os);
-        os<<std::endl;
     }
     element _output;
 };
 class addOp : public operation{
     public :
-    addOp(context *ctx, element &lhs, element &rhs){
+    addOp(context *ctx, element &lhs, element &rhs): operation(ctx){
         attachFrom(lhs, rhs);
         attachTo(_output);
         ctx->registerOp(this);
         elhs=&lhs;
         erhs=&rhs;
-        opName = "Add";
+        setID("Add");
     }
     element* lhs(){return elhs;}
     element* rhs(){return erhs;}
@@ -38,7 +40,6 @@ class addOp : public operation{
         elhs->represent(os);
         os<<" + ";
         erhs->represent(os);
-        os<<std::endl;
     }
     private:
     element *elhs, *erhs;
@@ -47,13 +48,13 @@ class addOp : public operation{
 
 class multiplyOp : public operation{
     public :
-    multiplyOp(context *ctx, element &lhs, element &rhs){
+    multiplyOp(context *ctx, element &lhs, element &rhs): operation(ctx){
         attachFrom(lhs, rhs);
         attachTo(_output);
         ctx->registerOp(this);
         elhs=&lhs;
         erhs=&rhs;
-        opName = "Multiply";
+        setID("Multiply");
     }
     element* lhs(){return elhs;}
     element* rhs(){return erhs;}
@@ -64,7 +65,6 @@ class multiplyOp : public operation{
         elhs->represent(os);
         os<<" * ";
         erhs->represent(os);
-        os<<std::endl;
     }
     private:
     element *elhs, *erhs;

@@ -135,7 +135,20 @@ namespace dgl
         //void print() { std::cout << "vertex value: " << _value << std::endl; }
     };
 
-
+    class graph : public vertex {
+    //graph is a collection of vertices connected by edges. The graph class is 
+    //an entry point to the vertcies. All the vertices contained in a graph is 
+    //called subvertices
+    public :  
+        graph() = default;
+        virtual ~graph(){}
+        //getVertices return the first level subvertices (entries)
+        std::vector<vertex*>& getVertices(){return subvertices;}
+        void addSubVertex(vertex* vtx){subvertices.push_back(vtx);}
+        template <typename callable>
+        void BFWalk(callable &fn);
+        std::vector<vertex*> subvertices;
+    };
 
     class tree
     {

@@ -1,6 +1,6 @@
 set(sources
     main.cpp 
-    tests/test_aog.h
+    #tests/test_aog.h
 )
 create_cpp_binary(
     NAME test_core
