@@ -47,9 +47,10 @@ class operation : public dgl::vertex, public objInfo{
 public : 
     operation(context *ctx_) : objInfo(ctx_){};
     virtual void represent(std::ostream &os) = 0;
-    void print(){
+    virtual void printRegion(){}
+    virtual void print(){
         printIndent();
-        Xos<<"%"<<traceID<<"_"<<id<<" : ";
+        Xos<<id;
         represent(Xos);
         Xos<<"\n";
     }
@@ -81,7 +82,7 @@ public :
     region() = default;
     region(context *ctx_){ctx = ctx_;}
     void printRegion();
-    void printOps(){
+    inline void printOps(){
         auto fn = [&](vertex* _op){
             auto op = dynamic_cast<operation*>(_op);
             op->setTraceID();
@@ -93,30 +94,36 @@ public :
     context *ctx= nullptr;
 };
 
-class moduleOp : public operation, public region{
+class moduleOp : public operation{
 public:
     moduleOp(context *ctx, std::string _id="module") : 
     operation(ctx),
     block(ctx){
         setID(_id);
     }
+    region& getRegion(){return block;}
     void represent(std::ostream &os){
-        printRegion();
+        block.printRegion();
     }
     region block;
 };
 
-class builder {
+class opBuilder {
 public:
-    builder(context *ctx_): ctx(ctx_){}
-    template<typename obj, typename...ARGS>
-    void setInsertPoint(operation* op){
-        
+    opBuilder(context *ctx_) : ctx(ctx_){}
+    void setInsertPoint(region& reg){
+        workingPtr = &reg;
     }
-    void build(ARGS&...args){
+    template<typename obj, typename...ARGS>
+    obj* create(ARGS &...args){
+        auto ptr = new obj(ctx, args...);
+        if(ptr->getInEdges().size()==0 && workingPtr != nullptr){
+            workingPtr->addSubVertex(dynamic_cast<dgl::vertex*>(ptr));
+        }
+        return ptr;
     }
     context * ctx;
-    region *insert_region=nullptr;
+    region *workingPtr=nullptr;
 };
 
 template<typename concreteOp>

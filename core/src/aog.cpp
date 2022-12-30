@@ -37,7 +37,8 @@ void context::print(){
 }
 
 void region::printRegion(){
-    Xos<<"{";
+    Xos<<"{\n";
     utility::Indent idlv(ctx->curIndent);
+    printOps();
     Xos<<"}\n";
 }

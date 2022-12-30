@@ -4,13 +4,12 @@ using namespace aog;
 void test_aog(){
     
     context ctx;
-    defOp def1(&ctx, "Symbolic"), def2(&ctx, "Symbolic");
-    multiplyOp xx(&ctx, def1.output(), def1.output());
-    multiplyOp xy(&ctx, def1.output(), def2.output());
-    multiplyOp yx(&ctx, def2.output(), def1.output());
-    multiplyOp yy(&ctx, def2.output(), def2.output());
-    addOp op1(&ctx, xx.output(), xy.output());
-    addOp op2(&ctx, yy.output(), yx.output());
-    addOp op3(&ctx, op1.output(), op2.output());
-    ctx.print();
+    opBuilder builder(&ctx); 
+    auto mainop = builder.create<moduleOp>();
+    builder.setInsertPoint(mainop->getRegion());
+    auto defx = builder.create<defOp>("Symbolic");
+    auto defy = builder.create<defOp>();
+    auto opxx = builder.create<multiplyOp>(defx->output(), defx->output());
+    auto opxy = builder.create<multiplyOp>(defx->output(), defy->output());
+    mainop->print();
 }

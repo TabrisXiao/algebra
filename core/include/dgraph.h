@@ -113,6 +113,9 @@ namespace dgl
         }
         bool isExplored(){ return bExplored; }
         void setExplored(bool key){ bExplored = key;}
+        // detach this vertex from the graph. The in/out edges will be disconnected
+        // from this vertex. But these edges won't be deleted as they are not part
+        // of this vertex. 
         void detach();
 
         std::vector<edge *> &getInEdges() { return inEdges; }
