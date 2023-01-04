@@ -111,6 +111,42 @@ namespace dgl
             }
             return return_ptr;
         }
+
+        template <typename callable>
+        void BFWalk(callable &&fn){
+            //The breadth-first walk through the graph starting at this vertex.
+            //call the callable at the begining of visiting each vertex.
+            //the callable should return void.
+            //the fn will be executed on each vertex at most once.
+            std::vector<vertex *> vertice_buffer;
+            std::queue<vertex *> _vq;
+            _vq.push(this);
+            while (_vq.size())
+                {
+                    auto v = _vq.front();
+                    _vq.pop();
+                    vertice_buffer.push_back(v);
+                    auto edges = v->getOutEdges();
+                    for (auto &e : edges)
+                    {
+                        if (auto vn = e->getReceiver())
+                        {
+                            if (!(vn->bExplored))
+                            {
+                                _vq.push(vn);
+                            }
+                        }
+                    }
+                    fn(v);
+                    v->bExplored = 1;
+                }
+                for (auto &v : vertice_buffer)
+                {
+                    v->reset();
+                }
+            return; 
+        }
+
         bool isExplored(){ return bExplored; }
         void setExplored(bool key){ bExplored = key;}
         // detach this vertex from the graph. The in/out edges will be disconnected
@@ -138,19 +174,24 @@ namespace dgl
         //void print() { std::cout << "vertex value: " << _value << std::endl; }
     };
 
-    class graph : public vertex {
-    //graph is a collection of vertices connected by edges. The graph class is 
-    //an entry point to the vertcies. All the vertices contained in a graph is 
-    //called subvertices
+    class graph {
+    // A graph is a collection of vertices connected by edges.
+    // All the vertices contained in a graph is called subvertices.
     public :  
         graph() = default;
-        virtual ~graph(){}
+        virtual ~graph(){
+            for(auto e : dummyEdges){
+                delete e;
+            }
+        }
         //getVertices return the first level subvertices (entries)
-        std::vector<vertex*>& getVertices(){return subvertices;}
-        void addSubVertex(vertex* vtx){subvertices.push_back(vtx);}
-        template <typename callable>
-        void BFWalk(callable &fn);
-        std::vector<vertex*> subvertices;
+        void addSubVertex(vertex* vtx){
+            auto e = new edge();
+            dummyEdges.emplace_back(e);
+            e->connect(ventry, *vtx);
+        }
+        vertex ventry, vexit;
+        std::vector<edge*> dummyEdges;
     };
 
     class tree
@@ -167,5 +208,6 @@ namespace dgl
         vertex *entry_vertex;
     };
 }
+
 
 #endif

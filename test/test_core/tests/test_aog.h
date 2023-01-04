@@ -9,7 +9,7 @@ void test_aog(){
     builder.setInsertPoint(mainop->getRegion());
     auto defx = builder.create<defOp>("Symbolic");
     auto defy = builder.create<defOp>();
-    auto opxx = builder.create<multiplyOp>(defx->output(), defx->output());
+    auto opxx = builder.create<addOp>(defx->output(), defx->output());
     auto opxy = builder.create<multiplyOp>(defx->output(), defy->output());
     mainop->print();
 }

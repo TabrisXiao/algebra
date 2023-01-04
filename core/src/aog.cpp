@@ -12,28 +12,19 @@ void objInfo::printIndent(){
     utility::indent(ctx->curIndent, Xos);
 }
 
-operation* element::getDefiningOp(){return dynamic_cast<operation*>(getSender());}
+operation* element::getDefiningOp(){return defOp;}
+
+element::element(operation * op):objInfo(op->getContext()), defOp(op){}
 
 void operation::setContext(context *_ctx) { ctx = _ctx; }
 
 template<class opType>
-opType* element::getDefiningOp(){return dynamic_cast<opType*>(getSender());}
+opType* element::getDefiningOp(){return dynamic_cast<opType*>(defOp);}
 
 void operation::setTraceIDToOutput(){
-    for(auto e : getOutEdges()){
-        dynamic_cast<element*>(e)->setTraceID(ctx->elem_counter++);
+    for(auto e : getOutputs()){
+        e.setTraceID(ctx->elem_counter++);
     }
-}
-
-void context::print(){
-    Xos<<"Context {"<<std::endl;
-    utility::Indent idlv(curIndent);
-    for(auto op : _ops){
-        utility::indent(curIndent, Xos);
-        //Xos<<"%"<<ops_counter++<<" : ";
-        op->print();
-    }
-    Xos<<"}\n";
 }
 
 void region::printRegion(){
