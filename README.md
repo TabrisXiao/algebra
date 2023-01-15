@@ -14,10 +14,12 @@ Configure, Build and test:
 
 ## The bell is ringing!
 
-* make a beautiful assembly print for basis:
-    * Make a nicer parse and print for AA dialect
-    * Make lit test for AA Ops
-* Make a symbolic table to store the type ID
+* Create pass for analysis the association and the distribution
+* Create op interface to manipulate the commutations for binaryOp.
+
+### Issues
+
+* The print from `Inverse`/`negative` can't show input type.
 
 ## Architecture
 1. Concrete math object definition -> Schedule lowering/optimizing passes

@@ -40,7 +40,7 @@ LogicalResult MC::AA::Negative::inferReturnTypes(MLIRContext *ctx, llvm::Optiona
 
 template<typename ConcreteOp>
 struct DoubleOccurrence : public mlir::OpRewritePattern<ConcreteOp> {
-  /// We register this pattern to match every toy.transpose in the IR.
+  /// We register this pattern to match every concrete op in the IR.
   /// The "benefit" is used by the framework to order the patterns and process
   /// them in order of profitability.
   DoubleOccurrence(mlir::MLIRContext *context)

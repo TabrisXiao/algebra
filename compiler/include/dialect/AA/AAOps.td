@@ -19,7 +19,7 @@ class AA_Op<string mnemonic, list<Trait> traits = []>:
 class AA_ObjDecl <string mnemonic, list<Trait> traits = []>: 
     AA_Op<mnemonic, 
     traits # [
-        NoSideEffect, 
+        NoSideEffect,
         DeclareOpInterfaceMethods<InferTypeOpInterface>
     ]>
 {
@@ -65,7 +65,7 @@ def AA_Inverse : AA_Op<"Inverse",
     let arguments = (ins AA_AElemType:$input);
     let results = (outs AA_AElemType:$output);
     let hasCanonicalizer = 1;
-    let assemblyFormat = "`(`$input`)` attr-dict `:` type($input) `->`type($output)";
+    let assemblyFormat = "`(`$input`)` attr-dict `:` type($input) `->`type(results)";
 }
 
 def AA_Negative : AA_Op<"Negative", 
