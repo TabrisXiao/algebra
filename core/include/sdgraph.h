@@ -8,6 +8,7 @@
 // Only vertex is used to construct graphs. The edge is represented by connection
 // between vertices.
 namespace sdgl{
+class vertex;
 class vertex{
 public : 
     vertex () =default;
@@ -27,26 +28,31 @@ public :
     //
     // attach this vertex to/from other vertices
     //
+    void addOutgoingVertex(vertex *v){  outVertices.push_back(v); }
+    void addIncomingVertex(vertex *v){ inVertices.push_back(v); }
+
+    // linkFrom option should not be used in standard case to avoid 
+    // duplicate linking happens.
     template <typename... ARGS>
-    void addInputVertex(ARGS &...args)
+    void linkFrom(ARGS &...args)
     {
         auto vertices = {&args...};
         for (auto v : vertices)
         {
             auto ptr = dynamic_cast<vertex*>(v);
             inVertices.push_back(ptr);
-            ptr->addOutputVertex(*this);
+            ptr->addOutgoingVertex(this);
         }
     }
     template <typename... ARGS>
-    void addOutputVertex(ARGS &...args)
+    void linkTo(ARGS &...args)
     {
         auto vertices = {&args...};
         for (auto v : vertices)
         {
             auto ptr = dynamic_cast<vertex*>(v);
             outVertices.push_back(ptr);
-            ptr->addInputVertex(*this);
+            ptr->addIncomingVertex(this);
         }
     }
     bool hasInput (){return inVertices.size()!=0;}
@@ -60,6 +66,7 @@ public :
         //the fn will be executed on each vertex at most once.
         std::vector<vertex *> vertice_buffer;
         std::queue<vertex *> _vq;
+        this->bExplored=1;
         _vq.push(this);
         while (_vq.size())
             {
@@ -71,11 +78,11 @@ public :
                 {
                     if (!(vn->bExplored))
                     {
+                        vn->bExplored= 1;
                         _vq.push(vn);
                     }
                 }
                 fn(v);
-                v->bExplored = 1;
             }
             for (auto &v : vertice_buffer)
             {
@@ -85,7 +92,8 @@ public :
     }
 
     bool bExplored = 0;
-    std::vector<vertex*> outVertices, inVertices;
+    std::vector<vertex*> outVertices;
+    std::vector<vertex*> inVertices;
 };
 
 class sdgraph {
@@ -96,24 +104,24 @@ class sdgraph {
             delete vtx;
         });
     }
-    void addTopLevelVertex(vertex* vtx){
-        entry.addOutputVertex(*vtx);
+    void addL1Vertex(vertex* vtx){
+        entry.linkTo(*vtx);
     }
     vertex & getEntry(){return entry;}
     vertex & getReturn(){return exit;}
-    vertex & addVertex(){
-        auto v = new vertex();
-        entry.addOutputVertex(*v);
-    }
-    template <typename... ARGS>
-    vertex & addVertex(ARGS&...args){
-        auto v = new vertex();
-        v->addInputVertex(args...);
-        return *v;
-    }
+    // vertex & addVertex(){
+    //     auto v = new vertex();
+    //     entry.linkTo(*v);
+    // }
+    // template <typename... ARGS>
+    // vertex & addVertex(ARGS&...args){
+    //     auto v = new vertex();
+    //     v->addIncomingVertex(args...);
+    //     return *v;
+    // }
     template <typename... ARGS>
     bool addReturn(ARGS&...args){
-        exit.addInputVertex(args...);
+        exit.addIncomingVertex(args...);
     }
     vertex & getReturnVertex(){return exit;}
     vertex & getEntryVertex(){return entry;}

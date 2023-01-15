@@ -10,30 +10,29 @@ namespace aog
 class defOp : public operation{
 public: 
     defOp(context *ctx, std::string id_="Unknown") : operation(ctx) {
-        _output = createElement();
-        _output.setID(id_);
+        reserveElement();
+        output().setID(id_);
         setID("Def");
     }
-    element& output(){return _output;}
+    element& output(){return elements[0];}
     void represent(std::ostream &os){
-        _output.represent(os);
+        output().represent(os);
     }
-    element& _output;
 };
 class addOp : public operation{
     public :
     addOp(context *ctx, element &lhs, element &rhs): operation(ctx){
-        addInputVertex(lhs, rhs);
-        _output = createElement();s
+        registerInput(lhs, rhs);
+        reserveElement();
         elhs=&lhs;
         erhs=&rhs;
         setID("Add");
     }
     element* lhs(){return elhs;}
     element* rhs(){return erhs;}
-    element& output(){return _output;}
+    element& output(){return elements[0];}
     void represent(std::ostream &os){
-        _output.represent(os);
+        output().represent(os);
         os<<" = ";
         elhs->represent(os);
         os<<" + ";
@@ -41,23 +40,22 @@ class addOp : public operation{
     }
     private:
     element *elhs, *erhs;
-    element * _output;
 };
 
 class multiplyOp : public operation{
     public :
     multiplyOp(context *ctx, element &lhs, element &rhs): operation(ctx){
-        addInputVertex(lhs, rhs);
-        _output = createElement();
+        registerInput(lhs, rhs);
+        reserveElement();
         elhs=&lhs;
         erhs=&rhs;
         setID("Multiply");
     }
     element* lhs(){return elhs;}
     element* rhs(){return erhs;}
-    element& output(){return _output;}
+    element& output(){return elements[0];}
     void represent(std::ostream &os){
-        _output.represent(os);
+        output().represent(os);
         os<<" = ";
         elhs->represent(os);
         os<<" * ";
@@ -65,7 +63,6 @@ class multiplyOp : public operation{
     }
     private:
     element *elhs, *erhs;
-    element * _output;
 };
 }
 

@@ -6,7 +6,7 @@
 
 using namespace aog;
 
-void objInfo::setTraceID(){setTraceID(ctx->ops_counter++);}
+void objInfo::setTraceID(){ setTraceID(ctx->ops_counter++);}
 
 void objInfo::printIndent(){
     utility::indent(ctx->curIndent, Xos);
@@ -22,8 +22,8 @@ template<class opType>
 opType* element::getDefiningOp(){return dynamic_cast<opType*>(defOp);}
 
 void operation::setTraceIDToOutput(){
-    for(auto e : getOutputs()){
-        e.setTraceID(ctx->elem_counter++);
+    for(auto i =0; i<elements.size(); i++){
+        elements[i].setTraceID(ctx->elem_counter++);
     }
 }
 

@@ -4,6 +4,7 @@
 #include <iostream>
 #include "sdgraph.h"
 #include "global.h"
+#include <unordered_map>
 
 // abstract operation graph
 
@@ -50,16 +51,30 @@ class operation : public sdgl::vertex, public objInfo{
 public : 
     operation(context *ctx_) : objInfo(ctx_){};
     virtual void represent(std::ostream &os) = 0;
-    virtual void printRegion(){}
     virtual void print(){
         printIndent();
         Xos<<id<<" : ";
         represent(Xos);
         Xos<<"\n";
     }
-    element & createElement(){
-        elements.push_back(element(this));
-        return elements.back();
+    template <typename... ARGS>
+    void registerInput(ARGS &...args)
+    {
+        auto elems = {&args...};
+        std::unordered_map<operation*, bool> buffer;
+        for (auto e : elems)
+        {
+            auto ptr = dynamic_cast<element*>(e)->getDefiningOp();
+            if(buffer.find(ptr) == buffer.end()) {
+                buffer[ptr] = 1;
+                linkFrom(*ptr);
+            }
+        }
+    }
+    void reserveElement(int n = 1){
+        for(auto i=0; i<n; i++){
+            elements.push_back(element(this));
+        }
     }
     void setContext(context *_ctx);
     context* getContext(){return ctx;}
@@ -102,6 +117,7 @@ public:
     operation(ctx),
     block(ctx){
         setID(_id);
+        block.getEntry().hasOutput();  
     }
     region& getRegion(){return block;}
     void represent(std::ostream &os){
@@ -120,18 +136,23 @@ class opBuilder {
         opBuilder* ptr= nullptr;
     };
 public:
-    opBuilder(context *ctx_) : ctx(ctx_){}
-    void setInsertPoint(region& reg){
-        currentRegion = &reg;
+    opBuilder(context *ctx_) : ctx(ctx_){
+        entranceModule = new moduleOp(ctx, "module");
+        setInsertPoint(&(entranceModule->getRegion()));
+    }
+    void setInsertPoint(region* reg){
+        currentRegion = reg;
     }
     template<typename obj, typename...ARGS>
     obj* create(ARGS &...args){
         auto ptr = new obj(ctx, args...);
-        if(!(ptr->hasInput()))
-            currentRegion->addTopLevelVertex(*ptr);
+        if(!(ptr->hasInput())){
+            currentRegion->addL1Vertex(dynamic_cast<sdgl::vertex*>(ptr));
+        }
         return ptr;
     }
     context * ctx;
+    moduleOp *entranceModule = nullptr;
     region *currentRegion=nullptr;
 };
 
