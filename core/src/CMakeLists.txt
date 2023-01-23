@@ -5,6 +5,7 @@ set(
     sources
     dgraph.cpp
     aog.cpp
+    sdgraph.cpp
 )
 
 create_cpp_library(

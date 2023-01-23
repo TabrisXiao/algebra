@@ -24,22 +24,18 @@ class addOp : public operation{
     addOp(context *ctx, element &lhs, element &rhs): operation(ctx){
         registerInput(lhs, rhs);
         reserveElement();
-        elhs=&lhs;
-        erhs=&rhs;
         setID("Add");
     }
-    element* lhs(){return elhs;}
-    element* rhs(){return erhs;}
+    element* lhs(){return inputElements[0];}
+    element* rhs(){return inputElements[1];}
     element& output(){return elements[0];}
     void represent(std::ostream &os){
         output().represent(os);
         os<<" = ";
-        elhs->represent(os);
+        lhs()->represent(os);
         os<<" + ";
-        erhs->represent(os);
+        rhs()->represent(os);
     }
-    private:
-    element *elhs, *erhs;
 };
 
 class multiplyOp : public operation{
@@ -47,22 +43,40 @@ class multiplyOp : public operation{
     multiplyOp(context *ctx, element &lhs, element &rhs): operation(ctx){
         registerInput(lhs, rhs);
         reserveElement();
-        elhs=&lhs;
-        erhs=&rhs;
         setID("Multiply");
     }
-    element* lhs(){return elhs;}
-    element* rhs(){return erhs;}
+    element* lhs(){return inputElements[0];}
+    element* rhs(){return inputElements[1];}
     element& output(){return elements[0];}
     void represent(std::ostream &os){
         output().represent(os);
         os<<" = ";
-        elhs->represent(os);
+        lhs()->represent(os);
         os<<" * ";
-        erhs->represent(os);
+        rhs()->represent(os);
     }
-    private:
-    element *elhs, *erhs;
+};
+
+class sumOp : public operation{
+    public:
+
+     template <typename... ARGS>
+    sumOp(context *ctx, ARGS &...args): operation(ctx){
+        registerInput(args...);
+        reserveElement();
+        setID("Sum");
+    }
+    element& output(){return elements[0];}
+    void represent(std::ostream &os){
+        output().represent(os);
+        os<<" = ";
+        int n = inputElements.size(), i=0;
+        for(auto e : inputElements){
+            e->represent(os);
+            i++;
+            if(i!= n) os<<" + ";
+        }
+    }
 };
 }
 

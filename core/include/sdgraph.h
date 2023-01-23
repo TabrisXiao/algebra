@@ -8,6 +8,7 @@
 // Only vertex is used to construct graphs. The edge is represented by connection
 // between vertices.
 namespace sdgl{
+
 class vertex;
 class vertex{
 public : 
@@ -28,7 +29,7 @@ public :
     //
     // attach this vertex to/from other vertices
     //
-    void addOutgoingVertex(vertex *v){  outVertices.push_back(v); }
+    void addOutgoingVertex(vertex *v){ outVertices.push_back(v); }
     void addIncomingVertex(vertex *v){ inVertices.push_back(v); }
 
     // linkFrom option should not be used in standard case to avoid 
@@ -55,6 +56,12 @@ public :
             ptr->addIncomingVertex(this);
         }
     }
+    // detach the vertex from this vertex if this vertex linked to it.
+    void detachOutgoingVertex(vertex *v_);
+    // detach the vertex from this vertex if this vertex linked from it.
+    void detachIncomingVertex(vertex *v_);
+    // detach this vertex from any other vertices linked to it.
+    void detach();
     bool hasInput (){return inVertices.size()!=0;}
     bool hasOutput(){return outVertices.size()!=0;}
     void reset() { bExplored = 0; }
@@ -109,16 +116,6 @@ class sdgraph {
     }
     vertex & getEntry(){return entry;}
     vertex & getReturn(){return exit;}
-    // vertex & addVertex(){
-    //     auto v = new vertex();
-    //     entry.linkTo(*v);
-    // }
-    // template <typename... ARGS>
-    // vertex & addVertex(ARGS&...args){
-    //     auto v = new vertex();
-    //     v->addIncomingVertex(args...);
-    //     return *v;
-    // }
     template <typename... ARGS>
     bool addReturn(ARGS&...args){
         exit.addIncomingVertex(args...);

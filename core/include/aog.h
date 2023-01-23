@@ -69,6 +69,7 @@ public :
                 buffer[ptr] = 1;
                 linkFrom(*ptr);
             }
+            inputElements.push_back(e);
         }
     }
     void reserveElement(int n = 1){
@@ -76,6 +77,7 @@ public :
             elements.push_back(element(this));
         }
     }
+    int getOutputSize(){return int(elements.size());}
     void setContext(context *_ctx);
     context* getContext(){return ctx;}
     std::vector<element>& getOutputs(){return elements;}
@@ -83,6 +85,7 @@ public :
     void setTraceIDToOutput();
     int elementTraceIDStart = -1;
     std::vector<element> elements;
+    std::vector<element*> inputElements;
 };
 
 class context{
@@ -183,19 +186,25 @@ public :
 
 class passManager{
     public : 
-    passManager(context * _ctx): ctx(_ctx){}
+    passManager(moduleOp * op): entranceOp(op){}
     bool runPasses(){
         return 0;
     }
+    void run(){
+        region * reg = &(entranceOp->getRegion());
+        for(auto pass :passes){
+            runPassThroughRegion(reg, pass);
+        }
+    }
     bool runPassThroughRegion(region* reg, passBase* pass){
-        reg->getEntry().BFWalk([&](sdgl::vertex* _op){
+        reg->getEntryVertex().BFWalk([&](sdgl::vertex* _op){
             auto op = dynamic_cast<operation*>(_op);
             pass->run(op);
         });
         return 0;
     }
     std::vector<passBase*> passes;
-    context *ctx;
+    moduleOp * entranceOp;
 };
 }
 
