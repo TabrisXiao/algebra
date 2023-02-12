@@ -23,8 +23,10 @@ class test_aog : public test_wrapper{
         //auto sum = builder.create<sumOp>(opxx->output(), opyy->output(), opxy->output(), opyx->output());
         builder.entranceModule->print(&ctx);
         passManager pm(builder.entranceModule);
-        createFuseAddToSumPass(pm);
+        createConvertAddToSumPass(pm);
         pm.run();
+        ctx.resetCounts();
+        builder.entranceModule->print(&ctx);
         return 0;
     }
 };

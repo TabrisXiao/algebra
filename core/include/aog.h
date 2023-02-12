@@ -39,9 +39,12 @@ public:
         os<<" <"<<id<<">";
     }
     operation* getDefiningOp();
+    void addUser(operation* op){ users.push_back(op); }
+    std::vector<operation*> & getUsers(){return users;}
     template<class opType>
     opType* getDefiningOp();
     operation *defOp = nullptr;
+    std::vector<operation*> users;
 };
 
 class operation : public sdgl::vertex, public objInfo{
@@ -55,9 +58,9 @@ public :
         Xos<<"\n";
     }
     template <typename... ARGS>
-    void registerInput(ARGS &...args)
+    void acceptInput(ARGS ...args)
     {
-        auto elems = {&args...};
+        auto elems = {args...};
         std::unordered_map<operation*, bool> buffer;
         for (auto e : elems)
         {
@@ -66,10 +69,11 @@ public :
                 buffer[ptr] = 1;
                 linkFrom(*ptr);
             }
+            e->addUser(this);
             inputElements.push_back(e);
         }
     }
-    void reserveElement(int n = 1){
+    void defineElement(int n = 1){
         for(auto i=0; i<n; i++){
             elements.push_back(element(this));
         }
@@ -91,6 +95,11 @@ public :
     int ops_counter = 0;
     int elem_counter = 0;
     int curIndent=0;
+    void resetCounts(){
+        ops_counter = 0;
+        elem_counter = 0;
+        curIndent=0;
+    }
     region* getRegion(){return _region;}
     region * _region = nullptr;
     context* parent_ctx = nullptr, *root_ctx = nullptr;
@@ -128,16 +137,18 @@ class opModifier {
     public : 
     opModifier() = default;
     template<typename obj, typename...ARGS>
-    obj* create(ARGS &...args){
+    obj* create(ARGS ...args){
         auto ptr = new obj(args...);
         if(!(ptr->hasInput())){
             reg->addL1Vertex(dynamic_cast<sdgl::vertex*>(ptr));
         }
         return ptr;
     }
-    template<typename...ARGS>
-    void replace(operation *origOp, ARGS &...args){
+    // create a new type T op and replace the origOp.
+    template<typename T, typename...ARGS>
+    T* replaceOp(operation *origOp, ARGS ...args){
         origOp->detach();
+        return create<T>(args...);
     }
     void setWorkRegion(region * reg_) { reg = reg_;}
     region *reg = nullptr;
@@ -166,27 +177,32 @@ public:
 
 class opRewriter : public opModifier{
     public : 
-    opRewriter() = default;
+    opRewriter(moduleOp *op){
+        entranceModule = op;
+        setWorkRegion(&(entranceModule->getRegion()));
+    }
+    moduleOp *entranceModule = nullptr;
 };
 
 class rewriterBase {
     public:
     rewriterBase() = default;
-    virtual int execute(operation * op) = 0;
+    virtual ~rewriterBase() = default;
+    virtual int execute(opRewriter &, operation * op) = 0;
 };
 
 template<typename concreteOp>
 class rewriter : public rewriterBase{
     public : rewriter() = default;
-    virtual bool rewrite(concreteOp *op) = 0;
-    virtual int execute(operation* op) override final{
+    virtual bool rewrite(opRewriter &, concreteOp *op) = 0;
+    virtual int execute(opRewriter & rewriter,operation* op) override final{
         // rewrite return value: 
         // 1 matched and rewrited
         // 0 matched but failed rewritten
         // -1 didn't match
         if(auto cop = dynamic_cast<concreteOp*>(op))
         {
-            return int(rewrite(cop));
+            return int(rewrite(rewriter, cop));
         }
         else {
             return -1;
@@ -198,9 +214,9 @@ class rewriter : public rewriterBase{
 class passBase {
 public :
     passBase (const char * name) : _pass_name (name) {}
-    void run(operation* op) {
+    void run(opRewriter & rewriter, operation* op) {
         for(auto ptr=rewriters.begin(); ptr!=rewriters.end(); ptr++){
-            (*ptr).get()->execute(op);
+            (*ptr).get()->execute(rewriter, op);
         }
     }
     template<typename T, typename ...ARGS>
@@ -209,13 +225,15 @@ public :
         rewriters.push_back(std::move(ptr));
     }
     std::vector<std::unique_ptr<rewriterBase>> rewriters;
-    opRewriter *rewriter;
     std::string _pass_name;
 };
 
 class passManager{
     public : 
-    passManager(moduleOp * op): entranceOp(op){}
+    passManager(moduleOp * op): 
+        entranceOp(op),
+        _rw(op)
+        {}
     bool runPasses(){
         return 0;
     }
@@ -229,7 +247,7 @@ class passManager{
     bool runPassThroughRegion(region* reg, passBase* pass){
         reg->getEntryVertex().BFWalk([&](sdgl::vertex* _op){
             auto op = dynamic_cast<operation*>(_op);
-            pass->run(op);
+            pass->run(_rw, op);
         });
         return 0;
     }
@@ -239,6 +257,7 @@ class passManager{
     }
     std::vector<std::unique_ptr<passBase>> passes;
     moduleOp * entranceOp;
+    opRewriter _rw;
 };
 }
 

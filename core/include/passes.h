@@ -7,24 +7,24 @@
 
 namespace aog{
 
-class fuseAddToSumRewriter : public rewriter<addOp> {
+class convertAddToSumRewriter : public rewriter<addOp> {
     public : 
-    fuseAddToSumRewriter (){}
-    virtual bool rewrite(addOp *origOp) override{
-        std::cout<<"addOp found"<<std::endl;
+    convertAddToSumRewriter (){}
+    virtual bool rewrite(opRewriter &rewriter, addOp *origOp) override{
+        rewriter.replaceOp<sumOp>(origOp, origOp->lhs(), origOp->rhs());
         return 1;
     }
 };
 
-class fuseAddToSumPass : public passBase{
+class convertAddToSumPass : public passBase{
     public:
-    fuseAddToSumPass(): passBase("fuse_add_to_sum_pass") {
-        addRewriter<fuseAddToSumRewriter>();
+    convertAddToSumPass(): passBase("convert_add_to_sum_pass") {
+        addRewriter<convertAddToSumRewriter>();
     }
 };
 
-void createFuseAddToSumPass(passManager &pm){
-    pm.addPass(std::make_unique<fuseAddToSumPass>());
+void createConvertAddToSumPass(passManager &pm){
+    pm.addPass(std::make_unique<convertAddToSumPass>());
 }
 }
 
