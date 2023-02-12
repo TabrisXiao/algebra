@@ -3,6 +3,11 @@
 using namespace sdgl;
 
 class test_sdgl : public test_wrapper{
+    class tvertex : public vertex{
+        public :
+        tvertex(int num): id(num){}
+        int id = 0;
+    };
     public:
     test_sdgl() {test_id = "sdgraph test";};
     bool run() {
@@ -10,13 +15,15 @@ class test_sdgl : public test_wrapper{
         v1.linkTo(v2, v3);
         v2.linkTo(v4);
         v3.linkTo(v3);
-        auto prit = [&](vertex * v){
-            std::cout<<v<<" : "<<&v3<<std::endl;
-        };
-        v1.BFWalk(prit);
-        std::cout<<"----------"<<std::endl;
+        
         v3.detach();
-        v1.BFWalk(prit);
-        return 0;
+        bool result = 0;
+        v1.BFWalk([&](vertex * v){
+            if(v== &v3){
+                std::cout<<"ERROR: detach failed!"<<std::endl;
+                result = 1;
+            }
+        });
+        return result;
     }
 };

@@ -18,22 +18,33 @@ public :
     {
         bExplored = rhs.bExplored;
     }
-    vertex(vertex &&rhs) : outVertices(std::move(rhs.getOutput())),
-                           inVertices(std::move(rhs.getInput())),
+    vertex(vertex &&rhs) : outVertices(std::move(rhs.getOutVertices())),
+                           inVertices(std::move(rhs.getInVertices())),
                            bExplored(rhs.bExplored)
     {
         rhs.~vertex();
     }
-    std::vector<vertex*> & getInput(){return inVertices;}
-    std::vector<vertex*> & getOutput(){return outVertices;}
+    // std::vector<vertex*> & getInput(){return inVertices;}
+    // std::vector<vertex*> & getOutput(){return outVertices;}
     //
     // attach this vertex to/from other vertices
     //
     void addOutgoingVertex(vertex *v){ outVertices.push_back(v); }
     void addIncomingVertex(vertex *v){ inVertices.push_back(v); }
 
-    // linkFrom option should not be used in standard case to avoid 
-    // duplicate linking happens.
+    bool isLinkedTo(vertex *v){
+        for(auto _v : outVertices){
+            if(v==_v) return true;
+        }
+        return false;
+    }
+    bool isLinkedFrom(vertex *v){
+        for(auto _v : inVertices){
+            if(v==_v) return true;
+        }
+        return false;
+    }
+    // linkFrom 
     template <typename... ARGS>
     void linkFrom(ARGS &...args)
     {
@@ -41,6 +52,7 @@ public :
         for (auto v : vertices)
         {
             auto ptr = dynamic_cast<vertex*>(v);
+            if(isLinkedFrom(ptr)) continue;
             inVertices.push_back(ptr);
             ptr->addOutgoingVertex(this);
         }
@@ -52,6 +64,7 @@ public :
         for (auto v : vertices)
         {
             auto ptr = dynamic_cast<vertex*>(v);
+            if(isLinkedTo(ptr)) continue;
             outVertices.push_back(ptr);
             ptr->addIncomingVertex(this);
         }
@@ -78,9 +91,10 @@ public :
         while (_vq.size())
             {
                 auto v = _vq.front();
+                if(!bActive) continue;
                 _vq.pop();
                 vertice_buffer.push_back(v);
-                auto vertices = v->getOutput();
+                auto vertices = v->getOutVertices();
                 for (auto &vn : vertices)
                 {
                     if (!(vn->bExplored))
@@ -97,8 +111,13 @@ public :
             }
         return;
     }
+    std::vector<vertex*> & getInVertices(){return inVertices;}
+    std::vector<vertex*> & getOutVertices(){return outVertices;}
+    void setActivation( bool b){bActive = b;}
+    virtual bool isActive(){return bActive;}
 
     bool bExplored = 0;
+    bool bActive = 1;
     std::vector<vertex*> outVertices;
     std::vector<vertex*> inVertices;
 };

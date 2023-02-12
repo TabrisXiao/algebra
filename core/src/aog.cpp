@@ -3,7 +3,6 @@
 #include "dgraph.h"
 #include "utility.h"
 
-
 using namespace aog;
 
 void objInfo::setTraceID(context * ctx){ setTraceID(ctx->ops_counter++);}
@@ -13,6 +12,21 @@ void objInfo::printIndent(context *ctx){
 }
 
 operation* element::getDefiningOp(){return defOp;}
+
+std::vector<operation*> element::getUsers() {
+    std::vector<operation*> users;
+    auto & ops = defOp->getOutVertices();
+    for(auto op : ops){
+        auto & elems = dynamic_cast<operation*>(op)->getInputs();
+        for(auto e : elems){
+            if(e == this){
+                users.push_back(dynamic_cast<operation*>(op));
+                break;
+            }
+        }
+    }
+    return users;
+}
 
 element::element(operation * op) : defOp(op){}
 
@@ -25,9 +39,23 @@ void operation::setTraceIDToOutput(context *ctx){
     }
 }
 
+void operation::print(context *ctx){
+    ctx->resetCounts();
+    printOp(ctx);
+}
+
 void region::printRegion(context *ctx){
     Xos<<"{\n";
     utility::Indent idlv(ctx->curIndent);
     printOps(ctx);
     Xos<<"}\n";
+}
+
+void opModifier::removeElement(element *e){
+    auto op = e->getDefiningOp();
+    auto & out_ops = op->getOutVertices();
+    for(auto op_ : out_ops){
+        auto op = dynamic_cast<operation*>(op_);
+        utility::remove_value_from_vector<element*>(e, op->getInputs());
+    }
 }

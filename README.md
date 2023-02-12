@@ -54,5 +54,6 @@ The Ops:
     * If some elements are owned by a operation, then this operation should be the only operation that can modify these elements. Other operations should never modify the elements.
     * Operations can only communiated with each others by passing the `element` objects. 
     * If a operation takes some elements owning by other operations as inputs, then this operation is consided as connected from those operations. 
+    * The information of connection between vertices is recorded in the inVertices/outVertices. It is implemented in a vector as here we assume that one node only connects to few other nodes. Vectors provide a faste access than the unordered_set (unordered_set provides a fast lookup, but given the connections are small, then lookup time is not a big deal). 
 
 * The `opBuilder` is the interface object used to create operations and manage the `context`. The `context` should be created by `opBuilder` to maintain the `context`

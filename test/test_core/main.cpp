@@ -8,6 +8,7 @@ int main(){
     test_frame frame;
     frame.add_test<test_sdgl>();
     frame.add_test<test_aog>();
+    //frame.add_test<test_dgraph>();
     frame.run_all_test();
     return 0;
 }
