@@ -1,7 +1,8 @@
 
 #include "test_frame.h"
 #include "ops.h"
-    using namespace aog;
+#include "passes.h"
+using namespace aog;
 class test_aog : public test_wrapper{
     public:
     test_aog() {test_id = "ops test";}
@@ -16,11 +17,14 @@ class test_aog : public test_wrapper{
         auto opxy = builder.create<multiplyOp>(defx->output(), defy->output());
         auto opyy = builder.create<multiplyOp>(defy->output(), defy->output());
         auto opyx = builder.create<multiplyOp>(defy->output(), defx->output());
-        // auto add1 = builder.create<addOp>(opxx->output(), opyy->output());
-        // auto add2 = builder.create<addOp>(opxy->output(), opyx->output());
-        // auto addfinal = builder.create<addOp>(add1->output(), add2->output());
-        auto sum = builder.create<sumOp>(opxx->output(), opyy->output(), opxy->output(), opyx->output());
-        builder.entranceModule->print();
+        auto add1 = builder.create<addOp>(opxx->output(), opyy->output());
+        auto add2 = builder.create<addOp>(opxy->output(), opyx->output());
+        auto addfinal = builder.create<addOp>(add1->output(), add2->output());
+        //auto sum = builder.create<sumOp>(opxx->output(), opyy->output(), opxy->output(), opyx->output());
+        builder.entranceModule->print(&ctx);
+        passManager pm(builder.entranceModule);
+        createFuseAddToSumPass(pm);
+        pm.run();
         return 0;
     }
 };

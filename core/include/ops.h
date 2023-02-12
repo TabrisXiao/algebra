@@ -9,19 +9,19 @@ namespace aog
 
 class defOp : public operation{
 public: 
-    defOp(context *ctx, std::string id_="Unknown") : operation(ctx) {
+    defOp(std::string id_="Unknown") {
         reserveElement();
         output().setID(id_);
         setID("Def");
     }
     element& output(){return elements[0];}
-    void represent(std::ostream &os){
-        output().represent(os);
+    void represent(std::ostream &os, context *ctx){
+        output().represent(os,ctx);
     }
 };
 class addOp : public operation{
     public :
-    addOp(context *ctx, element &lhs, element &rhs): operation(ctx){
+    addOp(element &lhs, element &rhs){
         registerInput(lhs, rhs);
         reserveElement();
         setID("Add");
@@ -29,18 +29,18 @@ class addOp : public operation{
     element* lhs(){return inputElements[0];}
     element* rhs(){return inputElements[1];}
     element& output(){return elements[0];}
-    void represent(std::ostream &os){
-        output().represent(os);
+    void represent(std::ostream &os, context *ctx){
+        output().represent(os, ctx);
         os<<" = ";
-        lhs()->represent(os);
+        lhs()->represent(os, ctx);
         os<<" + ";
-        rhs()->represent(os);
+        rhs()->represent(os, ctx);
     }
 };
 
 class multiplyOp : public operation{
     public :
-    multiplyOp(context *ctx, element &lhs, element &rhs): operation(ctx){
+    multiplyOp(element &lhs, element &rhs) {
         registerInput(lhs, rhs);
         reserveElement();
         setID("Multiply");
@@ -48,12 +48,12 @@ class multiplyOp : public operation{
     element* lhs(){return inputElements[0];}
     element* rhs(){return inputElements[1];}
     element& output(){return elements[0];}
-    void represent(std::ostream &os){
-        output().represent(os);
+    void represent(std::ostream &os, context *ctx){
+        output().represent(os,ctx);
         os<<" = ";
-        lhs()->represent(os);
+        lhs()->represent(os, ctx);
         os<<" * ";
-        rhs()->represent(os);
+        rhs()->represent(os, ctx);
     }
 };
 
@@ -61,18 +61,18 @@ class sumOp : public operation{
     public:
 
      template <typename... ARGS>
-    sumOp(context *ctx, ARGS &...args): operation(ctx){
+    sumOp(ARGS &...args) {
         registerInput(args...);
         reserveElement();
         setID("Sum");
     }
     element& output(){return elements[0];}
-    void represent(std::ostream &os){
-        output().represent(os);
+    void represent(std::ostream &os, context *ctx){
+        output().represent(os,ctx);
         os<<" = ";
         int n = inputElements.size(), i=0;
         for(auto e : inputElements){
-            e->represent(os);
+            e->represent(os, ctx);
             i++;
             if(i!= n) os<<" + ";
         }

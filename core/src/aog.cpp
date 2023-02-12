@@ -6,30 +6,28 @@
 
 using namespace aog;
 
-void objInfo::setTraceID(){ setTraceID(ctx->ops_counter++);}
+void objInfo::setTraceID(context * ctx){ setTraceID(ctx->ops_counter++);}
 
-void objInfo::printIndent(){
+void objInfo::printIndent(context *ctx){
     utility::indent(ctx->curIndent, Xos);
 }
 
 operation* element::getDefiningOp(){return defOp;}
 
-element::element(operation * op):objInfo(op->getContext()), defOp(op){}
-
-void operation::setContext(context *_ctx) { ctx = _ctx; }
+element::element(operation * op) : defOp(op){}
 
 template<class opType>
 opType* element::getDefiningOp(){return dynamic_cast<opType*>(defOp);}
 
-void operation::setTraceIDToOutput(){
+void operation::setTraceIDToOutput(context *ctx){
     for(auto i =0; i<elements.size(); i++){
         elements[i].setTraceID(ctx->elem_counter++);
     }
 }
 
-void region::printRegion(){
+void region::printRegion(context *ctx){
     Xos<<"{\n";
     utility::Indent idlv(ctx->curIndent);
-    printOps();
+    printOps(ctx);
     Xos<<"}\n";
 }

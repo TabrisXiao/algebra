@@ -103,6 +103,19 @@ public :
     std::vector<vertex*> inVertices;
 };
 
+class chain {
+    public : 
+    chain () = default;
+    vertex head, tail;
+    int size_=0;
+};
+
+class treeNode : public vertex {
+public:
+    treeNode() = default;
+    std::vector<treeNode> children;
+};
+
 class sdgraph {
     public : 
     sdgraph () = default;

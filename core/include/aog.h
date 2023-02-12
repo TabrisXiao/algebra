@@ -5,26 +5,24 @@
 #include "sdgraph.h"
 #include "global.h"
 #include <unordered_map>
+#include <memory.h>
 
 // abstract operation graph
 
 namespace aog{
 class context;
 class operation;
+class region;
 
 class objInfo {
     public: 
     objInfo() = default;
-    objInfo(context *ctx_): ctx(ctx_){
-    }
     void setTraceID(int id_){traceID = id_;}
-    void setTraceID();
+    void setTraceID(context * ctx);
     void setID(const char * _id){id = _id;}
     void setID(std::string& _id){id = _id;}
-    void printIndent();
-    context * getContext() {return ctx;}
+    void printIndent(context *ctx);
     void printTraceID(std::ostream os){ os<<traceID; }
-    context *ctx;
     int traceID = -1;
     std::string id="Unknown";
 };
@@ -32,10 +30,9 @@ class objInfo {
 class element : public objInfo{
 public:
     element() = default;
-    element(context *ctx_): objInfo(ctx_){}
     element(operation * op);
     virtual ~element(){}
-    virtual void represent(std::ostream &os){
+    virtual void represent(std::ostream &os, context *ctx){
         os<<"%";
         if(traceID > -1) os<<traceID;
         else os<<"Unknown";
@@ -49,12 +46,12 @@ public:
 
 class operation : public sdgl::vertex, public objInfo{
 public : 
-    operation(context *ctx_) : objInfo(ctx_){};
-    virtual void represent(std::ostream &os) = 0;
-    virtual void print(){
-        printIndent();
+    operation() : objInfo(){};
+    virtual void represent(std::ostream &os, context *ctx) = 0;
+    virtual void print(context *ctx){
+        printIndent(ctx);
         Xos<<id<<" : ";
-        represent(Xos);
+        represent(Xos, ctx);
         Xos<<"\n";
     }
     template <typename... ARGS>
@@ -78,58 +75,75 @@ public :
         }
     }
     int getOutputSize(){return int(elements.size());}
-    void setContext(context *_ctx);
-    context* getContext(){return ctx;}
     std::vector<element>& getOutputs(){return elements;}
     element & getOutput(int n){ return elements[n];}
-    void setTraceIDToOutput();
+    void setTraceIDToOutput(context *ctx);
     int elementTraceIDStart = -1;
     std::vector<element> elements;
     std::vector<element*> inputElements;
 };
 
 class context{
-public : context () = default;
+public : 
+    context () = default;
     virtual ~context(){}
 
     int ops_counter = 0;
     int elem_counter = 0;
     int curIndent=0;
+    region* getRegion(){return _region;}
+    region * _region = nullptr;
+    context* parent_ctx = nullptr, *root_ctx = nullptr;
 };
 
 class region : public sdgl::sdgraph{
 public : 
     region() = default;
-    region(context *ctx_){ctx = ctx_;}
-    void printRegion();
-    inline void printOps(){
+    void printRegion(context *ctx);
+    inline void printOps(context *ctx){
         getEntryVertex().BFWalk([&](sdgl::vertex* _op){
             if(auto op = dynamic_cast<operation*>(_op)){
-                op->setTraceID();
-                op->setTraceIDToOutput();
-                op->print();
+                op->setTraceID(ctx);
+                op->setTraceIDToOutput(ctx);
+                op->print(ctx);
             }
         });
     }
-    context *ctx= nullptr;
 };
 
 class moduleOp : public operation{
 public:
-    moduleOp(context *ctx, std::string _id="module") : 
-    operation(ctx),
-    block(ctx){
+    moduleOp(std::string _id="module") {
         setID(_id);
         block.getEntry().hasOutput();  
     }
     region& getRegion(){return block;}
-    void represent(std::ostream &os){
-        block.printRegion();
+    void represent(std::ostream &os, context *ctx){
+        block.printRegion(ctx);
     }
     region block;
 };
 
-class opBuilder {
+class opModifier {
+    public : 
+    opModifier() = default;
+    template<typename obj, typename...ARGS>
+    obj* create(ARGS &...args){
+        auto ptr = new obj(args...);
+        if(!(ptr->hasInput())){
+            reg->addL1Vertex(dynamic_cast<sdgl::vertex*>(ptr));
+        }
+        return ptr;
+    }
+    template<typename...ARGS>
+    void replace(operation *origOp, ARGS &...args){
+        origOp->detach();
+    }
+    void setWorkRegion(region * reg_) { reg = reg_;}
+    region *reg = nullptr;
+};
+
+class opBuilder : public opModifier{
     class regionPtrHelper{
     public : 
         regionPtrHelper(opBuilder *builder) : ptr(builder){}
@@ -139,49 +153,64 @@ class opBuilder {
         opBuilder* ptr= nullptr;
     };
 public:
-    opBuilder(context *ctx_) : ctx(ctx_){
-        entranceModule = new moduleOp(ctx, "module");
-        setInsertPoint(&(entranceModule->getRegion()));
+    opBuilder(context *ctx_) {
+        ctx = ctx_;
+        entranceModule = new moduleOp("module");
+        setWorkRegion(&(entranceModule->getRegion()));
     }
-    void setInsertPoint(region* reg){
-        currentRegion = reg;
-    }
-    template<typename obj, typename...ARGS>
-    obj* create(ARGS &...args){
-        auto ptr = new obj(ctx, args...);
-        if(!(ptr->hasInput())){
-            currentRegion->addL1Vertex(dynamic_cast<sdgl::vertex*>(ptr));
-        }
-        return ptr;
-    }
-    context * ctx;
+   
+    context * getContext(){return ctx;}
     moduleOp *entranceModule = nullptr;
-    region *currentRegion=nullptr;
+    context *ctx;
+};
+
+class opRewriter : public opModifier{
+    public : 
+    opRewriter() = default;
+};
+
+class rewriterBase {
+    public:
+    rewriterBase() = default;
+    virtual int execute(operation * op) = 0;
 };
 
 template<typename concreteOp>
-class rewriter {
-    public : rewriter(context *ctx_) {ctx=ctx;}
+class rewriter : public rewriterBase{
+    public : rewriter() = default;
     virtual bool rewrite(concreteOp *op) = 0;
-    int applyRewrite(operation* op){
+    virtual int execute(operation* op) override final{
         // rewrite return value: 
         // 1 matched and rewrited
         // 0 matched but failed rewritten
         // -1 didn't match
         if(auto cop = dynamic_cast<concreteOp*>(op))
+        {
             return int(rewrite(cop));
-        else return -1;
+        }
+        else {
+            return -1;
+        }
     }
-    void remove(operation* op){
-        delete op;
-    }
-    context *ctx;
+    opBuilder * builder;
 };
 
 class passBase {
 public :
-    passBase () = default;
-    virtual int run(operation* op) = 0;
+    passBase (const char * name) : _pass_name (name) {}
+    void run(operation* op) {
+        for(auto ptr=rewriters.begin(); ptr!=rewriters.end(); ptr++){
+            (*ptr).get()->execute(op);
+        }
+    }
+    template<typename T, typename ...ARGS>
+    void addRewriter(ARGS...arg){ 
+        auto ptr = std::make_unique<T>(arg...);
+        rewriters.push_back(std::move(ptr));
+    }
+    std::vector<std::unique_ptr<rewriterBase>> rewriters;
+    opRewriter *rewriter;
+    std::string _pass_name;
 };
 
 class passManager{
@@ -192,8 +221,9 @@ class passManager{
     }
     void run(){
         region * reg = &(entranceOp->getRegion());
-        for(auto pass :passes){
-            runPassThroughRegion(reg, pass);
+        for(auto pass=passes.begin(); pass!=passes.end(); pass++){
+            std::cout<<" running pass: "<<(*pass).get()->_pass_name<<std::endl;
+            runPassThroughRegion(reg, (*pass).get());
         }
     }
     bool runPassThroughRegion(region* reg, passBase* pass){
@@ -203,7 +233,11 @@ class passManager{
         });
         return 0;
     }
-    std::vector<passBase*> passes;
+
+    void addPass(std::unique_ptr<passBase> ps){
+        passes.push_back(std::move(ps));
+    }
+    std::vector<std::unique_ptr<passBase>> passes;
     moduleOp * entranceOp;
 };
 }
