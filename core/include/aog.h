@@ -73,6 +73,7 @@ public :
             inputElements.push_back(e);
         }
     }
+    std::vector<element*> & getInputs(){return inputElements;}
     void defineElement(int n = 1){
         for(auto i=0; i<n; i++){
             elements.push_back(element(this));
@@ -144,11 +145,36 @@ class opModifier {
         }
         return ptr;
     }
+    void replaceOperation(operation *origOp, operation *newOp){
+        auto out_ops = origOp->getOutVertices();
+        for(auto op_ : out_ops){
+            newOp->linkTo(*op_);
+        }
+        origOp->detach();
+    }
+    // replace the element by the new element for all users
+    void replaceElement(element *e, element* newe){
+        auto & vec = e->getUsers();
+        for(auto op : vec){
+            auto & inputs = op->getInputs();
+            for(auto i=0 ; i<inputs.size(); i++){
+                if(inputs[i]==e){
+                    inputs[i]=newe;
+                    break;
+                }
+            }
+        }
+    }
     // create a new type T op and replace the origOp.
+    // for both operations has to have only one elements;
     template<typename T, typename...ARGS>
     T* replaceOp(operation *origOp, ARGS ...args){
-        origOp->detach();
-        return create<T>(args...);
+        auto op = create<T>(args...);
+        // the input vertices is linked when creating the op, 
+        // so we only need to link the output vertices
+        replaceElement(&(origOp->getOutput(0)), &(op->getOutput(0)));
+        replaceOperation(origOp, op);
+        return op;
     }
     void setWorkRegion(region * reg_) { reg = reg_;}
     region *reg = nullptr;
@@ -241,6 +267,7 @@ class passManager{
         region * reg = &(entranceOp->getRegion());
         for(auto pass=passes.begin(); pass!=passes.end(); pass++){
             std::cout<<" running pass: "<<(*pass).get()->_pass_name<<std::endl;
+            std::cout<<std::endl;
             runPassThroughRegion(reg, (*pass).get());
         }
     }

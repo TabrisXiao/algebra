@@ -97,6 +97,8 @@ public :
             }
         return;
     }
+    std::vector<vertex*> & getInVertices(){return inVertices;}
+    std::vector<vertex*> & getOutVertices(){return outVertices;}
 
     bool bExplored = 0;
     std::vector<vertex*> outVertices;
