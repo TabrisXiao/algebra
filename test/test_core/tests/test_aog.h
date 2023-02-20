@@ -26,6 +26,8 @@ class test_aog : public test_wrapper{
         pm.enablePrintAfterPass();
         createConvertAddToSumPass(pm);
         createFuseAddToSumPass(pm);
+        createLhsAssociatePass(pm);
+        createRhsAssociatePass(pm);
         pm.run();
         ctx.resetCounts();
         //builder.entranceModule->print(&ctx);

@@ -43,7 +43,9 @@ public:
     operation* getDefiningOp();
     std::vector<operation*> getUsers();
     template<class opType>
-    opType* getDefiningOp();
+    opType* getDefiningOp(){
+        return  dynamic_cast<opType*>(defOp);
+    }
     operation *defOp = nullptr;
 };
 
@@ -159,8 +161,8 @@ class opModifier {
         // remove the output element from the users
         auto & vertices = op->getOutVertices();
         for(auto vert : vertices){
-            auto op = dynamic_cast<operation*>(vert);
-            auto & inputs = op->getInputs();
+            auto user = dynamic_cast<operation*>(vert);
+            auto & inputs = user->getInputs();
             auto iter = inputs.begin();
             while (iter!=inputs.end()){
                 if((*iter)->getDefiningOp() == op){
@@ -209,6 +211,12 @@ class opModifier {
         replaceOperation(origOp, op);
         deactiveOp(origOp);
         return op;
+    }
+
+    void replaceOp(operation *origOp, operation *newOp){
+        replaceElement(&(origOp->getOutput(0)), &(newOp->getOutput(0)));
+        replaceOperation(origOp, newOp);
+        deactiveOp(origOp);
     }
     
     void flush(){

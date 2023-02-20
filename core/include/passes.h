@@ -4,9 +4,11 @@
 
 #include "ops.h"
 #include "aog.h"
+#include <unordered_map>
 
 namespace aog{
 
+// -------------------- convertAddToSumPass ---------------------
 class convertAddToSumRewriter : public rewriter<addOp> {
     public : 
     convertAddToSumRewriter (){}
@@ -16,6 +18,18 @@ class convertAddToSumRewriter : public rewriter<addOp> {
     }
 };
 
+class convertAddToSumPass : public passBase{
+    public:
+    convertAddToSumPass(): passBase("convert_add_to_sum_pass") {
+        addRewriter<convertAddToSumRewriter>();
+    }
+};
+
+void createConvertAddToSumPass(passManager &pm){
+    pm.addPass(std::make_unique<convertAddToSumPass>());
+}
+
+// -------------------- fuseAddToSumPass ---------------------
 class fuseAddToSumRewriter : public rewriter<sumOp>{
     public: 
     fuseAddToSumRewriter(){}
@@ -43,13 +57,6 @@ class fuseAddToSumRewriter : public rewriter<sumOp>{
     }
 };
 
-class convertAddToSumPass : public passBase{
-    public:
-    convertAddToSumPass(): passBase("convert_add_to_sum_pass") {
-        addRewriter<convertAddToSumRewriter>();
-    }
-};
-
 class fuseAddToSumPass : public passBase{
     public:
     fuseAddToSumPass(): passBase("fuse_add_to_sum_pass") {
@@ -57,13 +64,96 @@ class fuseAddToSumPass : public passBase{
     }
 };
 
-void createConvertAddToSumPass(passManager &pm){
-    pm.addPass(std::make_unique<convertAddToSumPass>());
-}
-
 void createFuseAddToSumPass(passManager &pm){
     pm.addPass(std::make_unique<fuseAddToSumPass>());
 }
+
+// -------------------- lhsAssociatePass ---------------------
+class lhsAssociateRewriter : public rewriter<sumOp> {
+    public:
+    lhsAssociateRewriter () = default;
+    virtual bool rewrite(opRewriter &rewriter, sumOp *origOp) override{
+        auto & inputs = origOp->getInputs();
+        std::unordered_map<element *, std::vector<multiplyOp*>> map;
+        for(auto input : inputs){
+            if(auto op = input->getDefiningOp<multiplyOp>()){
+                auto lhs = op->lhs();
+                if(map.find(lhs)==map.end()){
+                    map.insert({lhs, {op}});
+                } else {
+                    map[lhs].push_back(op);
+                }
+            }
+        }
+        for(auto & [value, ops] : map){
+            if(ops.size()< 2) continue;
+            std::vector<element*> rhsValues;
+            rhsValues.push_back(ops[0]->rhs());
+            for(auto iter=ops.begin()+1; iter!=ops.end(); iter++){
+                rhsValues.push_back((*iter)->rhs());
+                rewriter.removeOp(*iter);
+            }
+            auto sumop = rewriter.create<sumOp>(rhsValues);
+            auto mulop = rewriter.replaceOp<multiplyOp>(ops[0], value, sumop->output());
+        }
+        return 1;
+    }
+};
+
+class lhsAssociatePass : public passBase{
+    public:
+    lhsAssociatePass(): passBase("lhs_associate_pass") {
+        addRewriter<lhsAssociateRewriter>();
+    }
+};
+
+void createLhsAssociatePass(passManager &pm){
+    pm.addPass(std::make_unique<lhsAssociatePass>());
+}
+
+// -------------------- rhsAssociatePass ---------------------
+class rhsAssociateRewriter : public rewriter<sumOp> {
+    public:
+    rhsAssociateRewriter () = default;
+    virtual bool rewrite(opRewriter &rewriter, sumOp *origOp) override{
+        auto & inputs = origOp->getInputs();
+        std::unordered_map<element *, std::vector<multiplyOp*>> map;
+        for(auto input : inputs){
+            if(auto op = input->getDefiningOp<multiplyOp>()){
+                auto rhs = op->rhs();
+                if(map.find(rhs)==map.end()){
+                    map.insert({rhs, {op}});
+                } else {
+                    map[rhs].push_back(op);
+                }
+            }
+        }
+        for(auto & [value, ops] : map){
+            if(ops.size()< 2) continue;
+            std::vector<element*> lhsValues;
+            lhsValues.push_back(ops[0]->rhs());
+            for(auto iter=ops.begin()+1; iter!=ops.end(); iter++){
+                lhsValues.push_back((*iter)->rhs());
+                rewriter.removeOp(*iter);
+            }
+            auto sumop = rewriter.create<sumOp>(lhsValues);
+            auto mulop = rewriter.replaceOp<multiplyOp>(ops[0], sumop->output(), value);
+        }
+        return 1;
+    }
+};
+
+class rhsAssociatePass : public passBase{
+    public:
+    rhsAssociatePass(): passBase("rhs_associate_pass") {
+        addRewriter<rhsAssociateRewriter>();
+    }
+};
+
+void createRhsAssociatePass(passManager &pm){
+    pm.addPass(std::make_unique<rhsAssociatePass>());
+}
+
 
 }
 

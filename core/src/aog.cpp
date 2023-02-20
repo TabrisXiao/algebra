@@ -30,9 +30,6 @@ std::vector<operation*> element::getUsers() {
 
 element::element(operation * op) : defOp(op){}
 
-template<class opType>
-opType* element::getDefiningOp(){return dynamic_cast<opType*>(defOp);}
-
 void operation::setTraceIDToOutput(context *ctx){
     for(auto i =0; i<elements.size(); i++){
         elements[i].setTraceID(ctx->elem_counter++);

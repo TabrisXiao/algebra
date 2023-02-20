@@ -60,9 +60,14 @@ class multiplyOp : public operation{
 class sumOp : public operation{
     public:
 
-     template <typename... ARGS>
+    template <typename... ARGS>
     sumOp(ARGS *...args) {
         acceptInput(args...);
+        defineElement();
+        setID("Sum");
+    }
+    sumOp(std::vector<element*> & values){
+        for(auto val : values) acceptInput(val);
         defineElement();
         setID("Sum");
     }
