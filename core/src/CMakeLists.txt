@@ -3,9 +3,11 @@ file(GLOB_RECURSE headers
 )
 set(
     sources
+    operation.cpp
     dgraph.cpp
     aog.cpp
     sdgraph.cpp
+    utility.cpp
 )
 
 create_cpp_library(

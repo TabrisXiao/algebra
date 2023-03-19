@@ -1,6 +1,8 @@
 
 #ifndef CORE_UTILITIES_H_
 #define CORE_UTILITIES_H_
+#include <vector>
+#include <iostream>
 
 namespace utility{
 struct Indent
@@ -10,10 +12,7 @@ struct Indent
     int &level;
 };
 
-void indent(int n, std::ostream &os){
-    for (int i = 0; i < n; i++)
-        os << "  ";
-}
+void indent(int n, std::ostream &os);
 
 // remove all objects that equal to the given value from the vector
 template<typename T>
