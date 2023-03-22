@@ -3,7 +3,7 @@
 #define PASSES_H_
 
 #include "ops.h"
-#include "aog.h"
+#include "pass.h"
 #include <unordered_map>
 
 namespace aog{
@@ -20,8 +20,13 @@ class convertAddToSumRewriter : public rewriter<addOp> {
 
 class convertAddToSumPass : public passBase{
     public:
-    convertAddToSumPass(): passBase("convert_add_to_sum_pass") {
-        addRewriter<convertAddToSumRewriter>();
+    convertAddToSumPass(): passBase("convert_add_to_sum_pass") {}
+    bool run() final{
+        graphModifier gm;
+        gm.addRewriter<convertAddToSumRewriter>();
+        auto reg = getRegion();
+        gm.walkApplyOnce(reg);
+        return 0;
     }
 };
 
@@ -59,8 +64,13 @@ class fuseAddToSumRewriter : public rewriter<sumOp>{
 
 class fuseAddToSumPass : public passBase{
     public:
-    fuseAddToSumPass(): passBase("fuse_add_to_sum_pass") {
-        addRewriter<fuseAddToSumRewriter>();
+    fuseAddToSumPass(): passBase("fuse_add_to_sum_pass") {}
+    bool run() final{
+        graphModifier gm;
+        gm.addRewriter<fuseAddToSumRewriter>();
+        auto reg = getRegion();
+        gm.walkApplyOnce(reg);
+        return 0;
     }
 };
 
@@ -102,8 +112,13 @@ class lhsAssociateRewriter : public rewriter<sumOp> {
 
 class lhsAssociatePass : public passBase{
     public:
-    lhsAssociatePass(): passBase("lhs_associate_pass") {
-        addRewriter<lhsAssociateRewriter>();
+    lhsAssociatePass(): passBase("lhs_associate_pass") {}
+    bool run() final{
+        graphModifier gm;
+        gm.addRewriter<lhsAssociateRewriter>();
+        auto reg = getRegion();
+        gm.walkApplyOnce(reg);
+        return 0;
     }
 };
 
@@ -145,15 +160,19 @@ class rhsAssociateRewriter : public rewriter<sumOp> {
 
 class rhsAssociatePass : public passBase{
     public:
-    rhsAssociatePass(): passBase("rhs_associate_pass") {
-        addRewriter<rhsAssociateRewriter>();
+    rhsAssociatePass(): passBase("rhs_associate_pass") {}
+    bool run() final{
+        graphModifier gm;
+        gm.addRewriter<rhsAssociateRewriter>();
+        auto reg = getRegion();
+        gm.walkApplyOnce(reg);
+        return 0;
     }
 };
 
 void createRhsAssociatePass(passManager &pm){
     pm.addPass(std::make_unique<rhsAssociatePass>());
 }
-
 
 }
 

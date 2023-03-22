@@ -10,7 +10,6 @@ class context;
 class operation;
 class region;
 
-
 class objInfo {
     public: 
     objInfo() = default;

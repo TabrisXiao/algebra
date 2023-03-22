@@ -38,7 +38,7 @@ class addOp : public operation{
     }
 };
 
-class multiplyOp : public operation{
+class multiplyOp : public operation {
     public :
     multiplyOp(element *lhs, element *rhs) {
         acceptInput(lhs, rhs);
@@ -57,7 +57,7 @@ class multiplyOp : public operation{
     }
 };
 
-class sumOp : public operation{
+class sumOp : public operation {
     public:
 
     template <typename... ARGS>
@@ -72,6 +72,7 @@ class sumOp : public operation{
         setID("Sum");
     }
     element* output(){return &(elements[0]);}
+
     void represent(std::ostream &os, context *ctx){
         output()->represent(os,ctx);
         os<<" = ";

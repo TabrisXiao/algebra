@@ -11,7 +11,7 @@
 // abstract operation graph
 
 namespace aog{
-    
+
 class opModifier {
     public : 
     opModifier() = default;
@@ -125,6 +125,7 @@ public:
 
 class opRewriter : public opModifier{
     public : 
+    opRewriter() = default;
     opRewriter(moduleOp *op){
         entranceModule = op;
         setWorkRegion(&(entranceModule->getRegion()));
@@ -145,80 +146,53 @@ class rewriter : public rewriterBase{
     virtual bool rewrite(opRewriter &, concreteOp *op) = 0;
     virtual int execute(opRewriter & rewriter,operation* op) override final{
         // rewrite return value: 
-        // 1 matched and rewrited
-        // 0 matched but failed rewritten
-        // -1 didn't match
+        // 1 rewrite happen
+        // 0 rewrite failed or not matched
         if(auto cop = dynamic_cast<concreteOp*>(op))
         {
             return int(rewrite(rewriter, cop));
         }
-        else {
-            return -1;
-        }
+        return 0;
     }
-    opBuilder * builder;
 };
 
-class passBase {
-public :
-    passBase (const char * name) : _pass_name (name) {}
-    void runOnOp(opRewriter & rewriter, operation* op) {
-        for(auto ptr=rewriters.begin(); ptr!=rewriters.end(); ptr++){
-            (*ptr).get()->execute(rewriter, op);
-        }
-    }
+class graphModifier {
+    public: 
+    graphModifier() = default;
     template<typename T, typename ...ARGS>
     void addRewriter(ARGS...arg){ 
         auto ptr = std::make_unique<T>(arg...);
         rewriters.push_back(std::move(ptr));
     }
-    std::vector<std::unique_ptr<rewriterBase>> rewriters;
-    std::string _pass_name;
-};
-
-class passManager{
-    public : 
-    passManager(moduleOp * op, context *_ctx): 
-        entranceOp(op),
-        _rw(op),
-        ctx(_ctx)
-        {}
-    void enablePrintAfterPass(){bPrintAfterPass = 1;}
-    bool runPasses(){
-        return 0;
-    }
-    void run(){
-        region * reg = &(entranceOp->getRegion());
-        for(auto pass=passes.begin(); pass!=passes.end(); pass++){
-            
-            runPassThroughRegion(reg, (*pass).get());
-            _rw.flush();
-            if(bPrintAfterPass){
-                std::cout<<"------ representation after pass: "<<(*pass).get()->_pass_name<<" ------\n";
-                entranceOp->print(ctx);
-                std::cout<<std::endl;
-            }
+    // apply the rewriters through BFWalk, 
+    // Each rewriter is applied only once
+    bool walkApplyOnce(region* reg){
+        bool ischanged = 0;
+        for(auto ptr=rewriters.begin(); ptr!=rewriters.end(); ptr++)
+        {
+            reg->getEntryVertex().BFWalk([&](sdgl::vertex* _op){
+                if(auto op = dynamic_cast<operation*>(_op)){
+                    ischanged = ischanged || (*ptr).get()->execute(_rw, op);
+                }
+            });
         }
+        return ischanged;
     }
-    bool runPassThroughRegion(region* reg, passBase* pass){
-        reg->getEntryVertex().BFWalk([&](sdgl::vertex* _op){
-            if(auto op = dynamic_cast<operation*>(_op)){
-                pass->runOnOp(_rw, op);
-            }
-        });
-        return 0; 
+    
+    // return how many run it repeated;
+    int walkApplyGreedy(region* reg){
+        bool repeat = 0;
+        int counts = 1;
+        while(repeat){
+            counts++;
+            repeat = walkApplyOnce(reg);
+        }
+        return counts;
     }
-
-    void addPass(std::unique_ptr<passBase> ps){
-        passes.push_back(std::move(ps));
-    }
-    std::vector<std::unique_ptr<passBase>> passes;
-    moduleOp * entranceOp;
+    std::vector<std::unique_ptr<rewriterBase>> rewriters;
     opRewriter _rw;
-    bool bPrintAfterPass = 0;
-    bool bPrintBeforePass = 0;
-    context *ctx;
 };
+
 }
 
 #endif
