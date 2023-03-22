@@ -1,35 +1,13 @@
 
 #include "aog.h"
-#include "dgraph.h"
 #include "utility.h"
-
-
 using namespace aog;
 
-void objInfo::setTraceID(){ setTraceID(ctx->ops_counter++);}
-
-void objInfo::printIndent(){
-    utility::indent(ctx->curIndent, Xos);
-}
-
-operation* element::getDefiningOp(){return defOp;}
-
-element::element(operation * op):objInfo(op->getContext()), defOp(op){}
-
-void operation::setContext(context *_ctx) { ctx = _ctx; }
-
-template<class opType>
-opType* element::getDefiningOp(){return dynamic_cast<opType*>(defOp);}
-
-void operation::setTraceIDToOutput(){
-    for(auto i =0; i<elements.size(); i++){
-        elements[i].setTraceID(ctx->elem_counter++);
+void opModifier::removeElement(element *e){
+    auto op = e->getDefiningOp();
+    auto & out_ops = op->getOutVertices();
+    for(auto op_ : out_ops){
+        auto op = dynamic_cast<operation*>(op_);
+        utility::remove_value_from_vector<element*>(e, op->getInputs());
     }
-}
-
-void region::printRegion(){
-    Xos<<"{\n";
-    utility::Indent idlv(ctx->curIndent);
-    printOps();
-    Xos<<"}\n";
 }

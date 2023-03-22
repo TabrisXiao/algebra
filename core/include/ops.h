@@ -9,60 +9,80 @@ namespace aog
 
 class defOp : public operation{
 public: 
-    defOp(context *ctx, std::string id_="Unknown") : operation(ctx) {
-        reserveElement();
-        output().setID(id_);
+    defOp(std::string id_="Unknown") {
+        defineElement();
+        output()->setID(id_);
         setID("Def");
     }
-    element& output(){return elements[0];}
-    void represent(std::ostream &os){
-        output().represent(os);
+    element* output(){return &(elements[0]);}
+    void represent(std::ostream &os, context *ctx){
+        output()->represent(os,ctx);
     }
 };
 class addOp : public operation{
     public :
-    addOp(context *ctx, element &lhs, element &rhs): operation(ctx){
-        registerInput(lhs, rhs);
-        reserveElement();
-        elhs=&lhs;
-        erhs=&rhs;
+    addOp(element *lhs, element *rhs){
+        acceptInput(lhs, rhs);
+        defineElement();
         setID("Add");
     }
-    element* lhs(){return elhs;}
-    element* rhs(){return erhs;}
-    element& output(){return elements[0];}
-    void represent(std::ostream &os){
-        output().represent(os);
+    element* lhs(){return inputElements[0];}
+    element* rhs(){return inputElements[1];}
+    element* output(){return &(elements[0]);}
+    void represent(std::ostream &os, context *ctx){
+        output()->represent(os, ctx);
         os<<" = ";
-        elhs->represent(os);
+        lhs()->represent(os, ctx);
         os<<" + ";
-        erhs->represent(os);
+        rhs()->represent(os, ctx);
     }
-    private:
-    element *elhs, *erhs;
 };
 
-class multiplyOp : public operation{
+class multiplyOp : public operation {
     public :
-    multiplyOp(context *ctx, element &lhs, element &rhs): operation(ctx){
-        registerInput(lhs, rhs);
-        reserveElement();
-        elhs=&lhs;
-        erhs=&rhs;
+    multiplyOp(element *lhs, element *rhs) {
+        acceptInput(lhs, rhs);
+        defineElement();
         setID("Multiply");
     }
-    element* lhs(){return elhs;}
-    element* rhs(){return erhs;}
-    element& output(){return elements[0];}
-    void represent(std::ostream &os){
-        output().represent(os);
+    element* lhs(){return inputElements[0];}
+    element* rhs(){return inputElements[1];}
+    element* output(){return &(elements[0]);}
+    void represent(std::ostream &os, context *ctx){
+        output()->represent(os,ctx);
         os<<" = ";
-        elhs->represent(os);
+        lhs()->represent(os, ctx);
         os<<" * ";
-        erhs->represent(os);
+        rhs()->represent(os, ctx);
     }
-    private:
-    element *elhs, *erhs;
+};
+
+class sumOp : public operation {
+    public:
+
+    template <typename... ARGS>
+    sumOp(ARGS *...args) {
+        acceptInput(args...);
+        defineElement();
+        setID("Sum");
+    }
+    sumOp(std::vector<element*> & values){
+        for(auto val : values) acceptInput(val);
+        defineElement();
+        setID("Sum");
+    }
+    element* output(){return &(elements[0]);}
+
+    void represent(std::ostream &os, context *ctx){
+        output()->represent(os,ctx);
+        os<<" = ";
+        int n = inputElements.size(), i=0;
+        for(auto e : inputElements){
+            e->represent(os, ctx);
+            i++;
+            if(i!= n) os<<" + ";
+        }
+    }
 };
 }
 

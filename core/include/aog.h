@@ -2,131 +2,107 @@
 #ifndef AOG_H_
 #define AOG_H_
 #include <iostream>
+#include <unordered_set>
+#include <memory.h>
 #include "sdgraph.h"
 #include "global.h"
-#include <unordered_map>
+#include "operation.h"
 
 // abstract operation graph
 
 namespace aog{
-class context;
-class operation;
 
-class objInfo {
-    public: 
-    objInfo() = default;
-    objInfo(context *ctx_): ctx(ctx_){
+class opModifier {
+    public : 
+    opModifier() = default;
+    template<typename obj, typename...ARGS>
+    obj* create(ARGS ...args){
+        auto ptr = new obj(args...);
+        if(!(ptr->hasInput())){
+            reg->addL1Vertex(dynamic_cast<sdgl::vertex*>(ptr));
+        }
+        return ptr;
     }
-    void setTraceID(int id_){traceID = id_;}
-    void setTraceID();
-    void setID(const char * _id){id = _id;}
-    void setID(std::string& _id){id = _id;}
-    void printIndent();
-    context * getContext() {return ctx;}
-    void printTraceID(std::ostream os){ os<<traceID; }
-    context *ctx;
-    int traceID = -1;
-    std::string id="Unknown";
-};
-
-class element : public objInfo{
-public:
-    element() = default;
-    element(context *ctx_): objInfo(ctx_){}
-    element(operation * op);
-    virtual ~element(){}
-    virtual void represent(std::ostream &os){
-        os<<"%";
-        if(traceID > -1) os<<traceID;
-        else os<<"Unknown";
-        os<<" <"<<id<<">";
+    void deactiveOp(operation *op){
+        op->detach();
+        op->setActivation(0);
+        _removed_ops.push_back(op);
     }
-    operation* getDefiningOp();
-    template<class opType>
-    opType* getDefiningOp();
-    operation *defOp = nullptr;
-};
-
-class operation : public sdgl::vertex, public objInfo{
-public : 
-    operation(context *ctx_) : objInfo(ctx_){};
-    virtual void represent(std::ostream &os) = 0;
-    virtual void print(){
-        printIndent();
-        Xos<<id<<" : ";
-        represent(Xos);
-        Xos<<"\n";
+    void removeElement(element * e);
+    void removeOp(operation *op){
+        // remove the output element from the users
+        auto & vertices = op->getOutVertices();
+        for(auto vert : vertices){
+            auto user = dynamic_cast<operation*>(vert);
+            auto & inputs = user->getInputs();
+            auto iter = inputs.begin();
+            while (iter!=inputs.end()){
+                if((*iter)->getDefiningOp() == op){
+                    inputs.erase(iter);
+                    iter = inputs.begin();
+                } else { iter++; }
+            }
+        }
+        // detach the operation from the graph
+        // since the op is removed, the inputs keep in op is unchanged.
+        // But this won't affect the rest of the graph so we don't need
+        // to remove the input elements
+        deactiveOp(op);
     }
-    template <typename... ARGS>
-    void registerInput(ARGS &...args)
-    {
-        auto elems = {&args...};
-        std::unordered_map<operation*, bool> buffer;
-        for (auto e : elems)
-        {
-            auto ptr = dynamic_cast<element*>(e)->getDefiningOp();
-            if(buffer.find(ptr) == buffer.end()) {
-                buffer[ptr] = 1;
-                linkFrom(*ptr);
+    void replaceOperation(operation *origOp, operation *newOp){
+        auto & out_ops = origOp->getOutVertices();
+        for(auto op_ : out_ops){
+            newOp->linkTo(*op_);
+        }
+        auto & in_ops = origOp->getInVertices();
+        for(auto op_ : in_ops){
+            newOp->linkFrom(*op_);
+        }
+    }
+    // replace the element by the new element for all users
+    void replaceElement(element *e, element* newe){
+        auto vec = e->getUsers();
+        for(auto op : vec){
+            auto & inputs = op->getInputs();
+            for(auto i=0 ; i<inputs.size(); i++){
+                if(inputs[i]==e){
+                    inputs[i]=newe;
+                    break;
+                }
             }
         }
     }
-    void reserveElement(int n = 1){
-        for(auto i=0; i<n; i++){
-            elements.push_back(element(this));
+    // create a new type T op and replace the origOp.
+    // for both operations has to have only one elements;
+    template<typename T, typename...ARGS>
+    T* replaceOp(operation *origOp, ARGS ...args){
+        auto op = create<T>(args...);
+        // the input vertices is linked when creating the op, 
+        // so we only need to link the output vertices
+        replaceElement(&(origOp->getOutput(0)), &(op->getOutput(0)));
+        replaceOperation(origOp, op);
+        deactiveOp(origOp);
+        return op;
+    }
+
+    void replaceOp(operation *origOp, operation *newOp){
+        replaceElement(&(origOp->getOutput(0)), &(newOp->getOutput(0)));
+        replaceOperation(origOp, newOp);
+        deactiveOp(origOp);
+    }
+    
+    void flush(){
+        for(auto op : _removed_ops){
+            delete op;
         }
+        _removed_ops.clear();
     }
-    void setContext(context *_ctx);
-    context* getContext(){return ctx;}
-    std::vector<element>& getOutputs(){return elements;}
-    element & getOutput(int n){ return elements[n];}
-    void setTraceIDToOutput();
-    int elementTraceIDStart = -1;
-    std::vector<element> elements;
+    void setWorkRegion(region * reg_) { reg = reg_;}
+    region *reg = nullptr;
+    std::vector<operation* > _removed_ops;
 };
 
-class context{
-public : context () = default;
-    virtual ~context(){}
-
-    int ops_counter = 0;
-    int elem_counter = 0;
-    int curIndent=0;
-};
-
-class region : public sdgl::sdgraph{
-public : 
-    region() = default;
-    region(context *ctx_){ctx = ctx_;}
-    void printRegion();
-    inline void printOps(){
-        getEntryVertex().BFWalk([&](sdgl::vertex* _op){
-            if(auto op = dynamic_cast<operation*>(_op)){
-                op->setTraceID();
-                op->setTraceIDToOutput();
-                op->print();
-            }
-        });
-    }
-    context *ctx= nullptr;
-};
-
-class moduleOp : public operation{
-public:
-    moduleOp(context *ctx, std::string _id="module") : 
-    operation(ctx),
-    block(ctx){
-        setID(_id);
-        block.getEntry().hasOutput();  
-    }
-    region& getRegion(){return block;}
-    void represent(std::ostream &os){
-        block.printRegion();
-    }
-    region block;
-};
-
-class opBuilder {
+class opBuilder : public opModifier{
     class regionPtrHelper{
     public : 
         regionPtrHelper(opBuilder *builder) : ptr(builder){}
@@ -136,67 +112,87 @@ class opBuilder {
         opBuilder* ptr= nullptr;
     };
 public:
-    opBuilder(context *ctx_) : ctx(ctx_){
-        entranceModule = new moduleOp(ctx, "module");
-        setInsertPoint(&(entranceModule->getRegion()));
+    opBuilder(context *ctx_) {
+        ctx = ctx_;
+        entranceModule = new moduleOp("module");
+        setWorkRegion(&(entranceModule->getRegion()));
     }
-    void setInsertPoint(region* reg){
-        currentRegion = reg;
-    }
-    template<typename obj, typename...ARGS>
-    obj* create(ARGS &...args){
-        auto ptr = new obj(ctx, args...);
-        if(!(ptr->hasInput())){
-            currentRegion->addL1Vertex(dynamic_cast<sdgl::vertex*>(ptr));
-        }
-        return ptr;
-    }
-    context * ctx;
+   
+    context * getContext(){return ctx;}
     moduleOp *entranceModule = nullptr;
-    region *currentRegion=nullptr;
+    context *ctx;
+};
+
+class opRewriter : public opModifier{
+    public : 
+    opRewriter() = default;
+    opRewriter(moduleOp *op){
+        entranceModule = op;
+        setWorkRegion(&(entranceModule->getRegion()));
+    }
+    moduleOp *entranceModule = nullptr;
+};
+
+class rewriterBase {
+    public:
+    rewriterBase() = default;
+    virtual ~rewriterBase() = default;
+    virtual int execute(opRewriter &, operation * op) = 0;
 };
 
 template<typename concreteOp>
-class rewriter {
-    public : rewriter(context *ctx_) {ctx=ctx;}
-    virtual bool rewrite(concreteOp *op) = 0;
-    int applyRewrite(operation* op){
+class rewriter : public rewriterBase{
+    public : rewriter() = default;
+    virtual bool rewrite(opRewriter &, concreteOp *op) = 0;
+    virtual int execute(opRewriter & rewriter,operation* op) override final{
         // rewrite return value: 
-        // 1 matched and rewrited
-        // 0 matched but failed rewritten
-        // -1 didn't match
+        // 1 rewrite happen
+        // 0 rewrite failed or not matched
         if(auto cop = dynamic_cast<concreteOp*>(op))
-            return int(rewrite(cop));
-        else return -1;
-    }
-    void remove(operation* op){
-        delete op;
-    }
-    context *ctx;
-};
-
-class passBase {
-public :
-    passBase () = default;
-    virtual int run(operation* op) = 0;
-};
-
-class passManager{
-    public : 
-    passManager(context * _ctx): ctx(_ctx){}
-    bool runPasses(){
+        {
+            return int(rewrite(rewriter, cop));
+        }
         return 0;
     }
-    bool runPassThroughRegion(region* reg, passBase* pass){
-        reg->getEntry().BFWalk([&](sdgl::vertex* _op){
-            auto op = dynamic_cast<operation*>(_op);
-            pass->run(op);
-        });
-        return 0;
-    }
-    std::vector<passBase*> passes;
-    context *ctx;
 };
+
+class graphModifier {
+    public: 
+    graphModifier() = default;
+    template<typename T, typename ...ARGS>
+    void addRewriter(ARGS...arg){ 
+        auto ptr = std::make_unique<T>(arg...);
+        rewriters.push_back(std::move(ptr));
+    }
+    // apply the rewriters through BFWalk, 
+    // Each rewriter is applied only once
+    bool walkApplyOnce(region* reg){
+        bool ischanged = 0;
+        for(auto ptr=rewriters.begin(); ptr!=rewriters.end(); ptr++)
+        {
+            reg->getEntryVertex().BFWalk([&](sdgl::vertex* _op){
+                if(auto op = dynamic_cast<operation*>(_op)){
+                    ischanged = ischanged || (*ptr).get()->execute(_rw, op);
+                }
+            });
+        }
+        return ischanged;
+    }
+    
+    // return how many run it repeated;
+    int walkApplyGreedy(region* reg){
+        bool repeat = 0;
+        int counts = 1;
+        while(repeat){
+            counts++;
+            repeat = walkApplyOnce(reg);
+        }
+        return counts;
+    }
+    std::vector<std::unique_ptr<rewriterBase>> rewriters;
+    opRewriter _rw;
+};
+
 }
 
 #endif

@@ -17,17 +17,34 @@ namespace dgl
         vto.attachFrom(*this);
         vfrom.attachTo(*this);
     }
-
+    void vertex::detachInput(edge *e){
+        auto iter = std::find(inEdges.begin(), inEdges.end(), e);
+        while(iter!=inEdges.end()){
+            inEdges.erase(iter);
+            iter = std::find(inEdges.begin(), inEdges.end(), e);
+        }
+        e->resetReceiver();
+    }
+    void vertex::detachOutput(edge *e){
+        auto iter = std::find(outEdges.begin(), outEdges.end(), e);
+        while(iter!=outEdges.end()){
+            outEdges.erase(iter);
+            iter = std::find(outEdges.begin(), outEdges.end(), e);
+        }
+        e->resetSender();
+    }
     void vertex::detach()
     {
         for (auto e : inEdges)
         {
-            e->vertexTo = nullptr;
+            auto vtx = e->getSender();
+            vtx->detachOutput(e);
         }
         inEdges.clear();
         for (auto e : outEdges)
         {
-            e->vertexFrom = nullptr;
+            auto vtx = e->getReceiver();
+            vtx->detachInput(e);
         }
         outEdges.clear();
     }
