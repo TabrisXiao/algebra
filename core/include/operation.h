@@ -97,6 +97,11 @@ public :
             elements.push_back(element(this));
         }
     }
+    template<typename type>
+    bool isInherit(){
+        if(auto p = dynamic_cast<type*>(this)) return true;
+        return false;
+    }
     int getOutputSize(){return int(elements.size());}
     std::vector<element>& getOutputs(){return elements;}
     element & getOutput(int n){ return elements[n];}

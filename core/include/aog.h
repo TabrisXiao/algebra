@@ -181,7 +181,7 @@ class graphModifier {
     
     // return how many run it repeated;
     int walkApplyGreedy(region* reg){
-        bool repeat = 0;
+        bool repeat = repeat = walkApplyOnce(reg);
         int counts = 1;
         while(repeat){
             counts++;
