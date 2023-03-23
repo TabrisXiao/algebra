@@ -2,11 +2,9 @@
 #ifndef AAOPS_H_
 #define AAOPS_H_
 #include "aog.h"
-
+#include "opInterface.h"
 namespace aog
 {
-
-
 class defOp : public operation{
 public: 
     defOp(std::string id_="Unknown") {
@@ -57,7 +55,7 @@ class multiplyOp : public operation {
     }
 };
 
-class sumOp : public operation {
+class sumOp : public operation, public commutableOp {
     public:
 
     template <typename... ARGS>

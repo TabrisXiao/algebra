@@ -25,7 +25,7 @@ class convertAddToSumPass : public passBase{
         graphModifier gm;
         gm.addRewriter<convertAddToSumRewriter>();
         auto reg = getRegion();
-        gm.walkApplyOnce(reg);
+        gm.walkApplyGreedy(reg);
         return 0;
     }
 };
@@ -39,43 +39,42 @@ class fuseAddToSumRewriter : public rewriter<sumOp>{
     public: 
     fuseAddToSumRewriter(){}
     virtual bool rewrite(opRewriter &rewriter, sumOp *origOp) override{
-        bool needScan = 1;
-        while( needScan){
-            // find the input coming from another sumOp
-            sumOp* op = nullptr;
-            auto & inputs = origOp->getInputs();
-            for(auto iter = inputs.begin(); iter!=inputs.end(); iter++){
-                if(op = dynamic_cast<sumOp*>((*iter)->getDefiningOp())){
-                    auto & newinputs = op->getInputs();
-                    auto niter = inputs.insert(iter, newinputs.begin(), newinputs.end());
-                    inputs.erase(niter+newinputs.size());
-                    for(auto newinput : newinputs){
-                        auto iop = newinput->getDefiningOp();
-                        origOp->linkFrom(*iop);
-                    }
-                    break;
-                } else { needScan = 0; }
+        // find the input coming from another sumOp
+        sumOp* op = nullptr;
+        bool isSuccess = 0;
+        auto & inputs = origOp->getInputs();
+        for(auto iter = inputs.begin(); iter!=inputs.end(); iter++){
+            if(op = dynamic_cast<sumOp*>((*iter)->getDefiningOp())){
+                auto & newinputs = op->getInputs();
+                auto niter = inputs.insert(iter, newinputs.begin(), newinputs.end());
+                inputs.erase(niter+newinputs.size());
+                for(auto newinput : newinputs){
+                    auto iop = newinput->getDefiningOp();
+                    origOp->linkFrom(*iop);
+                }
+                isSuccess = 1;
+                break;
             }
-            if(op) rewriter.removeOp(op);
         }
-        return 1;
+        if(op) rewriter.removeOp(op);
+        return isSuccess;
     }
 };
 
-class fuseAddToSumPass : public passBase{
+class fuseSumOpPass : public passBase{
     public:
-    fuseAddToSumPass(): passBase("fuse_add_to_sum_pass") {}
+    fuseSumOpPass(): passBase("fuse_add_to_sum_pass") {}
     bool run() final{
         graphModifier gm;
         gm.addRewriter<fuseAddToSumRewriter>();
         auto reg = getRegion();
-        gm.walkApplyOnce(reg);
+        gm.walkApplyGreedy(reg);
         return 0;
     }
 };
 
-void createFuseAddToSumPass(passManager &pm){
-    pm.addPass(std::make_unique<fuseAddToSumPass>());
+void createFuseSumOpPassPass(passManager &pm){
+    pm.addPass(std::make_unique<fuseSumOpPass>());
 }
 
 // -------------------- lhsAssociatePass ---------------------
