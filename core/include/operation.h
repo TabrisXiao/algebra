@@ -2,6 +2,7 @@
 #ifndef OPERATION_H_
 #define OPERATION_H_
 #include <unordered_set>
+#include <string>
 #include "sdgraph.h"
 #include "global.h"
 
@@ -15,20 +16,20 @@ class objInfo {
     objInfo() = default;
     void setTraceID(int id_){traceID = id_;}
     void setTraceID(context * ctx);
-    void setID(const char * _id){id = _id;}
-    void setID(std::string& _id){id = _id;}
-    std::string getID(){return id;}
+    void setTypeID(const char * _id){tid = _id;}
+    void setTypeID(std::string& _id){tid = _id;}
+    std::string getID(){return tid+"_"+std::to_string(traceID);}
     void printIndent(context *ctx);
     void printTraceID(std::ostream os){ os<<traceID; }
     int traceID = -1;
-    std::string id="Unknown";
+    std::string tid="Unknown";
 };
 
 class context{
 public : 
     context () = default;
     virtual ~context(){}
-
+    void assignID();
     int ops_counter = 0;
     int elem_counter = 0;
     int curIndent=0;
@@ -37,7 +38,7 @@ public :
         elem_counter = 0;
         curIndent=0;
     }
-    region* getRegion(){return _region;}
+    //region* getRegion(){return _region;}
     region * _region = nullptr;
     context* parent_ctx = nullptr, *root_ctx = nullptr;
 };
@@ -51,7 +52,7 @@ public:
         os<<"%";
         if(traceID > -1) os<<traceID;
         else os<<"Unknown";
-        os<<" <"<<id<<">";
+        os<<" <"<<tid<<">";
     }
     operation* getDefiningOp();
     std::vector<operation*> getUsers();
@@ -71,7 +72,7 @@ public :
     virtual void represent(std::ostream &os, context *ctx) = 0;
     virtual void printOp(context *ctx){
         printIndent(ctx);
-        Xos<<id<<" : ";
+        Xos<<getID()<<" : ";
         represent(Xos, ctx);
         Xos<<"\n";
     }
@@ -130,7 +131,7 @@ public :
 class moduleOp : public operation{
 public:
     moduleOp(std::string _id="module") {
-        setID(_id);
+        setTypeID(_id);
         block.getEntry().hasOutput();  
     }
     region& getRegion(){return block;}
