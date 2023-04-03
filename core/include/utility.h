@@ -4,6 +4,7 @@
 #include <vector>
 #include <iostream>
 
+
 namespace utility{
 struct Indent
 {
@@ -31,5 +32,6 @@ void check_push_back(T obj, std::vector<T> &vec){
     if(iter==vec.end()) vec.push_back(obj);
 }
 }
+
 
 #endif

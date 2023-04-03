@@ -2,8 +2,10 @@
 #ifndef OPERATION_H_
 #define OPERATION_H_
 #include <unordered_set>
+#include <string>
 #include "sdgraph.h"
 #include "global.h"
+#include "exception.h"
 
 namespace aog{
 class context;
@@ -15,31 +17,14 @@ class objInfo {
     objInfo() = default;
     void setTraceID(int id_){traceID = id_;}
     void setTraceID(context * ctx);
-    void setID(const char * _id){id = _id;}
-    void setID(std::string& _id){id = _id;}
-    std::string getID(){return id;}
+    void setTypeID(const char * _id){tid = _id;}
+    void setTypeID(std::string& _id){tid = _id;}
+    std::string getID(){return tid+"_"+std::to_string(traceID);}
+    std::string getTypeID(){return tid;}
     void printIndent(context *ctx);
     void printTraceID(std::ostream os){ os<<traceID; }
     int traceID = -1;
-    std::string id="Unknown";
-};
-
-class context{
-public : 
-    context () = default;
-    virtual ~context(){}
-
-    int ops_counter = 0;
-    int elem_counter = 0;
-    int curIndent=0;
-    void resetCounts(){
-        ops_counter = 0;
-        elem_counter = 0;
-        curIndent=0;
-    }
-    region* getRegion(){return _region;}
-    region * _region = nullptr;
-    context* parent_ctx = nullptr, *root_ctx = nullptr;
+    std::string tid="Unknown";
 };
 
 class element : public objInfo{
@@ -51,7 +36,7 @@ public:
         os<<"%";
         if(traceID > -1) os<<traceID;
         else os<<"Unknown";
-        os<<" <"<<id<<">";
+        os<<" <"<<tid<<">";
     }
     operation* getDefiningOp();
     std::vector<operation*> getUsers();
@@ -71,7 +56,7 @@ public :
     virtual void represent(std::ostream &os, context *ctx) = 0;
     virtual void printOp(context *ctx){
         printIndent(ctx);
-        Xos<<id<<" : ";
+        Xos<<getID()<<" : ";
         represent(Xos, ctx);
         Xos<<"\n";
     }
@@ -116,29 +101,52 @@ class region : public sdgl::sdgraph{
 public : 
     region() = default;
     void printRegion(context *ctx);
-    inline void printOps(context *ctx){
-        getEntryVertex().BFWalk([&](sdgl::vertex* _op){
-            if(auto op = dynamic_cast<operation*>(_op)){
-                op->setTraceID(ctx);
-                op->setTraceIDToOutput(ctx);
-                op->printOp(ctx);
-            }
-        });
-    }
+    inline void printOps(context *ctx);
 };
 
 class moduleOp : public operation{
 public:
-    moduleOp(std::string _id="module") {
-        setID(_id);
-        block.getEntry().hasOutput();  
-    }
-    region& getRegion(){return block;}
-    void represent(std::ostream &os, context *ctx){
-        block.printRegion(ctx);
+    moduleOp();
+    ~moduleOp(){std::cout<<"deleted"<<std::endl;}
+    region* getRegion(){return &block;}
+    void represent(std::ostream &os, context *ctx);
+    virtual void printOp(context *ctx) override final{
+        printIndent(ctx);
+        Xos<<getTypeID()<<" : ";
+        represent(Xos, ctx);
+        Xos<<"\n";
     }
     region block;
 };
+
+class context{
+public : 
+    context () {
+        op = new moduleOp();
+        _region = op->getRegion();
+    }
+    virtual ~context(){}
+    // assign ID to each operations or elements contained in this context
+    void assignID();
+    int ops_counter = 0;
+    int elem_counter = 0;
+    int curIndent=0;
+    void resetCounts(){
+        ops_counter = 0;
+        elem_counter = 0;
+        curIndent=0;
+    }
+    region * getRegion(){
+        CHECK_CONDITION(_region!=nullptr);
+        return _region;
+        }
+    moduleOp * getModuleOp(){return op;}
+    //region* getRegion(){return _region;}
+    region * _region = nullptr;
+    moduleOp * op;
+};
+
+
 
 }
 

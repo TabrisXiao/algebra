@@ -2,15 +2,17 @@
 #ifndef AAOPS_H_
 #define AAOPS_H_
 #include "aog.h"
-#include "opInterface.h"
+#include "pass.h"
+#include "interfaces.h"
+
 namespace aog
 {
 class defOp : public operation{
 public: 
     defOp(std::string id_="Unknown") {
         defineElement();
-        output()->setID(id_);
-        setID("Def");
+        output()->setTypeID(id_);
+        setTypeID("Def");
     }
     element* output(){return &(elements[0]);}
     void represent(std::ostream &os, context *ctx){
@@ -22,7 +24,7 @@ class addOp : public operation{
     addOp(element *lhs, element *rhs){
         acceptInput(lhs, rhs);
         defineElement();
-        setID("Add");
+        setTypeID("Add");
     }
     element* lhs(){return inputElements[0];}
     element* rhs(){return inputElements[1];}
@@ -41,7 +43,7 @@ class multiplyOp : public operation {
     multiplyOp(element *lhs, element *rhs) {
         acceptInput(lhs, rhs);
         defineElement();
-        setID("Multiply");
+        setTypeID("Multiply");
     }
     element* lhs(){return inputElements[0];}
     element* rhs(){return inputElements[1];}
@@ -55,19 +57,19 @@ class multiplyOp : public operation {
     }
 };
 
-class sumOp : public operation, public commutableOp {
+class sumOp : public operation, public opGroup<commutable>{
     public:
 
     template <typename... ARGS>
     sumOp(ARGS *...args) {
         acceptInput(args...);
         defineElement();
-        setID("Sum");
+        setTypeID("Sum");
     }
     sumOp(std::vector<element*> & values){
         for(auto val : values) acceptInput(val);
         defineElement();
-        setID("Sum");
+        setTypeID("Sum");
     }
     element* output(){return &(elements[0]);}
 

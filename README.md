@@ -39,9 +39,7 @@ The Ops:
 
 ## Documents
 
-* The function of the `context` is to represent the envelop of operations and recording the informations of the envelop. Right now, the `region` object is used to describe the boundary of operations, so the `context` records to the global information for this boundary. The principle of the `context` is that:
-    * `context` should have the information to find the larger `context` that contained it. 
-    * The information included in the `context` should independent from any other information outside this `context`.
+* The `context` object keeps the information of operations in one graph (or module).
 
 * `region` is basically a graph that consists by operations and elements. The desgin of the region is:
     * It can be contained by other `region` to form a nested structure.
