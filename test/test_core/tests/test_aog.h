@@ -21,13 +21,14 @@ class test_aog : public test_wrapper{
         auto add2 = builder.create<addOp>(opxy->output(), opyx->output());
         auto addfinal = builder.create<addOp>(add1->output(), add2->output());
         //auto sum = builder.create<sumOp>(opxx->output(), opyy->output(), opxy->output(), opyx->output());
-        builder.entranceModule->print(&ctx);
-        passManager pm(builder.entranceModule, &ctx);
+        ctx.getModuleOp()->print(&ctx);
+        passManager pm(ctx.getModuleOp(), &ctx);
         pm.enablePrintAfterPass();
         createConvertAddToSumPass(pm);
         createFuseSumOpPassPass(pm);
         createLhsAssociatePass(pm);
         createRhsAssociatePass(pm);
+        createNormalizationPass<commutable>(pm);
         pm.run();
         ctx.resetCounts();
         //builder.entranceModule->print(&ctx);

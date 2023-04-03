@@ -2,7 +2,7 @@
 #ifndef AAOPS_H_
 #define AAOPS_H_
 #include "aog.h"
-#include "opInterface.h"
+#include "trait.h"
 namespace aog
 {
 class defOp : public operation{
@@ -55,7 +55,7 @@ class multiplyOp : public operation {
     }
 };
 
-class sumOp : public operation, public commutableOp {
+class sumOp : public operation, public trait<commutable>{
     public:
 
     template <typename... ARGS>

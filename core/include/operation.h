@@ -5,6 +5,7 @@
 #include <string>
 #include "sdgraph.h"
 #include "global.h"
+#include "exception.h"
 
 namespace aog{
 class context;
@@ -19,28 +20,11 @@ class objInfo {
     void setTypeID(const char * _id){tid = _id;}
     void setTypeID(std::string& _id){tid = _id;}
     std::string getID(){return tid+"_"+std::to_string(traceID);}
+    std::string getTypeID(){return tid;}
     void printIndent(context *ctx);
     void printTraceID(std::ostream os){ os<<traceID; }
     int traceID = -1;
     std::string tid="Unknown";
-};
-
-class context{
-public : 
-    context () = default;
-    virtual ~context(){}
-    void assignID();
-    int ops_counter = 0;
-    int elem_counter = 0;
-    int curIndent=0;
-    void resetCounts(){
-        ops_counter = 0;
-        elem_counter = 0;
-        curIndent=0;
-    }
-    //region* getRegion(){return _region;}
-    region * _region = nullptr;
-    context* parent_ctx = nullptr, *root_ctx = nullptr;
 };
 
 class element : public objInfo{
@@ -117,29 +101,51 @@ class region : public sdgl::sdgraph{
 public : 
     region() = default;
     void printRegion(context *ctx);
-    inline void printOps(context *ctx){
-        getEntryVertex().BFWalk([&](sdgl::vertex* _op){
-            if(auto op = dynamic_cast<operation*>(_op)){
-                op->setTraceID(ctx);
-                op->setTraceIDToOutput(ctx);
-                op->printOp(ctx);
-            }
-        });
-    }
+    inline void printOps(context *ctx);
 };
 
 class moduleOp : public operation{
 public:
-    moduleOp(std::string _id="module") {
-        setTypeID(_id);
-        block.getEntry().hasOutput();  
-    }
-    region& getRegion(){return block;}
-    void represent(std::ostream &os, context *ctx){
-        block.printRegion(ctx);
+    moduleOp();
+    region* getRegion(){return &block;}
+    void represent(std::ostream &os, context *ctx);
+    virtual void printOp(context *ctx) override final{
+        printIndent(ctx);
+        Xos<<getTypeID()<<" : ";
+        represent(Xos, ctx);
+        Xos<<"\n";
     }
     region block;
 };
+
+class context{
+public : 
+    context () {
+        op = new moduleOp();
+        _region = op->getRegion();
+    }
+    virtual ~context(){}
+    // assign ID to each operations or elements contained in this context
+    void assignID();
+    int ops_counter = 0;
+    int elem_counter = 0;
+    int curIndent=0;
+    void resetCounts(){
+        ops_counter = 0;
+        elem_counter = 0;
+        curIndent=0;
+    }
+    region * getRegion(){
+        CHECK_CONDITION(_region!=nullptr);
+        return _region;
+        }
+    moduleOp * getModuleOp(){return op;}
+    //region* getRegion(){return _region;}
+    region * _region = nullptr;
+    moduleOp * op;
+};
+
+
 
 }
 

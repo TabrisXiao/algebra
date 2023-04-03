@@ -114,23 +114,22 @@ class opBuilder : public opModifier{
 public:
     opBuilder(context *ctx_) {
         ctx = ctx_;
-        entranceModule = new moduleOp("module");
-        setWorkRegion(&(entranceModule->getRegion()));
+        setWorkRegion(ctx->getRegion());
     }
    
     context * getContext(){return ctx;}
-    moduleOp *entranceModule = nullptr;
-    context *ctx;
+    context *ctx=nullptr;
 };
 
 class opRewriter : public opModifier{
     public : 
     opRewriter() = default;
-    opRewriter(moduleOp *op){
-        entranceModule = op;
-        setWorkRegion(&(entranceModule->getRegion()));
+    opRewriter(context *ctx_){
+        ctx = ctx_;
+        CHECK_CONDITION(ctx!=nullptr)
+        setWorkRegion(ctx->getRegion());
     }
-    moduleOp *entranceModule = nullptr;
+    context * ctx = nullptr;
 };
 
 class rewriterBase {
@@ -163,6 +162,9 @@ class graphModifier {
     void addRewriter(ARGS...arg){ 
         auto ptr = std::make_unique<T>(arg...);
         rewriters.push_back(std::move(ptr));
+    }
+    void addRewriter(std::unique_ptr<rewriterBase> rewriter){
+        rewriters.push_back(std::move(rewriter));
     }
     // apply the rewriters through BFWalk, 
     // Each rewriter is applied only once

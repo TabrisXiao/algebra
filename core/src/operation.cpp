@@ -9,6 +9,16 @@ void objInfo::printIndent(context *ctx){
     utility::indent(ctx->curIndent, Xos);
 }
 
+void context::assignID(){
+    CHECK_CONDITION(_region!=nullptr);
+    _region->getEntryVertex().BFWalk([&](sdgl::vertex* _op){
+            if(auto op = dynamic_cast<operation*>(_op)){
+                op->setTraceID(this);
+                op->setTraceIDToOutput(this);
+            }
+        });
+}
+
 operation* element::getDefiningOp(){return defOp;}
 
 std::vector<operation*> element::getUsers() {
@@ -44,4 +54,21 @@ void region::printRegion(context *ctx){
     utility::Indent idlv(ctx->curIndent);
     printOps(ctx);
     Xos<<"}\n";
+}
+
+inline void region::printOps(context *ctx){
+    ctx->assignID();
+    getEntryVertex().BFWalk([&](sdgl::vertex* _op){
+        if(auto op = dynamic_cast<operation*>(_op)){
+            op->printOp(ctx);
+        }
+    });
+}
+
+moduleOp::moduleOp(){
+    setTypeID("module");
+    block.getEntry().hasOutput();  
+} 
+void moduleOp::represent(std::ostream &os, context *ctx){
+    block.printRegion(ctx);
 }
