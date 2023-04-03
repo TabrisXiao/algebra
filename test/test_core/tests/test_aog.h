@@ -2,6 +2,7 @@
 #include "test_frame.h"
 #include "ops.h"
 #include "passes.h"
+#include "interfaces.h"
 using namespace aog;
 class test_aog : public test_wrapper{
     public:
@@ -28,7 +29,7 @@ class test_aog : public test_wrapper{
         createFuseSumOpPassPass(pm);
         createLhsAssociatePass(pm);
         createRhsAssociatePass(pm);
-        createNormalizationPass<commutable>(pm);
+        createNormalizationPass(pm);
         pm.run();
         ctx.resetCounts();
         //builder.entranceModule->print(&ctx);

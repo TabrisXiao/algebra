@@ -107,6 +107,7 @@ public :
 class moduleOp : public operation{
 public:
     moduleOp();
+    ~moduleOp(){std::cout<<"deleted"<<std::endl;}
     region* getRegion(){return &block;}
     void represent(std::ostream &os, context *ctx);
     virtual void printOp(context *ctx) override final{
