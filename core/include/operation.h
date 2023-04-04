@@ -3,6 +3,7 @@
 #define OPERATION_H_
 #include <unordered_set>
 #include <string>
+#include "printer.h"
 #include "sdgraph.h"
 #include "global.h"
 #include "exception.h"
@@ -32,11 +33,13 @@ public:
     element() = default;
     element(operation * op);
     virtual ~element(){}
-    virtual void represent(std::ostream &os, context *ctx){
-        os<<"%";
-        if(traceID > -1) os<<traceID;
-        else os<<"Unknown";
-        os<<" <"<<tid<<">";
+    virtual std::string represent(context *ctx){
+        printer p;
+        p.addString("%");
+        std::string id = traceID > -1 ? std::to_string(traceID) :"Unknown";
+        p.addString(id);
+        p.addToken("<"+tid+">");
+        return p.getString();
     }
     operation* getDefiningOp();
     std::vector<operation*> getUsers();
@@ -53,11 +56,10 @@ public :
     virtual ~operation(){
         inputElements.clear();
     }
-    virtual void represent(std::ostream &os, context *ctx) = 0;
+    virtual std::string represent(context *ctx) = 0;
     virtual void printOp(context *ctx){
         printIndent(ctx);
-        Xos<<getID()<<" : ";
-        represent(Xos, ctx);
+        Xos<<getID()<<" : "<<represent(ctx);
         Xos<<"\n";
     }
     void print(context *ctx);
@@ -109,11 +111,11 @@ public:
     moduleOp();
     ~moduleOp(){std::cout<<"deleted"<<std::endl;}
     region* getRegion(){return &block;}
-    void represent(std::ostream &os, context *ctx);
+    std::string represent(context *ctx){return getTypeID();}
     virtual void printOp(context *ctx) override final{
         printIndent(ctx);
         Xos<<getTypeID()<<" : ";
-        represent(Xos, ctx);
+        block.printRegion(ctx);
         Xos<<"\n";
     }
     region block;
@@ -145,8 +147,6 @@ public :
     region * _region = nullptr;
     moduleOp * op;
 };
-
-
 
 }
 

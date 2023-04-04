@@ -67,8 +67,5 @@ inline void region::printOps(context *ctx){
 
 moduleOp::moduleOp(){
     setTypeID("module");
-    block.getEntry().hasOutput();  
-} 
-void moduleOp::represent(std::ostream &os, context *ctx){
-    block.printRegion(ctx);
+    block.getEntry().hasOutput();
 }
