@@ -15,8 +15,10 @@ public:
         setTypeID("Def");
     }
     element* output(){return &(elements[0]);}
-    void represent(std::ostream &os, context *ctx){
-        output()->represent(os,ctx);
+    std::string represent(context *ctx) final{
+        printer p;
+        p.addToken(output()->represent(ctx));
+        return p.getString();
     }
 };
 class addOp : public operation{
@@ -29,12 +31,14 @@ class addOp : public operation{
     element* lhs(){return inputElements[0];}
     element* rhs(){return inputElements[1];}
     element* output(){return &(elements[0]);}
-    void represent(std::ostream &os, context *ctx){
-        output()->represent(os, ctx);
-        os<<" = ";
-        lhs()->represent(os, ctx);
-        os<<" + ";
-        rhs()->represent(os, ctx);
+    std::string represent(context *ctx) final {
+        printer p;
+        p.addToken(output()->represent(ctx));
+        p.addToken("=");
+        p.addToken(lhs()->represent(ctx));
+        p.addToken("+");
+        p.addToken(rhs()->represent(ctx));
+        return p.getString();
     }
 };
 
@@ -48,18 +52,19 @@ class multiplyOp : public operation {
     element* lhs(){return inputElements[0];}
     element* rhs(){return inputElements[1];}
     element* output(){return &(elements[0]);}
-    void represent(std::ostream &os, context *ctx){
-        output()->represent(os,ctx);
-        os<<" = ";
-        lhs()->represent(os, ctx);
-        os<<" * ";
-        rhs()->represent(os, ctx);
+    std::string represent(context *ctx) final{
+        printer p;
+        p.addToken(output()->represent(ctx));
+        p.addToken("=");
+        p.addToken(lhs()->represent(ctx));
+        p.addToken("*");
+        p.addToken(rhs()->represent(ctx));
+        return p.getString();
     }
 };
 
 class sumOp : public operation, public opGroup<commutable>{
     public:
-
     template <typename... ARGS>
     sumOp(ARGS *...args) {
         acceptInput(args...);
@@ -73,15 +78,17 @@ class sumOp : public operation, public opGroup<commutable>{
     }
     element* output(){return &(elements[0]);}
 
-    void represent(std::ostream &os, context *ctx){
-        output()->represent(os,ctx);
-        os<<" = ";
+    std::string represent(context *ctx) final {
+        printer p;
+        p.addToken(output()->represent(ctx));
+        p.addToken("=");
         int n = inputElements.size(), i=0;
         for(auto e : inputElements){
-            e->represent(os, ctx);
+            p.addToken(e->represent(ctx));
             i++;
-            if(i!= n) os<<" + ";
+            if(i!= n) p.addToken("+");
         }
+        return p.getString();
     }
 };
 }
