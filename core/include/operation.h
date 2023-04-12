@@ -20,7 +20,7 @@ class objInfo {
     void setTraceID(context * ctx);
     void setTypeID(const char * _id){tid = _id;}
     void setTypeID(std::string& _id){tid = _id;}
-    std::string getID(){return tid+"_"+std::to_string(traceID);}
+    std::string getID(){return tid;}
     std::string getTypeID(){return tid;}
     void printIndent(context *ctx);
     void printTraceID(std::ostream os){ os<<traceID; }
@@ -59,7 +59,7 @@ public :
     virtual std::string represent(context *ctx) = 0;
     virtual void printOp(context *ctx){
         printIndent(ctx);
-        Xos<<getID()<<" : "<<represent(ctx);
+        Xos<<represent(ctx);
         Xos<<"\n";
     }
     void print(context *ctx);

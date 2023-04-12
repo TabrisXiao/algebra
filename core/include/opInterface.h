@@ -2,7 +2,7 @@
 #define OPINTERFACE_H
 #include <memory.h>
 #include "operation.h"
-#include "aog.h"
+#include "opBuilder.h"
 
 namespace aog{
 // a wrapper for containning the traits of operations

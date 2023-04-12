@@ -1,7 +1,7 @@
 
 #ifndef AAOPS_H_
 #define AAOPS_H_
-#include "aog.h"
+#include "opBuilder.h"
 #include "pass.h"
 #include "interfaces.h"
 
@@ -18,6 +18,8 @@ public:
     std::string represent(context *ctx) final{
         printer p;
         p.addToken(output()->represent(ctx));
+        p.addToken("=");
+        p.addToken(getID());
         return p.getString();
     }
 };
@@ -35,6 +37,8 @@ class addOp : public operation{
         printer p;
         p.addToken(output()->represent(ctx));
         p.addToken("=");
+        p.addToken(getID());
+        p.addToken(":");
         p.addToken(lhs()->represent(ctx));
         p.addToken("+");
         p.addToken(rhs()->represent(ctx));
@@ -56,6 +60,8 @@ class multiplyOp : public operation {
         printer p;
         p.addToken(output()->represent(ctx));
         p.addToken("=");
+        p.addToken(getID());
+        p.addToken(":");
         p.addToken(lhs()->represent(ctx));
         p.addToken("*");
         p.addToken(rhs()->represent(ctx));
@@ -82,6 +88,8 @@ class sumOp : public operation, public opGroup<commutable>{
         printer p;
         p.addToken(output()->represent(ctx));
         p.addToken("=");
+        p.addToken(getID());
+        p.addToken(":");
         int n = inputElements.size(), i=0;
         for(auto e : inputElements){
             p.addToken(e->represent(ctx));
