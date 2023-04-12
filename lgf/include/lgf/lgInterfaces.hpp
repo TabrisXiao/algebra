@@ -2,19 +2,19 @@
 #ifndef BUILTIN_INTERFACES_H
 #define BUILTIN_INTERFACES_H
 #include <unordered_map>
-#include "opBuilder.h"
-#include "opInterface.h"
+#include "painter.h"
+#include "group.h"
 #include "pass.h"
 
-namespace aog{
+namespace lgf{
 // for operation that inputs are commutable 
-class commutable : public opGroup<commutable>, public rewriter<opGroup<commutable>> {
+class commutable : public group<commutable>, public rewriter<group<commutable>> {
     public:
     commutable () = default;
-    virtual bool rewrite(opRewriter &rewriter, opGroup<commutable> *origOp) override{
+    virtual bool rewrite(painter &rewriter, group<commutable> *origOp) override{
         auto op = dynamic_cast<operation*>(origOp);
-        std::vector<element*> & vec = op->getInputs();
-        std::sort(vec.begin(), vec.end(), [](element* a, element* b) {return a < b; });
+        auto vec = op->getInEdges();
+        std::sort(vec.begin(), vec.end(), [](value* a, value* b) {return a < b; });
         return 0;
     }
 };
@@ -23,7 +23,7 @@ template<typename opType>
 class DuplicatesRemover : public rewriter<opType>{
     public:
     DuplicatesRemover() = default;
-    virtual bool rewrite(opRewriter &rewriter, opType *origop) override{
+    virtual bool rewrite(painter &rewriter, opType *origop) override{
         auto ctx = rewriter.getContext();
         auto origOp = dynamic_cast<operation*>(origop);
         auto code = origOp->represent(ctx);
@@ -55,22 +55,22 @@ class DuplicatesRemover : public rewriter<opType>{
     std::unordered_map<operation*, std::string> book;
 };
 
-// this type of pass is used specific for trait normalization if it has
-class normalizationPass : public passBase {
-    public:
-    normalizationPass() : passBase("normalization pass"){}
-    bool run() final{
-        graphModifier gm;
-        gm.addRewriter<commutable>();
-        gm.addRewriter<DuplicatesRemover<opGroup<commutable>>>();
-        auto reg = getRegion();
-        gm.walkApplyOnce(reg);
-        return 0;
-    }
-};
+// // this type of pass is used specific for trait normalization if it has
+// class normalizationPass : public passBase {
+//     public:
+//     normalizationPass() : passBase("normalization pass"){}
+//     bool run() final{
+//         graphModifier gm;
+//         gm.addRewriter<commutable>();
+//         gm.addRewriter<DuplicatesRemover<group<commutable>>>();
+//         auto reg = getRegion();
+//         gm.walkApplyOnce(reg);
+//         return 0;
+//     }
+// };
 
-void createNormalizationPass(passManager &pm){
-    pm.addPass(std::make_unique<normalizationPass>());
-}
+// void createNormalizationPass(passManager &pm){
+//     pm.addPass(std::make_unique<normalizationPass>());
+// }
 }
 #endif
