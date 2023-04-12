@@ -145,9 +145,9 @@ class rhsAssociateRewriter : public rewriter<sumOp> {
         for(auto & [value, ops] : map){
             if(ops.size()< 2) continue;
             std::vector<element*> lhsValues;
-            lhsValues.push_back(ops[0]->rhs());
+            lhsValues.push_back(ops[0]->lhs());
             for(auto iter=ops.begin()+1; iter!=ops.end(); iter++){
-                lhsValues.push_back((*iter)->rhs());
+                lhsValues.push_back((*iter)->lhs());
                 rewriter.removeOp(*iter);
             }
             auto sumop = rewriter.create<sumOp>(lhsValues);

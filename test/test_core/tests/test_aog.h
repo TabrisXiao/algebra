@@ -28,6 +28,7 @@ class test_aog : public test_wrapper{
         createConvertAddToSumPass(pm);
         createFuseSumOpPassPass(pm);
         createLhsAssociatePass(pm);
+        createNormalizationPass(pm);
         createRhsAssociatePass(pm);
         createNormalizationPass(pm);
         pm.run();

@@ -5,7 +5,7 @@ set(
     sources
     operation.cpp
     dgraph.cpp
-    aog.cpp
+    opBuilder.cpp
     sdgraph.cpp
     utility.cpp
 )
