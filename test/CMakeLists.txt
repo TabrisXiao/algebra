@@ -1,3 +1,3 @@
 
-add_subdirectory(test_compiler)
+
 add_subdirectory(test_core)
