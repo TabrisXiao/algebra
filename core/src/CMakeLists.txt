@@ -11,7 +11,7 @@ set(
 )
 
 create_cpp_library(
-    NAME logic_abstract_lib
+    NAME logic_graph_lib
     #HDRS
     #${headers}
     SRCS
