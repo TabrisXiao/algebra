@@ -1,5 +1,6 @@
+
 #include "dgraph.h"
-#include "test_frame.h"
+#include "unit_test_frame.h"
 using namespace dgl;
 class tvertex : public vertex{
     public :
@@ -32,10 +33,7 @@ class test_dgraph : public test_wrapper{
         bool test_result = 0;
         g.BFWalk([&](vertex * vtx){
             auto v = dynamic_cast<tvertex*>(vtx);
-            if(order[counts] != v->id) {
-                std::cout<<"order1 error, expect: "<<order[counts]<<" got: "<<v->id<<std::endl;
-                test_result = 1;
-            }
+            TEST_CHECK_VALUE(v->id, order[counts], test_result,"edge::connect graph connected incorrectly!");
             counts++;
         });
 
@@ -52,10 +50,7 @@ class test_dgraph : public test_wrapper{
         counts=0;
         g.BFWalk([&](vertex * vtx){
             auto v = dynamic_cast<tvertex*>(vtx);
-            if(order2[counts] != v->id) {
-                std::cout<<"order2 error, expect: "<<order2[counts]<<" got: "<<v->id<<std::endl;
-                test_result = 1;
-            }
+            TEST_CHECK_VALUE(v->id, order2[counts], test_result, "vertex::detach graph detached incorrectly!");
             counts++;
         });
 
@@ -65,10 +60,7 @@ class test_dgraph : public test_wrapper{
         counts =0;
         g.BFWalk([&](vertex * vtx){
             auto v = dynamic_cast<tvertex*>(vtx);
-            if(order3[counts] != v->id) {
-                std::cout<<"order3 error, expect: "<<order2[counts]<<" got: "<<v->id<<std::endl;
-                test_result = 1;
-            }
+            TEST_CHECK_VALUE(v->id, order3[counts], test_result, "graph::replaceVertex doesn't work as expected!");
             counts++;
         });
         return test_result;
