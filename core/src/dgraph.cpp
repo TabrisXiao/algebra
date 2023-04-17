@@ -10,65 +10,69 @@
 // directed graph
 namespace dgl
 {
-    void edge::connect(vertex &vfrom, vertex &vto)
-    {
-        attachTo(vto);
-        attachFrom(vfrom);
-        vto.attachFrom(*this);
-        vfrom.attachTo(*this);
+    void dedge::connect(vertex* v1, vertex *v2){
+        if(vertexFrom){
+            CHECK_VALUE(vertexFrom,v1);
+        }
+        else {
+            attachFrom(v1);
+            v1->attachTo(this);
+        }
+        attachTo(v2);
+        v2->attachFrom(this);
     }
-    void vertex::detachInput(edge *e){
+    void vertex::detachInput(dedge *e){
         auto iter = std::find(inEdges.begin(), inEdges.end(), e);
         while(iter!=inEdges.end()){
             inEdges.erase(iter);
             iter = std::find(inEdges.begin(), inEdges.end(), e);
         }
-        e->resetReceiver();
+        e->resetVerticesTo();
     }
-    void vertex::detachOutput(edge *e){
+    void vertex::detachOutput(dedge *e){
         auto iter = std::find(outEdges.begin(), outEdges.end(), e);
         while(iter!=outEdges.end()){
             outEdges.erase(iter);
             iter = std::find(outEdges.begin(), outEdges.end(), e);
         }
-        e->resetSender();
+        e->resetVertexFrom();
     }
     void vertex::detach()
     {
         for (auto e : inEdges)
         {
-            auto vtx = e->getSender();
+            auto vtx = e->getVertexFrom();
             vtx->detachOutput(e);
         }
         inEdges.clear();
         for (auto e : outEdges)
         {
-            auto vtx = e->getReceiver();
-            vtx->detachInput(e);
+            for(auto ver : e->getVerticesTo())
+                ver->detachInput(e);
         }
         outEdges.clear();
     }
 
     // check if all the outgoing vertice have been marked as explored
-    bool vertex::isExploredOugoingVertex()
-    {
-        for (auto e : getOutEdges())
-        {
-            if (!(e->getReceiver()->isExplored()))
-                return 0;
-        }
-        return 1;
-    }
-    // check if all the incoming vertice have been marked as explored
-    bool vertex::isExploredIncomingVertex()
-    {
-        for (auto e : getInEdges())
-        {
-            if (!(e->getSender()->isExplored()))
-                return 0;
-        }
-        return 1;
-    }
+    // bool vertex::isExploredOugoingVertex()
+    // {
+    //     for (auto e : getOutDedges())
+    //     {
+    //         if (!(e->getReceiver()->isExplored()))
+    //             return 0;
+    //     }
+    //     return 1;
+    // }
+    // // check if all the incoming vertice have been marked as explored
+    // bool vertex::isExploredIncomingVertex()
+    // {
+    //     for (auto e : getInEdges())
+    //     {
+    //         if (!(e->getSender()->isExplored()))
+    //             return 0;
+    //     }
+    //     return 1;
+    // }
 
     //template <typename callable>
     //void graph::BFWalk(callable &&fn){

@@ -4,37 +4,46 @@
 #include <vector>
 #include <iostream>
 #include <queue>
+#include "exception.h"
 
 namespace dgl
 {
 
     class vertex;
-    class edge
+    // a directional edge which can connect to multi vertices as output but only allow one vertex as input.
+    class dedge
     {
     public:
-        edge() = default;
-        virtual ~edge() {}
+        dedge() = default;
+        dedge( const dedge& e){
+            vertexFrom = e.getVertexFrom();
+            auto vec = e.getVerticesTo();
+            verticeTo.assign(vec.begin(), vec.end());
+        }
+        virtual ~dedge() {}
         void reset(){
             vertexFrom = nullptr; 
-            vertexTo = nullptr;
+            verticeTo.clear();
         }
-        void resetReceiver(){vertexTo = nullptr;}
-        void resetSender(){vertexFrom = nullptr;}
-        void attachTo(vertex &v) { vertexTo = &v; }
-        void attachFrom(vertex &v) { vertexFrom = &v; }
-        void connect(vertex &vfrom, vertex &vto);
+        void resetVerticesTo(){verticeTo.clear();}
+        void resetVertexFrom(){vertexFrom = nullptr;}
+        void attachTo(vertex *v) { verticeTo.push_back(v); }
+        void attachFrom(vertex *v) { vertexFrom = v; }
+        void connect(vertex* v1, vertex *v2);
 
-        vertex *getReceiver() { return vertexTo; }
-        vertex *getSender() { return vertexFrom; }
+        std::vector<vertex*> getVerticesTo() const { return verticeTo; }
+        vertex * getVertexFrom() const { return vertexFrom; }
 
-        vertex *vertexFrom = nullptr, *vertexTo = nullptr;
+        vertex *vertexFrom = nullptr;
+        std::vector<vertex*> verticeTo;
     };
+
     class vertex
     {
     public:
         vertex() = default;
         virtual ~vertex() {}
-        vertex(vertex &rhs)
+        vertex(const vertex &rhs)
         {
             bExplored = rhs.bExplored;
 
@@ -51,134 +60,58 @@ namespace dgl
             rhs.~vertex();
         }
         //
-        // attach this vertex to/from some edges
+        // attach this vertex to/from some dedges
         //
         template <typename... ARGS>
-        void attachTo(ARGS &...args)
+        void attachTo(ARGS* ...args)
         {
-            auto edges = {&args...};
-            for (auto e : edges)
+            auto dedges = {args...};
+            for (auto& e : dedges)
             {
-                auto ptr = dynamic_cast<edge*>(e);
+                auto ptr = dynamic_cast<dedge*>(e);
                 outEdges.push_back(ptr);
-                ptr->attachFrom(*this);
+                ptr->attachFrom(this);
             }
         }
 
         template <typename... ARGS>
-        void attachFrom(ARGS &...args)
+        void attachFrom(ARGS* ...args)
         {
-            auto edges = {&args...};
-            for (auto e : edges)
+            auto dedges = {args...};
+            for (auto& e : dedges)
             {
                 inEdges.push_back(e);
-                e->attachTo(*this);
+                e->attachTo(this);
             }
         }
 
-        // detach an input/output edge from this vertex
-        // detached the edge e from this vertex w
-        void detachOutput(edge *e);
-        void detachInput(edge *e);
+        // detach an input/output dedge from this vertex
+        // detached the dedge e from this vertex w
+        void detachOutput(dedge *e);
+        void detachInput(dedge *e);
 
         // detach this vertex from its connected vertices
         void detach();
-        template <typename callable>
-        vertex *walk(vertex *entry_v, callable &fn)
-        {
-            // the callable function should return a bool to indicate
-            // if the walk should be stopped or not (true for stop)
-            std::vector<vertex *> vertice_buffer;
-
-            vertex *return_ptr = nullptr;
-            std::queue<vertex *> _vq;
-            _vq.push(entry_v);
-
-            while (_vq.size())
-            {
-                auto v = _vq.front();
-                _vq.pop();
-                auto bkey = fn(v);
-                v->bExplored = 1;
-                if (bkey)
-                {
-                    return_ptr = v;
-                    break;
-                }
-                vertice_buffer.push_back(v);
-                auto edges = v->getOutEdges();
-                for (auto &e : edges)
-                {
-                    if (auto vn = e->getReceiver())
-                    {
-                        if (!(vn->bExplored))
-                        {
-                            _vq.push(vn);
-                        }
-                    }
-                }
-            }
-            for (auto &v : vertice_buffer)
-            {
-                v->reset();
-            }
-            return return_ptr;
-        }
-
-        template <typename callable>
-        void BFWalk(callable &&fn){
-            //The breadth-first walk through the graph starting at this vertex.
-            //call the callable at the begining of visiting each vertex.
-            //the callable should return void.
-            //the fn will be executed on each vertex at most once.
-            std::vector<vertex *> vertice_buffer;
-            std::queue<vertex *> _vq;
-            _vq.push(this);
-            while (_vq.size())
-                {
-                    auto v = _vq.front();
-                    _vq.pop();
-                    if(!(v->isActive())) continue;
-                    if(v->bExplored) continue;
-                    vertice_buffer.push_back(v);
-                    auto edges = v->getOutEdges();
-                    fn(v);
-                    v->setExplored(1);
-                    for (auto &e : edges)
-                    {
-                        if (auto vn = e->getReceiver())
-                        {
-                            if (!(vn->bExplored))
-                            {
-                                _vq.push(vn);
-                            }
-                        }
-                    }
-                }
-                for (auto &v : vertice_buffer)
-                {
-                    v->reset();
-                }
-            return; 
-        }
 
         bool isExplored(){ return bExplored; }
         void setExplored(bool key){ bExplored = key;}
-        // detach this vertex from the graph. The in/out edges will be disconnected
-        // from this vertex. But these edges won't be deleted as they are not part
+        // detach this vertex from the graph. The in/out dedges will be disconnected
+        // from this vertex. But these dedges won't be deleted as they are not part
         // of this vertex. 
-        std::vector<edge *> &getInEdges() { return inEdges; }
-        std::vector<edge *> &getOutEdges() { return outEdges; }
+        const std::vector<dedge *>& getInEdges() const { return inEdges; }
+        const std::vector<dedge *>& getOutEdges() const { return outEdges; }
+        void clearInEdges(){ inEdges.clear(); }
+        void clearOutEdges(){ outEdges.clear(); }
 
         void reset() { bExplored = 0; }
 
-        std::vector<edge *> inEdges;
-        std::vector<edge *> outEdges;
+        std::vector<dedge *> inEdges;
+        std::vector<dedge *> outEdges;
 
         // check if all the outgoing vertice have been marked as explored
-        bool isExploredOugoingVertex();
+        //bool isExploredOugoingVertex();
         // check if all the incoming vertice have been marked as explored
-        bool isExploredIncomingVertex();
+        //bool isExploredIncomingVertex();
         bool setActivity(bool val){bActive = val;}
         bool isActive(){return bActive;}
 
@@ -191,7 +124,7 @@ namespace dgl
     };
 
     class graph {
-    // A graph is a collection of vertices connected by edges.
+    // A graph is a collection of vertices connected by dedges.
     // All the vertices contained in a graph is called subvertices.
     public :  
         graph() = default;
@@ -199,16 +132,6 @@ namespace dgl
         //getVertices return the first level subvertices (entries)
         void addL1Vertex(vertex* vtx){
             l1Vertices.push_back(vtx);
-        }
-        void replaceVertex(vertex * origVtx, vertex* newVtx){
-            for(auto e : origVtx->getInEdges()){
-                newVtx->attachFrom(*e);
-            }
-            origVtx->getInEdges().clear();
-            for(auto e : origVtx->getOutEdges()){
-                newVtx->attachTo(*e);
-            }
-            origVtx->getOutEdges().clear();
         }
         template <typename callable>
         void BFWalk(callable &&fn){
@@ -224,22 +147,21 @@ namespace dgl
                 {
                     auto v = _vq.front();
                     _vq.pop();
-                    if(!(v->isActive()) || v->isExplored()) continue;
+                    if(!(v->isActive())) continue;
                     vertice_buffer.push_back(v);
-                    auto edges = v->getOutEdges();
-                    fn(v);
-                    v->bExplored = 1;
-                    for (auto &e : edges)
+                    auto dedges = v->getOutEdges();
+                    for (auto& e : dedges)
                     {
-                        if (auto vn = e->getReceiver())
+                        for(auto & vn : e->getVerticesTo())
                         {
                             if (!(vn->bExplored))
                             {
+                                vn->bExplored = 1;
                                 _vq.push(vn);
                             }
                         }
                     }
-                    
+                    fn(v);
                 }
                 for (auto &v : vertice_buffer)
                 {

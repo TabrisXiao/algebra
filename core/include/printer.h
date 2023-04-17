@@ -1,22 +1,32 @@
 #ifndef PRINTER_H
 #define PRINTER_H
 #include <string>
+#include <iostream>
+#include <sstream>
 
 class printer {
     public :
     printer () = default;
-    std::string getString(){
-        return buffer;
+    std::string dump(){
+        auto ret = oss.str();
+        flush();
+        return ret;
     }
-    void flush(){buffer ="";}
-    void addToken(std::string tok){
-        if(buffer.empty()) buffer = tok;
-        else buffer = buffer+" "+tok;
+    void flush(){oss.str("");}
+
+    template<typename T>
+    printer& operator<<(const T& data) {
+        oss << data;
+        return *this;
     }
-    void addString(std::string str){
-        buffer = buffer+str;
-    }
-    std::string buffer;
+    std::ostringstream oss;
+};
+
+// utility to help making representation
+class coder {
+    public : 
+    coder() = default;
+
 };
 
 class parser {

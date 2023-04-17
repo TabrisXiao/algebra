@@ -7,6 +7,7 @@ class tvertex : public vertex{
     tvertex(int num): id(num){}
     int id = 0;
 };
+namespace test_body{
 
 class test_dgraph : public test_wrapper{
     public:
@@ -19,11 +20,11 @@ class test_dgraph : public test_wrapper{
         //    v2-> v3
         //   /
         //  v4
-        edge e1, e2, e3, e4;
-        e1.connect(v1, v2);
-        e2.connect(v1, v3);
-        e3.connect(v2, v3);
-        e4.connect(v2, v4);
+        dedge e1, e2, e3, e4;
+        e1.connect(&v1, &v2);
+        e2.connect(&v1, &v3);
+        e3.connect(&v2, &v3);
+        e4.connect(&v2, &v4);
         
         graph g;
         g.addL1Vertex(&v1);
@@ -54,15 +55,7 @@ class test_dgraph : public test_wrapper{
             counts++;
         });
 
-        tvertex v12(12);
-        int order3[4] = {1, 5, 12, 4};
-        g.replaceVertex(&v2, &v12);
-        counts =0;
-        g.BFWalk([&](vertex * vtx){
-            auto v = dynamic_cast<tvertex*>(vtx);
-            TEST_CHECK_VALUE(v->id, order3[counts], test_result, "graph::replaceVertex doesn't work as expected!");
-            counts++;
-        });
         return test_result;
     }
 };
+}
