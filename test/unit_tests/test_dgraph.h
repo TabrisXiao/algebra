@@ -39,8 +39,9 @@ class test_dgraph : public test_wrapper{
         });
 
         int order2[4] = {1, 5, 2, 4};
-        v3.detach();
-        v5.detach();
+        e2.dropConnectionTo(&v3);
+        e3.dropConnectionTo(&v3);
+        TEST_CHECK_VALUE(v3.inEdges.size(), 0, test_result, "dedge::dropConnectionTo failes!");
         // detach turn to configure, 
         // detach do not affect the isolated level 1 vertex in graph
         //      v1   v5

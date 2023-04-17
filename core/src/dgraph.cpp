@@ -15,40 +15,74 @@ namespace dgl
             CHECK_VALUE(vertexFrom,v1);
         }
         else {
-            attachFrom(v1);
             v1->attachTo(this);
         }
-        attachTo(v2);
         v2->attachFrom(this);
     }
-    void vertex::detachInput(dedge *e){
-        auto iter = std::find(inEdges.begin(), inEdges.end(), e);
-        while(iter!=inEdges.end()){
-            inEdges.erase(iter);
-            iter = std::find(inEdges.begin(), inEdges.end(), e);
+    void dedge::eraseVertexTo(vertex* v){
+        for(auto iter = verticesTo.begin(); iter!=verticesTo.end();){
+            if(v== *iter){
+                iter=verticesTo.erase(iter);
+                return;
+            } else iter++;
         }
-        e->resetVerticesTo();
     }
-    void vertex::detachOutput(dedge *e){
-        auto iter = std::find(outEdges.begin(), outEdges.end(), e);
-        while(iter!=outEdges.end()){
-            outEdges.erase(iter);
-            iter = std::find(outEdges.begin(), outEdges.end(), e);
+    void dedge::dropConnectionTo(vertex *v){
+        eraseVertexTo(v);
+        v->eraseInEdge(this);
+    }
+    void dedge::dropAllConnectionTo(){
+        for(auto & vtx: verticesTo){
+            vtx->eraseInEdge(this);
         }
-        e->resetVertexFrom();
+        verticesTo.clear();
     }
+    void vertex::eraseInEdge(dedge* e){
+        // assuming there's at most one edge needs to be erased
+        // ie. no duplication connections.
+        for(auto iter = inEdges.begin(); iter!=inEdges.end(); iter++){
+            if(e==*iter){
+                inEdges.erase(iter);
+                return;
+            }
+        }
+    }
+    void vertex::eraseOutEdge(dedge* e){
+        // assuming there's at most one edge needs to be erased
+        // ie. no duplication connections.
+        for(auto iter = outEdges.begin(); iter!=outEdges.end(); iter++){
+            if(e==*iter){
+                outEdges.erase(iter);
+                return;
+            }
+        }
+    }
+    // void vertex::detachInput(dedge *e){
+    //     auto iter = std::find(inEdges.begin(), inEdges.end(), e);
+    //     while(iter!=inEdges.end()){
+    //         inEdges.erase(iter);
+    //         iter = std::find(inEdges.begin(), inEdges.end(), e);
+    //     }
+    //     e->resetVerticesTo();
+    // }
+    // void vertex::detachOutput(dedge *e){
+    //     auto iter = std::find(outEdges.begin(), outEdges.end(), e);
+    //     while(iter!=outEdges.end()){
+    //         outEdges.erase(iter);
+    //         iter = std::find(outEdges.begin(), outEdges.end(), e);
+    //     }
+    //     e->resetVertexFrom();
+    // }
     void vertex::detach()
     {
-        for (auto e : inEdges)
+        for (auto& e : inEdges)
         {
-            auto vtx = e->getVertexFrom();
-            vtx->detachOutput(e);
+            e->eraseVertexTo(this);
         }
         inEdges.clear();
         for (auto e : outEdges)
         {
-            for(auto ver : e->getVerticesTo())
-                ver->detachInput(e);
+            e->eraseVertexFrom(this);
         }
         outEdges.clear();
     }
@@ -73,9 +107,5 @@ namespace dgl
     //     }
     //     return 1;
     // }
-
-    //template <typename callable>
-    //void graph::BFWalk(callable &&fn){
-        
 
 } // namespace dgl

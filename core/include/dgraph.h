@@ -18,24 +18,34 @@ namespace dgl
         dedge( const dedge& e){
             vertexFrom = e.getVertexFrom();
             auto vec = e.getVerticesTo();
-            verticeTo.assign(vec.begin(), vec.end());
+            verticesTo.assign(vec.begin(), vec.end());
         }
         virtual ~dedge() {}
         void reset(){
             vertexFrom = nullptr; 
-            verticeTo.clear();
+            verticesTo.clear();
         }
-        void resetVerticesTo(){verticeTo.clear();}
+        void resetVerticesTo(){verticesTo.clear();}
         void resetVertexFrom(){vertexFrom = nullptr;}
-        void attachTo(vertex *v) { verticeTo.push_back(v); }
+        void attachTo(vertex *v) { verticesTo.push_back(v); }
         void attachFrom(vertex *v) { vertexFrom = v; }
         void connect(vertex* v1, vertex *v2);
+        // remove the vertex from the verticesTo list,
+        // won't change vertex status;
+        void eraseVertexTo(vertex *);
+        void eraseVertexFrom(vertex *){ vertexFrom = nullptr;}
 
-        std::vector<vertex*> getVerticesTo() const { return verticeTo; }
+        // perform a disconnection to specified vertex.
+        // will update both status of the vertex to and this edge
+        void dropConnectionTo(vertex *v);
+        // disconnect this edge from all receivers;
+        void dropAllConnectionTo();
+
+        std::vector<vertex*> getVerticesTo() const { return verticesTo; }
         vertex * getVertexFrom() const { return vertexFrom; }
 
         vertex *vertexFrom = nullptr;
-        std::vector<vertex*> verticeTo;
+        std::vector<vertex*> verticesTo;
     };
 
     class vertex
@@ -85,10 +95,17 @@ namespace dgl
             }
         }
 
+        // remove the specified edge from the inEdges/outEdge,
+        // this won't change anything of the edge.
+        // assuming there's at most one edge needs to be erased
+        // ie. no duplication connections.
+        void eraseInEdge(dedge* e);
+        void eraseOutEdge(dedge* e);
+
         // detach an input/output dedge from this vertex
         // detached the dedge e from this vertex w
-        void detachOutput(dedge *e);
-        void detachInput(dedge *e);
+        // void detachOutput(dedge *e);
+        // void detachInput(dedge *e);
 
         // detach this vertex from its connected vertices
         void detach();

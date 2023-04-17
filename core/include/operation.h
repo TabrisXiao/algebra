@@ -36,25 +36,13 @@ class objInfo {
 class value : public objInfo{
 public:
     value() = default;
-    value(const value & val) : objInfo(val), iid(val.getIID()){
-        defOp = val.getDefiningOp();
-    }
+    value(const value & val);
     value(operation * op, int id);
-    virtual ~value(){}
-    virtual std::string represent() const {
-        printer p;
-        p<<"%";
-        std::string id = getTraceID() > -1 ? std::to_string(getTraceID()) :"#";
-        p<<id;
-        p<<" <"<<getTypeID()<<">";
-        return p.dump();
-    }
-    void print() const { 
-        global::stream::getInstance()<<represent()<<"\n"; };
+    virtual ~value() = default;
+    virtual std::string represent() const; 
+    void print() const;
     template<class opType>
-    opType* getDefiningOp(){
-        return  dynamic_cast<opType*>(val->getDefiningOp());
-    }
+    opType* getDefiningOp(){ return dynamic_cast<opType*>(val->getDefiningOp()); }
     void setDefiningOp(operation *op){defOp = op;}
     operation * getDefiningOp() const {return defOp;}
     std::vector<operation*> getUsers() const;
@@ -63,6 +51,9 @@ public:
     // dependency. The iid has to be the same in the value and 
     // the dependency containning this value.
     int getIID() const { return iid; }
+
+    // drop the specified user
+    void dropUser(operation* op);
 
     private:
     operation *defOp = nullptr;
@@ -77,7 +68,8 @@ class dependency : public dgl::dedge {
     int getIID() const {return iid;}
     void print() const { val.print(); }
     value * atValue(){ return &val; }
-    value getValue(){return val;}
+    operation * getDefiningOp() const {return val.getDefiningOp();}
+    const value& getValue() const {return val;}
     // internal id
     const int iid = -1;
     value val;
@@ -88,21 +80,11 @@ public :
     operation() : objInfo(){};
     virtual ~operation(){
     }
-    virtual std::string represent() = 0;
-    virtual void printOp(){
-        global::stream::getInstance().printIndent();
-        global::stream::getInstance() << represent();
-        global::stream::getInstance() <<"\n";
-    }
+    virtual std::string represent()const = 0;
+    virtual void printOp();
     void print();
-    dependency * atDependency(int iid) {
-        // Note: Here we have to search through outputs instead of outEdges
-        // as the edge might not have been connected yet. 
-        for(auto i=0; i<outputs.size(); i++){
-            if(outputs[i].checkIID(iid)) return &outputs[i];
-        }
-        return nullptr;
-    }
+    // get the ptr to the dependency contained in this operation, having the specified iid.
+    dependency * atDependency(int iid);
     template <typename... ARGS>
     void registInput(ARGS ...args)
     {
@@ -115,24 +97,31 @@ public :
             }
         }
     }
-    value * createValue(){
-        outputs.push_back(dependency(this, getOutputSize()));
-        return outputs.back().atValue();
-    }
+    value * createValue();
 
     // any functions getting the inputs should be const as they are not
     // suppose to modify the inputs. Any changes for the inputs should 
     // happen inside of the operation defining them.
-    value getInput(int n =0 ) const {
-        auto d = dynamic_cast<dependency*>(inEdges[n]);
-        return d->getValue();
-    }
-    void assignValueID(int& n){
-        for(auto& d : outputs){
-            auto val = d.atValue();
-            val->setTraceID(n++);
-        }
-    }
+    const value& getInput(int n =0 ) const;
+
+    // assign trace id to the value created in this operation. 
+    // The start of the trace id is specified by the argument n.
+    void assignValueID(int& n);
+
+    // disconnect from the dependency of the specified value
+    void dropInput(value &val);
+
+    // detach the input edges from this operation and disconnect
+    // the outputs from their users, this operation still connecting to
+    // the output edges.
+    // for example, detach v3 will leads to 
+    //    v1                       v1
+    //   / \                      /
+    //  v2  v3    detach v3:     v2      v3
+    //     /                              |
+    //    v4                        v4
+    void detach();
+    
     // template<typename type>
     // bool isInherit(){
     //     if(auto p = dynamic_cast<type*>(this)) return true;
@@ -141,7 +130,7 @@ public :
     int getOutputSize() const {return int(outEdges.size());}
     //std::vector<value>& getOutputs() {return values;}
     value * atOutput(int n=0){ return outputs[n].atValue();}
-    value getOutput(int n=0){return outputs[n].getValue();}
+    const value& getOutput(int n=0) const {return outputs[n].getValue();}
     //void setTraceIDToOutput(context *ctx);
     int valueTraceIDStart = -1;
     std::vector<dependency> outputs;
@@ -168,7 +157,7 @@ public:
     moduleOp();
     ~moduleOp(){std::cout<<"deleted"<<std::endl;}
     region* getRegion(){return &block;}
-    std::string represent(){return getTypeID();}
+    std::string represent() const {return getTypeID();}
     virtual void printOp() override final{
         global::stream::getInstance().printIndent();
         global::stream::getInstance()<<getTypeID()<<" : ";
@@ -198,7 +187,7 @@ public :
     region * getRegion(){
         CHECK_CONDITION(_region!=nullptr);
         return _region;
-        }
+    }
     moduleOp * getModuleOp(){return op;}
     //region* getRegion(){return _region;}
     region * _region = nullptr;
