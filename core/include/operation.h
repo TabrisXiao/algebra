@@ -90,7 +90,7 @@ public :
     {
         // inputs are suppose to be value type.
         auto values = {args...};
-        for (auto val : values)
+        for (auto& val : values)
         {
             if(auto d = val.atDependency()){
                 d->connect(val.getDefiningOp(), this);
@@ -103,6 +103,7 @@ public :
     // suppose to modify the inputs. Any changes for the inputs should 
     // happen inside of the operation defining them.
     const value& getInput(int n =0 ) const;
+    //int getInputSize() const;
 
     // assign trace id to the value created in this operation. 
     // The start of the trace id is specified by the argument n.
@@ -121,6 +122,9 @@ public :
     //     /                              |
     //    v4                        v4
     void detach();
+    
+    // replace the old value by the new value
+    void replaceInputValue(value & oldV, value & newV);
     
     // template<typename type>
     // bool isInherit(){
