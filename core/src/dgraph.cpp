@@ -12,7 +12,7 @@ namespace dgl
 {
     void dedge::connect(vertex* v1, vertex *v2){
         if(vertexFrom){
-            CHECK_VALUE(vertexFrom,v1);
+            CHECK_VALUE(vertexFrom,v1,"This new connection attaches from a different vertex than original, which is not allowed.");
         }
         else {
             v1->attachTo(this);

@@ -29,8 +29,8 @@ class addOp : public operation{
         setTypeID("Add");
         createValue();
     }
-    const value& lhs() const{return getInput(0);}
-    const value& rhs() const{return getInput(1);}
+    const value& lhs() const{return inputRef(0);}
+    const value& rhs() const{return inputRef(1);}
     const value& output() const {return getOutput();}
     virtual std::string represent() const override{
         printer p;
@@ -48,8 +48,8 @@ class multiplyOp : public operation {
         setTypeID("Multiply");
         createValue();
     }
-    const value& lhs() const{return getInput(0);}
-    const value& rhs() const{return getInput(1);}
+    const value& lhs() const{return inputRef(0);}
+    const value& rhs() const{return inputRef(1);}
     const value& output() const {return getOutput();}
     virtual std::string represent() const override{
         printer p;

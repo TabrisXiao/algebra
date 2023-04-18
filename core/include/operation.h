@@ -11,9 +11,9 @@
 namespace aog{
 class context;
 class operation;
-class dependency;
+class dependence;
 class region;
-
+typedef size_t id_t;
 class objInfo {
     public: 
     objInfo() = default;
@@ -37,7 +37,7 @@ class value : public objInfo{
 public:
     value() = default;
     value(const value & val);
-    value(operation * op, int id);
+    value(operation * op, id_t id);
     virtual ~value() = default;
     virtual std::string represent() const; 
     void print() const;
@@ -46,32 +46,38 @@ public:
     void setDefiningOp(operation *op){defOp = op;}
     operation * getDefiningOp() const {return defOp;}
     std::vector<operation*> getUsers() const;
-    dependency* atDependency() const;
+    dependence* getDependence() const;
     // this iid is used to build connection between the value and
-    // dependency. The iid has to be the same in the value and 
-    // the dependency containning this value.
-    int getIID() const { return iid; }
+    // dependence. The iid has to be the same in the value and 
+    // the dependence containning this value.
+    id_t getIID() const { return iid; }
+    // Replace this value by a new one for all users of this value.
+    void replaceBy(const value & val);
 
     // drop the specified user
     void dropUser(operation* op);
 
     private:
     operation *defOp = nullptr;
-    const int iid = -1;
+    const id_t iid = -1;
 };
 
-class dependency : public dgl::dedge {
+class dependence : public dgl::dedge {
     public : 
-    dependency() = default;
-    dependency(operation* op, int id): val(op, id), iid(id) {}
+    dependence() = default;
+    dependence(operation* op, id_t id): val(op, id), iid(id) {}
     bool checkIID(int id) const {return iid == id;}
-    int getIID() const {return iid;}
+    id_t getIID() const {return iid;}
     void print() const { val.print(); }
-    value * atValue(){ return &val; }
+    value * getValue(){ return &val; }
     operation * getDefiningOp() const {return val.getDefiningOp();}
-    const value& getValue() const {return val;}
+    const value& valueRef() const {return val; }
+
+    // replace this dependence by a new one for all users.
+    void replaceBy(dependence *dep);
     // internal id
-    const int iid = -1;
+    private:
+    const id_t iid = -1;
     value val;
 };
 
@@ -83,8 +89,8 @@ public :
     virtual std::string represent()const = 0;
     virtual void printOp();
     void print();
-    // get the ptr to the dependency contained in this operation, having the specified iid.
-    dependency * atDependency(int iid);
+    // get the ptr to the dependence contained in this operation, having the specified iid.
+    dependence * getDependence(id_t iid);
     template <typename... ARGS>
     void registInput(ARGS ...args)
     {
@@ -92,24 +98,25 @@ public :
         auto values = {args...};
         for (auto& val : values)
         {
-            if(auto d = val.atDependency()){
+            if(auto d = val.getDependence()){
                 d->connect(val.getDefiningOp(), this);
             }
         }
     }
     value * createValue();
 
-    // any functions getting the inputs should be const as they are not
+    // any functions referring to inputs should be const as they are not
     // suppose to modify the inputs. Any changes for the inputs should 
     // happen inside of the operation defining them.
-    const value& getInput(int n =0 ) const;
-    //int getInputSize() const;
+    const value& inputRef(int n =0 ) const;
+    id_t getInputSize() const;
+    id_t getOutputSize() const;
 
     // assign trace id to the value created in this operation. 
     // The start of the trace id is specified by the argument n.
     void assignValueID(int& n);
 
-    // disconnect from the dependency of the specified value
+    // disconnect from the dependence of the specified value
     void dropInput(value &val);
 
     // detach the input edges from this operation and disconnect
@@ -121,8 +128,9 @@ public :
     //  v2  v3    detach v3:     v2      v3
     //     /                              |
     //    v4                        v4
-    void detach();
+    operation* detach();
     
+    void replaceInputDependence(dependence* d1, dependence* d2 );
     // replace the old value by the new value
     void replaceInputValue(value & oldV, value & newV);
     
@@ -131,13 +139,13 @@ public :
     //     if(auto p = dynamic_cast<type*>(this)) return true;
     //     return false;
     // }
-    int getOutputSize() const {return int(outEdges.size());}
     //std::vector<value>& getOutputs() {return values;}
-    value * atOutput(int n=0){ return outputs[n].atValue();}
-    const value& getOutput(int n=0) const {return outputs[n].getValue();}
+    value * atOutput(int n=0){ return outputs[n].getValue();}
+    void setActivation(bool a ){ bActive = a; }
+    const value& getOutput(int n=0) const {return outputs[n].valueRef();}
     //void setTraceIDToOutput(context *ctx);
     int valueTraceIDStart = -1;
-    std::vector<dependency> outputs;
+    std::vector<dependence> outputs;
 };
 
 class region : public dgl::graph{
@@ -189,7 +197,7 @@ public :
         curIndent=0;
     }
     region * getRegion(){
-        CHECK_CONDITION(_region!=nullptr);
+        CHECK_CONDITION(_region!=nullptr, "");
         return _region;
     }
     moduleOp * getModuleOp(){return op;}
