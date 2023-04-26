@@ -3,7 +3,7 @@ set(sources
     #tests/test_aog.h
 )
 create_cpp_binary(
-    NAME unit_tests
+    NAME integrate_tests
     SRCS 
     ${sources}
 
