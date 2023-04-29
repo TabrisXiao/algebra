@@ -34,6 +34,23 @@ class painter {
         op1->setRemovable();
         return op2;
     }
+
+    void erase(operation* op){
+        op->dropAllInputs();
+        auto& users = op->getOutgoings();
+        for(auto user : users){
+            auto& refs = user->getInputRefs();
+            // removing all valueRef of users pointing to this op;
+            for(auto iter=refs.begin(); iter!=refs.end();){
+                if((*iter).getDefiningOp()== op ) 
+                    iter = refs.erase(iter);
+                else iter++;
+            }
+            // removing the this op from the users incoming list
+            user->getIncomings().erase(op);
+        }
+        op->setRemovable();
+    }
     
     // merge two ops:
     // op1   op2       op1 -- op2

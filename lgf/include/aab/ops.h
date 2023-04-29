@@ -2,6 +2,8 @@
 #ifndef AAOPS_H_
 #define AAOPS_H_
 #include "lgf/operation.h"
+#include "lgf/lgOps.h"
+#include "groups.h"
 //#include "lgf/group.h"
 //#include "lgf/lgInterfaces.h"
 //#include "pass.h"
@@ -9,12 +11,10 @@
 
 namespace lgf
 {
-
-
 class defOp : public operation{
 public: 
     defOp(std::string id_="Unknown") {
-        auto val = createValue();
+        auto& val = createValue();
         val.setTypeID(id_);
         setTypeID("Def");
     }
@@ -26,15 +26,11 @@ public:
     }
 };
 
-class addOp : public operation{
+class addOp : public binaryOp, public commutable{
     public :
-    addOp(value& lhs, value& rhs){
-        registInput(lhs, rhs);
+    addOp(value& lhs, value& rhs) : binaryOp(lhs, rhs) {
         setTypeID("Add");
-        createValue();
     }
-    value& lhs() {return input(0);}
-    value& rhs() {return input(1);}
     virtual std::string represent() override{
         printer p;
         p<<output().represent();
@@ -43,16 +39,12 @@ class addOp : public operation{
     }
 };
 
-class multiplyOp : public operation {
+class multiplyOp : public binaryOp {
     public :
     public :
-    multiplyOp(value& lhs, value& rhs){
-        registInput(lhs, rhs);
+    multiplyOp(value& lhs, value& rhs) : binaryOp(lhs, rhs) {
         setTypeID("Multiply");
-        createValue();
     }
-    value& lhs() {return input(0);}
-    value& rhs() {return input(1);}
     virtual std::string represent() override{
         printer p;
         p<<output().represent();
@@ -61,7 +53,7 @@ class multiplyOp : public operation {
     }
 };
 
-class sumOp : public operation{
+class sumOp : public operation, public commutable{
     public:
     template <typename... ARGS>
     sumOp(ARGS &...args) {
@@ -69,9 +61,11 @@ class sumOp : public operation{
         setTypeID("Sum");
         createValue();
     }
-    sumOp(){
+    sumOp(std::vector<value> vals){
         createValue();
         setTypeID("Sum");
+        for(auto& v : vals)
+            registInput(v);
     }
     void addInput(value& val) { registInput(val); }
 

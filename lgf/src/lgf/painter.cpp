@@ -20,10 +20,12 @@ bool painter::applyRewriterOnce(){
 
 int painter::applyRewriterGreedy(){
     bool repeat = applyRewriterOnce();
+    g->clean();
     int counts = 1;
     while(repeat){
         counts++;
         repeat = applyRewriterOnce();
+        g->clean();
     }
     return counts;
 }

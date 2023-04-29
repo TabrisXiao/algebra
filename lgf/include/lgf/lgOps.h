@@ -19,5 +19,27 @@ public:
     void assignID(int n=0){ block.assignID(n); }
     graph block;
 };
+
+// a binary op is an operation taking exactly two values as inputs
+// and produce eactly one output value
+class binaryOp : public operation{
+    public:
+    binaryOp(value &lhs, value &rhs){
+        registInput(lhs, rhs);
+        createValue();
+    }
+    value& lhs() {return input(0);}
+    value& rhs() {return input(1);}
+};
+
+// class funcOp : public operation {
+// public:
+//     funcOp(std::string funcid){
+//         funcID = funcid;
+//     }
+//     std::string getFuncID(){return funcID;}
+
+//     std::string funcID;
+// };
 }
 #endif

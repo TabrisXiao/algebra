@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <chrono>
 
 #define TEST_CHECK_VALUE(var, val, ret, msg)\
     if (var!= val) { \
@@ -32,6 +33,7 @@ class unit_test_frame{
     }
     void run_all_test(){ 
         for(auto test: tests){
+            auto start = std::chrono::high_resolution_clock::now();
             std::cout<<"[ Run    ]: "<<test->test_id<<"...\n";
             bool check = test->run();
             if(check){
@@ -39,7 +41,9 @@ class unit_test_frame{
             }else {
                 std::cout<<"[    Pass]: ";
             }
-            std::cout<<test->test_id<<std::endl;
+            auto end = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+            std::cout<<test->test_id<<",  in "<<duration.count()/1000<<" ms"<<std::endl;
         }
     }
     std::vector<test_wrapper*> tests;
