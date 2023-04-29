@@ -200,6 +200,7 @@ public :
     }
 
     std::multiset<operation*>& getOutgoings(){ return outgoings;}
+    std::multiset<operation*>& getIncomings(){ return incomings;}
 
     void setActivation(bool a ){ bActive = a; }
     bool isActive(){return bActive; }
@@ -219,6 +220,8 @@ public :
         }
         return res;
     }
+
+    std::vector<valueRef>& getInputRefs(){ return inputs;}
 
     private:
     std::vector<valueRef> inputs;

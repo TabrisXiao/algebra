@@ -22,8 +22,8 @@ class test_pass : public test_wrapper{
         auto yx = builder.createOp<multiplyOp>(vary->output(), varx->output());
         auto xx = builder.createOp<multiplyOp>(varx->output(), varx->output());
         auto yy = builder.createOp<multiplyOp>(vary->output(), vary->output());
-        auto add1 = builder.createOp<addOp>(xx->output(), xy->output());
-        auto add2 = builder.createOp<addOp>(yx->output(), yy->output());
+        auto add1 = builder.createOp<addOp>(xx->output(), yy->output());
+        auto add2 = builder.createOp<addOp>(yx->output(), xy->output());
         auto add3 = builder.createOp<addOp>(add1->output(), add2->output());
         module->assignID(0);
         module->print();
@@ -31,6 +31,7 @@ class test_pass : public test_wrapper{
         pm.enablePrintAfterPass();
         createConvertAddToSumPass(pm);
         createFuseSumOpPassPass(pm);
+        createLhsAssociatePass(pm);
         pm.run();
         return 0;
     }
