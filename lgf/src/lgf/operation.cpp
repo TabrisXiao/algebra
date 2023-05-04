@@ -39,15 +39,27 @@ value & valueRef::getValue(){
 
 //////////////////////////////////////////////////////
 
-void operation::print(){
-    printOp();
+std::string operation::representOutputs(){
+    // this function print the outputs in the form:
+    // %1, %2 = 
+    printer p;
+    p<<outputs.front().represent();
+    for(auto iter =outputs.begin()+1; iter!=outputs.end(); iter++){
+        p<<", "<<(*iter).represent();
+    }
+    p<<" = ";
+    return p.dump();
 }
 //---------------------------------------------------
 
-void operation::printOp() {
+void operation::print(){
     global::stream::getInstance().printIndent();
+    //printOutputs();
     global::stream::getInstance() << represent();
-    global::stream::getInstance() <<"\n";
+    if(auto g = getSubgraph()){
+        global::stream::getInstance() <<" ";
+        g->print();
+    } else global::stream::getInstance() <<"\n";
 }
 //---------------------------------------------------
 
@@ -143,9 +155,11 @@ void operation::replaceBy(operation* new_op){
 void graph::print() {
     global::stream::getInstance()<<"{\n";
     global::stream::getInstance().incrIndentLevel();
-    printOps();
-    global::stream::getInstance()<<"}\n";
+    walk([&](operation* op){ 
+        op->print();});
     global::stream::getInstance().decrIndentLevel();
+    global::stream::getInstance().printIndent();
+    global::stream::getInstance()<<"}\n";
 }
 //---------------------------------------------------
 
@@ -160,12 +174,6 @@ void graph::assignID(int n0 ){
 void graph::addOp(operation* op){
     nodes.push_back(op);
     if(op->getInputSize() == 0) addEntranceOp(op); 
-}
-//---------------------------------------------------
-
-inline void graph::printOps(){
-    walk([&](operation* op){ 
-        op->print();});
 }
 //---------------------------------------------------
 

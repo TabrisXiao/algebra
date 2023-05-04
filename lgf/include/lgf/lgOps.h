@@ -4,20 +4,19 @@
 #include "lgf/group.h"
 namespace lgf
 {
-class moduleOp : public operation{
-public:
-    moduleOp(){ setTypeID("module"); }
-    ~moduleOp(){std::cout<<"deleted"<<std::endl;}
+class subGraphDefBaseOp : public operation{
+    public:
+    subGraphDefBaseOp(std::string id) {setTypeID(id);};
+    ~subGraphDefBaseOp() = default;
     virtual graph* getSubgraph() override final {return &block;}
-    std::string represent() {return getTypeID();}
-    virtual void printOp() override final{
-        global::stream::getInstance().printIndent();
-        global::stream::getInstance()<<getTypeID()<<" : ";
-        block.print();
-        global::stream::getInstance()<<"\n";
-    }
     void assignID(int n=0){ block.assignID(n); }
     graph block;
+};
+class moduleOp : public subGraphDefBaseOp{
+public:
+    moduleOp() : subGraphDefBaseOp("module"){}
+    ~moduleOp(){}
+    std::string represent() {return getTypeID();}
 };
 
 // a binary op is an operation taking exactly two values as inputs
@@ -32,14 +31,26 @@ class binaryOp : public operation{
     value& rhs() {return input(1);}
 };
 
-// class funcOp : public operation {
-// public:
-//     funcOp(std::string funcid){
-//         funcID = funcid;
-//     }
-//     std::string getFuncID(){return funcID;}
-
-//     std::string funcID;
-// };
+class funcDefOp : public subGraphDefBaseOp {
+public:
+    funcDefOp(std::string funcid, std::vector<std::string> args) : subGraphDefBaseOp("funcDef") {
+        funcID = funcid;
+        argTypes = args;
+    }
+    std::string getFuncID(){return funcID;}
+    std::string represent() {
+        printer p;
+        p<<funcID<<" = "<<getTypeID()<<"(";
+        p<<argTypes[0];
+        for(auto iter=argTypes.begin()+1; iter!=argTypes.end(); iter++){
+            p<<", "<<(*iter);
+        }
+        p<<") ";
+        return p.dump();
+    }
+    
+    std::string funcID;
+    std::vector<std::string> argTypes;
+};
 }
 #endif

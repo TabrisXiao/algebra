@@ -95,11 +95,11 @@ class valueRef{
 
 class operation : public objInfo{
 public : 
-    operation() : objInfo(){ outputs.reserve(3); };
+    operation() : objInfo(){ outputs.reserve(1); };
     virtual ~operation() = default;
     virtual std::string represent() = 0;
-    virtual void printOp();
-    void print();
+    virtual std::string representOutputs();
+    virtual void print();
     value& getValueByID(id_t id){
         return outputs[id];
     }
@@ -243,8 +243,7 @@ public :
 class graph {
 public : 
     graph() = default;
-    void print();
-    inline void printOps();
+    inline void print();
     // A breadth-first walk function that is graph modification safe.
     // Call the callable at the begining of visiting each vertex.
     // The callable should return void.

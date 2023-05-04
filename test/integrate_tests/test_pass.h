@@ -26,7 +26,8 @@ class test_pass : public test_wrapper{
         auto add2 = builder.createOp<addOp>(yx->output(), xy->output());
         auto add3 = builder.createOp<addOp>(add1->output(), add2->output());
         module->assignID(0);
-        module->print();
+        builder.getOrigGraph().print();
+        //module->print();
         passManager pm(module);
         pm.enablePrintAfterPass();
         createConvertAddToSumPass(pm);

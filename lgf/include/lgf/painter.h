@@ -67,6 +67,7 @@ class painter {
     void gotoGraph(graph * reg_) { g = reg_;}
     graph& getGraph(){ return *g;}
     void backToOrigGraph(){ g = &origGraph; }
+    graph& getOrigGraph(){ return origGraph; }
 
     // addRewriter will create a rewriter using the arguments;
     template<typename T, typename ...ARGS>
