@@ -184,6 +184,12 @@ void graph::assignID(int n0 ){
     int n = n0;
     walk([&](operation* op){
         op->assignValueID(n);
+        if(auto g = dynamic_cast<graph*>(op)){
+            int gn = 0;
+            int entryn = 0;
+            g->getEntry().assignValueID(entryn);
+            g->assignID(gn);
+        }
     });
 }
 //---------------------------------------------------
@@ -214,3 +220,4 @@ void graph::clean()
         else iter++;
     }
 }
+//---------------------------------------------------

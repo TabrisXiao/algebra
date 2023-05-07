@@ -205,7 +205,7 @@ public :
 
     // assign trace id to the value created in this operation. 
     // The start of the trace id is specified by the argument n.
-    void assignValueID(int& n);
+    virtual void assignValueID(int& n);
 
     // drop all inputs to this operation, and remove all connects
     // associated to the op.
@@ -296,6 +296,8 @@ public :
     // The operation ran by fn is marked as done. A operation will
     // got processed only if all inputs operations are done (All
     // dependences are processed).
+    // notice that this walk skipped the entryOp so that we don't 
+    // need to worry about the entry op got modified by accident.
     template<typename callable>
     void walk(callable && fn, bool checkDependency = 0, bool recycleInactive = 0, bool removeDisconnected = 0){
         std::queue<operation *> _vq;
