@@ -41,7 +41,7 @@ class passManager{
     }
 
     void addPass(std::unique_ptr<passBase> ps){
-        ps->gotoGraph(startOp->getSubgraph());
+        ps->gotoGraph(dynamic_cast<graph*>(startOp));
         passes.push_back(std::move(ps));
     }
     std::vector<std::unique_ptr<passBase>> passes;

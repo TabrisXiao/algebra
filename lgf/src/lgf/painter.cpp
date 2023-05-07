@@ -7,12 +7,12 @@ bool painter::applyRewriterOnce(){
     bool ischanged = 0;
     for(auto ptr=rewriters.begin(); ptr!=rewriters.end(); ptr++)
     {
-        auto nodes = g->getNodeList(); 
+        auto nodes = current_graph->getNodeList(); 
         for(auto & node : nodes){
             if(node->isRemovable() || !node->isActive()) continue;
             ischanged = (*ptr).get()->execute(*this, node) ||ischanged;
         }
-        g->clean();
+        current_graph->clean();
     }
     return ischanged;
 }
@@ -20,12 +20,12 @@ bool painter::applyRewriterOnce(){
 
 int painter::applyRewriterGreedy(){
     bool repeat = applyRewriterOnce();
-    g->clean();
+    current_graph->clean();
     int counts = 1;
     while(repeat){
         counts++;
         repeat = applyRewriterOnce();
-        g->clean();
+        current_graph->clean();
     }
     return counts;
 }

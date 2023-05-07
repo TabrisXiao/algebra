@@ -15,13 +15,13 @@ class defOp : public operation{
 public: 
     defOp(std::string id_="Unknown") {
         auto& val = createValue();
-        val.setTypeID(id_);
-        setTypeID("Def");
+        val.setSID(id_);
+        setSID("Def");
     }
     std::string represent() final{
         printer p;
         p<<output().represent();
-        p<< " = "<<getTypeID();
+        p<< " = "<<getSID();
         return p.dump();
     }
 };
@@ -29,12 +29,12 @@ public:
 class addOp : public binaryOp, public commutable{
     public :
     addOp(value& lhs, value& rhs) : binaryOp(lhs, rhs) {
-        setTypeID("Add");
+        setSID("Add");
     }
     virtual std::string represent() override{
         printer p;
         p<<output().represent();
-        p<<" = "<<getTypeID()<<" : "<<lhs().represent() << " + "<<rhs().represent();
+        p<<" = "<<getSID()<<" : "<<lhs().represent() << " + "<<rhs().represent();
         return p.dump();
     }
 };
@@ -43,12 +43,12 @@ class multiplyOp : public binaryOp {
     public :
     public :
     multiplyOp(value& lhs, value& rhs) : binaryOp(lhs, rhs) {
-        setTypeID("Multiply");
+        setSID("Multiply");
     }
     virtual std::string represent() override{
         printer p;
         p<<output().represent();
-        p<<" = "<<getTypeID()<<" : "<<lhs().represent() << " * "<<rhs().represent();
+        p<<" = "<<getSID()<<" : "<<lhs().represent() << " * "<<rhs().represent();
         return p.dump();
     }
 };
@@ -57,22 +57,22 @@ class sumOp : public operation, public commutable{
     public:
     template <typename... ARGS>
     sumOp(ARGS &...args) {
-        registInput(args...);
-        setTypeID("Sum");
+        registerInput(args...);
+        setSID("Sum");
         createValue();
     }
     sumOp(std::vector<value> vals){
         createValue();
-        setTypeID("Sum");
+        setSID("Sum");
         for(auto& v : vals)
-            registInput(v);
+            registerInput(v);
     }
-    void addInput(value& val) { registInput(val); }
+    void addInput(value& val) { registerInput(val); }
 
     std::string represent() override {
         printer p;
         p<<output().represent();
-        p<<" = "<<getTypeID()<<" : ";
+        p<<" = "<<getSID()<<" : ";
         id_t n = getInputSize(), i=0;
         for(auto j =0 ;j<n; j++){
             p<<input(j).represent();

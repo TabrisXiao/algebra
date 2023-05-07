@@ -19,27 +19,43 @@ class dependence;
 class value;
 class valueRef;
 class graph;
+
 typedef size_t id_t;
 
+class type_t {
+    public:
+    type_t () = default;
+    type_t (std::string id_){ id= id_;}
+    ~type_t() = default;
+    void setID(std::string id_){ id= id_;}
+    std::string represent() const {
+        printer p; p<<"<"<<id<<">";
+        return p.dump(); 
+    }
+    std::string id="Unknown";
+};
+//symbolic id;
+using sid_t = std::string;
 class objInfo {
     public: 
-    objInfo() {};
-    objInfo(const objInfo & info){
-        tid = info.getTypeID();
+    objInfo() = default;
+    objInfo(const objInfo & info) {
         traceID = info.getTraceID();
+        sid=info.getSID();
     }
+    objInfo(std::string id) {sid = id;}
     void setTraceID(int id_){traceID = id_;}
-    void setTypeID(const char * _id){tid = _id;}
-    void setTypeID(std::string& _id){tid = _id;}
     int getTraceID() const {return traceID;}
-    std::string getTypeID() const { 
-        return tid; }
-    void printTraceID(std::ostream os){ os<<traceID; }
+
+    sid_t getSID() const {return sid;}
+    void setSID(sid_t id){sid=id;}
 
     private:
     int traceID = -1;
-    std::string tid="Unknown";
+    sid_t sid;
+    type_t type_;
 };
+
 
 template<typename obj>
 obj& get_vec_elem_with_check(size_t n, std::vector<obj>& vec){
@@ -55,6 +71,12 @@ public:
     virtual ~value() = default;
     virtual std::string represent(); 
     void print();
+    void setType(type_t tp) {vtp = tp;}
+    void setTypeID(const char * _id){vtp.setID(_id);}
+    void setTypeID(std::string& _id){vtp.setID(_id);}
+    type_t getType(){return vtp;}
+    std::string getTR() const { 
+        return vtp.represent(); }
     operation * getDefiningOp() const {return defop;}
     template<class opType>
     opType* getDefiningOp() const {return dynamic_cast<opType*>(getDefiningOp());}
@@ -70,6 +92,7 @@ public:
     private:
     operation *defop = nullptr;
     const id_t iid = -1;
+    type_t vtp;
 };
 
 class valueRef{
@@ -86,6 +109,10 @@ class valueRef{
     operation* getDefiningOp() const {return defop;}
     id_t getIID() const {return iid;}
     value & getValue();
+    int getTraceID(){ return getValue().getTraceID();}
+    // get type represent
+    std::string getTR(){ return getValue().getTR();}
+    std::string represent(){ return getValue().represent();}
 
     private:
     operation * defop = nullptr;
@@ -95,11 +122,15 @@ class valueRef{
 
 class operation : public objInfo{
 public : 
-    operation() : objInfo(){ outputs.reserve(3); };
+    operation(std::string id="Unknown", graph * g=nullptr) : 
+    objInfo(id){ 
+        graph_ = g;
+        outputs.reserve(1); 
+    };
     virtual ~operation() = default;
-    virtual std::string represent() = 0;
-    virtual void printOp();
-    void print();
+    virtual std::string represent()=0;
+    virtual std::string representOutputs();
+    virtual void print();
     value& getValueByID(id_t id){
         return outputs[id];
     }
@@ -109,6 +140,7 @@ public :
         op->incomings.insert(this);
     }
     void linkFrom(operation *op){
+        if(!op) return;
         op->outgoings.insert(this); 
         incomings.insert(op);
     }
@@ -148,7 +180,7 @@ public :
     // and link to the new operation owning v.
     void replaceInputValue(int n, value& v);
     template <typename... ARGS>
-    void registInput(ARGS ...args)
+    void registerInput(ARGS ...args)
     {
         // inputs are suppose to be value type.
         auto values = {args...};
@@ -160,7 +192,7 @@ public :
     }
     // register the input at the given position. Other inputs after 
     // that index will be push back by 1 pos.
-    void registInputAt( value& val, int pos);
+    void registerInputAt( value& val, int pos);
     
     // create a value as output from this op, the order is not 
     // changable as it related to the iid of that value.
@@ -173,7 +205,7 @@ public :
 
     // assign trace id to the value created in this operation. 
     // The start of the trace id is specified by the argument n.
-    void assignValueID(int& n);
+    virtual void assignValueID(int& n);
 
     // drop all inputs to this operation, and remove all connects
     // associated to the op.
@@ -220,8 +252,11 @@ public :
         }
         return res;
     }
+    graph* getParentGraph(){return graph_;}
+    void setParentGraph(graph* g){ graph_ = g; }
 
     std::vector<valueRef>& getInputRefs(){ return inputs;}
+    graph * expandToGraph();
 
     private:
     std::vector<valueRef> inputs;
@@ -229,22 +264,31 @@ public :
     // this function is used to determine if this operation contained
     // a region. If an op contained a region, it should override
     // this function.
-    virtual graph* getSubgraph(){ return nullptr;}
+    //virtual graph* getSubgraph(){ return nullptr;}
     bool bActive = 1;
     bool bExplored = 0;
 
     // this is a member used to remove the operation efficiently. 
     // Should be used solely for removing process in graph.
     bool bRemove = 0;
+    graph* graph_ = nullptr;
     std::multiset<operation*> incomings;
     std::multiset<operation*> outgoings;
 };
 
-class graph {
+class graph : public operation{
+    class graphEntry : public operation {
+        public:
+        graphEntry(graph* g) : operation("", g){}
+        virtual std::string represent() { return ""; }
+    };
 public : 
     graph() = default;
-    void print();
-    inline void printOps();
+    graph(std::string id, graph* pg = nullptr)
+    : operation(id, pg)
+    , entry(pg) {}
+    virtual void print() override;
+    virtual std::string represent() = 0;
     // A breadth-first walk function that is graph modification safe.
     // Call the callable at the begining of visiting each vertex.
     // The callable should return void.
@@ -252,11 +296,13 @@ public :
     // The operation ran by fn is marked as done. A operation will
     // got processed only if all inputs operations are done (All
     // dependences are processed).
+    // notice that this walk skipped the entryOp so that we don't 
+    // need to worry about the entry op got modified by accident.
     template<typename callable>
     void walk(callable && fn, bool checkDependency = 0, bool recycleInactive = 0, bool removeDisconnected = 0){
         std::queue<operation *> _vq;
         std::vector<operation *> vertice_buffer;
-        for(auto op: entrances)
+        for(auto op: entry.getOutgoings())
             _vq.push(op);
         while (_vq.size())
         {
@@ -297,23 +343,28 @@ public :
         return;
     }
     // add operation to this graph
-    void addEntranceOp(operation* op){ entrances.push_back(op); }
+    void attachToEntrance(operation* op){ 
+        entry.linkTo(op); }
     // regist the op in this graph into book, if this op has no
     // inputs, it will be added as an entrance op.
     void addOp(operation* op);
+    graph* getGraph() {return dynamic_cast<graph*>(this);}
+
+    virtual void printGraph();
 
     void assignID(int n=0);
 
     // clean will remove all operations marked as removable;
     void clean();
     // entrances are the ops have no inputs
+    operation&  getEntry(){ return entry; }
 
     // return how many operations graph contained
     int getNodeSize(){ return int(nodes.size()); }
     std::vector<operation*> & getNodeList(){return nodes;}
     private:
-    std::vector<operation*> entrances;
     std::vector<operation*> nodes;
+    graphEntry entry;
 };
 
 }

@@ -65,9 +65,12 @@ function(create_cpp_binary)
         RULE
         "TESTONLY"
         "NAME;OUT"
-        "SRCS;COPTS;DEFINES;LINKOPTS;DATA;DEPENDS;LINK_LIBS"
+        "SRCS;COPTS;DEFINES;INCLUDES;LINKOPTS;DATA;DEPENDS;LINK_LIBS"
         ${ARGN})
-    
+
+    if(RULE_INCLUDES)
+        include_directories(${RULE_INCLUDES})
+    endif()
     add_executable(${RULE_NAME} "")
     if(RULE_SRCS)
         target_sources(${RULE_NAME}
@@ -75,6 +78,7 @@ function(create_cpp_binary)
             ${RULE_SRCS}
         )
     endif()
+    
     if(RULE_OUT)
         set_target_properties(${RULE_NAME} PROPERTIES OUTPUT_NAME "${RULE_OUT}")
     else()

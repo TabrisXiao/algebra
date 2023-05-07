@@ -15,7 +15,7 @@ class test_pass : public test_wrapper{
     bool run() {
         painter builder;
         auto module = builder.createOp<moduleOp>();
-        builder.gotoGraph(module->getSubgraph());
+        builder.gotoGraph(module->getGraph());
         auto varx = builder.createOp<defOp>("x");
         auto vary = builder.createOp<defOp>("y");
         auto xy = builder.createOp<multiplyOp>(varx->output(), vary->output());
@@ -26,7 +26,8 @@ class test_pass : public test_wrapper{
         auto add2 = builder.createOp<addOp>(yx->output(), xy->output());
         auto add3 = builder.createOp<addOp>(add1->output(), add2->output());
         module->assignID(0);
-        module->print();
+        builder.getParentGraph()->print();
+        //module->print();
         passManager pm(module);
         pm.enablePrintAfterPass();
         createConvertAddToSumPass(pm);

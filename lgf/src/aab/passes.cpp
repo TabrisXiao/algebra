@@ -45,7 +45,7 @@ class fuseAddToSumRewriter : public rewriter<sumOp>{
         auto inputs = op->getInputs();
         for(auto& iter = inputs.begin(); iter!=inputs.end(); iter++){
             if(origOp == (*iter).getDefiningOp<sumOp>()) continue;
-            origOp->registInput(*iter);
+            origOp->registerInput(*iter);
         }
         op->replaceBy(origOp);
         op->dropAllInputs();
