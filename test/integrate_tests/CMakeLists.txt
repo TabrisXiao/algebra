@@ -11,4 +11,6 @@ create_cpp_binary(
     lgf_lib
     lgf_aab_lib
     COPTS /EHsc /W0 /std:c++17
+    INCLUDES
+    ${PROJECT_SOURCE_DIR}/test/include/
 )

@@ -15,13 +15,14 @@ class rewriterBase;
 
 class painter {
     public : 
-    painter(){ g = &origGraph; };
-    painter(graph* reg_) { g = reg_; }
+    painter(graph* reg_) { current_graph = reg_; }
+    painter() = default;
     ~painter(){}
     template<typename obj, typename...ARGS>
     obj* createOp(ARGS ...args){
+        CHECK_CONDITION(current_graph!=nullptr, "No graph associated to the painter!");
         auto ptr = new obj(args...);
-        g->addOp(ptr);
+        current_graph->addOp(ptr);
         return ptr;
     }
 
@@ -64,10 +65,17 @@ class painter {
         // TODO
         return ;}
     
-    void gotoGraph(graph * reg_) { g = reg_;}
-    graph& getGraph(){ return *g;}
-    void backToOrigGraph(){ g = &origGraph; }
-    graph& getOrigGraph(){ return origGraph; }
+    void gotoGraph(graph * reg_) {
+        current_graph = reg_;
+    }
+    graph* getGraph(){ return current_graph;}
+    void gotoParentGraph(){
+        if(!current_graph) return;
+        current_graph = current_graph->getParentGraph(); 
+    }
+    graph* getParentGraph(){ 
+        if(!current_graph) return nullptr;
+        return current_graph->getParentGraph(); }
 
     // addRewriter will create a rewriter using the arguments;
     template<typename T, typename ...ARGS>
@@ -79,8 +87,7 @@ class painter {
     int applyRewriterGreedy();
 
     private: 
-    graph *g = nullptr;
-    graph origGraph;
+    graph *current_graph = nullptr;
     std::vector<std::unique_ptr<rewriterBase>> rewriters;
 };
 

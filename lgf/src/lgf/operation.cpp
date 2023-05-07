@@ -10,10 +10,10 @@ value::value(operation * op, id_t id) : defop(op), iid(id) {
 
 std::string value::represent() {
     printer p;
-    p<<"%";
+    p<<"%"<<getSID();
     std::string id = getTraceID() > -1 ? std::to_string(getTraceID()):"#";
     p<<id;
-    p<<" <"<<getTypeID()<<">";
+    p<<" "<<getTR();
     return p.dump();
 }
 //---------------------------------------------------
@@ -47,7 +47,6 @@ std::string operation::representOutputs(){
     for(auto iter =outputs.begin()+1; iter!=outputs.end(); iter++){
         p<<", "<<(*iter).represent();
     }
-    p<<" = ";
     return p.dump();
 }
 //---------------------------------------------------
@@ -56,14 +55,14 @@ void operation::print(){
     global::stream::getInstance().printIndent();
     //printOutputs();
     global::stream::getInstance() << represent();
-    if(auto g = getSubgraph()){
+    if(auto g = expandToGraph()){
         global::stream::getInstance() <<" ";
         g->print();
     } else global::stream::getInstance() <<"\n";
 }
 //---------------------------------------------------
 
-void operation::registInputAt( value& val, int pos){
+void operation::registerInputAt( value& val, int pos){
     inputs.insert(inputs.begin()+pos, valueRef(val));
 }
 //---------------------------------------------------
@@ -105,6 +104,12 @@ bool operation::isDependencyFullfilled(){
         if(!op->isExplored()) return false;
     }
     return true;
+}
+//---------------------------------------------------
+
+graph* operation::expandToGraph()
+{ 
+    return dynamic_cast<graph*>(this);
 }
 //---------------------------------------------------
 
@@ -153,6 +158,19 @@ void operation::replaceBy(operation* new_op){
 //////////////////////////////////////////////////////
 
 void graph::print() {
+    global::stream::getInstance().printIndent();
+    std::string code = represent();
+    // add space if the represent is not empty
+    // {} no reprsent, shoudn't have space
+    // module {}, have represent "module", should have space
+    // between "module" and the {}.
+    if(!code.empty()) code += " "; 
+    global::stream::getInstance()<<code;
+    printGraph();
+}
+//---------------------------------------------------
+
+void graph::printGraph() {
     global::stream::getInstance()<<"{\n";
     global::stream::getInstance().incrIndentLevel();
     walk([&](operation* op){ 
@@ -161,7 +179,6 @@ void graph::print() {
     global::stream::getInstance().printIndent();
     global::stream::getInstance()<<"}\n";
 }
-//---------------------------------------------------
 
 void graph::assignID(int n0 ){
     int n = n0;
@@ -173,12 +190,14 @@ void graph::assignID(int n0 ){
 
 void graph::addOp(operation* op){
     nodes.push_back(op);
-    if(op->getInputSize() == 0) addEntranceOp(op); 
+    op->setParentGraph(this);
+    if(op->getInputSize() == 0) attachToEntrance(op); 
 }
 //---------------------------------------------------
 
 void graph::clean()
 {
+    auto & entrances= getOutgoings();
     for(auto iter = entrances.begin(); iter!=entrances.end();){
         if((*iter)->isRemovable()) {
             iter = entrances.erase(iter);
@@ -193,5 +212,5 @@ void graph::clean()
             iter = nodes.erase(iter);
         }
         else iter++;
-    } 
+    }
 }
