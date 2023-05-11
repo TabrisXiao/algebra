@@ -13,5 +13,10 @@
         std::cerr<<"Runtime Error: " __FILE__ ":"<< std::to_string(__LINE__)<< " : Expecting " #condition ", but failed. "<<msg<<"\n"; \
         std::exit(EXIT_FAILURE); \
     }
+#define THROW_WHEN(condition, msg) \
+    if (condition) { \
+        std::cerr<<"Runtime Error: " __FILE__ ":"<< std::to_string(__LINE__)<< ": "<<msg<<"\n"; \
+        std::exit(EXIT_FAILURE); \
+    }
 
 #endif

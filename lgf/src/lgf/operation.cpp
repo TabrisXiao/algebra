@@ -132,6 +132,7 @@ valueRef* operation::inputRefByValue(const value & v){
     if(iter!=inputs.end()) return &(*iter);
     return nullptr;
 }
+//---------------------------------------------------
 
 void operation::replaceBy(operation* new_op){
     auto output_size = getOutputSize();

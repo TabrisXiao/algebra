@@ -23,7 +23,7 @@ public :
 
 class passManager{
     public : 
-    passManager(moduleOp *op) {startOp = op;}
+    passManager(graph *op) {start = op;}
     void enablePrintAfterPass(){bPrintAfterPass = 1;}
     bool runPasses(){
         return 0;
@@ -33,22 +33,22 @@ class passManager{
             (*pass).get()->run();
             if(bPrintAfterPass){
                 OSTREAM<<"------ representation after pass: "<<(*pass).get()->_pass_name<<" ------\n";
-                startOp->assignID(0);
-                startOp->print();
+                start->assignID(0);
+                start->print();
                 OSTREAM<<"\n";
             }
         }
     }
 
     void addPass(std::unique_ptr<passBase> ps){
-        ps->gotoGraph(dynamic_cast<graph*>(startOp));
+        ps->gotoGraph(dynamic_cast<graph*>(start));
         passes.push_back(std::move(ps));
     }
     std::vector<std::unique_ptr<passBase>> passes;
 
     bool bPrintAfterPass = 0;
     bool bPrintBeforePass = 0;
-    moduleOp * startOp = nullptr;
+    graph * start = nullptr;
 };
 
 }

@@ -28,6 +28,7 @@ class type_t {
     type_t (std::string id_){ id= id_;}
     ~type_t() = default;
     void setID(std::string id_){ id= id_;}
+    std::string getSID() {return id;}
     std::string represent() const {
         printer p; p<<"<"<<id<<">";
         return p.dump(); 
@@ -299,7 +300,7 @@ public :
     // notice that this walk skipped the entryOp so that we don't 
     // need to worry about the entry op got modified by accident.
     template<typename callable>
-    void walk(callable && fn, bool checkDependency = 0, bool recycleInactive = 0, bool removeDisconnected = 0){
+    void walk(callable && fn, bool checkDependency = 0, bool recycleInactive = 0, bool removeDisconnected = 0, bool deepWalk=0){
         std::queue<operation *> _vq;
         std::vector<operation *> vertice_buffer;
         for(auto op: entry.getOutgoings())
@@ -322,6 +323,11 @@ public :
                 if (vn->isExplored()) continue;
                 if(vn->isRemovable()) continue;
                 _vq.push(vn);
+            }
+            if(deepWalk){
+                if(auto g = dynamic_cast<graph*>(v)){
+                    g->walk(fn, checkDependency, recycleInactive,   removeDisconnected, 1);
+                }
             }
             fn(v);
         }
