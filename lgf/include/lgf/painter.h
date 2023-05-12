@@ -83,8 +83,18 @@ class painter {
         auto ptr = std::make_unique<T>(arg...);
         rewriters.push_back(std::move(ptr));
     }
+
     bool applyRewriterOnce();
     int applyRewriterGreedy();
+
+    bool walkApplyRewriterOnce(bool deepwalk = 0);
+
+    // Translation is a special method to apply rewriters,
+    // It walk only once through a graph in the dependency order
+    // and apply all the applicable rewriters to the ops.
+    // So this method is only safe for the case that all rewriters
+    // are order free.
+    bool translation();
 
     private: 
     graph *current_graph = nullptr;

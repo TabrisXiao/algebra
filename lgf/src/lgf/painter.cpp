@@ -29,3 +29,25 @@ int painter::applyRewriterGreedy(){
     }
     return counts;
 }
+
+bool painter::walkApplyRewriterOnce(bool deepWalk){
+    current_graph->walk([&](operation* op){
+        if(op->isRemovable() || !op->isActive()) return;
+        for(auto ptr=rewriters.begin(); ptr!=rewriters.end(); ptr++){
+            (*ptr).get()->execute(*this, op);
+        }
+    }, 1, 1, 1, deepWalk);
+    current_graph->clean();
+    return 0;
+}
+
+bool painter::translation(){
+    current_graph->walk([&](operation* op){
+        if(op->isRemovable() || !op->isActive()) return;
+        for(auto ptr=rewriters.begin(); ptr!=rewriters.end(); ptr++){
+            (*ptr).get()->execute(*this, op);
+        }
+    }, 1, 1, 1, 0);
+    current_graph->clean();
+    return 0;
+}
