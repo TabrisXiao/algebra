@@ -42,6 +42,7 @@ value & valueRef::getValue(){
 std::string operation::representOutputs(){
     // this function print the outputs in the form:
     // %1, %2 = 
+    if(outputs.size()==0) return "";
     printer p;
     p<<outputs.front().represent();
     for(auto iter =outputs.begin()+1; iter!=outputs.end(); iter++){

@@ -30,15 +30,39 @@ class ASTBase {
     ASTKind kind = ASTKind::Unknown;
 };
 
+class binaryExprAST : public operation, public ASTBase {
+    public:
+    binaryExprAST(value& lhs, value& rhs, std::string op) : operation("binary"), ASTBase(ASTKind::ExprBinary) {
+        bop = op;
+        registerInput(lhs, rhs);
+        auto &val = createValue();
+        val.setType(lhs.getType());
+    };
+    value& lhs() {return input(0);}
+    value& rhs() {return input(1);}
+    virtual std::string represent(){
+            printer p;
+        p<<output().represent();
+        p<<" = "<<getSID()<<" : "<<lhs().represent() << " "<<bop<<" "<<rhs().represent();
+        return p.dump();
+    }
+    std::string bop = "";
+};
+
 class defFuncAST : public graph, public ASTBase{
     public:
-    template<typename ...ARGS>
-    defFuncAST(std::string funcid, std::string ty, ARGS ... args)
-    :graph("FuncDef")
-    ,ASTBase(ASTKind::DefFunc)
-    ,returnType(ty)
+    defFuncAST(std::string funcid)
+    : graph("FuncDef")
+    ,ASTBase(ASTKind::DefFunc) 
     {
         funcID = funcid;
+    }
+    void registerReturnType(std::string tp){
+        createValue().setTypeID(tp);
+    }
+    template<typename ...ARGS>
+    void registerInputTypes(ARGS ... args)
+    {
         (registerInputType(args),...);
     }
     void registerInputType(std::string ty){
@@ -48,14 +72,18 @@ class defFuncAST : public graph, public ASTBase{
     }
     virtual std::string represent(){
         printer p;
-        p<<"@"<<funcID<<" "<<returnType.represent()<<" = "<<getSID()<<" (";
+        p<<"@"<<funcID<<" ";
+        if(getOutputSize() > 0){
+            p<<getReturnType().represent();
+        } 
+        p<<" = "<<getSID()<<" (";
         p<<getEntry().representOutputs()<<")";
         return p.dump();
     }
-    type_t getReturnType(){return returnType;}
+    int nArgs(){return int(getEntry().getOutputSize()); }
+    type_t getReturnType(){return output().getType();}
     value& arg(int n=0){ return getEntry().output(n);}
     std::string funcID="Unknown";
-    type_t returnType;
 };
 
 class returnAST : public operation, public ASTBase{
