@@ -2,6 +2,7 @@
 #ifndef EXCEPTION_H
 #define EXCEPTION_H
 #include <exception>
+#include <iostream>
 #include <string>
 #define CHECK_VALUE(var, val, msg) \
     if ((var) != (val)) { \

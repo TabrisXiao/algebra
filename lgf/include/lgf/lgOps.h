@@ -4,12 +4,7 @@
 #include "lgf/group.h"
 namespace lgf
 {
-class canvas : public graph{
-    public : 
-    canvas() : graph("canvas"){}
-    virtual std::string represent(){ return "";} 
-};
-//----------------------------------------
+
 
 class moduleOp : public graph{
 public:

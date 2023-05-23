@@ -130,6 +130,7 @@ public :
     };
     virtual ~operation() = default;
     virtual std::string represent()=0;
+    virtual std::string representInputs();
     virtual std::string representOutputs();
     virtual void print();
     value& getValueByID(id_t id){
@@ -372,6 +373,13 @@ public :
     std::vector<operation*> nodes;
     graphEntry entry;
 };
+
+class canvas : public graph{
+    public : 
+    canvas() : graph("canvas"){}
+    virtual std::string represent(){ return "";} 
+};
+//----------------------------------------
 
 }
 
