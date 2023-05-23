@@ -4,6 +4,7 @@ file(GLOB_RECURSE headers
 set(
     sources
     ast.cpp
+    sketchLexer.cpp
     cppWriter.cpp
 )
 

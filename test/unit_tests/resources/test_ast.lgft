@@ -1,0 +1,16 @@
+
+@LGF::operation addOp {
+    inputs = {
+        lhs:variable,
+        rhs:variable
+    }
+    outputs = {
+        output:variable
+    }
+}
+
+@LGF::operation defOp {
+    outputs = {
+        output:variable
+    }
+}

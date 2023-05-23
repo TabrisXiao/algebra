@@ -39,6 +39,18 @@ value & valueRef::getValue(){
 
 //////////////////////////////////////////////////////
 
+std::string operation::representInputs(){
+    if(getInputSize() == 0) return "";
+    printer p;
+    auto refs = getInputRefs();
+    p<<refs[0].getValue().getTR();
+    for(auto iter = refs.begin()+1; iter != refs.end(); iter++){
+        p<<", "<<(*iter).getTR();
+    }
+    return p.dump();
+}
+//---------------------------------------------------
+
 std::string operation::representOutputs(){
     // this function print the outputs in the form:
     // %1, %2 = 

@@ -12,7 +12,7 @@ namespace test_body{
 class test_codegen : public test_wrapper{
     
     public:
-    test_codegen() {test_id = "operation test";};
+    test_codegen() {test_id = "codegen test";};
     bool run() {
         canvas reg;
         painter pntr(&reg);
