@@ -7,6 +7,8 @@
 #include <sstream>
 #include <fstream>
 #include <string>
+
+namespace lgf{
 namespace codegen{
 class cgstream
 {
@@ -61,6 +63,20 @@ protected:
     std::ofstream outputf;
     int curIndentLevel=0;
 };
+
+class indentGuard {
+    public:
+    indentGuard() = delete;
+    indentGuard(cgstream& sg){
+        st = &sg;
+        st->incrIndentLevel();
+    }
+    ~indentGuard(){
+        st->decrIndentLevel();
+    }
+    cgstream *st=nullptr;
 };
+} //namespace codegen
+} //namespace lgf
 
 #endif

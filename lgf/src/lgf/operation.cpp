@@ -8,6 +8,12 @@ value::value(operation * op, id_t id) : defop(op), iid(id) {
 }
 //---------------------------------------------------
 
+value::value(operation * op, id_t id, type_t type, std::string sid_) 
+: defop(op), iid(id), vtp(type) {
+    setSID(sid_);
+}
+//---------------------------------------------------
+
 std::string value::represent() {
     printer p;
     p<<"%"<<getSID();
@@ -82,6 +88,10 @@ void operation::registerInputAt( value& val, int pos){
 
 value& operation::createValue(){
     outputs.push_back(value(this, getOutputSize()));
+    return outputs.back();
+}
+value& operation::createValue(type_t type, std::string sid){
+    outputs.push_back(value(this, getOutputSize(), type, sid));
     return outputs.back();
 }
 //---------------------------------------------------

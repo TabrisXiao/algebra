@@ -21,7 +21,7 @@ class test_codegen : public test_wrapper{
         sumf->registerInputTypes("int", "int");
         pntr.gotoGraph(sumf->getGraph());
         auto sum = pntr.createOp<binaryExprAST>(sumf->arg(0), sumf->arg(1), "+");
-        auto ret = pntr.createOp<returnAST>(sum->output());
+        auto ret = pntr.createOp<returnAST>(sum->outputValue());
         pntr.gotoParentGraph();
         auto module = pntr.createOp<defFuncAST>("main");
         pntr.gotoGraph(module->getGraph());

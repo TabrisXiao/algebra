@@ -15,7 +15,7 @@ class defop : public operation {
     }
     virtual std::string represent() override{
         printer p;
-        p<<output().represent();
+        p<<outputValue().represent();
         p<< " = "<<getSID();
         return p.dump();
     }
@@ -27,11 +27,11 @@ class addop : public operation {
         setSID("add");
         createValue();
     }
-    value& lhs() {return input(0);}
-    value& rhs() {return input(1);}
+    value& lhs() {return inputValue(0);}
+    value& rhs() {return inputValue(1);}
     virtual std::string represent() override{
         printer p;
-        p<<output().represent();
+        p<<outputValue().represent();
         p<<" = "<<getSID()<<" : "<<lhs().represent() << " + "<<rhs().represent();
         return p.dump();
     }
@@ -44,11 +44,11 @@ class multiplyop : public operation {
         setSID("multiply");
         createValue();
     }
-    value& lhs() {return input(0);}
-    value& rhs() {return input(1);}
+    value& lhs() {return inputValue(0);}
+    value& rhs() {return inputValue(1);}
     virtual std::string represent() override{
         printer p;
-        p<<output().represent();
+        p<<outputValue().represent();
         p<<" = "<<getSID()<<" : "<<lhs().represent() << " * "<<rhs().represent();
         return p.dump();
     }
@@ -56,15 +56,15 @@ class multiplyop : public operation {
 
 class returnop : public operation{
     public: 
-    returnop (value & input){
-        registerInput(input);
+    returnop (value & inputValue){
+        registerInput(inputValue);
         setSID("return");
         createValue();
     }
     virtual std::string represent() override{
         printer p;
-        p<<output().represent();
-        p<<" = "<<getSID()<<" : "<<input().represent();
+        p<<outputValue().represent();
+        p<<" = "<<getSID()<<" : "<<inputValue().represent();
         return p.dump();
     }
 };
@@ -80,13 +80,13 @@ class test_operation : public test_wrapper{
         auto x = pntr.createOp<defop>("x");
         auto y = pntr.createOp<defop>("y");
         auto z = pntr.createOp<defop>("z");
-        auto xy = pntr.createOp<addop>(x->output(), y->output());
-        auto ret = pntr.createOp<returnop>(xy->output());
+        auto xy = pntr.createOp<addop>(x->outputValue(), y->outputValue());
+        auto ret = pntr.createOp<returnop>(xy->outputValue());
         reg.assignID();
         reg.print();
-        auto xy2 = pntr.replaceOp<multiplyop>(xy, x->output(),y->output());
+        auto xy2 = pntr.replaceOp<multiplyop>(xy, x->outputValue(),y->outputValue());
         reg.clean();
-        xy2->replaceInputValue(1, z->output());
+        xy2->replaceInputValue(1, z->outputValue());
         reg.assignID();
 
         reg.print();

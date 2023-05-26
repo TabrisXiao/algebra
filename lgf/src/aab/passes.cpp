@@ -36,7 +36,7 @@ class fuseAddToSumRewriter : public rewriter<sumOp>{
     virtual bool rewrite(painter &rewriter, sumOp *origOp) override{
         // find the input coming from another sumOp
         sumOp* op = nullptr;
-        std::vector<operation*> users = origOp->output().getUsers();
+        std::vector<operation*> users = origOp->outputValue().getUsers();
         if(users.size() == 0)
             return 0;
         op = dynamic_cast<sumOp*>(users[0]);
@@ -97,7 +97,7 @@ class lhsAssociateRewriter : public rewriter<sumOp> {
                 rewriter.erase(*iter);
             }
             auto sumop = rewriter.createOp<sumOp>(rhsValues);
-            auto mulop = rewriter.replaceOp<multiplyOp>(ops[0], *val, sumop->output());
+            auto mulop = rewriter.replaceOp<multiplyOp>(ops[0], *val, sumop->outputValue());
         }
         return success;
     }

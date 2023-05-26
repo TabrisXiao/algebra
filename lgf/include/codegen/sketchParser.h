@@ -35,7 +35,7 @@ class sketchParser {
             lexer.consume(token(':'));
             lexer.consume(tok_identifier);
             auto typeSID = lexer.identifierStr;
-            op->addInput(vname, typeSID);
+            op->getBuilderOp()->addInput(vname, typeSID);
             if(lexer.getCurToken() != token('}'))
                 lexer.consume(token(','));
         }
@@ -51,7 +51,7 @@ class sketchParser {
             lexer.consume(token(':'));
             lexer.consume(tok_identifier);
             auto typeSID = lexer.identifierStr;
-            op->addOutput(vname, typeSID);
+            op->getBuilderOp()->addOutput(vname, typeSID);
             if(lexer.getCurToken() != token('}'))
                 lexer.consume(token(','));
         }
@@ -73,7 +73,6 @@ class sketchParser {
         }
     }
     void parseOpDef() {
-        std::cout<<"parseOpDef"<<std::endl;
         lexer.consume(tok_identifier);
         auto opname = lexer.identifierStr;
         auto op = pntr.createOp<opDefAST>(opname);

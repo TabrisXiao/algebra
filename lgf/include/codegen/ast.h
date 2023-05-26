@@ -38,11 +38,11 @@ class binaryExprAST : public operation, public ASTBase {
         auto &val = createValue();
         val.setType(lhs.getType());
     };
-    value& lhs() {return input(0);}
-    value& rhs() {return input(1);}
+    value& lhs() {return inputValue(0);}
+    value& rhs() {return inputValue(1);}
     virtual std::string represent(){
             printer p;
-        p<<output().represent();
+        p<<outputValue().represent();
         p<<" = "<<getSID()<<" : "<<lhs().represent() << " "<<bop<<" "<<rhs().represent();
         return p.dump();
     }
@@ -81,8 +81,8 @@ class defFuncAST : public graph, public ASTBase{
         return p.dump();
     }
     int nArgs(){return int(getEntry().getOutputSize()); }
-    type_t getReturnType(){return output().getType();}
-    value& arg(int n=0){ return getEntry().output(n);}
+    type_t getReturnType(){return outputValue().getType();}
+    value& arg(int n=0){ return getEntry().outputValue(n);}
     std::string funcID="Unknown";
 };
 
@@ -94,7 +94,7 @@ class returnAST : public operation, public ASTBase{
     }
     std::string represent()override{
         printer p;
-        p<<getSID()<<" : "<<input().represent();
+        p<<getSID()<<" : "<<inputValue().represent();
         return p.dump();
     }
 };
@@ -130,7 +130,7 @@ class callFuncAST : public operation, public ASTBase {
     std::string represent() final {
         printer p;
         p<<representOutputs()<<" = "<<getSID()<<" : ";
-        p<<funcID<<"(%"<<input().represent();
+        p<<funcID<<"(%"<<inputValue().represent();
         for(auto iter=getInputRefs().begin()+1; iter!=getInputRefs().end(); iter++)
         {
             p<<", %"<<(*iter).represent();

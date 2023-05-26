@@ -69,6 +69,8 @@ class value : public objInfo{
 public:
     value() = default;
     value(operation * op, id_t id);
+    value(operation *op, id_t id, type_t type, std::string sid);
+
     virtual ~value() = default;
     virtual std::string represent(); 
     void print();
@@ -199,9 +201,10 @@ public :
     // create a value as output from this op, the order is not 
     // changable as it related to the iid of that value.
     value& createValue();
+    value& createValue(type_t type, std::string sid);
 
-    value& output(int n=0){return outputs[n];}
-    value& input(int n=0) {return inputs[n].getValue();}
+    value& outputValue(int n=0){return outputs[n];}
+    value& inputValue(int n=0) {return inputs[n].getValue();}
     size_t getInputSize() const;
     size_t getOutputSize() const;
 
