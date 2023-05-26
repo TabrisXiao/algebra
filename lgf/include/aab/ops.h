@@ -11,6 +11,17 @@
 
 namespace lgf
 {
+// a binary op is an operation taking exactly two values as inputs
+// and produce eactly one outputValue value
+class binaryOp : public operation{
+    public:
+    binaryOp(value &lhs, value &rhs){
+        registerInput(lhs, rhs);
+        createValue();
+    }
+    value& lhs() {return inputValue(0);}
+    value& rhs() {return inputValue(1);}
+};
 class defOp : public operation{
 public: 
     defOp(std::string id_="Unknown") {
@@ -20,7 +31,7 @@ public:
     }
     std::string represent() final{
         printer p;
-        p<<output().represent();
+        p<<outputValue().represent();
         p<< " = "<<getSID();
         return p.dump();
     }
@@ -33,7 +44,7 @@ class addOp : public binaryOp, public commutable{
     }
     virtual std::string represent() override{
         printer p;
-        p<<output().represent();
+        p<<outputValue().represent();
         p<<" = "<<getSID()<<" : "<<lhs().represent() << " + "<<rhs().represent();
         return p.dump();
     }
@@ -47,7 +58,7 @@ class multiplyOp : public binaryOp {
     }
     virtual std::string represent() override{
         printer p;
-        p<<output().represent();
+        p<<outputValue().represent();
         p<<" = "<<getSID()<<" : "<<lhs().represent() << " * "<<rhs().represent();
         return p.dump();
     }
@@ -71,11 +82,11 @@ class sumOp : public operation, public commutable{
 
     std::string represent() override {
         printer p;
-        p<<output().represent();
+        p<<outputValue().represent();
         p<<" = "<<getSID()<<" : ";
         id_t n = getInputSize(), i=0;
         for(auto j =0 ;j<n; j++){
-            p<<input(j).represent();
+            p<<inputValue(j).represent();
             i++;
             if(i!= n) p<<" + ";
         }

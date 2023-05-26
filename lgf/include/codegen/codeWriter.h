@@ -4,6 +4,7 @@
 #include "stream.h"
 #include "lgf/operation.h"
 
+namespace lgf{
 namespace codegen{
 class translationRuleBase {
     public:
@@ -79,6 +80,7 @@ class codeWriter {
 };
 
 } //namespace codegen
+} //namespace lgf
     
 
 

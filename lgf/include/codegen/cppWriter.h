@@ -5,6 +5,7 @@
 #include "codeWriter.h"
 #include "ast.h"
 
+namespace lgf{
 namespace codegen{
 class cppTranslationRule : public translateRule<lgf::ast::ASTBase>{
     public:
@@ -59,6 +60,7 @@ class cppTranslationRule : public translateRule<lgf::ast::ASTBase>{
         return p.dump();
     }
 };
+}
 }
 
 #endif
