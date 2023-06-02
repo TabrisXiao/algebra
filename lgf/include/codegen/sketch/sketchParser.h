@@ -42,7 +42,7 @@ class sketchParser {
         lexer.consume(token('}'));
     }
     void parserOpDefOutputs(opDefAST *op){
-        lexer.consume(tok_op_def_inputs);
+        lexer.consume(tok_op_def_outputs);
         lexer.consume(token('='));
         lexer.consume(token('{'));
         while(lexer.getCurToken()!= token('}')){
@@ -57,7 +57,7 @@ class sketchParser {
         }
         lexer.consume(token('}'));
     }
-    void parseOpDefDetial(opDefAST *op) {
+    void parseOpDefDetail(opDefAST *op) {
         lexer.getNextToken();
         while(lexer.getCurToken()!= token('}')){
             switch(lexer.getCurToken()){
@@ -77,8 +77,28 @@ class sketchParser {
         auto opname = lexer.identifierStr;
         auto op = pntr.createOp<opDefAST>(opname);
         if(lexer.getCurToken() == token('{'))
-            parseOpDefDetial(op);
+            parseOpDefDetail(op);
         lexer.consume(token('}'));
+    }
+    void parseMACRO_spell(){
+        std::string spell = "";
+        int ntok = 0;
+        if(lexer.getCurToken()!=token('{')) parseError("expect '{' but get others");
+        char ch = lexer.lastChar;
+        while(ntok>=0 && ch!=EOF){
+            spell+= ch;
+            ch = lexer.getNextChar();
+            if(ch == '{') ntok++;
+            if(ch == '}') ntok--;
+        }
+        lexer.getNextToken();
+        lexer.getNextToken();
+        auto spellOp = pntr.createOp<macroSpellAST>(spell);
+    }
+    void parseMACRO(){
+        lexer.consume(tok_identifier);
+        auto option = lexer.identifierStr;
+        if(option == "spell") parseMACRO_spell();
     }
     void parseScope(){
         lexer.consume(token('@'));
@@ -88,6 +108,11 @@ class sketchParser {
             lexer.consume(token(':'));
             lexer.consume(tok_op_def);
             return parseOpDef();
+        }
+        if(lexer.identifierStr == "MACRO"){
+            lexer.consume(token(':'));
+            lexer.consume(token(':'));
+                return parseMACRO();
         }
         THROW_WHEN(true, "Unknown scope name.");
     }

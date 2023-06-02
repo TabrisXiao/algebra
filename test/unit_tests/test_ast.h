@@ -1,8 +1,8 @@
 #include "unit_test_frame.h"
 #include "codegen/codeWriter.h"
-#include "codegen/sketchLexer.h"
-#include "codegen/sketchParser.h"
-#include "codegen/sketchWriter.h"
+#include "codegen/sketch/sketchLexer.h"
+#include "codegen/sketch/sketchParser.h"
+#include "codegen/sketch/sketchWriter.h"
 #include "lgf/painter.h"
 #include "codegen/cppWriter.h"
 #include <string>
@@ -22,6 +22,7 @@ class test_ast : public test_wrapper{
 
         codeWriter writer;
         writer.out.liveStreamToConsole();
+        //writer.out.liveStreamToFile("test/unit_tests/resources/aaOps.h");
         writer.addTranslationRule<sketch2cppTranslationRule>();
         writer.write(&(parser.c));
 

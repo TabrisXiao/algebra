@@ -3,13 +3,14 @@
 #define CODEDGEN_LGSKETCH_H
 
 #include "lgf/operation.h"
-#include "codeWriter.h"
+#include "codegen/codeWriter.h"
 namespace lgf{
 
 namespace codegen{
 enum sketchASTKind{
     kind_opDef,
     kind_opDefBuilder,
+    kind_macroSpell,
     kind_unknown
 };
 class sketchASTBase {
@@ -18,6 +19,14 @@ class sketchASTBase {
     virtual ~sketchASTBase() {}
     sketchASTKind getKind(){ return kind; }
     sketchASTKind kind;
+};
+
+class macroSpellAST : public lgf::operation, public sketchASTBase{
+    public:
+    macroSpellAST(std::string & s): sketchASTBase(kind_macroSpell){
+        spell = s;
+    }
+    std::string spell;
 };
 
 // class cppCodeReg : public lgf::graph, public sketchASTBase{

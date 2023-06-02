@@ -1,11 +1,12 @@
 file(GLOB_RECURSE headers
     "${PROJECT_SOURCE_DIR}/lgf/include/codegen/*.h"
+    "${PROJECT_SOURCE_DIR}/lgf/include/codegen/sketch/*.h"
 )
 set(
     sources
     ast.cpp
-    sketchLexer.cpp
     cppWriter.cpp
+    sketch/sketchLexer.cpp
 )
 
 create_cpp_library(

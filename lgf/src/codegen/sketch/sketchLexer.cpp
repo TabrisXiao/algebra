@@ -1,5 +1,5 @@
 
-#include "codegen/sketchLexer.h"
+#include "codegen/sketch/sketchLexer.h"
 
 char lgf::codegen::sketchLexer::getNextChar(){
     if (buffer.empty()){
