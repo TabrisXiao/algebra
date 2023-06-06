@@ -21,3 +21,5 @@ create_cpp_library(
     ${PROJECT_SOURCE_DIR}/lgf/include/
     COPTS /EHsc
 )
+
+add_subdirectory(sketchOps)

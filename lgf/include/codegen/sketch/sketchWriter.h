@@ -4,9 +4,7 @@
 #include "codegen/codeWriter.h"
 #include "sketchAST.h"
 
-
 namespace lgf{
-
 namespace codegen{
 class sketch2cppTranslationRule : public translateRule<sketchASTBase>{
     public:
@@ -72,7 +70,7 @@ class sketch2cppTranslationRule : public translateRule<sketchASTBase>{
     }
     void writeMACROSpellAST(cgstream &out, lgf::operation *op){
         auto spellOp = dynamic_cast<macroSpellAST*>(op);
-        out<<spellOp->spell;
+        out<<spellOp->spell<<"\n";
     }
     virtual bool write(cgstream &out, sketchASTBase *op_){
         auto op = dynamic_cast<lgf::operation*>(op_);
