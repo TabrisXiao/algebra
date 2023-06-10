@@ -37,12 +37,20 @@ int main(int argc, char* argv[]){
     }
     else {
         inputf = std::filesystem::absolute(argv[1]).string();
-        outputpath = argv[2];
+        outputpath = std::filesystem::absolute(argv[2]).string();
     }
     std::string outputFile = outputpath+getFileName(inputf)+".h";
     
     std::cout<<"Converting inputs from: "<<inputf<<std::endl;
-    std::cout<<"Generating codes into: "<<outputFile<<std::endl;
+
+    if(!std::filesystem::exists(outputpath)){
+        std::cout<<"Folder not exists, creating the folder: "<<outputpath<<std::endl;
+        if(!std::filesystem::create_directories(outputpath)){
+            std::cout<<"Failed to create the folder. Abort!"<<std::endl;
+            return 1;
+        }
+    }
+    std::cout<<"Generating codes to: "<<outputFile<<std::endl;
 
     lgf::codegen::sketchParser parser;
     parser.lexer.loadBuffer(inputf);

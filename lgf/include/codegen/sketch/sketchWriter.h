@@ -19,7 +19,7 @@ class sketch2cppTranslationRule : public translateRule<sketchASTBase>{
     std::string printValueArraySignature(std::vector<value>& vec, bool typeInclude = 0){
         std::string res;
         std::string prefix = "";
-        if(typeInclude) prefix = "value& ";
+        if(typeInclude) prefix = "lgf::value& ";
         if(vec.size()==0) return "";
         res+=prefix+vec[0].getSID();
         for(auto i=1; i<vec.size(); i++){
@@ -52,7 +52,7 @@ class sketch2cppTranslationRule : public translateRule<sketchASTBase>{
             for(auto i=0; i<noutput; i++){
                 out.printIndent();
                 auto & val = vecOutput[i];
-                out<<"createValue("<<val.getSID()<<", "<<val.getType().getSID()<<");\n";
+                out<<"createValue(\""<<val.getType().getSID()<<"\", \""<<val.getSID()<<"\");\n";
             }
         }
         out.printIndent();
