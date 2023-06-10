@@ -6,7 +6,13 @@ This is a library used to generate the data from logic graph. The suppose of thi
 ## Keyword
 The operation declaration should be
 ```cpp
-@LGF::Operation opname <opInterface> {
+// all the content contained in spell region will be 
+// copied into the code directly.
+@MACRO::spell{
+#include "lgf/operation.h"
+}
+
+@LGF::operation opname <opInterface> {
     // comments are still initiated with //
     // LGF keywords are initiated with @LGF::
     // the inheritation can be followed inside < >. separated by comma

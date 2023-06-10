@@ -131,7 +131,11 @@ public :
         outputs.reserve(1); 
     };
     virtual ~operation() = default;
-    virtual std::string represent()=0;
+    virtual std::string represent() {
+        printer p;
+        p<<representOutputs()<<" = "<<getSID() <<" : "<<representInputs();
+        return p.dump();
+    }
     virtual std::string representInputs();
     virtual std::string representOutputs();
     virtual void print();

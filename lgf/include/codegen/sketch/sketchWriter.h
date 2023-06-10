@@ -1,12 +1,10 @@
 #ifndef CODEGEN_SKETCHWRITER_H
 #define CODEGEN_SKETCHWRITER_H
 
-#include "codeWriter.h"
+#include "codegen/codeWriter.h"
 #include "sketchAST.h"
 
-
 namespace lgf{
-
 namespace codegen{
 class sketch2cppTranslationRule : public translateRule<sketchASTBase>{
     public:
@@ -21,7 +19,7 @@ class sketch2cppTranslationRule : public translateRule<sketchASTBase>{
     std::string printValueArraySignature(std::vector<value>& vec, bool typeInclude = 0){
         std::string res;
         std::string prefix = "";
-        if(typeInclude) prefix = "value& ";
+        if(typeInclude) prefix = "lgf::value& ";
         if(vec.size()==0) return "";
         res+=prefix+vec[0].getSID();
         for(auto i=1; i<vec.size(); i++){
@@ -54,7 +52,7 @@ class sketch2cppTranslationRule : public translateRule<sketchASTBase>{
             for(auto i=0; i<noutput; i++){
                 out.printIndent();
                 auto & val = vecOutput[i];
-                out<<"createValue("<<val.getSID()<<", "<<val.getType().getSID()<<");\n";
+                out<<"createValue(\""<<val.getType().getSID()<<"\", \""<<val.getSID()<<"\");\n";
             }
         }
         out.printIndent();
@@ -62,13 +60,17 @@ class sketch2cppTranslationRule : public translateRule<sketchASTBase>{
 
         for(auto i=0; i<ninput; i++){
             out.printIndent();
-            out<<"value& "<<vecInput.at(i).getSID()<<"(){ return inputValue("<<std::to_string(i)<<"); }\n";
+            out<<"lgf::value& "<<vecInput.at(i).getSID()<<"(){ return inputValue("<<std::to_string(i)<<"); }\n";
         }
         
         for(auto i=0; i<noutput; i++){
             out.printIndent();
-            out<<"value& "<<vecOutput.at(i).getSID()<<"(){ return outputValue("<<std::to_string(i)<<"); }\n";
+            out<<"lgf::value& "<<vecOutput.at(i).getSID()<<"(){ return outputValue("<<std::to_string(i)<<"); }\n";
         }
+    }
+    void writeMACROSpellAST(cgstream &out, lgf::operation *op){
+        auto spellOp = dynamic_cast<macroSpellAST*>(op);
+        out<<spellOp->spell<<"\n";
     }
     virtual bool write(cgstream &out, sketchASTBase *op_){
         auto op = dynamic_cast<lgf::operation*>(op_);
@@ -78,6 +80,10 @@ class sketch2cppTranslationRule : public translateRule<sketchASTBase>{
                 return 1;
             case kind_opDefBuilder:
                 writeOpDefBuilerdAST(out, op);
+                return 1;
+            case kind_macroSpell:
+                writeMACROSpellAST(out, op);
+                return 1;
             default:
                 return 0;
         }

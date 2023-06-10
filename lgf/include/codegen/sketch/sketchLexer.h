@@ -75,9 +75,14 @@ class sketchLexer {
         return curTok;
     }
     void consume(token tok){
-        if(tok > 0 && tok != curTok ){
-            std::cerr<<loc.string()<<": expect '"<<static_cast<char>(tok);
-            std::cerr<<"' but get others"<<std::endl;
+        if( tok != curTok ){
+            std::string symbol= "special";
+            if(tok > 0 ) {
+                symbol = char(tok);
+            }
+            else if(tok == tok_identifier)
+                symbol = "symbol or literal";
+            std::cerr<<loc.string()<<": expect "<<symbol<<" but get others"<<std::endl;
             std::exit(EXIT_FAILURE);
         }
         getNextToken();
