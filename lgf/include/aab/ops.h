@@ -2,7 +2,7 @@
 #ifndef AAOPS_H_
 #define AAOPS_H_
 #include "lgf/operation.h"
-#include "lgf/lgOps.h"
+#include "lgf/lgf.h"
 #include "groups.h"
 //#include "lgf/group.h"
 //#include "lgf/lgInterfaces.h"

@@ -2,7 +2,7 @@
 #include "lgf/operation.h"
 #include "aab/ops.h"
 #include "lgf/painter.h"
-#include "lgf/lgOps.h"
+#include "lgf/lgf.h"
 #include "lgf/pass.h"
 #include "aab/passes.h"
 

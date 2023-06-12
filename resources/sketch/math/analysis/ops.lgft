@@ -1,0 +1,37 @@
+@MACRO::spell{
+#include "lgf/operation.h"
+}
+
+@LGF::operation mappingOp {
+    inputs = {
+        input:variable,
+    }
+    outputs = {
+        output:variable
+    }
+}
+
+@LGF::operation derivativeOp {
+    inputs = {
+        var:variable,
+        func:variable
+    }
+    outputs = {
+        derivative:variable
+    }
+}
+
+@LGF::operation sinFunc {
+    inputs = { var:variable }
+    outputs = {output:variable}
+}
+
+@LGF::operation cosFunc{
+    inputs = { var:variable }
+    outputs = {output:variable}
+}
+
+@LGF::operation expFunc{
+    inputs = { var:variable }
+    outputs = {output:variable}
+}

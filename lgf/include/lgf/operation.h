@@ -33,8 +33,15 @@ class type_t {
         printer p; p<<"<"<<id<<">";
         return p.dump(); 
     }
+    template<typename t>
+    bool isType(){
+        if(auto p = dynamic_cast<t*>(this))
+            return 1;
+        return 0;
+    }
     std::string id="Unknown";
 };
+
 //symbolic id;
 using sid_t = std::string;
 class objInfo {

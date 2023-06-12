@@ -27,6 +27,16 @@ class sketch2cppTranslationRule : public translateRule<sketchASTBase>{
         }
         return res;
     }
+    std::string printValueTypeArraySignature(std::vector<value>& types){
+        std::string res;
+        if(types.size()==0) return res;
+        std::string prefix = "lgf::type_t ";
+        res += prefix+types[0].getSID()+"_t";
+        for(auto i=1; i<types.size(); i++){
+            res+=", "+prefix+types[i].getSID()+"_t";
+        }
+        return res;
+    }
     void writeOpDefBuilerdAST(cgstream &out, lgf::operation *op){
         auto builder = dynamic_cast<opDefBuilderAST*>(op);
         auto vecInput = builder->getInputSig();
@@ -39,7 +49,12 @@ class sketch2cppTranslationRule : public translateRule<sketchASTBase>{
         out<<"public:\n";
         out.printIndent();
         out<<builder->getOpName()<<"(";
-        out<<printValueArraySignature(vecInput, 1);
+        out<<printValueTypeArraySignature(vecOutput);
+        auto str = printValueArraySignature(vecInput, 1);
+        if(!str.empty()) {
+            str=", "+str;
+            out<<str;
+        }
         out<<"){\n";
         {
             indentGuard a(out);
@@ -52,7 +67,7 @@ class sketch2cppTranslationRule : public translateRule<sketchASTBase>{
             for(auto i=0; i<noutput; i++){
                 out.printIndent();
                 auto & val = vecOutput[i];
-                out<<"createValue(\""<<val.getType().getSID()<<"\", \""<<val.getSID()<<"\");\n";
+                out<<"createValue("<<val.getSID()<<"_t, \""<<val.getSID()<<"\");\n";
             }
         }
         out.printIndent();

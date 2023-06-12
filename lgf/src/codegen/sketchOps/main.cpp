@@ -45,7 +45,7 @@ int main(int argc, char* argv[]){
 
     if(!std::filesystem::exists(outputpath)){
         std::cout<<"Folder not exists, creating the folder: "<<outputpath<<std::endl;
-        if(!std::filesystem::create_directories(outputpath)){
+        if(std::filesystem::create_directories(outputpath)){
             std::cout<<"Failed to create the folder. Abort!"<<std::endl;
             return 1;
         }

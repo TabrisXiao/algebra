@@ -4,9 +4,9 @@
 class addOp : public lgf::operation
 {
   public:
-  addOp(lgf::value& lhs, lgf::value& rhs){
+  addOp(lgf::type_t output_t, lgf::value& lhs, lgf::value& rhs){
     registerInput(lhs, rhs);
-    createValue("variable", "output");
+    createValue(output_t, "output");
   }
   lgf::value& lhs(){ return inputValue(0); }
   lgf::value& rhs(){ return inputValue(1); }
@@ -17,12 +17,24 @@ class addOp : public lgf::operation
 class multiplyOp : public lgf::operation
 {
   public:
-  multiplyOp(lgf::value& lhs, lgf::value& rhs){
+  multiplyOp(lgf::type_t output_t, lgf::value& lhs, lgf::value& rhs){
     registerInput(lhs, rhs);
-    createValue("variable", "output");
+    createValue(output_t, "output");
   }
   lgf::value& lhs(){ return inputValue(0); }
   lgf::value& rhs(){ return inputValue(1); }
+  lgf::value& output(){ return outputValue(0); }
+};
+
+// ---------- inverseOp ----------
+class inverseOp : public lgf::operation
+{
+  public:
+  inverseOp(lgf::type_t output_t, lgf::value& input){
+    registerInput(input);
+    createValue(output_t, "output");
+  }
+  lgf::value& input(){ return inputValue(0); }
   lgf::value& output(){ return outputValue(0); }
 };
 
@@ -30,8 +42,8 @@ class multiplyOp : public lgf::operation
 class defOp : public lgf::operation
 {
   public:
-  defOp(){
-    createValue("variable", "output");
+  defOp(lgf::type_t output_t){
+    createValue(output_t, "output");
   }
   lgf::value& output(){ return outputValue(0); }
 };

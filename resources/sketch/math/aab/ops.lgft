@@ -22,8 +22,26 @@
     }
 }
 
+@LGF::operation inverseOp {
+    inputs = {
+        input:variable
+    }
+    outputs = {
+        output:variable
+    }
+}
+
 @LGF::operation defOp {
     outputs = {
         output:variable
+    }
+}
+
+@LGF::operation defVectorOp{
+    inputs = {
+        dimension:integer
+    }
+    outputs= {
+        output:vector<variable>
     }
 }

@@ -1,0 +1,9 @@
+@MACRO::spell{
+#include "lgf/operation.h"
+}
+
+@LGF::operation defRandomVariableOp {
+    outputs = {
+        output:RandomVariable
+    }
+}
