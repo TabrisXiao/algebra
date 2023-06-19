@@ -1,8 +1,10 @@
-@MACRO::spell{
+code{
 #include "lgf/operation.h"
 }
 
-@LGF::operation mappingOp {
+import types.lgft
+
+operation mappingOp {
     inputs = {
         input:variable,
     }
@@ -11,7 +13,7 @@
     }
 }
 
-@LGF::operation derivativeOp {
+operation derivativeOp {
     inputs = {
         var:variable,
         func:variable
@@ -21,17 +23,17 @@
     }
 }
 
-@LGF::operation sinFunc {
+operation sinFunc {
     inputs = { var:variable }
     outputs = {output:variable}
 }
 
-@LGF::operation cosFunc{
+operation cosFunc{
     inputs = { var:variable }
     outputs = {output:variable}
 }
 
-@LGF::operation expFunc{
+operation expFunc{
     inputs = { var:variable }
     outputs = {output:variable}
 }

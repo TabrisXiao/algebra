@@ -10,7 +10,8 @@ namespace codegen{
 enum sketchASTKind{
     kind_opDef,
     kind_opDefBuilder,
-    kind_macroSpell,
+    kind_typeDef,
+    kind_code,
     kind_unknown
 };
 class sketchASTBase {
@@ -21,9 +22,9 @@ class sketchASTBase {
     sketchASTKind kind;
 };
 
-class macroSpellAST : public lgf::operation, public sketchASTBase{
+class sketchCodeAST : public lgf::operation, public sketchASTBase{
     public:
-    macroSpellAST(std::string & s): sketchASTBase(kind_macroSpell){
+    sketchCodeAST(std::string & s): sketchASTBase(kind_code){
         spell = s;
     }
     std::string spell;
@@ -80,6 +81,31 @@ class opDefAST : public lgf::graph, public sketchASTBase {
     }
     std::string opname;
     opDefBuilderAST ioOp;
+};
+
+class typeDefAST : public lgf::graph, public sketchASTBase {
+    public:
+    typeDefAST(std::string name) 
+    : sketchASTBase(kind_typeDef)
+    , typeSID(name)
+    , graph("sketch::DefTypeAST") { }
+
+    void addParameter(std::string sid, std::string type){
+        para.push_back(std::pair<std::string, std::string>(sid, type));
+    }
+    std::vector<std::pair<std::string, std::string>> & getParameters(){
+        return para;
+    }
+    virtual std::string represent(){
+        // todo
+        return "";
+    }
+    std::string typeSID;
+    // the parameters stored in the type variable
+    // each parameter is stored as pair: name, type
+    // example: x , int
+    //          y , std::vector<int>
+    std::vector<std::pair<std::string, std::string>> para;
 };
 
 } // namespace codegen

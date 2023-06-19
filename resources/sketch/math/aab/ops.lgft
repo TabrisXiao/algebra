@@ -1,8 +1,10 @@
-@MACRO::spell{
+code {
 #include "lgf/operation.h"
 }
 
-@LGF::operation addOp {
+import types.lgft
+
+operation addOp {
     inputs = {
         lhs:variable,
         rhs:variable
@@ -12,7 +14,7 @@
     }
 }
 
-@LGF::operation multiplyOp {
+operation multiplyOp {
     inputs = {
         lhs:variable,
         rhs:variable
@@ -22,7 +24,7 @@
     }
 }
 
-@LGF::operation inverseOp {
+operation inverseOp {
     inputs = {
         input:variable
     }
@@ -31,17 +33,9 @@
     }
 }
 
-@LGF::operation defOp {
+operation defOp {
     outputs = {
         output:variable
     }
 }
 
-@LGF::operation defVectorOp{
-    inputs = {
-        dimension:integer
-    }
-    outputs= {
-        output:vector<variable>
-    }
-}

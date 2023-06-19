@@ -83,9 +83,13 @@ class sketch2cppTranslationRule : public translateRule<sketchASTBase>{
             out<<"lgf::value& "<<vecOutput.at(i).getSID()<<"(){ return outputValue("<<std::to_string(i)<<"); }\n";
         }
     }
-    void writeMACROSpellAST(cgstream &out, lgf::operation *op){
-        auto spellOp = dynamic_cast<macroSpellAST*>(op);
+    void writeSketchCodeAST(cgstream &out, lgf::operation *op){
+        auto spellOp = dynamic_cast<sketchCodeAST*>(op);
         out<<spellOp->spell<<"\n";
+    }
+    void writeTypeDefAST(cgstream &out, lgf::operation *op_){
+        auto op = dynamic_cast<typeDefAST*>(op_);
+        out<<"class "<<op->typeSID<<": public type_t\n";
     }
     virtual bool write(cgstream &out, sketchASTBase *op_){
         auto op = dynamic_cast<lgf::operation*>(op_);
@@ -96,8 +100,11 @@ class sketch2cppTranslationRule : public translateRule<sketchASTBase>{
             case kind_opDefBuilder:
                 writeOpDefBuilerdAST(out, op);
                 return 1;
-            case kind_macroSpell:
-                writeMACROSpellAST(out, op);
+            case kind_typeDef:
+                writeTypeDefAST(out, op);
+                return 1;
+            case kind_code:
+                writeSketchCodeAST(out, op);
                 return 1;
             default:
                 return 0;

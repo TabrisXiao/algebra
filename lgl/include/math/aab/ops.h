@@ -1,4 +1,5 @@
 #include "lgf/operation.h"
+#include "types.h"
 
 // ---------- addOp ----------
 class addOp : public lgf::operation

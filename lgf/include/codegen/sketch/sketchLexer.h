@@ -11,7 +11,7 @@
 namespace lgf{
 
 namespace codegen{
-typedef int64_t token;
+typedef int token;
 struct location {
     std::shared_ptr<std::string> file; ///< filename.
     int line;                          ///< line number.
@@ -20,15 +20,16 @@ struct location {
         return (*file)+"("+std::to_string(line)+", "+std::to_string(col)+")";
     }
 };
-enum l0token : int64_t {
+enum l0token : int {
     tok_eof = -1,
     tok_return = -2,
     tok_var = -3,
     tok_identifier = -6,
     tok_number = -7,
+    tok_code = -100,
+    tok_type_def = -101,
     tok_op_def = -102,
-    tok_op_def_inputs = -103,
-    tok_op_def_outputs= -104,
+    tok_import = -103,
     tok_lgf_scope = -105,
 };
 class sketchLexer {
@@ -63,6 +64,11 @@ class sketchLexer {
     }
 
     char getNextChar();
+    void getNextLine(){
+        ++curLine;
+        curCol = 0;
+        buffer = readNextLine();
+    }
 
     std::string readNextLine();
 
@@ -72,17 +78,15 @@ class sketchLexer {
 
     token getNextToken(){
         curTok = getNextL1Token();
-        return curTok;
+        if(curTok == token('#')){
+            getNextLine();
+            return getNextToken();
+        }else  return curTok;
     }
     void consume(token tok){
         if( tok != curTok ){
-            std::string symbol= "special";
-            if(tok > 0 ) {
-                symbol = char(tok);
-            }
-            else if(tok == tok_identifier)
-                symbol = "symbol or literal";
-            std::cerr<<loc.string()<<": expect "<<symbol<<" but get others"<<std::endl;
+            auto symbol = convertCurrentToken2String();
+            std::cerr<<loc.string()<<": unexpected token \""<<convertCurrentToken2String()<<"\"."<<std::endl;
             std::exit(EXIT_FAILURE);
         }
         getNextToken();
@@ -95,6 +99,10 @@ class sketchLexer {
         return (*loc.file);
     }
 
+    std::string convertCurrentToken2String(){
+        if(curTok >= 0) return std::string(1, static_cast<char>(curTok));
+        else return identifierStr;
+    }
     location getLoc(){ return loc; }
 
     std::ifstream file;

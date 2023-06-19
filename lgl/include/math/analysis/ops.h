@@ -1,4 +1,5 @@
 #include "lgf/operation.h"
+#include "types.h"
 
 // ---------- mappingOp ----------
 class mappingOp : public lgf::operation
