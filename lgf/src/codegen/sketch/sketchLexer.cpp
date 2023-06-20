@@ -3,9 +3,7 @@
 
 char lgf::codegen::sketchLexer::getNextChar(){
     if (buffer.empty()){
-        ++curLine;
-        curCol = 0;
-        buffer = readNextLine();
+        getNextLine();
     }
     if(buffer.empty()) return EOF;
     ++curCol;
@@ -65,10 +63,12 @@ std::string lgf::codegen::sketchLexer::readNextLine(){
 lgf::codegen::token lgf::codegen::sketchLexer::getNextL1Token(){
     auto l0tok = getNextL0Token();
     if(l0tok == tok_identifier){
+        if(identifierStr == "import") return tok_import;
+        if(identifierStr == "code") return tok_code;
+        if(identifierStr == "type") return tok_type_def;
         if(identifierStr == "operation" ) return tok_op_def;
-        if(identifierStr == "inputs") return tok_op_def_inputs;
-        if(identifierStr == "outputs") return tok_op_def_outputs;
         if(identifierStr == "return") return tok_return;
+        if(identifierStr == "type") return tok_type_def;
         return tok_identifier;
     }
     return l0tok;

@@ -1,0 +1,8 @@
+
+code {
+#include "lgf/operation.h"
+}
+
+type variable {
+    # this type has no parameter inputs
+}

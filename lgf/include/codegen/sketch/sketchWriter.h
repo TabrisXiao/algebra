@@ -27,6 +27,27 @@ class sketch2cppTranslationRule : public translateRule<sketchASTBase>{
         }
         return res;
     }
+    void printTypeGuards(cgstream &out, std::vector<value>& vec ){
+        if(vec.size() == 0) return;
+        out.printIndent();
+        auto & elm = vec[0];
+        out<<elm.getSID()<<".type_guard<"+elm.getType().getSID()<<">();\n";
+        for(auto i=1; i<vec.size(); i++){
+            auto & elm = vec[i];
+            out.printIndent();
+            out<<elm.getSID()<<".type_guard<"+elm.getType().getSID()<<">();\n";
+        }
+    }
+    std::string printValueTypeArraySignature(std::vector<value>& types){
+        std::string res;
+        if(types.size()==0) return res;
+        std::string prefix = types[0].getType().getSID()+" ";
+        res += prefix+types[0].getSID()+"_t";
+        for(auto i=1; i<types.size(); i++){
+            res+=", "+prefix+types[i].getSID()+"_t";
+        }
+        return res;
+    }
     void writeOpDefBuilerdAST(cgstream &out, lgf::operation *op){
         auto builder = dynamic_cast<opDefBuilderAST*>(op);
         auto vecInput = builder->getInputSig();
@@ -39,11 +60,17 @@ class sketch2cppTranslationRule : public translateRule<sketchASTBase>{
         out<<"public:\n";
         out.printIndent();
         out<<builder->getOpName()<<"(";
-        out<<printValueArraySignature(vecInput, 1);
+        out<<printValueTypeArraySignature(vecOutput);
+        auto str = printValueArraySignature(vecInput, 1);
+        if(!str.empty()) {
+            str=", "+str;
+            out<<str;
+        }
         out<<"){\n";
         {
             indentGuard a(out);
             if(ninput>0){
+                printTypeGuards(out, vecInput);
                 out.printIndent();
                 out<<"registerInput("<<printValueArraySignature(vecInput)<<");\n";
             }
@@ -52,7 +79,7 @@ class sketch2cppTranslationRule : public translateRule<sketchASTBase>{
             for(auto i=0; i<noutput; i++){
                 out.printIndent();
                 auto & val = vecOutput[i];
-                out<<"createValue(\""<<val.getType().getSID()<<"\", \""<<val.getSID()<<"\");\n";
+                out<<"createValue("<<val.getSID()<<"_t, \""<<val.getSID()<<"\");\n";
             }
         }
         out.printIndent();
@@ -68,9 +95,16 @@ class sketch2cppTranslationRule : public translateRule<sketchASTBase>{
             out<<"lgf::value& "<<vecOutput.at(i).getSID()<<"(){ return outputValue("<<std::to_string(i)<<"); }\n";
         }
     }
-    void writeMACROSpellAST(cgstream &out, lgf::operation *op){
-        auto spellOp = dynamic_cast<macroSpellAST*>(op);
+    void writeSketchCodeAST(cgstream &out, lgf::operation *op){
+        auto spellOp = dynamic_cast<sketchCodeAST*>(op);
         out<<spellOp->spell<<"\n";
+    }
+    void writeTypeDefAST(cgstream &out, lgf::operation *op_){
+        auto op = dynamic_cast<typeDefAST*>(op_);
+        out<<"class "<<op->typeSID<<": public lgf::type_t {\n";
+        out<<"    public:\n";
+        out<<"    "<<op->typeSID<<"(){}\n";
+        out<<"};";
     }
     virtual bool write(cgstream &out, sketchASTBase *op_){
         auto op = dynamic_cast<lgf::operation*>(op_);
@@ -81,8 +115,11 @@ class sketch2cppTranslationRule : public translateRule<sketchASTBase>{
             case kind_opDefBuilder:
                 writeOpDefBuilerdAST(out, op);
                 return 1;
-            case kind_macroSpell:
-                writeMACROSpellAST(out, op);
+            case kind_typeDef:
+                writeTypeDefAST(out, op);
+                return 1;
+            case kind_code:
+                writeSketchCodeAST(out, op);
                 return 1;
             default:
                 return 0;

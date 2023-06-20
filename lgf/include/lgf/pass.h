@@ -3,7 +3,7 @@
 #define PASS_H_
 #include "operation.h"
 #include "painter.h"
-#include "lgOps.h"
+#include "lgf.h"
 
 namespace lgf{
 

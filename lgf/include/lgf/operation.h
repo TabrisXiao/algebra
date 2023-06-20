@@ -33,8 +33,15 @@ class type_t {
         printer p; p<<"<"<<id<<">";
         return p.dump(); 
     }
+    template<typename t>
+    bool isType(){
+        if(auto p = dynamic_cast<t*>(this))
+            return 1;
+        return 0;
+    }
     std::string id="Unknown";
 };
+
 //symbolic id;
 using sid_t = std::string;
 class objInfo {
@@ -84,6 +91,13 @@ public:
     template<class opType>
     opType* getDefiningOp() const {return dynamic_cast<opType*>(getDefiningOp());}
     void setDefiningOp(operation *op){defop = op;} 
+
+    template<typename t>
+    void type_guard(){
+        if(dynamic_cast<t>(vtp)) return;
+        std::cerr<<"Value type mismatch!"<<std::endl;
+        std::exit(EXIT_FAILURE); 
+    }
     
     // get the list of all ops using this value as a input;
     std::vector<operation*> getUsers();

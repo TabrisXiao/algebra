@@ -1,8 +1,10 @@
-@MACRO::spell{
+code {
 #include "lgf/operation.h"
 }
 
-@LGF::operation addOp {
+import types.lgft
+
+operation addOp {
     inputs = {
         lhs:variable,
         rhs:variable
@@ -12,7 +14,7 @@
     }
 }
 
-@LGF::operation multiplyOp {
+operation multiplyOp {
     inputs = {
         lhs:variable,
         rhs:variable
@@ -22,8 +24,18 @@
     }
 }
 
-@LGF::operation defOp {
+operation inverseOp {
+    inputs = {
+        input:variable
+    }
     outputs = {
         output:variable
     }
 }
+
+operation defOp {
+    outputs = {
+        output:variable
+    }
+}
+

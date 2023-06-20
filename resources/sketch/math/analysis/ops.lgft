@@ -1,0 +1,39 @@
+code{
+#include "lgf/operation.h"
+}
+
+import types.lgft
+
+operation mappingOp {
+    inputs = {
+        input:variable,
+    }
+    outputs = {
+        output:variable
+    }
+}
+
+operation derivativeOp {
+    inputs = {
+        var:variable,
+        func:variable
+    }
+    outputs = {
+        derivative:variable
+    }
+}
+
+operation sinFunc {
+    inputs = { var:variable }
+    outputs = {output:variable}
+}
+
+operation cosFunc{
+    inputs = { var:variable }
+    outputs = {output:variable}
+}
+
+operation expFunc{
+    inputs = { var:variable }
+    outputs = {output:variable}
+}

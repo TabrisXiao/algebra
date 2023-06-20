@@ -7,6 +7,7 @@ set(
     ast.cpp
     cppWriter.cpp
     sketch/sketchLexer.cpp
+    sketch/sketchParser.cpp
 )
 
 create_cpp_library(

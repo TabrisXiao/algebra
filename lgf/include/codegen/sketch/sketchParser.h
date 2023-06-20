@@ -5,8 +5,11 @@
 #include "lgf/operation.h"
 #include "sketchLexer.h"
 #include "sketchAST.h"
+#include "symbolTable.h"
 #include <vector>
 #include <memory>
+#include <filesystem>
+namespace fs = std::filesystem;
 
 namespace lgf{
 namespace codegen{
@@ -15,124 +18,44 @@ class sketchParser {
     sketchParser() {
         pntr.gotoGraph(&c);
     }
+    
+    bool fileExists(const std::string& filePath) {
+        return fs::exists(filePath) && fs::is_regular_file(filePath);
+    }
+
+    bool searchFile(const std::string& folderPath, const std::string& fileName);
+
+    void import(std::string file);
+
+    void parseImport();
+
     void parseError(const char * msg){
         //std::cout<<static_cast<char>(lexer.getCurToken())<<std::endl;
-        std::cerr<<lexer.getLoc().string()<<" : error: "<<msg;
+        std::cerr<<lexer.getLoc().string()<<": Error: "<<msg;
         std::exit(EXIT_FAILURE);
     }
-    void parserOpDefInputs(opDefAST *op){
-        // the example of the inputs:
-        // inputs = {
-        //     lhs:variable,
-        //     rhs:variable
-        // }
-        lexer.consume(tok_op_def_inputs);
-        lexer.consume(token('='));
-        lexer.consume(token('{'));
-        while(lexer.getCurToken()!= token('}')){
-            lexer.consume(tok_identifier);
-            auto vname = lexer.identifierStr;
-            lexer.consume(token(':'));
-            lexer.consume(tok_identifier);
-            auto typeSID = lexer.identifierStr;
-            op->getBuilderOp()->addInput(vname, typeSID);
-            if(lexer.getCurToken() != token('}'))
-                lexer.consume(token(','));
-        }
-        lexer.consume(token('}'));
+    void parseError(std::string msg){
+        parseError(msg.c_str());
     }
-    void parserOpDefOutputs(opDefAST *op){
-        lexer.consume(tok_op_def_outputs);
-        lexer.consume(token('='));
-        lexer.consume(token('{'));
-        while(lexer.getCurToken()!= token('}')){
-            lexer.consume(tok_identifier);
-            auto vname = lexer.identifierStr;
-            lexer.consume(token(':'));
-            lexer.consume(tok_identifier);
-            auto typeSID = lexer.identifierStr;
-            op->getBuilderOp()->addOutput(vname, typeSID);
-            if(lexer.getCurToken() != token('}'))
-                lexer.consume(token(','));
-        }
-        lexer.consume(token('}'));
-    }
-    void parseOpDefDetail(opDefAST *op) {
-        lexer.getNextToken();
-        while(lexer.getCurToken()!= token('}')){
-            switch(lexer.getCurToken()){
-                case tok_op_def_inputs:
-                    parserOpDefInputs(op);
-                    break;
-                case tok_op_def_outputs:
-                    parserOpDefOutputs(op);
-                    break;
-                default:
-                    return parseError("Unknown token");
-            }
-        }
-    }
-    void parseOpDef() {
-        lexer.consume(tok_identifier);
-        auto opname = lexer.identifierStr;
-        auto op = pntr.createOp<opDefAST>(opname);
-        if(lexer.getCurToken() == token('{'))
-            parseOpDefDetail(op);
-        lexer.consume(token('}'));
-    }
-    void parseMACRO_spell(){
-        std::string spell = "";
-        int ntok = 0;
-        if(lexer.getCurToken()!=token('{')) parseError("expect '{' but get others");
-        char ch = lexer.lastChar;
-        while(ntok>=0 && ch!=EOF){
-            spell+= ch;
-            ch = lexer.getNextChar();
-            if(ch == '{') ntok++;
-            if(ch == '}') ntok--;
-        }
-        lexer.getNextToken();
-        lexer.getNextToken();
-        auto spellOp = pntr.createOp<macroSpellAST>(spell);
-    }
-    void parseMACRO(){
-        lexer.consume(tok_identifier);
-        auto option = lexer.identifierStr;
-        if(option == "spell") parseMACRO_spell();
-    }
-    void parseScope(){
-        lexer.consume(token('@'));
-        lexer.consume(tok_identifier);
-        if(lexer.identifierStr == "LGF"){
-            lexer.consume(token(':'));
-            lexer.consume(token(':'));
-            lexer.consume(tok_op_def);
-            return parseOpDef();
-        }
-        if(lexer.identifierStr == "MACRO"){
-            lexer.consume(token(':'));
-            lexer.consume(token(':'));
-                return parseMACRO();
-        }
-        THROW_WHEN(true, "Unknown scope name.");
-    }
-    void parse(){
-        lexer.getNextToken();
-        while(true){
-            switch(lexer.getCurToken()){
-                case tok_eof:
-                    return;
-                case token('@'):
-                    parseScope();
-                    break;
-                default:
-                    return parseError("Unknown token.");
-            }
-        }
+    void parserOpDefInputs(opDefAST *op);
+    void parserOpDefOutputs(opDefAST *op);
+    void parseOpDefDetail(opDefAST *op);
+    void parseOpDef();
+
+    void parseCodeBlock();
+    void parseTypeDef();
+    void parseClassDef();
+    void parseScope();
+    void parse();
+
+    void addIncludePath(std::string path){
+        includePath.push_back(path);
     }
     sketchLexer lexer;
     canvas c;
     painter pntr;
+    symbolTable<sketchTypeInfo> tbl;
+    std::vector<std::string> includePath;
 };
 } // namespace codegen
 } // namespace lgf

@@ -1,7 +1,7 @@
 #include "unit_test_frame.h"
 #include "lgf/operation.h"
 #include "lgf/painter.h"
-#include "lgf/lgOps.h"
+#include "lgf/lgf.h"
 #include <string>
 
 using namespace lgf;

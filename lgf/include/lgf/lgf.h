@@ -5,7 +5,6 @@
 namespace lgf
 {
 
-
 class moduleOp : public graph{
 public:
     moduleOp() : graph("module"){}
@@ -13,5 +12,6 @@ public:
     virtual std::string represent() {return getSID();}
 };
 //----------------------------------------
+
 }
 #endif
