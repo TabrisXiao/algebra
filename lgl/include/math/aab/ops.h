@@ -5,7 +5,9 @@
 class addOp : public lgf::operation
 {
   public:
-  addOp(lgf::type_t output_t, lgf::value& lhs, lgf::value& rhs){
+  addOp(variable output_t, lgf::value& lhs, lgf::value& rhs){
+    lhs.type_guard<variable>();
+    rhs.type_guard<variable>();
     registerInput(lhs, rhs);
     createValue(output_t, "output");
   }
@@ -18,7 +20,9 @@ class addOp : public lgf::operation
 class multiplyOp : public lgf::operation
 {
   public:
-  multiplyOp(lgf::type_t output_t, lgf::value& lhs, lgf::value& rhs){
+  multiplyOp(variable output_t, lgf::value& lhs, lgf::value& rhs){
+    lhs.type_guard<variable>();
+    rhs.type_guard<variable>();
     registerInput(lhs, rhs);
     createValue(output_t, "output");
   }
@@ -31,7 +35,8 @@ class multiplyOp : public lgf::operation
 class inverseOp : public lgf::operation
 {
   public:
-  inverseOp(lgf::type_t output_t, lgf::value& input){
+  inverseOp(variable output_t, lgf::value& input){
+    input.type_guard<variable>();
     registerInput(input);
     createValue(output_t, "output");
   }
@@ -43,7 +48,7 @@ class inverseOp : public lgf::operation
 class defOp : public lgf::operation
 {
   public:
-  defOp(lgf::type_t output_t){
+  defOp(variable output_t){
     createValue(output_t, "output");
   }
   lgf::value& output(){ return outputValue(0); }

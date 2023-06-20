@@ -91,6 +91,13 @@ public:
     template<class opType>
     opType* getDefiningOp() const {return dynamic_cast<opType*>(getDefiningOp());}
     void setDefiningOp(operation *op){defop = op;} 
+
+    template<typename t>
+    void type_guard(){
+        if(dynamic_cast<t>(vtp)) return;
+        std::cerr<<"Value type mismatch!"<<std::endl;
+        std::exit(EXIT_FAILURE); 
+    }
     
     // get the list of all ops using this value as a input;
     std::vector<operation*> getUsers();

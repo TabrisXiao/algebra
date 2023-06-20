@@ -83,12 +83,11 @@ class opDefAST : public lgf::graph, public sketchASTBase {
     opDefBuilderAST ioOp;
 };
 
-class typeDefAST : public lgf::graph, public sketchASTBase {
+class typeDefAST : public lgf::operation, public sketchASTBase {
     public:
     typeDefAST(std::string name) 
     : sketchASTBase(kind_typeDef)
-    , typeSID(name)
-    , graph("sketch::DefTypeAST") { }
+    , typeSID(name) { }
 
     void addParameter(std::string sid, std::string type){
         para.push_back(std::pair<std::string, std::string>(sid, type));

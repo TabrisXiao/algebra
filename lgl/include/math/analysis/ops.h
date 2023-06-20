@@ -5,7 +5,8 @@
 class mappingOp : public lgf::operation
 {
   public:
-  mappingOp(lgf::type_t output_t, lgf::value& input){
+  mappingOp(variable output_t, lgf::value& input){
+    input.type_guard<variable>();
     registerInput(input);
     createValue(output_t, "output");
   }
@@ -17,7 +18,9 @@ class mappingOp : public lgf::operation
 class derivativeOp : public lgf::operation
 {
   public:
-  derivativeOp(lgf::type_t derivative_t, lgf::value& var, lgf::value& func){
+  derivativeOp(variable derivative_t, lgf::value& var, lgf::value& func){
+    var.type_guard<variable>();
+    func.type_guard<variable>();
     registerInput(var, func);
     createValue(derivative_t, "derivative");
   }
@@ -30,7 +33,8 @@ class derivativeOp : public lgf::operation
 class sinFunc : public lgf::operation
 {
   public:
-  sinFunc(lgf::type_t output_t, lgf::value& var){
+  sinFunc(variable output_t, lgf::value& var){
+    var.type_guard<variable>();
     registerInput(var);
     createValue(output_t, "output");
   }
@@ -42,7 +46,8 @@ class sinFunc : public lgf::operation
 class cosFunc : public lgf::operation
 {
   public:
-  cosFunc(lgf::type_t output_t, lgf::value& var){
+  cosFunc(variable output_t, lgf::value& var){
+    var.type_guard<variable>();
     registerInput(var);
     createValue(output_t, "output");
   }
@@ -54,7 +59,8 @@ class cosFunc : public lgf::operation
 class expFunc : public lgf::operation
 {
   public:
-  expFunc(lgf::type_t output_t, lgf::value& var){
+  expFunc(variable output_t, lgf::value& var){
+    var.type_guard<variable>();
     registerInput(var);
     createValue(output_t, "output");
   }

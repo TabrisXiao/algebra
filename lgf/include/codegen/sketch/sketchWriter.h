@@ -27,10 +27,21 @@ class sketch2cppTranslationRule : public translateRule<sketchASTBase>{
         }
         return res;
     }
+    void printTypeGuards(cgstream &out, std::vector<value>& vec ){
+        if(vec.size() == 0) return;
+        out.printIndent();
+        auto & elm = vec[0];
+        out<<elm.getSID()<<".type_guard<"+elm.getType().getSID()<<">();\n";
+        for(auto i=1; i<vec.size(); i++){
+            auto & elm = vec[i];
+            out.printIndent();
+            out<<elm.getSID()<<".type_guard<"+elm.getType().getSID()<<">();\n";
+        }
+    }
     std::string printValueTypeArraySignature(std::vector<value>& types){
         std::string res;
         if(types.size()==0) return res;
-        std::string prefix = "lgf::type_t ";
+        std::string prefix = types[0].getType().getSID()+" ";
         res += prefix+types[0].getSID()+"_t";
         for(auto i=1; i<types.size(); i++){
             res+=", "+prefix+types[i].getSID()+"_t";
@@ -59,6 +70,7 @@ class sketch2cppTranslationRule : public translateRule<sketchASTBase>{
         {
             indentGuard a(out);
             if(ninput>0){
+                printTypeGuards(out, vecInput);
                 out.printIndent();
                 out<<"registerInput("<<printValueArraySignature(vecInput)<<");\n";
             }
@@ -89,7 +101,10 @@ class sketch2cppTranslationRule : public translateRule<sketchASTBase>{
     }
     void writeTypeDefAST(cgstream &out, lgf::operation *op_){
         auto op = dynamic_cast<typeDefAST*>(op_);
-        out<<"class "<<op->typeSID<<": public type_t\n";
+        out<<"class "<<op->typeSID<<": public lgf::type_t {\n";
+        out<<"    public:\n";
+        out<<"    "<<op->typeSID<<"(){}\n";
+        out<<"};";
     }
     virtual bool write(cgstream &out, sketchASTBase *op_){
         auto op = dynamic_cast<lgf::operation*>(op_);
