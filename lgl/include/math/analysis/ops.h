@@ -1,5 +1,9 @@
-#include "lgf/operation.h"
+#ifndef ANALYSIS_OPS_H
+#define ANALYSIS_OPS_H
 #include "types.h"
+#include "lgf/operation.h"
+
+namespace analysis{
 
 // ---------- mappingOp ----------
 class mappingOp : public lgf::operation
@@ -67,3 +71,6 @@ class expFunc : public lgf::operation
   lgf::value& var(){ return inputValue(0); }
   lgf::value& output(){ return outputValue(0); }
 };
+
+}
+#endif

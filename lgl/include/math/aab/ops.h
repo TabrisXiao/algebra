@@ -1,5 +1,9 @@
-#include "lgf/operation.h"
+#ifndef AAB_OPS_H
+#define AAB_OPS_H
 #include "types.h"
+#include "lgf/operation.h"
+
+namespace aab{
 
 // ---------- addOp ----------
 class addOp : public lgf::operation
@@ -53,3 +57,6 @@ class defOp : public lgf::operation
   }
   lgf::value& output(){ return outputValue(0); }
 };
+
+}
+#endif

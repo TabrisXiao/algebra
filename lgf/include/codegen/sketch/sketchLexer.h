@@ -26,11 +26,12 @@ enum l0token : int {
     tok_var = -3,
     tok_identifier = -6,
     tok_number = -7,
-    tok_code = -100,
-    tok_type_def = -101,
-    tok_op_def = -102,
-    tok_import = -103,
-    tok_lgf_scope = -105,
+    tok_code = -100,    // code
+    tok_type_def = -101,// type
+    tok_op_def = -102,// operation
+    tok_import = -103,// import
+    tok_module = -104,// module
+    tok_scope = -105, // ::
 };
 class sketchLexer {
     public: 

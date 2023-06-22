@@ -106,6 +106,31 @@ class sketch2cppTranslationRule : public translateRule<sketchASTBase>{
         out<<"    "<<op->typeSID<<"(){}\n";
         out<<"};";
     }
+    virtual void writeHeader(cgstream &out, lgf::graph* reg){
+        auto module = dynamic_cast<sketchModuleAST*>(reg);
+        auto name = module->name;
+        std::string scopeName = "";
+        bool isDone = 0;
+        for(auto & c : name){
+            if(c=='.') {
+                c='_';
+                isDone = 1;
+            }
+            if(!isDone) scopeName += c;
+            c = std::toupper(c);
+        }
+        out<<"#ifndef "+name+"_H\n";
+        out<<"#define "+name+"_H\n";
+        for(auto & path : module->includes){
+            out<<"#include \""+path+"\"\n";
+        }
+        out<<"\n";
+        out<<"namespace "+scopeName+"{\n";
+    }
+    virtual void writeFinal(cgstream &out, lgf::graph* reg){
+        out<<"\n}\n";
+        out<<"#endif\n";
+    }
     virtual bool write(cgstream &out, sketchASTBase *op_){
         auto op = dynamic_cast<lgf::operation*>(op_);
         switch(op_->getKind()){

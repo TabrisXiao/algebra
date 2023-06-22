@@ -35,6 +35,11 @@ std::string getFileName(const std::string& filePath){
 }
 
  void getFilesWithExtension(const std::string& folderPath, const std::string& extension, std::vector<std::pair<std::string, std::string>> & files) {
+    // feed the path folder/subfolder/ and specify the extension like .lgft
+    // Find all .lgft files in the folder folder/subfolder/ 
+    // say folder/subfolder/file.lgft
+    // convert to file.h
+    // makes the pair to <folder/subfolder/file.lgft, file.h> to the vector
     if (std::filesystem::is_regular_file(folderPath)) {
         auto output = getFileName(folderPath)+".h";
         files.push_back(std::pair<std::string, std::string>(folderPath, output));
@@ -92,14 +97,17 @@ int main(int argc, char* argv[]){
         std::cout<<"Generated codes to: "<<outputf<<std::endl;
 
         lgf::codegen::sketchParser parser;
-        parser.lexer.loadBuffer(inputf);
-        
-        if(!includePath.empty()) parser.addIncludePath(includePath);
-        parser.parse();
+        //parser.lexer.loadBuffer(inputf);
+        if(!includePath.empty()) {
+            
+            parser.addIncludePath(includePath);
+        }
+        parser.parseFile(inputf);
+        //parser.parse();
         lgf::codegen::codeWriter writer;
         writer.out.liveStreamToFile(outputf);
         writer.addTranslationRule<lgf::codegen::sketch2cppTranslationRule>();
-        writer.write(&(parser.c));
+        writer.write(&(parser.module));
     }
     return 0;
 }

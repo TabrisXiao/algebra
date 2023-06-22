@@ -8,6 +8,7 @@ namespace lgf{
 
 namespace codegen{
 enum sketchASTKind{
+    kind_module,
     kind_opDef,
     kind_opDefBuilder,
     kind_typeDef,
@@ -28,6 +29,35 @@ class sketchCodeAST : public lgf::operation, public sketchASTBase{
         spell = s;
     }
     std::string spell;
+};
+
+class sketchModuleAST : public lgf::graph, public sketchASTBase {
+    public:
+    sketchModuleAST(std::string name_="")
+    : sketchASTBase(kind_module)
+    , name(name_)
+    , graph("sketch::moduleAST") {}
+    void setName(std::string &name_){name = name_;}
+
+    virtual std::string represent(){
+        printer p;
+        p<<getSID()<<" : "<<name;
+        return p.dump();
+    }
+
+    void addOperationHeader(){
+        if(inclOp) return;
+        inclOp = 1;
+        includes.push_back("lgf/operation.h");
+    }
+    void addIncludes(std::string inc){
+        for(auto & file: includes)
+            if(file== inc) return;
+        includes.push_back(inc);
+    }
+    std::string name;
+    bool inclOp = 0;
+    std::vector<std::string> includes;
 };
 
 // class cppCodeReg : public lgf::graph, public sketchASTBase{

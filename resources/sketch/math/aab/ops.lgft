@@ -1,16 +1,14 @@
-code {
-#include "lgf/operation.h"
-}
-
 import types.lgft
+
+module aab.ops
 
 operation addOp {
     inputs = {
-        lhs:variable,
-        rhs:variable
+        lhs:math::variable,
+        rhs:math::variable
     }
     outputs = {
-        output:variable
+        output:math::variable
     }
 }
 

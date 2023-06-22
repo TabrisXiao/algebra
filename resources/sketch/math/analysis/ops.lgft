@@ -1,8 +1,6 @@
-code{
-#include "lgf/operation.h"
-}
-
 import types.lgft
+
+module analysis.ops
 
 operation mappingOp {
     inputs = {

@@ -1,7 +1,4 @@
-
-code {
-#include "lgf/operation.h"
-}
+module math.types
 
 type variable {
     # this type has no parameter inputs

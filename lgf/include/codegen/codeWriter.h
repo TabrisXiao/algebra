@@ -17,6 +17,11 @@ class translationRuleBase {
     virtual void exitGraphRule(cgstream &out, lgf::graph* reg){
         out.decrIndentLevel();
     }
+
+    virtual void writeHeader(cgstream &out, lgf::graph* reg){
+    } 
+    virtual void writeFinal(cgstream &out, lgf::graph* reg){
+    } 
 };
 
 template<typename opty>
@@ -31,6 +36,7 @@ class translateRule : public translationRuleBase {
         auto ptr = dynamic_cast<opty*>(op);
         return write(out, ptr);
     }
+
     virtual bool write(cgstream &out, opty *op) = 0;
 };
 
@@ -63,10 +69,26 @@ class codeWriter {
        rule->exitGraphRule(out, reg);
     }
 
-    void write(lgf::graph* reg){  
-       reg->walk([&](lgf::operation* op){
+    void start(lgf::graph* reg){
+        for(auto &w : rules){
+            auto ptr = w.get();
+            ptr->writeHeader(out, reg);
+        }
+    }
+
+    void final(lgf::graph* reg){
+        for(auto &w : rules){
+            auto ptr = w.get();
+            ptr->writeFinal(out, reg);
+        }
+    }
+
+    void write(lgf::graph* reg){
+        start(reg);
+        reg->walk([&](lgf::operation* op){
             translateOp(out, op);
         });
+        final(reg);
     }
 
     template<typename T, typename ...ARGS>
