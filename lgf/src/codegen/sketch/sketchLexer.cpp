@@ -47,6 +47,14 @@ lgf::codegen::token lgf::codegen::sketchLexer::getNextL0Token(){
             return getNextL0Token();
         }
     }
+    if(lastChar == token(':')){
+        lastChar = getNextChar();
+        if(lastChar == token(':')) {
+            lastChar = getNextChar();
+            return tok_scope;
+        }
+        return token(':');
+    }
     auto tok = l0token(lastChar);
     lastChar = getNextChar();
     return tok;
@@ -63,6 +71,7 @@ std::string lgf::codegen::sketchLexer::readNextLine(){
 lgf::codegen::token lgf::codegen::sketchLexer::getNextL1Token(){
     auto l0tok = getNextL0Token();
     if(l0tok == tok_identifier){
+        if(identifierStr == "module") return tok_module;
         if(identifierStr == "import") return tok_import;
         if(identifierStr == "code") return tok_code;
         if(identifierStr == "type") return tok_type_def;
@@ -71,6 +80,7 @@ lgf::codegen::token lgf::codegen::sketchLexer::getNextL1Token(){
         if(identifierStr == "type") return tok_type_def;
         return tok_identifier;
     }
+    
     return l0tok;
 }
 //---------------------------------------------------

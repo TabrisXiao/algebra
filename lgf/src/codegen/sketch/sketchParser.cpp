@@ -24,17 +24,24 @@ void sketchParser::import(std::string file){
     sketchLexer lx;
     lx.loadBuffer(file);
     lx.getNextToken();
+    std::string scope = "";
     while(true){
         switch(lx.getCurToken()){
+            case tok_module:
+                scope = getScopeName(lx.buffer);
+                scope+="::";
+                lx.getNextLine();
+                lx.getNextToken();
+                break;
             case tok_eof:
                 return;
             case tok_op_def:
                 lx.consume(tok_op_def);
-                tbl.addInfo("op::"+lx.identifierStr, info_struct);
+                tbl.addInfo(scope+lx.identifierStr, info_struct);
                 break;
             case tok_type_def:
                 lx.consume(tok_type_def);
-                tbl.addInfo("type::"+lx.identifierStr, info_struct);
+                tbl.addInfo(scope+lx.identifierStr, info_struct);
                 break;
             default:
                 lx.getNextToken();
@@ -52,7 +59,6 @@ void sketchParser::parseImport(){
     bool isExists = 0;
     for(auto f : includePath){
         auto testpath = (f)+file;
-        std::cout<<"checking: "<<testpath<<std::endl;
         if( fileExists(testpath) ){
             isExists = 1;
             ifile = testpath;
@@ -65,8 +71,7 @@ void sketchParser::parseImport(){
     }
     auto path = fs::path(file);
     path.replace_extension(".h");
-    std::string include = "#include \""+path.string()+"\"";
-    auto codeOp = pntr.createOp<sketchCodeAST>(include);
+    module.addIncludes(path.string());
     import(ifile);
 }
 
@@ -80,12 +85,10 @@ void sketchParser::parserOpDefInputs(opDefAST *op){
     lexer.consume(token('='));
     lexer.consume(token('{'));
     while(lexer.getCurToken()!= token('}')){
-        lexer.consume(tok_identifier);
+        auto typeSID = ReadIdentifierWithScope();
         auto vname = lexer.identifierStr;
-        lexer.consume(token(':'));
         lexer.consume(tok_identifier);
-        auto typeSID = lexer.identifierStr;
-        if(! tbl.check("type::"+typeSID)){
+        if(! tbl.check(typeSID)){
             std::string msg = "type: "+typeSID+" is unknown.";
             parseError(msg.c_str());
         }
@@ -100,11 +103,13 @@ void sketchParser::parserOpDefOutputs(opDefAST *op){
     lexer.consume(token('='));
     lexer.consume(token('{'));
     while(lexer.getCurToken()!= token('}')){
-        lexer.consume(tok_identifier);
+        auto typeSID = ReadIdentifierWithScope();
         auto vname = lexer.identifierStr;
-        lexer.consume(token(':'));
         lexer.consume(tok_identifier);
-        auto typeSID = lexer.identifierStr;
+        if(! tbl.check(typeSID)){
+            std::string msg = "type: "+typeSID+" is unknown.";
+            parseError(msg.c_str());
+        }
         op->getBuilderOp()->addOutput(vname, typeSID);
         if(lexer.getCurToken() != token('}'))
             lexer.consume(token(','));
@@ -112,6 +117,7 @@ void sketchParser::parserOpDefOutputs(opDefAST *op){
     lexer.consume(token('}'));
 }
 void sketchParser::parseOpDefDetail(opDefAST *op) {
+    module.addOperationHeader();
     lexer.getNextToken();
     while(lexer.getCurToken()!= token('}')){
         if(lexer.identifierStr == "inputs")
@@ -123,10 +129,10 @@ void sketchParser::parseOpDefDetail(opDefAST *op) {
 }
 void sketchParser::parseOpDef() {
     lexer.consume(tok_op_def);
-    lexer.consume(tok_identifier);
-    auto opname = lexer.identifierStr;
-    tbl.addInfo("op::"+opname, info_struct);
+    auto opname = ReadIdentifierWithScope();
+    tbl.addInfo(opname, info_struct);
     auto op = pntr.createOp<opDefAST>(opname);
+    op->getBuilderOp()->setSID(scopeName+opname);
     if(lexer.getCurToken() == token('{'))
         parseOpDefDetail(op);
     lexer.consume(token('}'));
@@ -147,10 +153,10 @@ void sketchParser::parseCodeBlock(){
     auto spellOp = pntr.createOp<sketchCodeAST>(spell);
 }
 void sketchParser::parseTypeDef(){
+    module.addOperationHeader();
     lexer.consume(tok_type_def);
-    lexer.consume(tok_identifier);
-    auto tpname = lexer.identifierStr;
-    tbl.addInfo("type::"+tpname, info_struct);
+    auto tpname = ReadIdentifierWithScope();
+    tbl.addInfo(tpname, info_struct);
     auto op = pntr.createOp<typeDefAST>(tpname);
     lexer.consume(token('{'));
     lexer.consume(token('}'));
@@ -160,25 +166,23 @@ void sketchParser::parseClassDef(){
     lexer.consume(tok_identifier);
     return parseOpDef();
 }
-void sketchParser::parseScope(){
-    lexer.consume(token('@'));
-    lexer.consume(tok_identifier);
-    if(lexer.identifierStr == "LGF"){
-        lexer.consume(token(':'));
-        lexer.consume(token(':'));
-        switch(lexer.getCurToken()){
-            case tok_type_def:
-                return parseTypeDef();
-            default:
-                return parseError("Unknown identifier.");
-        }
-    }
-    THROW_WHEN(true, "Unknown scope name.");
+
+void sketchParser::parseModule(){
+    auto name = lexer.buffer;
+    lexer.getNextLine();
+    lexer.getNextToken();
+    module.setName(name);
+    scopeName = getScopeName(name);
+    scopeName+="::";
 }
+
 void sketchParser::parse(){
     lexer.getNextToken();
     while(true){
         switch(lexer.getCurToken()){
+            case tok_module:
+                parseModule();
+                break;
             case tok_code:
                 parseCodeBlock();
                 break;

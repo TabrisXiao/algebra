@@ -1,13 +1,18 @@
-#include "lgf/operation.h"
+#ifndef AAB_OPS_H
+#define AAB_OPS_H
 #include "types.h"
+#include "lgf/operation.h"
+
+namespace aab{
 
 // ---------- addOp ----------
 class addOp : public lgf::operation
 {
   public:
-  addOp(variable output_t, lgf::value& lhs, lgf::value& rhs){
-    lhs.type_guard<variable>();
-    rhs.type_guard<variable>();
+  addOp(math::variable output_t, lgf::value& lhs, lgf::value& rhs){
+    setSID("aab::addOp");
+    lhs.type_guard<math::variable>();
+    rhs.type_guard<math::variable>();
     registerInput(lhs, rhs);
     createValue(output_t, "output");
   }
@@ -20,9 +25,10 @@ class addOp : public lgf::operation
 class multiplyOp : public lgf::operation
 {
   public:
-  multiplyOp(variable output_t, lgf::value& lhs, lgf::value& rhs){
-    lhs.type_guard<variable>();
-    rhs.type_guard<variable>();
+  multiplyOp(math::variable output_t, lgf::value& lhs, lgf::value& rhs){
+    setSID("aab::multiplyOp");
+    lhs.type_guard<math::variable>();
+    rhs.type_guard<math::variable>();
     registerInput(lhs, rhs);
     createValue(output_t, "output");
   }
@@ -35,8 +41,9 @@ class multiplyOp : public lgf::operation
 class inverseOp : public lgf::operation
 {
   public:
-  inverseOp(variable output_t, lgf::value& input){
-    input.type_guard<variable>();
+  inverseOp(math::variable output_t, lgf::value& input){
+    setSID("aab::inverseOp");
+    input.type_guard<math::variable>();
     registerInput(input);
     createValue(output_t, "output");
   }
@@ -48,8 +55,12 @@ class inverseOp : public lgf::operation
 class defOp : public lgf::operation
 {
   public:
-  defOp(variable output_t){
+  defOp(math::variable output_t){
+    setSID("aab::defOp");
     createValue(output_t, "output");
   }
   lgf::value& output(){ return outputValue(0); }
 };
+
+}
+#endif

@@ -16,7 +16,7 @@ namespace codegen{
 class sketchParser {
     public:
     sketchParser() {
-        pntr.gotoGraph(&c);
+        pntr.gotoGraph(&module);
     }
     
     bool fileExists(const std::string& filePath) {
@@ -42,17 +42,46 @@ class sketchParser {
     void parseOpDefDetail(opDefAST *op);
     void parseOpDef();
 
+    std::string getScopeName(std::string moduleName){
+        // the module name should be: scope.component
+        // so this function get the scope part.
+        std::string scope = "";
+        for(auto & c : moduleName){
+            if(c=='.') break;
+            scope += c;
+        }
+        return scope;
+    }
     void parseCodeBlock();
     void parseTypeDef();
     void parseClassDef();
-    void parseScope();
+    void parseModule();
     void parse();
+    void parseFile(std::string path){
+        lexer.loadBuffer(path);
+        fileName = fs::path(path).filename().string();
+        parse();
+    }
+
+    std::string ReadIdentifierWithScope(){
+        auto name = lexer.identifierStr;
+        lexer.consume(tok_identifier);
+        while(lexer.getCurToken() == tok_scope){
+            name+="::";
+            lexer.consume(tok_scope);
+            name+=lexer.identifierStr;
+            lexer.consume(tok_identifier);
+        }
+        return name;
+    }
 
     void addIncludePath(std::string path){
         includePath.push_back(path);
     }
+    std::string fileName, scopeName;
     sketchLexer lexer;
-    canvas c;
+    sketchModuleAST module;
+    bool foundModule = 0 ;
     painter pntr;
     symbolTable<sketchTypeInfo> tbl;
     std::vector<std::string> includePath;

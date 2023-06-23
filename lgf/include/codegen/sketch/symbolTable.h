@@ -38,7 +38,8 @@ enum info_type_e {
     info_func,
     info_variable,
     info_struct,
-    info_template
+    info_template,
+    info_scope
 };
 
 class sketchTypeInfo {
