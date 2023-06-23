@@ -63,7 +63,6 @@ class sketchParser {
         parse();
     }
 
-
     std::string ReadIdentifierWithScope(){
         auto name = lexer.identifierStr;
         lexer.consume(tok_identifier);
@@ -79,7 +78,7 @@ class sketchParser {
     void addIncludePath(std::string path){
         includePath.push_back(path);
     }
-    std::string fileName;
+    std::string fileName, scopeName;
     sketchLexer lexer;
     sketchModuleAST module;
     bool foundModule = 0 ;

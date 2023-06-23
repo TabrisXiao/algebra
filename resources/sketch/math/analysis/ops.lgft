@@ -4,34 +4,24 @@ module analysis.ops
 
 operation mappingOp {
     inputs = {
-        input:variable,
+        math::variable x
     }
     outputs = {
-        output:variable
-    }
-}
-
-operation derivativeOp {
-    inputs = {
-        var:variable,
-        func:variable
-    }
-    outputs = {
-        derivative:variable
+        math::variable output
     }
 }
 
 operation sinFunc {
-    inputs = { var:variable }
-    outputs = {output:variable}
+    inputs = { math::variable x }
+    outputs = { math::variable output}
 }
 
 operation cosFunc{
-    inputs = { var:variable }
-    outputs = {output:variable}
+    inputs = { math::variable x }
+    outputs = { math::variable output}
 }
 
 operation expFunc{
-    inputs = { var:variable }
-    outputs = {output:variable}
+    inputs = { math::variable x }
+    outputs = { math::variable output}
 }

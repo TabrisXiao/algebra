@@ -69,6 +69,8 @@ class sketch2cppTranslationRule : public translateRule<sketchASTBase>{
         out<<"){\n";
         {
             indentGuard a(out);
+            out.printIndent();
+            out<<"setSID(\""<<op->getSID()<<"\");\n";
             if(ninput>0){
                 printTypeGuards(out, vecInput);
                 out.printIndent();

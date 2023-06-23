@@ -4,36 +4,36 @@ module aab.ops
 
 operation addOp {
     inputs = {
-        lhs:math::variable,
-        rhs:math::variable
+        math::variable lhs,
+        math::variable rhs
     }
     outputs = {
-        output:math::variable
+        math::variable output
     }
 }
 
 operation multiplyOp {
     inputs = {
-        lhs:variable,
-        rhs:variable
+        math::variable lhs,
+        math::variable rhs
     }
     outputs = {
-        output:variable
+        math::variable output
     }
 }
 
 operation inverseOp {
     inputs = {
-        input:variable
+        math::variable input
     }
     outputs = {
-        output:variable
+        math::variable output
     }
 }
 
 operation defOp {
     outputs = {
-        output:variable
+        math::variable output
     }
 }
 
