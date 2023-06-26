@@ -95,11 +95,11 @@ int main(int argc, char* argv[]){
         std::cout<<"Converting input from: "<<inputf<<std::endl;
         auto outputf = outputpath+iter.second;
         std::cout<<"Generated codes to: "<<outputf<<std::endl;
-
+        std::filesystem::path outputPath(outputf);
+        std::filesystem::create_directories(outputPath.parent_path());
         lgf::codegen::sketchParser parser;
         //parser.lexer.loadBuffer(inputf);
         if(!includePath.empty()) {
-            
             parser.addIncludePath(includePath);
         }
         parser.parseFile(inputf);

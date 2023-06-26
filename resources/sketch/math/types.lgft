@@ -1,5 +1,31 @@
 module math.types
 
 type variable {
-    # this type has no parameter inputs
+    # this type can be treated as any type
+}
+
+type natureNumber {
+    # positive integer
+}
+
+type integer{
+    # postive, 0 and negative integer
+}
+
+type rationalNumber {
+    # can be expressed as fraction of two integer
+}
+
+type irrationalNumber {
+    # those numbers can not expressed as fraction of two integer
+}
+
+type realNumber {
+    # rational and irrational number
+}
+
+type matrix{
+    parameters = {
+        int $rowDim, int $colDim
+    }
 }
