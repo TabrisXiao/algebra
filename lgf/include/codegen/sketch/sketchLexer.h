@@ -67,7 +67,7 @@ class sketchLexer {
     char getNextChar();
     void getNextLine(){
         ++curLine;
-        curCol = 0;
+        curCol = 1;
         buffer = readNextLine();
     }
 
@@ -87,7 +87,7 @@ class sketchLexer {
     void consume(token tok){
         if( tok != curTok ){
             auto symbol = convertCurrentToken2String();
-            std::cerr<<loc.string()<<": unexpected token \""<<convertCurrentToken2String()<<"\"."<<std::endl;
+            std::cerr<<loc.string()<<": consuming an unexpected token \""<<convertCurrentToken2String()<<"\"."<<std::endl;
             std::exit(EXIT_FAILURE);
         }
         getNextToken();

@@ -11,7 +11,7 @@ char lgf::codegen::sketchLexer::getNextChar(){
     buffer = buffer.erase(0, 1);
     if (nextchar == '\n') {
         ++curLine;
-        curCol = 0;
+        curCol = 1;
     }
     return nextchar;
 }

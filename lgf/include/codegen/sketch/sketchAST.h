@@ -113,6 +113,7 @@ class opDefAST : public lgf::graph, public sketchASTBase {
     opDefBuilderAST ioOp;
 };
 
+
 class typeDefAST : public lgf::operation, public sketchASTBase {
     public:
     typeDefAST(std::string name) 

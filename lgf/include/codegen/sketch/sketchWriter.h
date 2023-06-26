@@ -105,8 +105,19 @@ class sketch2cppTranslationRule : public translateRule<sketchASTBase>{
         auto op = dynamic_cast<typeDefAST*>(op_);
         out<<"class "<<op->typeSID<<": public lgf::type_t {\n";
         out<<"    public:\n";
+        indentGuard a(out), b(out);
+        
         out<<"    "<<op->typeSID<<"(){}\n";
-        out<<"};";
+        int n= 0;
+        for(auto & pair : op->getParameters()){
+            out.printIndent();
+            out<<"const "<<pair.second<<"& "<<pair.first<<"(){ return "<<pair.first<<"_; }\n";
+        }
+        for(auto & pair : op->getParameters()){
+            out.printIndent();
+            out<<pair.second<<" "<<pair.first<<"_;\n";
+        }
+        out<<"};\n\n";
     }
     virtual void writeHeader(cgstream &out, lgf::graph* reg){
         auto module = dynamic_cast<sketchModuleAST*>(reg);

@@ -152,6 +152,30 @@ void sketchParser::parseCodeBlock(){
     lexer.getNextToken();
     auto spellOp = pntr.createOp<sketchCodeAST>(spell);
 }
+
+void sketchParser::parseTypeInputParameters(typeDefAST* op){
+    lexer.consume(tok_identifier);
+    lexer.consume(token('='));
+    lexer.consume(token('{'));
+    while(lexer.getCurToken()!=token('}')){
+        if(lexer.getCurToken()==token(',')) {
+            lexer.getNextToken();
+            continue;
+        }
+        std::string type = lexer.identifierStr;
+        auto chara = lexer.lastChar;
+        while(chara!='$'){
+            if(chara!=' ') type+=chara;
+            chara = lexer.getNextChar();
+        }
+        lexer.getNextToken();
+        std::string tname = lexer.identifierStr;
+        lexer.consume(tok_identifier);
+        op->addParameter(tname, type);
+    }
+    lexer.consume(token('}'));
+}
+
 void sketchParser::parseTypeDef(){
     module.addOperationHeader();
     lexer.consume(tok_type_def);
@@ -159,6 +183,13 @@ void sketchParser::parseTypeDef(){
     tbl.addInfo(tpname, info_struct);
     auto op = pntr.createOp<typeDefAST>(tpname);
     lexer.consume(token('{'));
+    while(lexer.getCurToken() == tok_identifier){
+        if(lexer.identifierStr == "parameters"){
+            parseTypeInputParameters(op);
+        }else {
+            parseError("Unknown keywords: "+lexer.identifierStr);
+        }
+    }
     lexer.consume(token('}'));
 }
 

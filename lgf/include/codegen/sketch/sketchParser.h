@@ -56,6 +56,8 @@ class sketchParser {
     void parseTypeDef();
     void parseClassDef();
     void parseModule();
+    std::string parseCPPType();
+    void parseTypeInputParameters(typeDefAST* op);
     void parse();
     void parseFile(std::string path){
         lexer.loadBuffer(path);
