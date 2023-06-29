@@ -15,6 +15,10 @@ class mappingOp : public lgf::operation
     registerInput(x);
     createValue(output_t, "output");
   }
+  static mappingOp* build(math::variable output_t, lgf::value& x){
+    auto op = new mappingOp(output_t, x);
+    return op;
+  }
   lgf::value& x(){ return inputValue(0); }
   lgf::value& output(){ return outputValue(0); }
 };
@@ -28,6 +32,10 @@ class sinFunc : public lgf::operation
     x.type_guard<math::variable>();
     registerInput(x);
     createValue(output_t, "output");
+  }
+  static sinFunc* build(math::variable output_t, lgf::value& x){
+    auto op = new sinFunc(output_t, x);
+    return op;
   }
   lgf::value& x(){ return inputValue(0); }
   lgf::value& output(){ return outputValue(0); }
@@ -43,6 +51,10 @@ class cosFunc : public lgf::operation
     registerInput(x);
     createValue(output_t, "output");
   }
+  static cosFunc* build(math::variable output_t, lgf::value& x){
+    auto op = new cosFunc(output_t, x);
+    return op;
+  }
   lgf::value& x(){ return inputValue(0); }
   lgf::value& output(){ return outputValue(0); }
 };
@@ -56,6 +68,10 @@ class expFunc : public lgf::operation
     x.type_guard<math::variable>();
     registerInput(x);
     createValue(output_t, "output");
+  }
+  static expFunc* build(math::variable output_t, lgf::value& x){
+    auto op = new expFunc(output_t, x);
+    return op;
   }
   lgf::value& x(){ return inputValue(0); }
   lgf::value& output(){ return outputValue(0); }

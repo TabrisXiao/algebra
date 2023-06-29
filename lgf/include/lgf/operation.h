@@ -150,6 +150,7 @@ public :
         p<<representOutputs()<<" = "<<getSID() <<" : "<<representInputs();
         return p.dump();
     }
+    
     virtual std::string representInputs();
     virtual std::string representOutputs();
     virtual void print();

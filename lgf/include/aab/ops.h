@@ -15,19 +15,25 @@ namespace lgf
 // and produce eactly one outputValue value
 class binaryOp : public operation{
     public:
-    binaryOp(value &lhs, value &rhs){
-        registerInput(lhs, rhs);
-        createValue();
+    binaryOp() = default;
+    static binaryOp* build(value &lhs, value &rhs){
+        auto op = new binaryOp();
+        op->registerInput(lhs, rhs);
+        op->createValue();
+        return op;
     }
     value& lhs() {return inputValue(0);}
     value& rhs() {return inputValue(1);}
 };
 class defOp : public operation{
 public: 
-    defOp(std::string id_="Unknown") {
-        auto& val = createValue();
+    defOp() = default;
+    static defOp* build(std::string id_="Unknown"){
+        auto op = new defOp();
+        auto& val = op->createValue();
         val.setSID(id_);
-        setSID("Def");
+        op->setSID("Def");
+        return op;
     }
     std::string represent() final{
         printer p;
@@ -39,8 +45,12 @@ public:
 
 class addOp : public binaryOp, public commutable{
     public :
-    addOp(value& lhs, value& rhs) : binaryOp(lhs, rhs) {
-        setSID("Add");
+    addOp() = default;
+    static addOp* build(value& lhs, value& rhs){
+        auto op = new addOp();
+        op->registerInput(lhs, rhs);
+        op->setSID("Add");
+        return op;
     }
     virtual std::string represent() override{
         printer p;
@@ -53,8 +63,13 @@ class addOp : public binaryOp, public commutable{
 class multiplyOp : public binaryOp {
     public :
     public :
-    multiplyOp(value& lhs, value& rhs) : binaryOp(lhs, rhs) {
-        setSID("Multiply");
+    multiplyOp() = default;
+        
+    static multiplyOp* build(value& lhs, value& rhs){
+        auto op = new multiplyOp();
+        op->setSID("Multiply");
+        op->registerInput(lhs, rhs);
+        return op;
     }
     virtual std::string represent() override{
         printer p;
@@ -66,17 +81,22 @@ class multiplyOp : public binaryOp {
 
 class sumOp : public operation, public commutable{
     public:
+    sumOp() = default;
     template <typename... ARGS>
-    sumOp(ARGS &...args) {
-        registerInput(args...);
-        setSID("Sum");
-        createValue();
+    static sumOp* build(ARGS &...args) {
+        auto op = new sumOp();
+        op->registerInput(args...);
+        op->setSID("Sum");
+        op->createValue();
+        return op;
     }
-    sumOp(std::vector<value> vals){
-        createValue();
-        setSID("Sum");
+    static sumOp* build(std::vector<value> vals){
+        auto op = new sumOp();
+        op->createValue();
+        op->setSID("Sum");
         for(auto& v : vals)
-            registerInput(v);
+            op->registerInput(v);
+        return op;
     }
     void addInput(value& val) { registerInput(val); }
 

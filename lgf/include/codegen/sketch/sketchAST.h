@@ -25,8 +25,11 @@ class sketchASTBase {
 
 class sketchCodeAST : public lgf::operation, public sketchASTBase{
     public:
-    sketchCodeAST(std::string & s): sketchASTBase(kind_code){
-        spell = s;
+    sketchCodeAST(): sketchASTBase(kind_code){}
+    static sketchCodeAST* build(std::string code){
+        auto op = new sketchCodeAST();
+        op->spell = code;
+        return op;
     }
     std::string spell;
 };
@@ -38,6 +41,11 @@ class sketchModuleAST : public lgf::graph, public sketchASTBase {
     , name(name_)
     , graph("sketch::moduleAST") {}
     void setName(std::string &name_){name = name_;}
+
+    static sketchModuleAST* build(std::string name_=""){
+        auto op = new sketchModuleAST(name_);
+        return op;
+    }
 
     virtual std::string represent(){
         printer p;
@@ -67,6 +75,10 @@ class sketchModuleAST : public lgf::graph, public sketchASTBase {
 class opDefBuilderAST : public lgf::operation, public sketchASTBase {
     public:
     opDefBuilderAST(): sketchASTBase(kind_opDefBuilder) {}
+    static opDefBuilderAST* build(){
+        auto op = new opDefBuilderAST();
+        return op;
+    }
     void addInput(std::string name, lgf::type_t tp){
         input_.push_back(value());
         input_.back().setSID(name);
@@ -95,6 +107,10 @@ class opDefAST : public lgf::graph, public sketchASTBase {
         ioOp.setOpName( name );
         addOp(&ioOp);
     }
+    static opDefAST* build(std::string name){
+        auto op = new opDefAST(name);
+        return op;
+    }
     opDefBuilderAST* getBuilderOp(){
         return &ioOp;
     }
@@ -119,6 +135,11 @@ class typeDefAST : public lgf::operation, public sketchASTBase {
     typeDefAST(std::string name) 
     : sketchASTBase(kind_typeDef)
     , typeSID(name) { }
+
+    static typeDefAST* build(std::string name){
+        auto op = new typeDefAST(name);
+        return op;
+    }
 
     void addParameter(std::string sid, std::string type){
         para.push_back(std::pair<std::string, std::string>(sid, type));

@@ -9,6 +9,10 @@ class moduleOp : public graph{
 public:
     moduleOp() : graph("module"){}
     ~moduleOp(){}
+    static moduleOp * build(){
+        auto op = new moduleOp();
+        return op;
+    }
     virtual std::string represent() {return getSID();}
 };
 //----------------------------------------
