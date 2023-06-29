@@ -21,7 +21,7 @@ class painter {
     template<typename obj, typename...ARGS>
     obj* createOp(ARGS ...args){
         CHECK_CONDITION(current_graph!=nullptr, "No graph associated to the painter!");
-        auto ptr = new obj(args...);
+        auto ptr = obj::build(args...);
         current_graph->addOp(ptr);
         return ptr;
     }

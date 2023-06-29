@@ -16,6 +16,10 @@ class addOp : public lgf::operation
     registerInput(lhs, rhs);
     createValue(output_t, "output");
   }
+  static addOp* build(math::variable output_t, lgf::value& lhs, lgf::value& rhs){
+    auto op = new addOp(output_t, lhs, rhs);
+    return op;
+  }
   lgf::value& lhs(){ return inputValue(0); }
   lgf::value& rhs(){ return inputValue(1); }
   lgf::value& output(){ return outputValue(0); }
@@ -32,6 +36,10 @@ class multiplyOp : public lgf::operation
     registerInput(lhs, rhs);
     createValue(output_t, "output");
   }
+  static multiplyOp* build(math::variable output_t, lgf::value& lhs, lgf::value& rhs){
+    auto op = new multiplyOp(output_t, lhs, rhs);
+    return op;
+  }
   lgf::value& lhs(){ return inputValue(0); }
   lgf::value& rhs(){ return inputValue(1); }
   lgf::value& output(){ return outputValue(0); }
@@ -47,6 +55,10 @@ class inverseOp : public lgf::operation
     registerInput(input);
     createValue(output_t, "output");
   }
+  static inverseOp* build(math::variable output_t, lgf::value& input){
+    auto op = new inverseOp(output_t, input);
+    return op;
+  }
   lgf::value& input(){ return inputValue(0); }
   lgf::value& output(){ return outputValue(0); }
 };
@@ -58,6 +70,10 @@ class defOp : public lgf::operation
   defOp(math::variable output_t){
     setSID("aab::defOp");
     createValue(output_t, "output");
+  }
+  static defOp* build(math::variable output_t){
+    auto op = new defOp(output_t, );
+    return op;
   }
   lgf::value& output(){ return outputValue(0); }
 };

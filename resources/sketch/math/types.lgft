@@ -26,6 +26,6 @@ type realNumber {
 
 type matrix{
     parameters = {
-        int $rowDim, int $colDim
+        type_t $elemType, int $rowDim, int $colDim
     }
 }

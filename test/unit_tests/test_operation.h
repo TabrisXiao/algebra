@@ -13,6 +13,10 @@ class defop : public operation {
         auto& v = createValue();
         v.setSID(name);
     }
+    static defop* build(std::string name){
+        auto op = new defop(name);
+        return op;
+    }
     virtual std::string represent() override{
         printer p;
         p<<outputValue().represent();
@@ -22,10 +26,13 @@ class defop : public operation {
 };
 class addop : public operation {
     public:
-    addop (value& lhs, value& rhs){
-        registerInput(lhs, rhs);
-        setSID("add");
-        createValue();
+    addop () = default;
+    static addop* build(value& lhs, value& rhs){
+        auto op = new addop();
+        op->registerInput(lhs, rhs);
+        op->setSID("add");
+        op->createValue();
+        return op;
     }
     value& lhs() {return inputValue(0);}
     value& rhs() {return inputValue(1);}
@@ -39,10 +46,13 @@ class addop : public operation {
 
 class multiplyop : public operation {
     public:
-    multiplyop (value& lhs, value& rhs){
-        registerInput(lhs, rhs);
-        setSID("multiply");
-        createValue();
+    multiplyop () = default;
+    static multiplyop* build(value& lhs, value& rhs){
+        auto op = new multiplyop();
+        op->registerInput(lhs, rhs);
+        op->setSID("multiply");
+        op->createValue();
+        return op;
     }
     value& lhs() {return inputValue(0);}
     value& rhs() {return inputValue(1);}
@@ -56,10 +66,13 @@ class multiplyop : public operation {
 
 class returnop : public operation{
     public: 
-    returnop (value & inputValue){
-        registerInput(inputValue);
-        setSID("return");
-        createValue();
+    returnop () = default;
+    static returnop * build(value & inputValue){
+        auto op = new returnop();
+        op->registerInput(inputValue);
+        op->setSID("return");
+        op->createValue();
+        return op;
     }
     virtual std::string represent() override{
         printer p;
