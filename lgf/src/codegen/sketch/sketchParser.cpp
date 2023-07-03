@@ -133,6 +133,12 @@ void sketchParser::parseOpDef() {
     tbl.addInfo(opname, info_struct);
     auto op = pntr.createOp<opDefAST>(opname);
     op->getBuilderOp()->setSID(scopeName+opname);
+    if(lexer.getCurToken() == token(':')){
+        lexer.consume(token(':'));
+        auto parent = lexer.identifierStr;
+        op->addParent(parent);
+        lexer.consume(tok_identifier);
+    }
     if(lexer.getCurToken() == token('{'))
         parseOpDefDetail(op);
     lexer.consume(token('}'));
@@ -176,16 +182,27 @@ void sketchParser::parseTypeInputParameters(typeDefAST* op){
     lexer.consume(token('}'));
 }
 
+void sketchParser::parseRepresent(lgf::graph* op){
+    lexer.consume(tok_identifier);
+}
+
 void sketchParser::parseTypeDef(){
     module.addOperationHeader();
     lexer.consume(tok_type_def);
     auto tpname = ReadIdentifierWithScope();
     tbl.addInfo(tpname, info_struct);
     auto op = pntr.createOp<typeDefAST>(tpname);
+    if(lexer.getCurToken()== token(':')){
+        lexer.consume(token(':'));
+        op->addParent(lexer.identifierStr);
+        lexer.consume(tok_identifier);
+    }
     lexer.consume(token('{'));
     while(lexer.getCurToken() == tok_identifier){
         if(lexer.identifierStr == "parameters"){
             parseTypeInputParameters(op);
+        } else if(lexer.identifierStr == "represent"){
+            parseRepresent(dynamic_cast<lgf::graph*>(op));
         }else {
             parseError("Unknown keywords: "+lexer.identifierStr);
         }

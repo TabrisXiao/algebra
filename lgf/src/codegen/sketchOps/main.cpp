@@ -34,7 +34,7 @@ std::string getFileName(const std::string& filePath){
     }
 }
 
- void getFilesWithExtension(const std::string& folderPath, const std::string& extension, std::vector<std::pair<std::string, std::string>> & files) {
+void getFilesWithExtension(const std::string& folderPath, const std::string& extension, std::vector<std::pair<std::string, std::string>> & files) {
     // feed the path folder/subfolder/ and specify the extension like .lgft
     // Find all .lgft files in the folder folder/subfolder/ 
     // say folder/subfolder/file.lgft

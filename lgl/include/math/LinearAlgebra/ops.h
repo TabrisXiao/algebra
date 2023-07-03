@@ -9,15 +9,14 @@ namespace LinAlg{
 class addOp : public lgf::operation
 {
   public:
-  addOp(math::matrix output_t, lgf::value& lhs, lgf::value& rhs){
-    setSID("LinAlg::addOp");
+  addOp(){}
+  static addOp* build(math::matrix output_t, lgf::value& lhs, lgf::value& rhs){
     lhs.type_guard<math::matrix>();
     rhs.type_guard<math::matrix>();
-    registerInput(lhs, rhs);
-    createValue(output_t, "output");
-  }
-  static addOp* build(math::matrix output_t, lgf::value& lhs, lgf::value& rhs){
-    auto op = new addOp(output_t, lhs, rhs);
+    auto op = new addOp();
+    op->registerInput(lhs, rhs);
+    op->setSID("LinAlg::addOp");
+    op->createValue(output_t, "output");
     return op;
   }
   lgf::value& lhs(){ return inputValue(0); }
@@ -29,15 +28,14 @@ class addOp : public lgf::operation
 class multiplyOp : public lgf::operation
 {
   public:
-  multiplyOp(math::matrix output_t, lgf::value& lhs, lgf::value& rhs){
-    setSID("LinAlg::multiplyOp");
+  multiplyOp(){}
+  static multiplyOp* build(math::matrix output_t, lgf::value& lhs, lgf::value& rhs){
     lhs.type_guard<math::matrix>();
     rhs.type_guard<math::matrix>();
-    registerInput(lhs, rhs);
-    createValue(output_t, "output");
-  }
-  static multiplyOp* build(math::matrix output_t, lgf::value& lhs, lgf::value& rhs){
-    auto op = new multiplyOp(output_t, lhs, rhs);
+    auto op = new multiplyOp();
+    op->registerInput(lhs, rhs);
+    op->setSID("LinAlg::multiplyOp");
+    op->createValue(output_t, "output");
     return op;
   }
   lgf::value& lhs(){ return inputValue(0); }
@@ -49,14 +47,13 @@ class multiplyOp : public lgf::operation
 class inverseOp : public lgf::operation
 {
   public:
-  inverseOp(math::matrix output_t, lgf::value& input){
-    setSID("LinAlg::inverseOp");
-    input.type_guard<math::matrix>();
-    registerInput(input);
-    createValue(output_t, "output");
-  }
+  inverseOp(){}
   static inverseOp* build(math::matrix output_t, lgf::value& input){
-    auto op = new inverseOp(output_t, input);
+    input.type_guard<math::matrix>();
+    auto op = new inverseOp();
+    op->registerInput(input);
+    op->setSID("LinAlg::inverseOp");
+    op->createValue(output_t, "output");
     return op;
   }
   lgf::value& input(){ return inputValue(0); }
@@ -67,14 +64,13 @@ class inverseOp : public lgf::operation
 class transpose : public lgf::operation
 {
   public:
-  transpose(math::matrix output_t, lgf::value& input){
-    setSID("LinAlg::transpose");
-    input.type_guard<math::matrix>();
-    registerInput(input);
-    createValue(output_t, "output");
-  }
+  transpose(){}
   static transpose* build(math::matrix output_t, lgf::value& input){
-    auto op = new transpose(output_t, input);
+    input.type_guard<math::matrix>();
+    auto op = new transpose();
+    op->registerInput(input);
+    op->setSID("LinAlg::transpose");
+    op->createValue(output_t, "output");
     return op;
   }
   lgf::value& input(){ return inputValue(0); }
@@ -85,12 +81,11 @@ class transpose : public lgf::operation
 class declareOp : public lgf::operation
 {
   public:
-  declareOp(math::matrix output_t){
-    setSID("LinAlg::declareOp");
-    createValue(output_t, "output");
-  }
+  declareOp(){}
   static declareOp* build(math::matrix output_t){
-    auto op = new declareOp(output_t, );
+    auto op = new declareOp();
+    op->setSID("LinAlg::declareOp");
+    op->createValue(output_t, "output");
     return op;
   }
   lgf::value& output(){ return outputValue(0); }

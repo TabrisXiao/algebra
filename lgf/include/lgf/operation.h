@@ -29,9 +29,9 @@ class type_t {
     ~type_t() = default;
     void setID(std::string id_){ id= id_;}
     std::string getSID() {return id;}
-    std::string represent() const {
+    virtual std::string represent() const {
         printer p; p<<"<"<<id<<">";
-        return p.dump(); 
+        return p.dump();
     }
     template<typename t>
     bool isType(){

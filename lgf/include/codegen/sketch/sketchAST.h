@@ -13,6 +13,9 @@ enum sketchASTKind{
     kind_opDefBuilder,
     kind_typeDef,
     kind_code,
+    kind_funcDef,
+    kind_funcCall,
+    kind_represent,
     kind_unknown
 };
 class sketchASTBase {
@@ -97,6 +100,7 @@ class opDefBuilderAST : public lgf::operation, public sketchASTBase {
     std::vector<value> input_;
     std::vector<value> output_;
     std::string opname;
+    std::vector<std::string> parents;
 };
 
 class opDefAST : public lgf::graph, public sketchASTBase {
@@ -118,6 +122,9 @@ class opDefAST : public lgf::graph, public sketchASTBase {
     void addSubgraph(graph* g){
         addOp(dynamic_cast<operation*>(g));
     }
+    void addParent(std::string p ){
+        ioOp.parents.push_back(p);
+    }
 
     virtual std::string represent(){
         printer p;
@@ -128,7 +135,6 @@ class opDefAST : public lgf::graph, public sketchASTBase {
     std::string opname;
     opDefBuilderAST ioOp;
 };
-
 
 class typeDefAST : public lgf::operation, public sketchASTBase {
     public:
@@ -151,12 +157,56 @@ class typeDefAST : public lgf::operation, public sketchASTBase {
         // todo
         return "";
     }
+    void addParent(std::string pr){
+        parents.push_back(pr);
+    }
     std::string typeSID;
     // the parameters stored in the type variable
     // each parameter is stored as pair: name, type
     // example: x , int
     //          y , std::vector<int>
     std::vector<std::pair<std::string, std::string>> para;
+    std::vector<std::string> parents;
+};
+
+class representAST : public lgf::operation, public sketchASTBase {
+    public:
+    representAST() : sketchASTBase(kind_represent) {}
+    representAST & operator <<(std::string & cc){
+        content+=cc;
+        return *this;
+    }
+    std::string content;
+};
+
+struct variable{
+    std::string id, type, value;
+};
+
+class funcDefAST: public lgf::graph, public sketchASTBase {
+    public:
+    funcDefAST(std::string id, std::string rtype, std::string type = "") 
+    : sketchASTBase(kind_funcDef)
+    , graph("sketch::funcDefAST")
+    , funcId(id)
+    , funcType(type)
+    , returnType(rtype)
+    {}
+    void addArg(std::string type, std::string id, std::string dvalue=""){
+        args.push_back(variable({type, id, dvalue}));
+    }
+    std::string funcId, funcType, returnType;
+    // funcType can used to specify if func is virtual, const etc.
+    std::vector<variable> args;
+};
+
+class funcCallAST : public lgf::operation, public sketchASTBase {
+    public:
+    funcCallAST(std::string id)
+    : sketchASTBase(kind_funcCall)
+    , funcId(id) 
+    {}
+    std::string funcId;
 };
 
 } // namespace codegen
