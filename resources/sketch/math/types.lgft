@@ -24,8 +24,15 @@ type realNumber {
     # rational and irrational number
 }
 
-type matrix{
+type anyMatrix {
+    # any matrix  
+}
+
+type matrix : anyMatrix {
     parameters = {
         type_t $elemType, int $rowDim, int $colDim
     }
+    #represent = {
+    #    $id [$rowDim, $colDim] $elemType
+    #}
 }

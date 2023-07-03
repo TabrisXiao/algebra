@@ -81,6 +81,7 @@ class sketchLexer {
         curTok = getNextL1Token();
         if(curTok == token('#')){
             getNextLine();
+            lastChar = getNextChar();
             return getNextToken();
         }else  return curTok;
     }

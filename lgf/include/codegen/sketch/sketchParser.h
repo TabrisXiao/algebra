@@ -64,7 +64,7 @@ class sketchParser {
         fileName = fs::path(path).filename().string();
         parse();
     }
-
+    void parseRepresent(lgf::graph* op);
     std::string ReadIdentifierWithScope(){
         auto name = lexer.identifierStr;
         lexer.consume(tok_identifier);

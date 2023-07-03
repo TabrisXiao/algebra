@@ -59,45 +59,36 @@ class sketch2cppTranslationRule : public translateRule<sketchASTBase>{
         out.printIndent();
         out<<"public:\n";
         out.printIndent();
-        out<<builder->getOpName()<<"(";
+        out<<builder->getOpName()<<"(){}\n";
         auto outputType = printValueTypeArraySignature(vecOutput);
-        out<<outputType;
         auto str = printValueArraySignature(vecInput, 1);
-        if(!str.empty()) {
-            str=", "+str;
-            out<<str;
-        }
-        out<<"){\n";
-        {
-            indentGuard a(out);
-            out.printIndent();
-            out<<"setSID(\""<<op->getSID()<<"\");\n";
-            if(ninput>0){
-                printTypeGuards(out, vecInput);
-                out.printIndent();
-                out<<"registerInput("<<printValueArraySignature(vecInput)<<");\n";
-            }
-            
-            for(auto i=0; i<noutput; i++){
-                out.printIndent();
-                auto & val = vecOutput[i];
-                out<<"createValue("<<val.getSID()<<"_t, \""<<val.getSID()<<"\");\n";
-            }
-        }
-        out.printIndent();
-        out<<"}\n";
-
         // write build function:
         out.printIndent();
         out<<"static "<<builder->getOpName()<<"* build("<<outputType;
         if(!str.empty()) {
-            out<<str;
+            out<<", "<<str;
         }
         out<<"){\n";
         {
             indentGuard a(out);
+            if(ninput>0){
+                printTypeGuards(out, vecInput);
+            }
             out.printIndent();
-            out<<"auto op = new "<<builder->getOpName()<<"("<<printValueArraySignature(vecOutput)<<"_t, "<<printValueArraySignature(vecInput)<<");\n";
+            out<<"auto op = new "<<builder->getOpName()<<"();\n";
+            if(ninput>0){
+                out.printIndent();
+                out<<"op->registerInput("<<printValueArraySignature(vecInput)<<");\n";
+            } 
+            out.printIndent();
+            out<<"op->setSID(\""<<op->getSID()<<"\");\n";
+            
+            
+            for(auto i=0; i<noutput; i++){
+                out.printIndent();
+                auto & val = vecOutput[i];
+                out<<"op->createValue("<<val.getSID()<<"_t, \""<<val.getSID()<<"\");\n";
+            }
             out.printIndent();
             out<<"return op;\n";
         }
@@ -120,11 +111,23 @@ class sketch2cppTranslationRule : public translateRule<sketchASTBase>{
     }
     void writeTypeDefAST(cgstream &out, lgf::operation *op_){
         auto op = dynamic_cast<typeDefAST*>(op_);
-        out<<"class "<<op->typeSID<<": public lgf::type_t {\n";
-        out<<"    public:\n";
-        indentGuard a(out), b(out);
-        
-        out<<"    "<<op->typeSID<<"(";
+        out<<"class "<<op->typeSID<<": public ";
+        if(op->parents.size()==0){
+            out<<"lgf::type_t {\n";
+        }else {
+            out<<op->parents[0];
+            for(auto i=1; i<op->parents.size(); i++){
+                out<<", public "<<op->parents[i];
+            }
+            out<<" {\n";
+        }
+        indentGuard a(out);
+        out.printIndent();
+        out<<"public:\n";
+        out.printIndent();
+        out<<op->typeSID<<"() { id=\""<<op->typeSID<<"\"; }\n";
+        out.printIndent();
+        out<<"static "<<op->typeSID<<" build(";
         auto & para = op->getParameters();
         auto size = para.size();
         if(size>0){
@@ -133,18 +136,23 @@ class sketch2cppTranslationRule : public translateRule<sketchASTBase>{
                 out<<", "<< para[i].second<<" "<<para[i].first;
             }
         }
-        out<<")";
-        if(size>0){
-            out<<"\n";
+        out<<"){\n";{
+            indentGuard g1(out);
             out.printIndent();
-            out<<": "<<para[0].first<<"_("<<para[0].first<<")\n";
-            for(auto i = 1; i<size; i++){
+            out<<op->typeSID<<" obj;\n";
+            if(size>0){
                 out.printIndent();
-                out<<", "<<para[i].first<<"_("<<para[i].first<<")\n";
+                out<<"obj."<<para[0].first<<"_="<<para[0].first<<";\n";
+                for(auto i = 1; i<size; i++){
+                    out.printIndent();
+                    out<<"obj."<<para[i].first<<"_="<<para[i].first<<";\n";
+                } 
             }
             out.printIndent();
+            out<<"return obj;\n";
         }
-        out<<"{}\n";
+        out.printIndent();
+        out<<"}\n";
         int n= 0;
         for(auto & pair : op->getParameters()){
             out.printIndent();
