@@ -12,7 +12,7 @@ class variable: public lgf::type_t {
   }
 };
 
-class natureNumber: public lgf::type_t {
+class natureNumber: public variable {
   public:
   natureNumber() { id="natureNumber"; }
   static natureNumber build(){
@@ -21,7 +21,7 @@ class natureNumber: public lgf::type_t {
   }
 };
 
-class integer: public lgf::type_t {
+class integer: public variable {
   public:
   integer() { id="integer"; }
   static integer build(){
@@ -30,7 +30,7 @@ class integer: public lgf::type_t {
   }
 };
 
-class rationalNumber: public lgf::type_t {
+class rationalNumber: public variable {
   public:
   rationalNumber() { id="rationalNumber"; }
   static rationalNumber build(){
@@ -39,7 +39,7 @@ class rationalNumber: public lgf::type_t {
   }
 };
 
-class irrationalNumber: public lgf::type_t {
+class irrationalNumber: public variable {
   public:
   irrationalNumber() { id="irrationalNumber"; }
   static irrationalNumber build(){
@@ -48,7 +48,7 @@ class irrationalNumber: public lgf::type_t {
   }
 };
 
-class realNumber: public lgf::type_t {
+class realNumber: public variable {
   public:
   realNumber() { id="realNumber"; }
   static realNumber build(){
@@ -57,7 +57,7 @@ class realNumber: public lgf::type_t {
   }
 };
 
-class anyMatrix: public lgf::type_t {
+class anyMatrix: public variable {
   public:
   anyMatrix() { id="anyMatrix"; }
   static anyMatrix build(){

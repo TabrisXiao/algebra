@@ -36,4 +36,3 @@ operation defOp {
         math::variable output
     }
 }
-

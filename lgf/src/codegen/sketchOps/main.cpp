@@ -56,6 +56,11 @@ void getFilesWithExtension(const std::string& folderPath, const std::string& ext
     return;
 }
 
+void test(std::vector<int> vec){
+    std::cout<<vec.size()<<std::endl;
+    return;
+}
+
 int main(int argc, char* argv[]){
     std::string includePath, outputpath;
     std::vector<std::pair<std::string, std::string>> inputs;
@@ -109,5 +114,6 @@ int main(int argc, char* argv[]){
         writer.addTranslationRule<lgf::codegen::sketch2cppTranslationRule>();
         writer.write(&(parser.module));
     }
+    test({1,2,3,4});
     return 0;
 }
