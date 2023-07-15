@@ -1,7 +1,7 @@
 
 #include "compiler/lexer.h"
 
-char lgf::compiler::lexer::getNextChar(){
+char lgfc::lexer::getNextChar(){
     if (buffer.empty()){
         getNextLine();
     }
@@ -17,7 +17,7 @@ char lgf::compiler::lexer::getNextChar(){
 }
 //---------------------------------------------------
 
-lgf::compiler::token lgf::compiler::lexer::getToken(){
+lgfc::token lgfc::lexer::getToken(){
     loc.col = curCol;
     loc.line = curLine;
     // skip all space
@@ -73,7 +73,7 @@ lgf::compiler::token lgf::compiler::lexer::getToken(){
 }
 //---------------------------------------------------
 
-std::string lgf::compiler::lexer::readNextLine(){
+std::string lgfc::lexer::readNextLine(){
     std::string line;
     std::getline(file, line);
     return line;

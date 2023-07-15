@@ -5,12 +5,11 @@
 #include <vector>
 #include <string>
 #include "lexer.h"
-#include <optional>
 #include "lgf/printer.h"
 #include "streamer.h"
+#include <optional>
 
-namespace lgf {
-namespace compiler{
+namespace lgfc {
 
 enum astKind{ 
     kind_module,
@@ -29,7 +28,7 @@ class astBase {
     virtual ~astBase () {}
     astKind kind;
     location loc;
-    virtual void emitIR(streamer &) = 0;
+    virtual void emitIR(lgf::streamer &) = 0;
 };
 
 class moduleAST : public astBase {
@@ -43,13 +42,14 @@ class moduleAST : public astBase {
     }
     std::vector<std::unique_ptr<astBase>> contents;
     unsigned int id, previous_id=0;
-    virtual void emitIR(streamer & out){
+    virtual void emitIR(lgf::streamer & out){
         out.printIndent();
         out<<"module #"<<id<<" {\n";
         out.incrIndentLevel();
         for(auto & op : contents){
             out.printIndent();
             op->emitIR(out);
+            out<<"\n";
         }
         out.decrIndentLevel();
         out.printIndent();
@@ -71,7 +71,7 @@ class structAST : public astBase {
         contents.push_back(astNode());
     }
     std::vector<std::unique_ptr<astBase>> contents;
-    virtual void emitIR(streamer & out){
+    virtual void emitIR(lgf::streamer & out){
         //TODO
     }
 };
@@ -83,8 +83,8 @@ class varDeclAST : public astBase {
     , varTypeID(tid)
     , name(name_) {}
     std::string varTypeID, name;
-    virtual void emitIR(streamer & out){
-        out<<varTypeID<<" "<<name<<"\n";
+    virtual void emitIR(lgf::streamer & out){
+        out<<varTypeID<<" "<<name;
     }
 };
 
@@ -94,7 +94,7 @@ class varAST : public astBase {
     : astBase(loc, kind_variable)
     , id(name) {}
     std::string id;
-    virtual void emitIR(streamer & out){
+    virtual void emitIR(lgf::streamer & out){
         out<<id;
     }
 };
@@ -106,7 +106,7 @@ class funcDeclAST : public astBase {
     : astBase(loc, kind_funcDecl) {}
     std::string funcID;
     std::vector<std::unique_ptr<astBase>> contents;
-    virtual void emitIR(streamer & out){
+    virtual void emitIR(lgf::streamer & out){
         //TODO
     }
 };
@@ -118,7 +118,7 @@ class numberAST : public astBase {
     , number(num) {}
     double getValue(){return number;}
     double number;
-    virtual void emitIR(streamer & out){
+    virtual void emitIR(lgf::streamer & out){
         out<<std::to_string(number);
     }
 };
@@ -135,13 +135,11 @@ class binaryAST : public astBase {
     , binaryOp(op) {}
     std::unique_ptr<astBase> lhs, rhs;
     std::string binaryOp;
-    virtual void emitIR(streamer & out){
+    bool irNotEnd = 0;
+    virtual void emitIR(lgf::streamer & out){
         lhs->emitIR(out);
         out<<" "<<binaryOp<<" ";
         rhs->emitIR(out);
-        if(rhs->kind == kind_variable || rhs->kind == kind_number){
-            out<<"\n";
-        }
     }
 };
 
@@ -155,7 +153,7 @@ class returnAST : public astBase {
         return std::nullopt;
     }
     std::optional<astBase*> value;
-    virtual void emitIR(streamer & out){
+    virtual void emitIR(lgf::streamer & out){
         out.printIndent();
         out<<"return";
         if(value.has_value()){
@@ -165,7 +163,6 @@ class returnAST : public astBase {
     }
 };
 
-}
 }
 
 #endif

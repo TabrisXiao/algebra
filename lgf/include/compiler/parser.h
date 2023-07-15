@@ -1,6 +1,7 @@
 
 #ifndef COMPILER_PARSER_H
 #define COMPILER_PARSER_H
+#include "fileIO.h"
 #include "lexer.h"
 #include "ast.h"
 #include "symbolicTable.h"
@@ -8,8 +9,9 @@
 #include <map>
 #include <functional>
 #include "lgf/operation.h"
-namespace lgf::compiler{
 
+namespace lgfc{
+using namespace lgf;
 #define TRACE_FUNC_CALL \
     std::cout << "Calling function: " << __func__ << std::endl;
 
@@ -26,8 +28,8 @@ struct idInfo {
 
 class parser{
     public:
-    parser() = default;
-    std::unique_ptr<moduleAST> parse(std::string path){
+    parser(fileIO *io_) : io(io_) {}
+    std::unique_ptr<moduleAST> parse(fs::path path){
         lx.loadBuffer(path);
         return parseModule();
     }
@@ -55,6 +57,12 @@ class parser{
                 case tok_module:
                     record = parseModule();
                     break;
+                case tok_number:
+                    record = parseExpression();
+                    break;
+                case tok_import: 
+                    parseImport();
+                    break;
                 case tok_identifier:
                     record = parseIdentifier();
                     break;
@@ -79,20 +87,26 @@ class parser{
                 parseError("Get unexpected token in a expression.");
                 return nullptr;
             case tok_identifier:
-                return parseValAST();
+                return parseCallOrExpr();
             case tok_number:
                 return parseNumber();
         }
     }
-    std::unique_ptr<astBase> parseValAST(){
+    std::unique_ptr<astBase> parseCallOrExpr(){
         auto id = lx.identifierStr;
-        lx.consume(tok_identifier);
         auto loc = lx.getLoc();
+        lx.consume(tok_identifier);
+        if(lx.getCurToken()==token('(')){
+            return parseFuncCall(loc, id);
+        }else {
+            return parseValAST(loc, id);
+        }
+    }
+    std::unique_ptr<astBase> parseValAST(location loc, std::string id){
         if(!idtbl.check(id)) {
             idInfo info{idInfo::infoType_variable, current_scopeid};
             idtbl.addSymbol(id,info);
         }
-        //lx.getNextToken();
         return std::make_unique<varAST>(loc, id);
     }
     std::unique_ptr<astBase> parseBinaryRHS(int tokWeight, std::unique_ptr<astBase> lhs){
@@ -116,7 +130,6 @@ class parser{
             if(nnTok == -1) {
                 lx.consume(token(';'));
             }
-
             lhs = std::make_unique<binaryAST>(loc, op, std::move(lhs), std::move(rhs));
         }
     }
@@ -144,25 +157,55 @@ class parser{
                 return -1;
         }
     }
+    void parseImport(){
+        // lx.consume(tok_import);
+        // std::string file = lx.buffer;
+        // lx.getNextLine();
+        // lx.getNextToken();
+        // bool isExists = 0;
+        // for(auto f : includePath){
+        //     auto testpath = (f)+file;
+        //     if( fileExists(testpath) ){
+        //         isExists = 1;
+        //         ifile = testpath;
+        //         break;
+        //     }
+        // }
+        // if(!isExists){
+        // std::string msg = "Can't find the import file: "+file;
+        // parseError(msg.c_str());
+        // }
+        // auto path = fs::path(file);
+        // path.replace_extension(".h");
+        // module.addIncludes(path.string());
+        // import(ifile);
+    }
+    std::unique_ptr<astBase> parseDeclaration(){
+        return nullptr;
+    }
     std::unique_ptr<astBase> parseIdentifier(){
         auto id = lx.identifierStr;
         auto loc = lx.getLoc();
-        // lx.getNextToken();
-        // if(lx.getCurToken() == token('(')){
-        //     return parseFuncCall(loc, id);
-        // }
+        lx.consume(tok_identifier);
+        if(lx.getCurToken()== token('(')){
+            if(!idtbl.check(id)) 
+                parseError("Function: "+id+" is undefined!");
+            if(idtbl.get(id)->type!= idInfo::infoType_func)
+                parseError(id+" is not a function!");
+            return parseFuncCall(loc, id);
+        }
         // check if the id is declared before
-        if(typeIdTable.check(id)){
-            // TODO: implement this
-            idInfo info{idInfo::infoType_typeid, current_scopeid};
-            idtbl.addSymbol(id, info);
+        if(lx.getCurToken()== tok_identifier){
+            if(!typeIdTable.check(id)){
+                parseError(id+" is not a type!");
+            }
             return parseVarDecl(loc, id);
         }
-        return parseExpression();
+        auto lhs = parseValAST(loc, id);
+        return parseBinaryRHS(0, std::move(lhs));
     }
 
     std::unique_ptr<astBase> parseVarDecl(location loc, std::string tid){
-        lx.consume(tok_identifier);
         auto id = lx.identifierStr;
         lx.consume(tok_identifier);
         idInfo info{idInfo::infoType_variable, current_scopeid, 1};
@@ -179,6 +222,7 @@ class parser{
         return nullptr;
     }
     
+    fileIO *io=nullptr;
     lexer lx;
     symbolTable<idInfo> idtbl;
     symbolTable<std::function<type_t()>> typeIdTable;

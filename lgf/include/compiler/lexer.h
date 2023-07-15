@@ -8,9 +8,7 @@
 #include "lgf/exception.h"
 #include <filesystem>
 
-namespace lgf{
-
-namespace compiler{
+namespace lgfc{
 
 struct location {
     std::shared_ptr<std::string> file; ///< filename.
@@ -28,22 +26,24 @@ enum token : int {
     tok_number = -7,
     tok_struct = -100,  // struct
     tok_comment = -101, // //
+    tok_import = -102, // import
     tok_module = -104,// module
     tok_scope = -105, // ::
 };
 class lexer {
     public: 
     lexer() = default;
-    lexer(std::string filename) {
-        loadBuffer(filename);
+    lexer(std::filesystem::path file) {
+        loadBuffer(file);
     }
     ~lexer(){ file.close(); }
-    void loadBuffer(std::string filename){
-        auto filepath = std::filesystem::absolute(filename).string();
-        loc = location({std::make_shared<std::string>(std::move(filepath)), 0,0});
-        file.open(getFilePath());
-        THROW_WHEN(!file.is_open(), "Can't open the file: "+getFilePath());
+    void loadBuffer(std::filesystem::path path){
+        std::string pathstr = path.string();
+        loc = location({std::make_shared<std::string>(std::move(pathstr)), 0,0});
+        file.open(path);
+        THROW_WHEN(!file.is_open(), "Can't open the file: "+pathstr);
     }
+
     static constexpr bool isalpha(unsigned ch) { return (ch | 32) - 'a' < 26; }
 
     static constexpr bool isdigit(unsigned ch) { return (ch - '0') < 10; }
@@ -90,9 +90,6 @@ class lexer {
     token getCurToken(){
         return curTok;
     }
-    std::string getFilePath(){
-        return (*loc.file);
-    }
 
     std::string convertCurrentToken2String(){
         if(curTok >= 0) return std::string(1, static_cast<char>(curTok));
@@ -112,7 +109,5 @@ class lexer {
     location loc;
 };
 
-}
-
-} // namespace lgf
+} // namespace lgfc
 #endif
