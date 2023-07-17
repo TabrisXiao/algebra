@@ -5,31 +5,32 @@
 #include <string>
 #include <memory>
 
-namespace lgfc{
+namespace lgf::compiler{
 
-template<typename handle>
+template<typename meta>
 class symbolTable {
     public:
     symbolTable() = default;
-    const handle* get(std::string key){
+    meta* find(std::string key){
         auto itr = table.find(key);
         if( itr == table.end()) return nullptr;
         return &((*itr).second);
     }
-    bool check(std::string key){
+    bool has(std::string key){
         auto itr = table.find(key);
         if( itr == table.end()) return 0;
         return 1;
     }
+    void addEntry(std::string key, meta entry){
+        THROW_WHEN(has(key) ,"The key: "+key+" already exists!");
+        table[key] = entry;
+    }
     template<typename ...ARGS>
-    void addSymbol(std::string key, ARGS ... args){
-        auto is_valid_key = !check(key);
-        auto msg = " The key: "+key+" is already exists!";
-        CHECK_CONDITION(is_valid_key, msg);
-        table[key] = handle(args...);
+    void addEntry(std::string key, ARGS ... args){
+        addEntry(key, meta(args...));
     }
 
-    std::map<std::string, handle> table;
+    std::map<std::string, meta> table;
 };
 
 }

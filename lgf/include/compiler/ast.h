@@ -9,7 +9,7 @@
 #include "streamer.h"
 #include <optional>
 
-namespace lgfc {
+namespace lgf::compiler {
 
 enum astKind{ 
     kind_module,
@@ -93,7 +93,7 @@ class varAST : public astBase {
     varAST(location loc, std::string name)
     : astBase(loc, kind_variable)
     , id(name) {}
-    std::string id;
+    std::string id, typesid;
     virtual void emitIR(lgf::streamer & out){
         out<<id;
     }

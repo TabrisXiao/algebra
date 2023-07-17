@@ -9,22 +9,12 @@
 #include <map>
 #include <functional>
 #include "lgf/operation.h"
+#include "context.h"
+#include <stack>
 
-namespace lgfc{
-using namespace lgf;
+namespace lgf::compiler{
 #define TRACE_FUNC_CALL \
     std::cout << "Calling function: " << __func__ << std::endl;
-
-struct idInfo {
-    enum eType{
-        infoType_typeid,
-        infoType_variable,
-        infoType_func,
-    };
-    eType type;
-    int scopeid;
-    int rank=0;
-};
 
 class parser{
     public:
@@ -103,9 +93,8 @@ class parser{
         }
     }
     std::unique_ptr<astBase> parseValAST(location loc, std::string id){
-        if(!idtbl.check(id)) {
-            idInfo info{idInfo::infoType_variable, current_scopeid};
-            idtbl.addSymbol(id,info);
+        if(!ctx.current_scope->hasSymbolInfo(id)) {
+            ctx.current_scope->addSymbolInfo(id,{"variable", loc});
         }
         return std::make_unique<varAST>(loc, id);
     }
@@ -158,28 +147,17 @@ class parser{
         }
     }
     void parseImport(){
-        // lx.consume(tok_import);
-        // std::string file = lx.buffer;
-        // lx.getNextLine();
-        // lx.getNextToken();
-        // bool isExists = 0;
-        // for(auto f : includePath){
-        //     auto testpath = (f)+file;
-        //     if( fileExists(testpath) ){
-        //         isExists = 1;
-        //         ifile = testpath;
-        //         break;
-        //     }
-        // }
-        // if(!isExists){
-        // std::string msg = "Can't find the import file: "+file;
-        // parseError(msg.c_str());
-        // }
-        // auto path = fs::path(file);
-        // path.replace_extension(".h");
-        // module.addIncludes(path.string());
-        // import(ifile);
+        lx.consume(tok_import);
+        std::string file = lx.buffer;
+        lx.getNextLine();
+        lx.getNextToken();
+        auto ifile = io->findInclude(file);
+        if(ifile.empty()) parseError("Can't find the fiile: "+file);
+        lexer lxer;
+        lxer.loadBuffer(ifile);
+        // TODO: parse the imported module;
     }
+    
     std::unique_ptr<astBase> parseDeclaration(){
         return nullptr;
     }
@@ -188,17 +166,14 @@ class parser{
         auto loc = lx.getLoc();
         lx.consume(tok_identifier);
         if(lx.getCurToken()== token('(')){
-            if(!idtbl.check(id)) 
-                parseError("Function: "+id+" is undefined!");
-            if(idtbl.get(id)->type!= idInfo::infoType_func)
-                parseError(id+" is not a function!");
             return parseFuncCall(loc, id);
         }
         // check if the id is declared before
         if(lx.getCurToken()== tok_identifier){
-            if(!typeIdTable.check(id)){
-                parseError(id+" is not a type!");
-            }
+            // TODO: need to first implement the symbolic scan
+            //if(stbl.find(id)->type_name != "typedef"){
+            //    parseError(id+" is not a type!");
+            //}
             return parseVarDecl(loc, id);
         }
         auto lhs = parseValAST(loc, id);
@@ -206,14 +181,18 @@ class parser{
     }
 
     std::unique_ptr<astBase> parseVarDecl(location loc, std::string tid){
+        if(auto ptr = ctx.current_scope->findSymbolInfo(tid)){
+            if(ptr->category!= "type" || ptr->category!= "class"){
+                parseError("The type \'"+tid+"\' is not defined yet!");
+            }
+        }
         auto id = lx.identifierStr;
         lx.consume(tok_identifier);
-        idInfo info{idInfo::infoType_variable, current_scopeid, 1};
-        idtbl.addSymbol(id, info);
-        // todo  parse the case:
+        // TODO: support to parse the case:
         //       var a, b, c
         //       var a = 1, b = 2
         lx.consume(token(';'));
+        //stbl.addSymbol(id, {tid, loc});
         return std::make_unique<varDeclAST>(loc, tid, id);
     }
 
@@ -224,9 +203,10 @@ class parser{
     
     fileIO *io=nullptr;
     lexer lx;
-    symbolTable<idInfo> idtbl;
+    context ctx;
     symbolTable<std::function<type_t()>> typeIdTable;
     unsigned int current_scopeid, scopeid = 0;
+    std::stack<std::string> scope_trace;
 };
 
 }

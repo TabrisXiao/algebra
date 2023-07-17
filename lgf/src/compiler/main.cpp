@@ -19,11 +19,13 @@ int main(int argc, char* argv[]){
             inputFile = argv[count+1];
         count+=2;
     }
-    lgfc::compiler cmp;
-    cmp.pser.typeIdTable.addSymbol("var", nullptr);
+    lgf::compiler::compiler cmp;
+    cmp.pser.typeIdTable.addEntry("var", nullptr);
     cmp.compileInput(inputFile);
     lgf::streamer sm;
     cmp.main->emitIR(sm);
 
+    std::cout<<"\n---- LGIR ----\n";
+    cmp.builder.c.printGraph();
     return 0;
 }

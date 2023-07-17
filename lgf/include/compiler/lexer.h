@@ -7,17 +7,10 @@
 #include <fstream>
 #include "lgf/exception.h"
 #include <filesystem>
+#include "utils.h"
 
-namespace lgfc{
+namespace lgf::compiler{
 
-struct location {
-    std::shared_ptr<std::string> file; ///< filename.
-    int line;                          ///< line number.
-    int col;                           ///< column number.
-    std::string string(){
-        return (*file)+"("+std::to_string(line)+", "+std::to_string(col)+")";
-    }
-};
 enum token : int {
     tok_eof = -1,
     tok_return = -2,

@@ -6,7 +6,7 @@
 #include <filesystem>
 
 namespace fs = std::filesystem;
-namespace lgfc{
+namespace lgf::compiler{
 class fileIO{
     public:
     fileIO() = default;
