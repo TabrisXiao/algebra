@@ -25,6 +25,13 @@ class painter {
         current_graph->addOp(ptr);
         return ptr;
     }
+    template<typename obj>
+    obj* createOp(){
+        CHECK_CONDITION(current_graph!=nullptr, "No graph associated to the painter!");
+        auto ptr = obj::build();
+        current_graph->addOp(ptr);
+        return ptr;
+    }
 
     // create a new op to replace the op1's users
     template<typename obj, typename...ARGS>

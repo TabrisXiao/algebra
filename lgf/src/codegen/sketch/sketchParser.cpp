@@ -75,6 +75,10 @@ void sketchParser::parseImport(){
     import(ifile);
 }
 
+void sketchParser::parseBuiltinStruct(opDefAST *op){
+    parseError("not defined yet");
+}
+
 void sketchParser::parserOpDefInputs(opDefAST *op){
     // the example of the inputs:
     // inputs = {
@@ -86,13 +90,29 @@ void sketchParser::parserOpDefInputs(opDefAST *op){
     lexer.consume(token('{'));
     while(lexer.getCurToken()!= token('}')){
         auto typeSID = ReadIdentifierWithScope();
-        auto vname = lexer.identifierStr;
-        lexer.consume(tok_identifier);
-        if(! tbl.check(typeSID)){
-            std::string msg = "type: "+typeSID+" is unknown.";
-            parseError(msg.c_str());
+        // parsing array struct
+        if(typeSID == "lgf::array"){
+            lexer.consume(token('<'));
+            auto elemType = ReadIdentifierWithScope();
+            if(! tbl.check(elemType)){
+                std::string msg = "element type: "+elemType+" is unknown.";
+                parseError(msg.c_str());
+            }
+            lexer.consume(token('>'));
+            auto name = lexer.identifierStr;
+            lexer.consume(tok_identifier);
+            typeSID += "<"+elemType+">";
+            op->getBuilderOp()->addInput(name, typeSID);
         }
-        op->getBuilderOp()->addInput(vname, typeSID);
+        else{
+            if(! tbl.check(typeSID)){
+                std::string msg = "type: "+typeSID+" is unknown.";
+                parseError(msg.c_str());
+            }
+            lexer.getNextToken();
+            auto vname = lexer.identifierStr;
+            op->getBuilderOp()->addInput(vname, typeSID);
+        }
         if(lexer.getCurToken() != token('}'))
             lexer.consume(token(','));
     }

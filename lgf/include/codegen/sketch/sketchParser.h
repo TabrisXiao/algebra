@@ -64,6 +64,7 @@ class sketchParser {
         fileName = fs::path(path).filename().string();
         parse();
     }
+    void parseBuiltinStruct(opDefAST *op);
     void parseRepresent(lgf::graph* op);
     std::string ReadIdentifierWithScope(){
         auto name = lexer.identifierStr;
@@ -89,5 +90,5 @@ class sketchParser {
     std::vector<std::string> includePath;
 };
 } // namespace codegen
-} // namespace lgf
+} // namespace lgf 
 #endif

@@ -4,27 +4,27 @@ type variable {
     # this type can be treated as any type
 }
 
-type natureNumber {
+type natureNumber : variable {
     # positive integer
 }
 
-type integer{
+type integer : variable {
     # postive, 0 and negative integer
 }
 
-type rationalNumber {
+type rationalNumber : variable {
     # can be expressed as fraction of two integer
 }
 
-type irrationalNumber {
+type irrationalNumber : variable {
     # those numbers can not expressed as fraction of two integer
 }
 
-type realNumber {
+type realNumber : variable {
     # rational and irrational number
 }
 
-type anyMatrix {
+type anyMatrix : variable {
     # any matrix  
 }
 

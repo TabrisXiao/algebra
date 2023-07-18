@@ -198,7 +198,7 @@ void graph::printGraph() {
     global::stream::getInstance()<<"{\n";
     global::stream::getInstance().incrIndentLevel();
     walk([&](operation* op){ 
-        op->print();});
+        op->print();}, 1);
     global::stream::getInstance().decrIndentLevel();
     global::stream::getInstance().printIndent();
     global::stream::getInstance()<<"}\n";
@@ -214,7 +214,7 @@ void graph::assignID(int n0 ){
             g->getEntry().assignValueID(entryn);
             g->assignID(gn);
         }
-    });
+    }, 1);
 }
 //---------------------------------------------------
 

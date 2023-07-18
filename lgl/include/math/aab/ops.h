@@ -24,6 +24,25 @@ class addOp : public lgf::operation
   lgf::value& output(){ return outputValue(0); }
 };
 
+// ---------- multiplyOp ----------
+class multiplyOp : public lgf::operation
+{
+  public:
+  multiplyOp(){}
+  static multiplyOp* build(math::variable output_t, lgf::value& lhs, lgf::value& rhs){
+    lhs.type_guard<math::variable>();
+    rhs.type_guard<math::variable>();
+    auto op = new multiplyOp();
+    op->registerInput(lhs, rhs);
+    op->setSID("aab::multiplyOp");
+    op->createValue(output_t, "output");
+    return op;
+  }
+  lgf::value& lhs(){ return inputValue(0); }
+  lgf::value& rhs(){ return inputValue(1); }
+  lgf::value& output(){ return outputValue(0); }
+};
+
 // ---------- inverseOp ----------
 class inverseOp : public lgf::operation
 {
@@ -52,25 +71,6 @@ class defOp : public lgf::operation
     op->createValue(output_t, "output");
     return op;
   }
-  lgf::value& output(){ return outputValue(0); }
-};
-
-// ---------- multiplyOp ----------
-class multiplyOp : public lgf::operation
-{
-  public:
-  multiplyOp(){}
-  static multiplyOp* build(math::variable output_t, lgf::value& lhs, lgf::value& rhs){
-    lhs.type_guard<math::variable>();
-    rhs.type_guard<math::variable>();
-    auto op = new multiplyOp();
-    op->registerInput(lhs, rhs);
-    op->setSID("aab::multiplyOp");
-    op->createValue(output_t, "output");
-    return op;
-  }
-  lgf::value& lhs(){ return inputValue(0); }
-  lgf::value& rhs(){ return inputValue(1); }
   lgf::value& output(){ return outputValue(0); }
 };
 
