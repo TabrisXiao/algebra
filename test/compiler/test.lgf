@@ -2,6 +2,5 @@
 c = a+b;
 // test
 d = a+ c;
-e = d+3*b - c;
-3 + d;
+e = d+3*b *c -c;
 var v;

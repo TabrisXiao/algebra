@@ -117,6 +117,9 @@ class numberAST : public astBase {
     : astBase(loc, kind_number)
     , number(num) {}
     double getValue(){return number;}
+    bool isInt(){
+        return int(number)== number;
+    }
     double number;
     virtual void emitIR(lgf::streamer & out){
         out<<std::to_string(number);

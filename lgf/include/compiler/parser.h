@@ -103,7 +103,7 @@ class parser{
             std::string op;
             auto nextTok = binaryTokenPrioCheck();
             op+=static_cast<char>(lx.getCurToken());
-            if(nextTok < tokWeight ) return lhs;
+            if(nextTok <= tokWeight ) return lhs;
             lx.getNextToken();
             auto loc = lx.getLoc();
             auto rhs = parsePrimary();
@@ -203,7 +203,7 @@ class parser{
     
     fileIO *io=nullptr;
     lexer lx;
-    context ctx;
+    ASTContext ctx;
     symbolTable<std::function<type_t()>> typeIdTable;
     unsigned int current_scopeid, scopeid = 0;
     std::stack<std::string> scope_trace;

@@ -20,7 +20,7 @@ class compiler {
         auto f = io.getFile(file);
         COMPIELR_THROW_WHEN(f.empty(), "Can't find the file: "+file);
         main = pser.parse(f);
-        builder.ctx = &(pser.ctx);
+        builder.astctx = &(pser.ctx);
         builder.build(main);
     }
     fileIO io;

@@ -4,10 +4,50 @@
 #include "symbolicTable.h"
 #include "utils.h"
 #include <queue>
+#include <stack>
 
 namespace lgf::compiler{
 
-class context {
+template<typename info>
+class scope{
+    public:
+    scope() = default;
+    scope(scope* p) : parent(p) {}
+    info* findSymbolInfo(std::string id){
+        return stbl.find(id);
+    }
+    void addSymbolInfo(std::string id, info info){
+        stbl.addEntry(id, info);
+    }
+    bool hasSymbolInfo(std::string id){
+        return stbl.has(id);
+    }
+    scope& findScope(std::string name) {
+        // parse scope string
+        auto & iter = subscope.find(name);
+        THROW_WHEN(iter == subscope.end(), "Scope name: \'"+name+"\' doesn't     exist!");
+        return (*iter).second;
+    }
+    scope& findScope(std::queue<std::string>& path){
+        if(path.size() == 0 ) return *this;
+        auto &_scope = subscope.find(path.front());
+        path.pop();
+        return (*_scope).second.findScope(path);
+    }
+    bool hasScope(std::string name){
+        if(subscope.find(name) == subscope.end()) return 0;
+        return 1;
+    }
+    void registerScope(std::string name){
+        if(hasScope(name)) return;
+        subscope.insert(std::make_pair(name, scope(this)));
+    }
+    symbolTable<info> stbl;
+    scope* parent = nullptr;
+    std::map<std::string, scope> subscope;
+};
+
+class ASTContext {
     public:
     struct idinfo {
         //category can be:
@@ -18,47 +58,11 @@ class context {
         std::string category;
         location loc;
         std::string extra="";
-    };
-    class scope{
-        public:
-        scope() = default;
-        scope(scope* p) : parent(p) {}
-        idinfo* findSymbolInfo(std::string id){
-            return stbl.find(id);
-        }
-        void addSymbolInfo(std::string id, idinfo info){
-            stbl.addEntry(id, info);
-        }
-        bool hasSymbolInfo(std::string id){
-            return stbl.has(id);
-        }
-        scope& findScope(std::string name) {
-            // parse scope string
-            auto & iter = subscope.find(name);
-            THROW_WHEN(iter == subscope.end(), "Scope name: \'"+name+"\' doesn't     exist!");
-            return (*iter).second;
-        }
-        scope& findScope(std::queue<std::string>& path){
-            if(path.size() == 0 ) return *this;
-            auto &_scope = subscope.find(path.front());
-            path.pop();
-            return (*_scope).second.findScope(path);
-        }
-        bool hasScope(std::string name){
-            if(subscope.find(name) == subscope.end()) return 0;
-            return 1;
-        }
-        void registerScope(std::string name){
-            if(hasScope(name)) return;
-            subscope.insert(std::make_pair(name, scope(this)));
-        }
-        symbolTable<idinfo> stbl;
-        scope* parent = nullptr;
-        std::map<std::string, scope> subscope;
+        operation * ptr= nullptr;
     };
 
-    context() { current_scope = &root_scope; }
-    scope& findScope(std::string name){
+    ASTContext() { current_scope = &root_scope; }
+    scope<idinfo>& findScope(std::string name){
         return root_scope.findScope(name);
     }
     void addSymbolInfoToScope(std::string name, std::queue<std::string> scope_path, idinfo info){
@@ -79,9 +83,30 @@ class context {
         current_scope = current_scope->parent;
     }
     
-    scope* current_scope = nullptr;
-    scope root_scope;
+    scope<idinfo>* current_scope = nullptr;
+    scope<idinfo> root_scope;
 };
+
+class LGContext {
+    public: 
+    struct lgObjInfo{
+        operation* opPtr = nullptr;
+        value* valuePtr= nullptr;
+    };
+    LGContext() = default;
+    void backToParentScope(){
+        tracer.pop();
+        ptr=tracer.top();
+    }
+    void moveScopeTo(std::string name){
+        tracer.push(&(ptr->findScope(name)));
+        ptr = tracer.top();
+    }
+    scope<lgObjInfo>* getScope(){return ptr;}
+    scope<lgObjInfo>* ptr = nullptr;
+    std::stack<scope<lgObjInfo>*> tracer;
+};
+
 }
 
 #endif
