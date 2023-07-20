@@ -2,11 +2,13 @@
 #define INTERNALOPS_H_
 #include "lgf/operation.h"
 #include "lgf/group.h"
+#include "types.h"
+#include <string>
 namespace lgf
 {
 
 class moduleOp : public graph{
-public:
+    public:
     moduleOp() : graph("module"){}
     ~moduleOp(){}
     static moduleOp * build(){
@@ -28,7 +30,7 @@ class declOp : public operation{
     value * output(){ return &outputValue(0); }
     virtual std::string represent(){
         printer p;
-        p<<representOutputs()<<" = "<<getSID();
+        p<<representOutputs()<<" : Declare";
         return p.dump();
     }
 };
@@ -39,7 +41,7 @@ class assignOp : public operation{
     ~assignOp() { }
     static assignOp * build(type_t type, value lhs, value rhs){
         auto op = new assignOp();
-        op->setSID("assignOp");
+        op->setSID("assign");
         op->createValue(type, "");
         op->registerInput(lhs, rhs);
         return op;
@@ -53,7 +55,36 @@ class assignOp : public operation{
         return p.dump();
     }
 };
+
 //----------------------------------------
+
+class cstDeclOp : public lgf::operation {
+    public:
+    cstDeclOp () = default;
+    static cstDeclOp *build(int val_){
+        auto op = new cstDeclOp();
+        op->intValue = val_;
+        op->isInt = 1;
+        op->createValue(intType::build(), "");
+        return op;
+    }
+    static cstDeclOp *build(double val_){
+        auto op = new cstDeclOp();
+        op->doubleValue = val_;
+        op->createValue(doubleType::build(), "");
+        return op;
+    }
+    virtual std::string represent(){
+        printer p;
+        p<<representOutputs()<<" = "<<"Constant ";
+        auto & v = isInt ? "int: "+std::to_string (intValue) : "double: "+std::to_string (doubleValue);
+        p<<v;
+        return p.dump();
+    }
+    bool isInt = 0;
+    int intValue;
+    double doubleValue;
+};
 
 }
 #endif

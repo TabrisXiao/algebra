@@ -56,6 +56,9 @@ class parser{
                 case tok_identifier:
                     record = parseIdentifier();
                     break;
+                case tok_def:
+                    record = parseFuncDef();
+                    break;
                 default:
                     parseError("Unknown token: "+lx.convertCurrentToken2String());
             }
@@ -65,6 +68,28 @@ class parser{
         if(lx.getCurToken()!= tok_eof) parseError("Module is not closed!");
         current_scopeid = module->previous_id;
         return std::move(module);
+    }
+    void parseArguments(std::vector<std::unique_ptr<astBase>>& vec){
+        while(lx.getCurToken() == tok_identifier){
+            auto id = lx.identifierStr;
+            auto loc = lx.getLoc();
+            vec.push_back(parseValAST(loc, id));
+            lx.consume(tok_identifier);
+            if(lx.getCurToken() != token(',')) break;
+            lx.consume(token(','));
+        }
+        return;
+    }
+    std::unique_ptr<astBase> parseFuncDef(){
+        lx.consume(tok_def);
+        auto id = lx.identifierStr;
+        auto loc = lx.getLoc();
+        auto ast = std::make_unique<funcDeclAST>(loc, id);
+        lx.consume(tok_identifier);
+        lx.consume(token('('));
+        parseArguments(ast->args);
+        lx.consume(token(')'));
+        return ast;
     }
     std::unique_ptr<astBase> parseNumber(){
         auto nn = lx.number;

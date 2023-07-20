@@ -64,7 +64,11 @@ class LGTranslator {
     }
     operation* declareConstant(std::unique_ptr<astBase>& op){
         auto ast = dynamic_cast<numberAST*>(op.get());
-        auto lgfop = pnt.createOp<declOp>(math::integer());
+        cstDeclOp * lgfop;
+        if(ast->isInt())
+            lgfop = pnt.createOp<cstDeclOp>(int(ast->number));
+        else
+            lgfop = pnt.createOp<cstDeclOp>(ast->number);
         return lgfop;
     }
     operation* convertBinaryOp(std::unique_ptr<astBase>& op){

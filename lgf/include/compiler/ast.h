@@ -17,6 +17,7 @@ enum astKind{
     kind_varDecl,
     kind_variable,
     kind_funcDecl,
+    kind_funcCall,
     kind_number,
     kind_return,
     kind_binary,
@@ -103,11 +104,17 @@ class varAST : public astBase {
 class funcDeclAST : public astBase {
     public:
     funcDeclAST(location loc, std::string funid)
-    : astBase(loc, kind_funcDecl) {}
+    : astBase(loc, kind_funcDecl), funcID(funid) {}
     std::string funcID;
+    std::vector<std::unique_ptr<astBase>> args;
     std::vector<std::unique_ptr<astBase>> contents;
     virtual void emitIR(lgf::streamer & out){
-        //TODO
+        out<<"def "<<funcID<<"(";
+        if(args.size()>0) out<<dynamic_cast<varAST*>(args[0].get())->id;
+        for(auto i=1; i<args.size(); i++){
+            out<<", "<<dynamic_cast<varAST*>(args[i].get())->id;
+        }
+        out<<")";
     }
 };
 
@@ -144,6 +151,15 @@ class binaryAST : public astBase {
         out<<" "<<binaryOp<<" ";
         rhs->emitIR(out);
     }
+};
+
+class funcCallAST : public astBase {
+    public:
+    funcCallAST(location loc) : astBase(loc, kind_funcCall){}
+    std::unique_ptr<astBase>& arg(int n=0){
+        return args[n];
+    }
+    std::vector<std::unique_ptr<astBase>> args;
 };
 
 class returnAST : public astBase {
