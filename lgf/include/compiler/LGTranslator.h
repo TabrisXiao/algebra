@@ -50,7 +50,7 @@ class LGTranslator {
         for(auto& it : scp.stbl.table){
             auto & entry = it.second;
             if(entry.category != "variable") continue;
-            auto op = pnt.createOp<declOp>(math::variable());
+            auto op = pnt.createOp<declOp>(lgf::variable());
             op->output()->setSID("");
             it.second.ptr=op;
         }
@@ -75,18 +75,17 @@ class LGTranslator {
         auto ast = dynamic_cast<binaryAST*>(op.get());
         auto lhs = translateAST(ast->lhs);
         auto rhs = translateAST(ast->rhs);
-        std::cout<<lhs->getSID()<<" : "<<rhs->getSID()<<" --- "<<std::endl;
         auto bop = ast->binaryOp;
         if(bop == "+"){
             // all the operation converted from ast should contained only 1 output.
-            return pnt.createOp<math::aab::addOp>(math::variable(), lhs->outputValue(0), rhs->outputValue(0));
+            return pnt.createOp<math::aab::addOp>(variable(), lhs->outputValue(0), rhs->outputValue(0));
         }else if(bop == "-"){
             // all the operation converted from ast should contained only 1 output.
-            return pnt.createOp<math::aab::minusOp>(math::variable(), lhs->outputValue(0), rhs->outputValue(0));
+            return pnt.createOp<math::aab::minusOp>(variable(), lhs->outputValue(0), rhs->outputValue(0));
         }else if(bop == "*"){
-            return pnt.createOp<math::aab::multiplyOp>(math::variable(), lhs->outputValue(0), rhs->outputValue(0));
+            return pnt.createOp<math::aab::multiplyOp>(variable(), lhs->outputValue(0), rhs->outputValue(0));
         }else if(bop == "="){
-            return pnt.createOp<assignOp>(math::variable(), lhs->outputValue(0), rhs->outputValue(0));
+            return pnt.createOp<assignOp>(variable(), lhs->outputValue(0), rhs->outputValue(0));
         }
         return nullptr;
     }

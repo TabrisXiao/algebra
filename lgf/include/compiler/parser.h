@@ -64,6 +64,8 @@ class parser{
             }
             if(!record) break;
             module->addASTNode(std::move(record));
+            //lgf::streamer sm;
+            //module->emitIR(sm);
         }
         if(lx.getCurToken()!= tok_eof) parseError("Module is not closed!");
         current_scopeid = module->previous_id;
@@ -89,7 +91,10 @@ class parser{
         lx.consume(token('('));
         parseArguments(ast->args);
         lx.consume(token(')'));
-        return ast;
+        if(lx.getCurToken()==token(';')){
+            lx.consume(token(';'));
+            return ast;
+        }
     }
     std::unique_ptr<astBase> parseNumber(){
         auto nn = lx.number;
@@ -206,6 +211,7 @@ class parser{
     }
 
     std::unique_ptr<astBase> parseVarDecl(location loc, std::string tid){
+        TRACE_FUNC_CALL;
         if(auto ptr = ctx.current_scope->findSymbolInfo(tid)){
             if(ptr->category!= "type" || ptr->category!= "class"){
                 parseError("The type \'"+tid+"\' is not defined yet!");
@@ -217,7 +223,6 @@ class parser{
         //       var a, b, c
         //       var a = 1, b = 2
         lx.consume(token(';'));
-        //stbl.addSymbol(id, {tid, loc});
         return std::make_unique<varDeclAST>(loc, tid, id);
     }
 

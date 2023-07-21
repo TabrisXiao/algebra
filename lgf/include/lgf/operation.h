@@ -85,6 +85,8 @@ public:
     void setTypeID(const char * _id){vtp.setID(_id);}
     void setTypeID(std::string& _id){vtp.setID(_id);}
     type_t getType(){return vtp;}
+    template<typename t>
+    t& getType(){ return dynamic_cast<t>(vtp); }
     std::string getTR() const { 
         return vtp.represent(); }
     operation * getDefiningOp() const {return defop;}
@@ -278,6 +280,7 @@ public :
     }
     graph* getParentGraph(){return graph_;}
     void setParentGraph(graph* g){ graph_ = g; }
+    virtual bool verify() { return 0; }
 
     std::vector<valueRef>& getInputRefs(){ return inputs;}
     graph * expandToGraph();
@@ -387,6 +390,12 @@ public :
     void clean();
     // entrances are the ops have no inputs
     operation&  getEntry(){ return entry; }
+    virtual void verifyGraph() { 
+        this->verify();
+        walk([&](operation* op){
+            THROW_WHEN(op->verify(), "Op verification failed!");
+        }, 1);
+    }
 
     // return how many operations graph contained
     int getNodeSize(){ return int(nodes.size()); }

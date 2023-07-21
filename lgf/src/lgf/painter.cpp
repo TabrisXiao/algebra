@@ -14,6 +14,7 @@ bool painter::applyRewriterOnce(){
         }
         current_graph->clean();
     }
+    current_graph->verify();
     return ischanged;
 }
 //---------------------------------------------------

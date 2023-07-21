@@ -11,7 +11,7 @@
 
 namespace lgf::compiler {
 
-enum astKind{ 
+enum astKind{
     kind_module,
     kind_struct,
     kind_varDecl,

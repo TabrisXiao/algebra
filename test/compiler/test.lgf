@@ -3,4 +3,4 @@ c = a+b;
 // test
 d = a+ c;
 e = d+3*b *c -c;
-def sum(a, b)
+def sum(a, b);

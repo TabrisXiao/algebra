@@ -2,6 +2,7 @@
 #ifndef MATH_AAB_OPS_H
 #define MATH_AAB_OPS_H
 #include "lgf/types.h"
+#include "math/types.h"
 #include "lgf/operation.h"
 
 namespace math::aab{
@@ -13,8 +14,10 @@ class addOp : public lgf::operation
     addOp(){}
     static addOp* build(lgf::variable output_type, lgf::value& lhs, lgf::value& rhs){
         auto op = new addOp();
+        lhs.type_guard<math::matrix>();
+        rhs.type_guard<math::matrix>();
         op->registerInput(lhs, rhs);
-        op->setSID("aab::add");
+        op->setSID("linearAlg::add");
         op->createValue(output_type, "");
         return op;
     }
@@ -35,9 +38,11 @@ class minusOp : public lgf::operation
     public:
     minusOp(){}
     static minusOp* build(lgf::variable output_type, lgf::value& lhs, lgf::value& rhs){
+        lhs.type_guard<math::matrix>();
+        rhs.type_guard<math::matrix>();
         auto op = new minusOp();
         op->registerInput(lhs, rhs);
-        op->setSID("aab::minus");
+        op->setSID("linearAlg::minus");
         op->createValue(output_type, "");
         return op;
     }
@@ -57,9 +62,11 @@ class multiplyOp : public lgf::operation
     public:
     multiplyOp(){}
     static multiplyOp* build(lgf::variable output_type, lgf::value& lhs, lgf::value& rhs){
+        lhs.type_guard<math::matrix>();
+        rhs.type_guard<math::matrix>();
         auto op = new multiplyOp();
         op->registerInput(lhs, rhs);
-        op->setSID("aab::multiply");
+        op->setSID("linearAlg::multiply");
         op->createValue(output_type, "");
         return op;
     }
@@ -79,14 +86,27 @@ class inverseOp : public lgf::operation
     public:
     inverseOp(){}
     static inverseOp* build(lgf::variable output_type, lgf::value& input){
+        input.type_guard<math::matrix>();
         auto op = new inverseOp();
         op->registerInput(input);
-        op->setSID("aab::inverse");
+        op->setSID("linearAlg::inverse");
         op->createValue(output_type, "");
         return op;
     }
     lgf::value& input(){ return inputValue(0); }
     lgf::value& output(){ return outputValue(0); }
+};
+
+class determinant : public lgf::operation {
+    public:
+    determinant () = default;
+    static determinant* build(lgf::value &input){
+        input.type_guard<math::matrix>();
+        auto op = new determinant();
+        op->setSID("linearAlg::determinant");
+        op->createValue(input.getType<math::matrix>().elemType , "");
+        return op;
+    }
 };
 
 }
