@@ -51,7 +51,9 @@ class LGTranslator {
         if(ast->hasValue()) {
             value = translateAST(ast->value);
         }
-        pnt.createOp<returnOp>();
+        auto retOp = pnt.createOp<returnOp>(ctx);
+        retOp->registerInput(value->outputValue(0));
+        return retOp;
     }
     void translateError(std::string msg){
         std::cerr<<"Translation error: "<<msg<<std::endl;

@@ -109,7 +109,12 @@ class returnOp : public operation {
         auto op = new returnOp();
         return op;
     }
-    virtual std::string represent(){return "";}
+    static returnOp * build(LGFContext *ctx, value val){
+        auto op = build(ctx);
+        op->registerInput(val);
+        return op;
+    }
+    virtual std::string represent(){return "return";}
 };
 
 }
