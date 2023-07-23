@@ -22,6 +22,7 @@ enum token : int {
     tok_import = -102, // import
     tok_module = -104,// module
     tok_scope = -105, // ::
+    tok_def  =  -106, // def
 };
 class lexer {
     public: 

@@ -90,7 +90,7 @@ value& operation::createValue(){
     outputs.push_back(value(this, getOutputSize()));
     return outputs.back();
 }
-value& operation::createValue(type_t type, std::string sid){
+value& operation::createValue(type_t& type, std::string sid){
     outputs.push_back(value(this, getOutputSize(), type, sid));
     return outputs.back();
 }

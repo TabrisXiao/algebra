@@ -30,7 +30,8 @@ class passManager{
     }
     void run(){
         for(auto pass=passes.begin(); pass!=passes.end(); pass++){
-            (*pass).get()->run();
+            (*pass)->run();
+            
             if(bPrintAfterPass){
                 OSTREAM<<"------ representation after pass: "<<(*pass).get()->_pass_name<<" ------\n";
                 start->assignID(0);

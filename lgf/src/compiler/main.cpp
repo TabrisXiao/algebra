@@ -24,7 +24,7 @@ int main(int argc, char* argv[]){
     cmp.compileInput(inputFile);
     lgf::streamer sm;
     cmp.main->emitIR(sm);
-
+    
     std::cout<<"\n---- LGIR ----\n";
     cmp.builder.c.printGraph();
     return 0;

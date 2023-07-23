@@ -1,6 +1,7 @@
 
 #ifndef OPERATION_H_
 #define OPERATION_H_
+#include "type.h"
 #include <unordered_set>
 #include <queue>
 #include <map>
@@ -10,6 +11,7 @@
 //#include "dgraph.h"
 #include "global.h"
 #include "exception.h"
+#include <memory>
 
 // logic graph frameworks
 namespace lgf{
@@ -22,25 +24,6 @@ class graph;
 
 typedef size_t id_t;
 
-class type_t {
-    public:
-    type_t () = default;
-    type_t (std::string id_){ id= id_;}
-    ~type_t() = default;
-    void setID(std::string id_){ id= id_;}
-    std::string getSID() {return id;}
-    virtual std::string represent() const {
-        printer p; p<<"<"<<id<<">";
-        return p.dump();
-    }
-    template<typename t>
-    bool isType(){
-        if(auto p = dynamic_cast<t*>(this))
-            return 1;
-        return 0;
-    }
-    std::string id="Unknown";
-};
 
 //symbolic id;
 using sid_t = std::string;
@@ -61,7 +44,7 @@ class objInfo {
     private:
     int traceID = -1;
     sid_t sid;
-    type_t type_;
+    //type_t type_;
 };
 
 
@@ -85,6 +68,8 @@ public:
     void setTypeID(const char * _id){vtp.setID(_id);}
     void setTypeID(std::string& _id){vtp.setID(_id);}
     type_t getType(){return vtp;}
+    template<typename t>
+    t& getType(){ return dynamic_cast<t>(vtp); }
     std::string getTR() const { 
         return vtp.represent(); }
     operation * getDefiningOp() const {return defop;}
@@ -220,7 +205,7 @@ public :
     // create a value as output from this op, the order is not 
     // changable as it related to the iid of that value.
     value& createValue();
-    value& createValue(type_t type, std::string sid);
+    value& createValue(type_t& type, std::string sid);
 
     value& outputValue(int n=0){return outputs[n];}
     value& inputValue(int n=0) {return inputs[n].getValue();}
@@ -278,6 +263,7 @@ public :
     }
     graph* getParentGraph(){return graph_;}
     void setParentGraph(graph* g){ graph_ = g; }
+    virtual bool verify() { return 0; }
 
     std::vector<valueRef>& getInputRefs(){ return inputs;}
     graph * expandToGraph();
@@ -387,6 +373,12 @@ public :
     void clean();
     // entrances are the ops have no inputs
     operation&  getEntry(){ return entry; }
+    virtual void verifyGraph() { 
+        this->verify();
+        walk([&](operation* op){
+            THROW_WHEN(op->verify(), "Op verification failed!");
+        }, 1);
+    }
 
     // return how many operations graph contained
     int getNodeSize(){ return int(nodes.size()); }

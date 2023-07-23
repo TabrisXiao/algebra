@@ -41,6 +41,7 @@ lgf::compiler::token lgf::compiler::lexer::getToken(){
 
         if(identifierStr == "module") return tok_module;
         if(identifierStr == "class") return tok_struct;
+        if(identifierStr == "def") return tok_def;
 
         return tok_identifier;
     }

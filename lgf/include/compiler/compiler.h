@@ -22,6 +22,9 @@ class compiler {
         main = pser.parse(f);
         builder.astctx = &(pser.ctx);
         builder.build(main);
+        auto var_t = builder.ctx->getType<variable>();
+        auto list_t = builder.ctx->getType<listType>(var_t, 10);
+        std::cout<<list_t.represent()<<std::endl;
     }
     fileIO io;
     parser pser;
