@@ -116,6 +116,7 @@ class funcDeclAST : public astBase {
         }
         out<<")";
     }
+    bool contentDefined = 0;
 };
 
 class numberAST : public astBase {
@@ -165,18 +166,18 @@ class funcCallAST : public astBase {
 class returnAST : public astBase {
     public:
     returnAST(location loc) : astBase(loc, kind_return) {}
-    std::optional<astBase*> getValue(){
-        if(value.has_value()){
-            return value.value();
-        }
-        return std::nullopt;
+    bool hasValue(){
+        return value == nullptr;
     }
-    std::optional<astBase*> value;
+    void takeValue(std::unique_ptr<astBase>& ptr){
+        value=std::move(ptr);
+    }
+    std::unique_ptr<astBase> value=nullptr;
     virtual void emitIR(lgf::streamer & out){
         out.printIndent();
         out<<"return";
-        if(value.has_value()){
-            value.value()->emitIR(out);
+        if(value){
+            value->emitIR(out);
         }
         out<<"\n";
     }

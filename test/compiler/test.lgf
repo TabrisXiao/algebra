@@ -1,6 +1,10 @@
-
+a+b;
 c = a+b;
 // test
 d = a+ c;
 e = d+3*b *c -c;
-def sum(a, b);
+def check(a, b, c);
+def sum(a, b){
+    //test 
+    return a+b;
+}

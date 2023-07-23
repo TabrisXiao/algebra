@@ -13,7 +13,7 @@ class LGTranslator {
     LGTranslator() = default;
     void build(std::unique_ptr<moduleAST> & main){
         pnt.gotoGraph(&c);
-        auto module = pnt.createOp<moduleOp>();
+        auto module = pnt.createOp<moduleOp>(ctx);
         pnt.gotoGraph(module);
         declareVariables(*(astctx->current_scope));
         translateModuleAST(main);
@@ -37,11 +37,21 @@ class LGTranslator {
             case kind_number:
                 ptr = declareConstant(op);
                 break;
+            case kind_return:
+                ptr = translateReturnOp(op);
             default:
                 translateError("unknown op type: "+std::to_string(op->kind));
                 return nullptr;
         }
         return ptr;
+    }
+    operation* translateReturnOp(std::unique_ptr<astBase>& op){
+        auto ast = dynamic_cast<returnAST*>(op.get());
+        operation *value = nullptr;
+        if(ast->hasValue()) {
+            value = translateAST(ast->value);
+        }
+        pnt.createOp<returnOp>();
     }
     void translateError(std::string msg){
         std::cerr<<"Translation error: "<<msg<<std::endl;
@@ -50,7 +60,7 @@ class LGTranslator {
         for(auto& it : scp.stbl.table){
             auto & entry = it.second;
             if(entry.category != "variable") continue;
-            auto op = pnt.createOp<declOp>(lgf::variable());
+            auto op = pnt.createOp<declOp>(ctx, ctx->getType<variable>());
             op->output()->setSID("");
             it.second.ptr=op;
         }
@@ -65,10 +75,10 @@ class LGTranslator {
     operation* declareConstant(std::unique_ptr<astBase>& op){
         auto ast = dynamic_cast<numberAST*>(op.get());
         cstDeclOp * lgfop;
-        if(ast->isInt())
-            lgfop = pnt.createOp<cstDeclOp>(int(ast->number));
-        else
-            lgfop = pnt.createOp<cstDeclOp>(ast->number);
+        if(ast->isInt()){
+            lgfop = pnt.createOp<cstDeclOp>(ctx, int(ast->number));
+        } else
+            lgfop = pnt.createOp<cstDeclOp>(ctx, ast->number);
         return lgfop;
     }
     operation* convertBinaryOp(std::unique_ptr<astBase>& op){
@@ -78,14 +88,14 @@ class LGTranslator {
         auto bop = ast->binaryOp;
         if(bop == "+"){
             // all the operation converted from ast should contained only 1 output.
-            return pnt.createOp<math::aab::addOp>(variable(), lhs->outputValue(0), rhs->outputValue(0));
+            return pnt.createOp<math::aab::addOp>(ctx, ctx->getType<variable>(), lhs->outputValue(0), rhs->outputValue(0));
         }else if(bop == "-"){
             // all the operation converted from ast should contained only 1 output.
-            return pnt.createOp<math::aab::minusOp>(variable(), lhs->outputValue(0), rhs->outputValue(0));
+            return pnt.createOp<math::aab::minusOp>(ctx, ctx->getType<variable>(), lhs->outputValue(0), rhs->outputValue(0));
         }else if(bop == "*"){
-            return pnt.createOp<math::aab::multiplyOp>(variable(), lhs->outputValue(0), rhs->outputValue(0));
+            return pnt.createOp<math::aab::multiplyOp>(ctx, ctx->getType<variable>(), lhs->outputValue(0), rhs->outputValue(0));
         }else if(bop == "="){
-            return pnt.createOp<assignOp>(variable(), lhs->outputValue(0), rhs->outputValue(0));
+            return pnt.createOp<assignOp>(ctx, ctx->getType<variable>(), lhs->outputValue(0), rhs->outputValue(0));
         }
         return nullptr;
     }
@@ -93,6 +103,8 @@ class LGTranslator {
     painter pnt;
     canvas c;
     ASTContext *astctx;
+    LGFContext context;
+    LGFContext *ctx = &context;
 };
 
 }

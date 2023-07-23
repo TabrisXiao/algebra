@@ -1,6 +1,7 @@
 #ifndef INTERNALOPS_H_
 #define INTERNALOPS_H_
 #include "lgf/operation.h"
+#include "lgf/LGFContext.h"
 #include "lgf/group.h"
 #include "types.h"
 #include <string>
@@ -11,7 +12,7 @@ class moduleOp : public graph{
     public:
     moduleOp() : graph("module"){}
     ~moduleOp(){}
-    static moduleOp * build(){
+    static moduleOp * build(LGFContext *ctx){
         auto op = new moduleOp();
         return op;
     }
@@ -21,7 +22,7 @@ class moduleOp : public graph{
 class declOp : public operation{
     public:
     declOp() = default;
-    static declOp * build(type_t type) {
+    static declOp * build(LGFContext *ctx, type_t type) {
         auto op = new declOp();
         op->setSID("declOp");
         op->createValue(type, "");
@@ -39,7 +40,7 @@ class assignOp : public operation{
     public:
     assignOp() = default;
     ~assignOp() { }
-    static assignOp * build(type_t type, value lhs, value rhs){
+    static assignOp * build(LGFContext *ctx, type_t type, value lhs, value rhs){
         auto op = new assignOp();
         op->setSID("assign");
         op->createValue(type, "");
@@ -61,17 +62,17 @@ class assignOp : public operation{
 class cstDeclOp : public lgf::operation {
     public:
     cstDeclOp () = default;
-    static cstDeclOp *build(int val_){
+    static cstDeclOp *build(LGFContext *ctx, int val_){
         auto op = new cstDeclOp();
         op->intValue = val_;
         op->isInt = 1;
-        op->createValue(intType::build(), "");
+        op->createValue(ctx->getType<intType>(), "");
         return op;
     }
-    static cstDeclOp *build(double val_){
+    static cstDeclOp *build(LGFContext *ctx, double val_){
         auto op = new cstDeclOp();
         op->doubleValue = val_;
-        op->createValue(doubleType::build(), "");
+        op->createValue(ctx->getType<doubleType>(), "");
         return op;
     }
     virtual std::string represent(){
@@ -84,6 +85,31 @@ class cstDeclOp : public lgf::operation {
     bool isInt = 0;
     int intValue;
     double doubleValue;
+};
+
+class funcDefineOp : public graph {
+    public:
+    funcDefineOp() : graph("funcDefineOp") {}
+    static funcDefineOp* build(lgf::type_t returnType_, std::string id_){
+        auto op = new funcDefineOp();
+        op->returnType = returnType_;
+        op->id = id_;
+        return op;
+    }
+    std::string id;
+    type_t returnType;
+    virtual std::string represent(){ 
+        return "";} 
+};
+
+class returnOp : public operation {
+    public:
+    returnOp() = default;
+    static returnOp * build(LGFContext *ctx){
+        auto op = new returnOp();
+        return op;
+    }
+    virtual std::string represent(){return "";}
 };
 
 }
