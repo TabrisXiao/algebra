@@ -1,3 +1,4 @@
+a;
 a+b;
 c = a+b;
 // test
@@ -8,3 +9,4 @@ def sum(a, b){
     //test 
     return a+b;
 }
+return;

@@ -22,8 +22,6 @@ int main(int argc, char* argv[]){
     lgf::compiler::compiler cmp;
     cmp.pser.typeIdTable.addEntry("var", nullptr);
     cmp.compileInput(inputFile);
-    lgf::streamer sm;
-    cmp.main->emitIR(sm);
     
     std::cout<<"\n---- LGIR ----\n";
     cmp.builder.c.printGraph();

@@ -12,6 +12,7 @@
 #include "global.h"
 #include "exception.h"
 #include <memory>
+#include <algorithm>
 
 // logic graph frameworks
 namespace lgf{
@@ -58,8 +59,8 @@ obj& get_vec_elem_with_check(size_t n, std::vector<obj>& vec){
 class value : public objInfo{
 public:
     value() = default;
-    value(operation * op, id_t id);
-    value(operation *op, id_t id, type_t type, std::string sid);
+    value(operation * op);
+    value(operation *op, type_t type, std::string sid);
 
     virtual ~value() = default;
     virtual std::string represent(); 
@@ -70,6 +71,7 @@ public:
     type_t getType(){return vtp;}
     template<typename t>
     t& getType(){ return dynamic_cast<t>(vtp); }
+    // get type representation;
     std::string getTR() const { 
         return vtp.represent(); }
     operation * getDefiningOp() const {return defop;}
@@ -77,6 +79,15 @@ public:
     opType* getDefiningOp() const {return dynamic_cast<opType*>(getDefiningOp());}
     void setDefiningOp(operation *op){defop = op;} 
 
+    void addUsesr(operation *op){
+        if(std::find(users.begin(), users.end(), op)!=users.end()){
+            std::cout<<"user exists!"<<std::endl;
+            return;
+        }
+        users.push_back(op);
+    }
+    void dropUser(operation *op);
+    void dropUsers();
     template<typename t>
     void type_guard(){
         if(dynamic_cast<t>(vtp)) return;
@@ -86,48 +97,31 @@ public:
     
     // get the list of all ops using this value as a input;
     std::vector<operation*> getUsers();
-    // this iid is used to build connection between the value and
-    // dependence. The iid has to be the same in the value and 
-    // the dependence containning this value.
-    id_t getIID() const { return iid; }
 
     private:
     operation *defop = nullptr;
-    const id_t iid = -1;
+    std::vector<operation*> users;
     type_t vtp;
 };
 
-class valueRef{
+class dependencyValue : public value {
     public:
-    valueRef() = default;
-    valueRef(value &val){ referTo(val); }
-    ~valueRef() = default;
-    
-    void referTo( value &val){
-        bInitiated = 1;
-        defop = val.getDefiningOp();
-        iid = val.getIID();
+    dependencyValue() = default;
+    dependencyValue(operation * op) : value(op) { setSID("dummy"); }
+    std::string represent() {
+        return "";
     }
-    operation* getDefiningOp() const {return defop;}
-    id_t getIID() const {return iid;}
-    value & getValue();
-    int getTraceID(){ return getValue().getTraceID();}
-    // get type represent
-    std::string getTR(){ return getValue().getTR();}
-    std::string represent(){ return getValue().represent();}
-
-    private:
-    operation * defop = nullptr;
-    bool bInitiated = 0;
-    id_t iid;
 };
 
 class operation : public objInfo{
 public : 
-    operation(std::string id="Unknown", graph * g=nullptr) : 
+    // the first output value is dependency value used to store 
+    // the dependency inform that don't have value connections
+    operation(std::string id="op", graph * g=nullptr) : 
     objInfo(id){ 
+        auto ptr = std::make_unique<dependencyValue>(this);
+        outputs.push_back(std::move(ptr));
         graph_ = g;
-        outputs.reserve(1); 
     };
     virtual ~operation() = default;
     virtual std::string represent() {
@@ -135,44 +129,10 @@ public :
         p<<representOutputs()<<" = "<<getSID() <<" : "<<representInputs();
         return p.dump();
     }
-    
     virtual std::string representInputs();
     virtual std::string representOutputs();
     virtual void print();
-    value& getValueByID(id_t id){
-        return outputs[id];
-    }
-    valueRef* inputRefByValue(const value & v);
-    void linkTo(operation *op){
-        outgoings.insert(op); 
-        op->incomings.insert(this);
-    }
-    void linkFrom(operation *op){
-        if(!op) return;
-        op->outgoings.insert(this); 
-        incomings.insert(op);
-    }
-    void breakLinkTo(operation *op){
-        outgoings.erase(op);
-        op->incomings.erase(this);
-    }
-    void breakLinkFrom(operation *op){
-        op->outgoings.erase(this);
-        incomings.erase(op);
-    }
 
-    // reduce link will reduce the link counts by 1 or remove it
-    // if there is only one connection exists.
-    void reduceLinkTo(operation *op){
-        if(outgoings.count(op) == 0) return; 
-        outgoings.erase(outgoings.find(op));
-        op->incomings.erase(incomings.find(this));
-    }
-    void reduceLinkFrom(operation *op){
-        if(incomings.count(op) == 0) return; 
-        op->outgoings.erase(outgoings.find(this));
-        incomings.erase(incomings.find(op));
-    }
     // replace this operation by another operation.
     // the new operation must have the same output size as
     // the original one. 
@@ -186,7 +146,7 @@ public :
     // replace the n-th input by the value v. 
     // the connection to the original value will break
     // and link to the new operation owning v.
-    void replaceInputValue(int n, value& v);
+    void replaceInputValue(int n, value* v);
     template <typename... ARGS>
     void registerInput(ARGS ...args)
     {
@@ -194,21 +154,30 @@ public :
         auto values = {args...};
         for (auto val : values)
         {
-            inputs.push_back(valueRef(val));
-            linkFrom(val.getDefiningOp());
+            val->addUsesr(this);
+            inputs.push_back(val);
         }
     }
     // register the input at the given position. Other inputs after 
     // that index will be push back by 1 pos.
-    void registerInputAt( value& val, int pos);
+    void registerInputAt( value* val, int pos);
     
-    // create a value as output from this op, the order is not 
-    // changable as it related to the iid of that value.
-    value& createValue();
-    value& createValue(type_t& type, std::string sid);
+    // Attach an op means this op will depends on that one and
+    // it is connected as an acceptor of the op.
+    dependencyValue* getDependecyValue() { 
+        return dynamic_cast<dependencyValue*>(outputs[0].get()); }
+    void appendTo(operation *op){
+        auto dep = op->getDependecyValue();
+        this->registerInput(dep);
+    }
+    void dependOn(operation* op){
+        this->registerInput(outputValue(0));
+    }
+    value* createValue();
+    value* createValue(type_t& type, std::string sid);
 
-    value& outputValue(int n=0){return outputs[n];}
-    value& inputValue(int n=0) {return inputs[n].getValue();}
+    value* outputValue(int n=0){return outputs[n].get();}
+    value* inputValue(int n=0) {return inputs[n];}
     size_t getInputSize() const;
     size_t getOutputSize() const;
 
@@ -236,12 +205,9 @@ public :
 
     bool isDependencyFullfilled();
 
-    std::vector<value>& getOutputs() const {
-        return const_cast<std::vector<value>&>(outputs);
+    std::vector<std::unique_ptr<value>>& getOutputs() const {
+        return const_cast<std::vector<std::unique_ptr<value>>&>(outputs);
     }
-
-    std::multiset<operation*>& getOutgoings(){ return outgoings;}
-    std::multiset<operation*>& getIncomings(){ return incomings;}
 
     void setActivation(bool a ){ bActive = a; }
     bool isActive(){return bActive; }
@@ -254,23 +220,21 @@ public :
         bRemove = 1; }
     //void erase(){ detach(); bRemove = 1;}
 
-    std::vector<value> getInputs(){
-        std::vector<value> res;
-        for(auto& ref : inputs){
-            res.push_back(ref.getValue());
-        }
-        return res;
-    }
     graph* getParentGraph(){return graph_;}
     void setParentGraph(graph* g){ graph_ = g; }
     virtual bool verify() { return 0; }
 
-    std::vector<valueRef>& getInputRefs(){ return inputs;}
+    std::vector<value*>& getInputs(){ return inputs;}
     graph * expandToGraph();
 
     private:
-    std::vector<valueRef> inputs;
-    std::vector<value> outputs;
+    std::vector<value*> inputs;
+    std::vector<std::unique_ptr<value>> outputs;
+    // dependency stores the ops depending on this op.
+    // Additional those ops don't have the value connecting to this op
+    // other ops using the output from this op clearly depends on this op
+    // but the inform is kept in output values so they are not kept here.
+    std::vector<operation*> dependency;
     // this function is used to determine if this operation contained
     // a region. If an op contained a region, it should override
     // this function.
@@ -282,8 +246,6 @@ public :
     // Should be used solely for removing process in graph.
     bool bRemove = 0;
     graph* graph_ = nullptr;
-    std::multiset<operation*> incomings;
-    std::multiset<operation*> outgoings;
 };
 
 class graph : public operation{
@@ -312,7 +274,8 @@ public :
     void walk(callable && fn, bool checkDependency = 0, bool recycleInactive = 0, bool removeDisconnected = 0, bool deepWalk=0){
         std::queue<operation *> _vq;
         std::vector<operation *> vertice_buffer;
-        for(auto op: entry.getOutgoings())
+        vertice_buffer.reserve(getNodeSize());
+        for(auto op: entry.getDependecyValue()->getUsers())
             _vq.push(op);
         while (_vq.size())
         {
@@ -326,21 +289,23 @@ public :
             v->setExploration(true);
             
             vertice_buffer.push_back(v);
-            for(auto& vn : v->getOutgoings() )
-            {
-                if(checkDependency && !vn->isDependencyFullfilled()) continue;
-                if (vn->isExplored()) continue;
-                if(vn->isRemovable()) continue;
-                _vq.push(vn);
+            for(auto i=0 ;i<v->getOutputSize(); i++){
+                auto val = v->outputValue(i);
+                for(auto vn : val->getUsers()){
+                    if(checkDependency && !vn->isDependencyFullfilled()) continue;
+                    if (vn->isExplored()) continue;
+                    if(vn->isRemovable()) continue;
+                    _vq.push(vn);
+                }
             }
             if(deepWalk){
                 if(auto g = dynamic_cast<graph*>(v)){
-                    g->walk(fn, checkDependency, recycleInactive,   removeDisconnected, 1);
+                    g->walk(fn, checkDependency, recycleInactive, removeDisconnected, 1);
                 }
             }
             fn(v);
+            
         }
-
         // all the ops haven't been explored come from a disconnected graph
         // need to mark them as removable if we don't need them.
         if(removeDisconnected){
@@ -349,8 +314,7 @@ public :
                 op->setRemovable();
             }
         }
-        
-        for (auto &v : vertice_buffer)
+        for (auto v : vertice_buffer)
         {
             v->setExploration(false);
         }
@@ -359,10 +323,10 @@ public :
     }
     // add operation to this graph
     void attachToEntrance(operation* op){ 
-        entry.linkTo(op); }
+        op->appendTo(dynamic_cast<operation*>(&entry)); }
     // regist the op in this graph into book, if this op has no
     // inputs, it will be added as an entrance op.
-    void addOp(operation* op);
+    void registerOp(operation* op);
     graph* getGraph() {return dynamic_cast<graph*>(this);}
 
     virtual void printGraph();
@@ -386,6 +350,7 @@ public :
     private:
     std::vector<operation*> nodes;
     graphEntry entry;
+    // how many operations contained in this graph
 };
 
 class canvas : public graph{

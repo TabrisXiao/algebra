@@ -17,7 +17,9 @@ class LGTranslator {
         pnt.gotoGraph(module);
         declareVariables(*(astctx->current_scope));
         translateModuleAST(main);
+        std::cout<<"AST translated!"<<std::endl;
         c.assignID(0);
+        std::cout<<"translation finished."<<std::endl;
     }
     void translateModuleAST(std::unique_ptr<moduleAST> & main){
         for(auto & op : main->contents){
@@ -52,7 +54,8 @@ class LGTranslator {
             value = translateAST(ast->value);
         }
         auto retOp = pnt.createOp<returnOp>(ctx);
-        retOp->registerInput(value->outputValue(0));
+        if(value) retOp->registerInput(value->outputValue(0));
+        else pnt.appendOp(retOp);
         return retOp;
     }
     void translateError(std::string msg){
@@ -90,14 +93,14 @@ class LGTranslator {
         auto bop = ast->binaryOp;
         if(bop == "+"){
             // all the operation converted from ast should contained only 1 output.
-            return pnt.createOp<math::aab::addOp>(ctx, ctx->getType<variable>(), lhs->outputValue(0), rhs->outputValue(0));
+            return pnt.createOp<math::aab::addOp>(ctx, ctx->getType<variable>(), lhs->outputValue(1), rhs->outputValue(1));
         }else if(bop == "-"){
             // all the operation converted from ast should contained only 1 output.
-            return pnt.createOp<math::aab::minusOp>(ctx, ctx->getType<variable>(), lhs->outputValue(0), rhs->outputValue(0));
+            return pnt.createOp<math::aab::minusOp>(ctx, ctx->getType<variable>(), lhs->outputValue(1), rhs->outputValue(1));
         }else if(bop == "*"){
-            return pnt.createOp<math::aab::multiplyOp>(ctx, ctx->getType<variable>(), lhs->outputValue(0), rhs->outputValue(0));
+            return pnt.createOp<math::aab::multiplyOp>(ctx, ctx->getType<variable>(), lhs->outputValue(1), rhs->outputValue(1));
         }else if(bop == "="){
-            return pnt.createOp<assignOp>(ctx, ctx->getType<variable>(), lhs->outputValue(0), rhs->outputValue(0));
+            return pnt.createOp<assignOp>(ctx, ctx->getType<variable>(), lhs->outputValue(1), rhs->outputValue(1));
         }
         return nullptr;
     }

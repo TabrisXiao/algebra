@@ -4,12 +4,12 @@
 #include "lgf/operation.h"
 using namespace lgf;
 
-value::value(operation * op, id_t id) : defop(op), iid(id) {
+value::value(operation * op) : defop(op) {
 }
 //---------------------------------------------------
 
-value::value(operation * op, id_t id, type_t type, std::string sid_) 
-: defop(op), iid(id), vtp(type) {
+value::value(operation * op, type_t type, std::string sid_) 
+: defop(op), vtp(type) {
     setSID(sid_);
 }
 //---------------------------------------------------
@@ -28,19 +28,25 @@ void value::print() { global::stream::getInstance()<<represent()<<"\n"; };
 //---------------------------------------------------
 
 std::vector<operation*> value::getUsers() {
-    std::vector<operation*> users;
-    auto& outgoings = defop->getOutgoings();
-    for(auto iter = outgoings.begin(); iter!=outgoings.end(); iter++){
-        if(auto ref = (*iter)->inputRefByValue(*this)){
-            users.push_back(*iter);
-        }
-    }
     return users;
 }
 //---------------------------------------------------
 
-value & valueRef::getValue(){
-    return defop->getValueByID(iid);
+void value::dropUser(operation *op){
+    auto &iter = std::find(users.begin(), users.end(), op);
+    if(iter==users.end()) return;
+    auto user = (*iter);
+    auto & userInputs = user->getInputs();
+    auto & del = std::find(userInputs.begin(), userInputs.end(),this);
+    if(del!=userInputs.end()) userInputs.erase(del);
+    users.erase(iter);
+}
+//---------------------------------------------------
+
+void value::dropUsers(){ 
+    for(auto op : users){
+        dropUser(op);
+    }
 }
 
 //////////////////////////////////////////////////////
@@ -48,10 +54,10 @@ value & valueRef::getValue(){
 std::string operation::representInputs(){
     if(getInputSize() == 0) return "";
     printer p;
-    auto refs = getInputRefs();
-    p<<refs[0].getValue().getTR();
-    for(auto iter = refs.begin()+1; iter != refs.end(); iter++){
-        p<<", "<<(*iter).getTR();
+    auto ins = getInputs();
+    p<<ins[0]->getTR();
+    for(auto iter = ins.begin()+1; iter != ins.end(); iter++){
+        p<<", "<<(*iter)->getTR();
     }
     return p.dump();
 }
@@ -60,11 +66,12 @@ std::string operation::representInputs(){
 std::string operation::representOutputs(){
     // this function print the outputs in the form:
     // %1, %2 = 
-    if(outputs.size()==0) return "";
+    if(outputs.size()<2) return "";
     printer p;
-    p<<outputs.front().represent();
-    for(auto iter =outputs.begin()+1; iter!=outputs.end(); iter++){
-        p<<", "<<(*iter).represent();
+    // skip the 1st dependencyValue
+    p<<outputs[1]->represent();
+    for(auto iter =outputs.begin()+2; iter!=outputs.end(); iter++){
+        p<<", "<<(*iter)->represent();
     }
     return p.dump();
 }
@@ -81,24 +88,28 @@ void operation::print(){
 }
 //---------------------------------------------------
 
-void operation::registerInputAt( value& val, int pos){
-    inputs.insert(inputs.begin()+pos, valueRef(val));
+void operation::registerInputAt( value* val, int pos){
+    inputs.insert(inputs.begin()+pos, val);
 }
 //---------------------------------------------------
 
-value& operation::createValue(){
-    outputs.push_back(value(this, getOutputSize()));
-    return outputs.back();
+value* operation::createValue(){
+    auto val = std::make_unique<value>(this);
+    outputs.push_back(std::move(val));
+    return outputs.back().get();
 }
-value& operation::createValue(type_t& type, std::string sid){
-    outputs.push_back(value(this, getOutputSize(), type, sid));
-    return outputs.back();
+value* operation::createValue(type_t& type, std::string sid){
+    auto val = std::make_unique<value>(this, type, sid);
+    outputs.push_back(std::move(val));
+    return outputs.back().get();
 }
 //---------------------------------------------------
 
 void operation::assignValueID(int& n){
     for(auto &val : outputs){
-        val.setTraceID(n++);
+        if(dynamic_cast<dependencyValue*>(val.get()))
+            continue;
+        val->setTraceID(n++);
     }
 }
 //---------------------------------------------------
@@ -114,17 +125,16 @@ size_t operation::getOutputSize() const {
 //---------------------------------------------------
 
 void operation::dropAllInputs(){
-    for(auto op : incomings){
-        op->outgoings.erase(this);
+    for(auto input: inputs){
+        input->dropUser(this);
     }
-    incomings.clear();
     inputs.clear();
 }
 //---------------------------------------------------
 
 bool operation::isDependencyFullfilled(){
-    for(auto &op : incomings){
-        if(!op->isExplored()) return false;
+    for(auto input : inputs){
+        if(!input->getDefiningOp()->isExplored()) return false;
     }
     return true;
 }
@@ -136,24 +146,12 @@ graph* operation::expandToGraph()
 }
 //---------------------------------------------------
 
-void operation::replaceInputValue(int n, value& v){
+void operation::replaceInputValue(int n, value* v){
     if(n+1 > inputs.size())return;
-    auto op = inputs[n].getDefiningOp();
-    breakLinkFrom(op);
+    inputs[n]->dropUser(this);
     // update the corresponding valueRef to the new one
-    inputs[n].referTo(v);
-}
-//---------------------------------------------------
-
-valueRef* operation::inputRefByValue(const value & v){
-    auto op = v.getDefiningOp();
-    auto id  = v.getIID();
-    auto iter = std::find_if(inputs.begin(), inputs.end(), 
-    [&](const valueRef &ref){
-        return (op==ref.getDefiningOp() && id == ref.getIID());
-    });
-    if(iter!=inputs.end()) return &(*iter);
-    return nullptr;
+    inputs[n]=v;
+    v->addUsesr(this);
 }
 //---------------------------------------------------
 
@@ -162,21 +160,15 @@ void operation::replaceBy(operation* new_op){
     CHECK_VALUE(output_size, new_op->getOutputSize(), "New op must have the same number of outputs as the original op.");
     // assume that the inputs are settled down for the new op,
     // here we only substitue the users for outputs.
-    for(auto iter= outgoings.begin(); iter!=outgoings.end();iter++){
-        // replace the valueRef in the users;
-        for(auto &val : outputs){
-            if(auto ref = (*iter)->inputRefByValue(val)){
-                // the new value suppose to have the same iid
-                // as the old one
-                ref->referTo(new_op->getValueByID(val.getIID()));
-                // connecting the new op to users
-                new_op->linkTo(*iter);
-            }
+    // it also assume the output size is the same as the old one.
+    for(auto i=0; i<outputs.size(); i++){
+        auto output = outputs[i].get();
+        auto& users = output->getUsers();
+        for(auto &user : users){
+            user->inputs[i] = new_op->outputs[i].get();
         }
-        // break connections with users
-        (*iter)->incomings.erase(this);
+        output->getUsers().clear();
     }
-    outgoings.clear();
 }
 
 //////////////////////////////////////////////////////
@@ -218,22 +210,15 @@ void graph::assignID(int n0 ){
 }
 //---------------------------------------------------
 
-void graph::addOp(operation* op){
-    nodes.push_back(op);
+void graph::registerOp(operation* op){
     op->setParentGraph(this);
-    if(op->getInputSize() == 0) attachToEntrance(op); 
+    if(op->getInputSize() == 0) attachToEntrance(op);
+    nodes.push_back(op);
 }
 //---------------------------------------------------
 
 void graph::clean()
 {
-    auto & entrances= getOutgoings();
-    for(auto iter = entrances.begin(); iter!=entrances.end();){
-        if((*iter)->isRemovable()) {
-            iter = entrances.erase(iter);
-        }
-        else iter++;
-    }
     for(auto iter = nodes.begin(); iter!=nodes.end(); )
     {
         operation* op =(*iter);

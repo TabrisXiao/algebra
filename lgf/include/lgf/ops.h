@@ -21,14 +21,14 @@ class moduleOp : public graph{
 
 class declOp : public operation{
     public:
-    declOp() = default;
+    declOp() : operation("declOp") {}
     static declOp * build(LGFContext *ctx, type_t type) {
         auto op = new declOp();
         op->setSID("declOp");
         op->createValue(type, "");
         return op;
     }
-    value * output(){ return &outputValue(0); }
+    value * output(){ return outputValue(1); }
     virtual std::string represent(){
         printer p;
         p<<representOutputs()<<" : Declare";
@@ -38,21 +38,21 @@ class declOp : public operation{
 
 class assignOp : public operation{
     public:
-    assignOp() = default;
+    assignOp() : operation("assign") {}
     ~assignOp() { }
-    static assignOp * build(LGFContext *ctx, type_t type, value lhs, value rhs){
+    static assignOp * build(LGFContext *ctx, type_t type, value* lhs, value* rhs){
         auto op = new assignOp();
-        op->setSID("assign");
         op->createValue(type, "");
         op->registerInput(lhs, rhs);
         return op;
     }
-    value * lhs() { return &inputValue(0); }
-    value * rhs() { return &inputValue(1); }
-    value * output(){ return &outputValue(0); }
+    value * lhs() { return inputValue(0); }
+    value * rhs() { return inputValue(1); }
+    // note the outputValue(0) is the dependecyValue;
+    value * output(){ return outputValue(1); }
     virtual std::string represent(){
         printer p;
-        p<<representOutputs()<<" = "<<getSID() <<" : "<<inputValue(1).represent()<<" -> "<<inputValue(0).represent();
+        p<<representOutputs()<<" = "<<getSID() <<" : "<<inputValue(1)->represent()<<" -> "<<inputValue(0)->represent();
         return p.dump();
     }
 };
@@ -109,7 +109,7 @@ class returnOp : public operation {
         auto op = new returnOp();
         return op;
     }
-    static returnOp * build(LGFContext *ctx, value val){
+    static returnOp * build(LGFContext *ctx, value* val){
         auto op = build(ctx);
         op->registerInput(val);
         return op;
