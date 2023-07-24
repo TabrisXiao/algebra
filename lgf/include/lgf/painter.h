@@ -22,15 +22,23 @@ class painter {
     obj* createOp(ARGS ...args){
         CHECK_CONDITION(current_graph!=nullptr, "No graph associated to the painter!");
         auto ptr = obj::build(args...);
-        current_graph->addOp(ptr);
+        current_graph->registerOp(ptr);
+        lastOp = ptr;
         return ptr;
     }
     template<typename obj>
     obj* createOp(){
         CHECK_CONDITION(current_graph!=nullptr, "No graph associated to the painter!");
         auto ptr = obj::build();
-        current_graph->addOp(ptr);
+        current_graph->registerOp(ptr);
+        lastOp = ptr;
         return ptr;
+    }
+
+    // making an Op depends on the lastOp so that in a dependency walk order, 
+    // it will be later than the current lastOp
+    void appendOp(operation* op){
+        op->dependOn(lastOp);
     }
 
     // create a new op to replace the op1's users
@@ -45,17 +53,9 @@ class painter {
 
     void erase(operation* op){
         op->dropAllInputs();
-        auto& users = op->getOutgoings();
-        for(auto user : users){
-            auto& refs = user->getInputRefs();
-            // removing all valueRef of users pointing to this op;
-            for(auto iter=refs.begin(); iter!=refs.end();){
-                if((*iter).getDefiningOp()== op ) 
-                    iter = refs.erase(iter);
-                else iter++;
-            }
-            // removing the this op from the users incoming list
-            user->getIncomings().erase(op);
+        // drop users of output values from this op
+        for(auto i = 0; i<op->getOutputSize(); i++){
+            op->outputValue(i)->dropUser(op);
         }
         op->setRemovable();
     }
@@ -105,6 +105,7 @@ class painter {
 
     private: 
     graph *current_graph = nullptr;
+    operation * lastOp = nullptr;
     std::vector<std::unique_ptr<rewriterBase>> rewriters;
 };
 

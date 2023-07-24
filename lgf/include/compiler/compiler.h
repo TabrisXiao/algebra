@@ -20,6 +20,8 @@ class compiler {
         auto f = io.getFile(file);
         COMPIELR_THROW_WHEN(f.empty(), "Can't find the file: "+file);
         main = pser.parse(f);
+        lgf::streamer sm;
+        main->emitIR(sm);
         builder.astctx = &(pser.ctx);
         builder.build(main);
         auto var_t = builder.ctx->getType<variable>();
