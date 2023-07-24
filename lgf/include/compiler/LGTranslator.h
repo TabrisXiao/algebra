@@ -17,12 +17,13 @@ class LGTranslator {
         pnt.gotoGraph(module);
         declareVariables(*(astctx->current_scope));
         translateModuleAST(main);
-        std::cout<<"AST translated!"<<std::endl;
         c.assignID(0);
-        std::cout<<"translation finished."<<std::endl;
     }
     void translateModuleAST(std::unique_ptr<moduleAST> & main){
-        for(auto & op : main->contents){
+        transplateASTScope(main->contents);
+    }
+    void transplateASTScope(std::vector<std::unique_ptr<astBase>>& contents){
+        for(auto & op : contents){
             translateAST(op);
         }
     }
@@ -41,11 +42,27 @@ class LGTranslator {
                 break;
             case kind_return:
                 ptr = translateReturnOp(op);
+            case kind_funcDecl:
+                ptr = translateFuncDef(op);
             default:
                 translateError("unknown op type: "+std::to_string(op->kind));
                 return nullptr;
         }
         return ptr;
+    }
+    operation * translateFuncDef(std::unique_ptr<astBase>& op){
+        auto ast = dynamic_cast<funcDeclAST*>(op.get());
+        // assuming all function return variable for now.
+        auto funcOp = pnt.createOp<funcDefineOp>(ctx, ast->funcID, ctx->getType<lgf::variable>());
+        for(auto i=0; i< ast->args.size(); i++){
+            auto arg = dynamic_cast<varAST*>(ast->args[i].get());
+            auto argid = arg->id;
+            funcOp->registerArg(ctx->getType<lgf::variable>(), "arg");
+        }
+        if(ast->contents.size()!=0){
+            // parsing definition block;
+        }
+        return funcOp;
     }
     operation* translateReturnOp(std::unique_ptr<astBase>& op){
         auto ast = dynamic_cast<returnAST*>(op.get());

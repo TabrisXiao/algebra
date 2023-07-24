@@ -90,16 +90,28 @@ class cstDeclOp : public lgf::operation {
 class funcDefineOp : public graph {
     public:
     funcDefineOp() : graph("funcDefineOp") {}
-    static funcDefineOp* build(lgf::type_t returnType_, std::string id_){
+    static funcDefineOp* build(LGFContext *ctx, std::string id_, lgf::type_t returnType_){
         auto op = new funcDefineOp();
-        op->returnType = returnType_;
+        op->createValue(returnType_, "");
         op->id = id_;
         return op;
     }
+    // this builder for no return type func defining
+    static funcDefineOp* build(LGFContext *ctx, std::string id_){
+        auto op = new funcDefineOp();
+        op->id = id_;
+        return op;
+    }
+    void registerArg(type_t type, std::string id){
+        getEntry().createValue(type, id);
+    }
     std::string id;
-    type_t returnType;
     virtual std::string represent(){ 
-        return "";} 
+        printer p;
+        p<<"funcOp: "<<id<<" (";
+        p<<getEntry().representOutputs()<<")";
+        return p.dump();
+    } 
 };
 
 class returnOp : public operation {

@@ -249,12 +249,12 @@ public :
 };
 
 class graph : public operation{
+    public : 
     class graphEntry : public operation {
         public:
         graphEntry(graph* g) : operation("", g){}
         virtual std::string represent() { return ""; }
     };
-public : 
     graph() = default;
     graph(std::string id, graph* pg = nullptr)
     : operation(id, pg)
