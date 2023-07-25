@@ -4,7 +4,7 @@
 #include "fileIO.h"
 #include "lexer.h"
 #include "ast.h"
-#include "symbolicTable.h"
+#include "lgf/symbolicTable.h"
 #include <memory>
 #include <map>
 #include <functional>

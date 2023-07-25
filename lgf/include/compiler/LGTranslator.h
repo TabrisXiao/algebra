@@ -5,6 +5,7 @@
 #include "compiler/ast.h"
 #include "libs/math/aab/ops.h"
 #include "context.h"
+#include "lgf/typeTable.h"
 
 namespace lgf::compiler {
 
@@ -120,6 +121,12 @@ class LGTranslator {
             return pnt.createOp<assignOp>(ctx, ctx->getType<variable>(), lhs->outputValue(1), rhs->outputValue(1));
         }
         return nullptr;
+    }
+    type_t parseType(std::string id, std::string ir){
+        auto & func = typeTable::get().findParser(id);
+        liteParser p;
+        p.loadBuffer(ir);
+        return func(p, ctx);
     }
     std::unique_ptr<moduleAST> main;
     painter pnt;

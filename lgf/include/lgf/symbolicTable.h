@@ -5,7 +5,7 @@
 #include <string>
 #include <memory>
 
-namespace lgf::compiler{
+namespace lgf{
 
 template<typename meta>
 class symbolTable {

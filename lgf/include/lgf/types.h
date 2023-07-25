@@ -2,6 +2,8 @@
 #ifndef INTERNAL_TYPES_H_
 #define INTERNAL_TYPES_H_
 #include "type.h"
+#include "LGFContext.h"
+#include "typeTable.h"
 
 namespace lgf{
 
@@ -11,6 +13,9 @@ class variable : public lgf::type_t {
     static std::unique_ptr<typeImpl> createImpl(){
       return std::move(std::make_unique<typeImpl>("Variable"));
     }
+    static type_t parse(liteParser& paser, LGFContext* ctx){
+      return ctx->getType<variable>();
+    }
 };
 
 class intType: public variable {
@@ -19,6 +24,9 @@ class intType: public variable {
     static std::unique_ptr<typeImpl> createImpl(){
       return std::move(std::make_unique<typeImpl>("int"));
     }
+    static type_t parse(liteParser& paser, LGFContext* ctx){
+      return ctx->getType<intType>();
+    }
 };
 
 class doubleType: public variable {
@@ -26,6 +34,9 @@ class doubleType: public variable {
     doubleType() = default;
     static std::unique_ptr<typeImpl> createImpl(){
       return std::move(std::make_unique<typeImpl>("double"));
+    }
+    static type_t parse(liteParser& paser, LGFContext* ctx){
+      return ctx->getType<doubleType>();
     }
 };
 
@@ -55,6 +66,11 @@ class listType : public type_t {
   }
 };
 
+void registerLGFTypes(){
+  REGISTER_TYPE(variable, "variable");
+  REGISTER_TYPE(intType, "intType");
+  REGISTER_TYPE(doubleType, "doubleType");
+}
 
 }
 

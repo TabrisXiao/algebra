@@ -40,7 +40,6 @@ class LGFContext {
         return nullptr;
     }
 
-
     std::vector<std::unique_ptr<typeImpl>> types;
 };
 

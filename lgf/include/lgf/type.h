@@ -1,8 +1,8 @@
 
 #ifndef LGF_TYPE_H_
 #define LGF_TYPE_H_
+#include "liteParser.h"
 #include <iostream>
-
 #include <string>
 
 namespace lgf{
