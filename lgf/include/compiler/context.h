@@ -1,7 +1,7 @@
 
 #ifndef COMPILER_CONTEXT_H
 #define COMPILER_CONTEXT_H
-#include "symbolicTable.h"
+#include "lgf/symbolicTable.h"
 #include "utils.h"
 #include <queue>
 #include <stack>
@@ -87,25 +87,6 @@ class ASTContext {
     scope<idinfo> root_scope;
 };
 
-class LGContext {
-    public: 
-    struct lgObjInfo{
-        operation* opPtr = nullptr;
-        value* valuePtr= nullptr;
-    };
-    LGContext() = default;
-    void backToParentScope(){
-        tracer.pop();
-        ptr=tracer.top();
-    }
-    void moveScopeTo(std::string name){
-        tracer.push(&(ptr->findScope(name)));
-        ptr = tracer.top();
-    }
-    scope<lgObjInfo>* getScope(){return ptr;}
-    scope<lgObjInfo>* ptr = nullptr;
-    std::stack<scope<lgObjInfo>*> tracer;
-};
 
 }
 
