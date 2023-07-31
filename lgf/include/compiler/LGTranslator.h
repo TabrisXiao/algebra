@@ -13,6 +13,7 @@ class LGTranslator {
     public: 
     LGTranslator() = default;
     void build(std::unique_ptr<moduleAST> & main){
+        registerLGFTypes();
         pnt.gotoGraph(&c);
         auto module = pnt.createOp<moduleOp>(ctx);
         pnt.gotoGraph(module);
@@ -56,10 +57,13 @@ class LGTranslator {
         // assuming all function return variable for now.
         auto funcOp = pnt.createOp<funcDefineOp>(ctx, ast->funcID, ctx->getType<lgf::variable>());
         for(auto i=0; i< ast->args.size(); i++){
-            auto arg = dynamic_cast<varAST*>(ast->args[i].get());
+            auto arg = dynamic_cast<varDeclAST*>(ast->args[i].get());
             auto argid = arg->id;
-            funcOp->registerArg(ctx->getType<lgf::variable>(), "arg");
+            auto type = typeTable::get().parseTypeStr(ctx, arg->typeStr);
+            funcOp->registerArg(type, "arg");
         }
+        if(!ast->returnTypeStr.empty())
+            funcOp->returnType = typeTable::get().parseTypeStr(ctx,ast->returnTypeStr);
         if(ast->contents.size()!=0){
             // parsing definition block;
         }
@@ -111,14 +115,14 @@ class LGTranslator {
         auto bop = ast->binaryOp;
         if(bop == "+"){
             // all the operation converted from ast should contained only 1 output.
-            return pnt.createOp<math::aab::addOp>(ctx, ctx->getType<variable>(), lhs->outputValue(1), rhs->outputValue(1));
+            return pnt.createOp<math::aab::addOp>(ctx, lhs->outputValue(1), rhs->outputValue(1));
         }else if(bop == "-"){
             // all the operation converted from ast should contained only 1 output.
-            return pnt.createOp<math::aab::minusOp>(ctx, ctx->getType<variable>(), lhs->outputValue(1), rhs->outputValue(1));
+            return pnt.createOp<math::aab::minusOp>(ctx, lhs->outputValue(1), rhs->outputValue(1));
         }else if(bop == "*"){
-            return pnt.createOp<math::aab::multiplyOp>(ctx, ctx->getType<variable>(), lhs->outputValue(1), rhs->outputValue(1));
+            return pnt.createOp<math::aab::multiplyOp>(ctx, lhs->outputValue(1), rhs->outputValue(1));
         }else if(bop == "="){
-            return pnt.createOp<assignOp>(ctx, ctx->getType<variable>(), lhs->outputValue(1), rhs->outputValue(1));
+            return pnt.createOp<assignOp>(ctx, lhs->outputValue(1), rhs->outputValue(1));
         }
         return nullptr;
     }

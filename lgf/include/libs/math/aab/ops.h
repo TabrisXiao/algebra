@@ -11,10 +11,10 @@ class addOp : public lgf::operation
 {
     public:
     addOp() : operation("aab::add") {}
-    static addOp* build(lgf::LGFContext* ctx, lgf::type_t output_type, lgf::value* lhs, lgf::value* rhs){
+    static addOp* build(lgf::LGFContext* ctx, lgf::value* lhs, lgf::value* rhs){
         auto op = new addOp();
         op->registerInput(lhs, rhs);
-        op->createValue(output_type, "");
+        op->createValue(ctx->getType<lgf::variable>(), "");
         return op;
     }
     lgf::value* lhs(){ return inputValue(0); }
@@ -33,10 +33,10 @@ class minusOp : public lgf::operation
 {
     public:
     minusOp() : operation("aab::minus") {}
-    static minusOp* build(lgf::LGFContext* ctx, lgf::type_t output_type, lgf::value* lhs, lgf::value* rhs){
+    static minusOp* build(lgf::LGFContext* ctx, lgf::value* lhs, lgf::value* rhs){
         auto op = new minusOp();
         op->registerInput(lhs, rhs);
-        op->createValue(output_type, "");
+        op->createValue(ctx->getType<lgf::variable>(), "");
         return op;
     }
     lgf::value* lhs(){ return inputValue(0); }
@@ -54,10 +54,10 @@ class multiplyOp : public lgf::operation
 {
     public:
     multiplyOp() : operation("aab::multiply") {}
-    static multiplyOp* build(lgf::LGFContext* ctx, lgf::type_t output_type, lgf::value* lhs, lgf::value* rhs){
+    static multiplyOp* build(lgf::LGFContext* ctx, lgf::value* lhs, lgf::value* rhs){
         auto op = new multiplyOp();
         op->registerInput(lhs, rhs);
-        op->createValue(output_type, "");
+        op->createValue(ctx->getType<lgf::variable>(), "");
         return op;
     }
     lgf::value* lhs(){ return inputValue(0); }
@@ -75,10 +75,10 @@ class inverseOp : public lgf::operation
 {
     public:
     inverseOp() : operation("aab::inverse") {}
-    static inverseOp* build(lgf::LGFContext* ctx, lgf::type_t output_type, lgf::value* input){
+    static inverseOp* build(lgf::LGFContext* ctx, lgf::value* input){
         auto op = new inverseOp();
         op->registerInput(input);
-        op->createValue(output_type, "");
+        op->createValue(input->getType(), "");
         return op;
     }
     lgf::value* input(){ return inputValue(0); }

@@ -105,6 +105,32 @@ class parser{
         }
         return;
     }
+    std::string parseTypeName(){
+        auto type = lx.identifierStr;
+        lx.consume(tok_identifier);
+        if(lx.getCurToken() == token('<')){
+            std::string tsub = parseTypeName();
+            type+= tsub;
+            while(lx.getCurToken()== token(',')){
+                lx.consume(token(','));
+                tsub = parseTypeName();
+                type+= tsub;
+            }
+        }
+        return type;
+    }
+    void parseArgSignatures(std::vector<std::unique_ptr<astBase>>& vec){
+        while(lx.getCurToken() == tok_identifier){
+            auto type = parseTypeName();
+            auto id = lx.identifierStr;
+            auto loc = lx.getLoc();
+            auto ptr = std::make_unique<varDeclAST>(loc, type, id);
+            vec.push_back(std::move(ptr));
+            lx.consume(tok_identifier);
+            if(lx.getCurToken() == token(',')) lx.consume(token(','));
+        }
+        return;
+    }
     std::unique_ptr<astBase> parseFuncDef(){
         lx.consume(tok_def);
         auto id = lx.identifierStr;
@@ -112,8 +138,12 @@ class parser{
         auto ast = std::make_unique<funcDeclAST>(loc, id);
         lx.consume(tok_identifier);
         lx.consume(token('('));
-        parseArguments(ast->args);
+        parseArgSignatures(ast->args);
         lx.consume(token(')'));
+        if(lx.getCurToken()==tok_arrow){
+            lx.consume(tok_arrow);
+            ast->setReturnType(parseTypeName());
+        }
         if(lx.getCurToken()==token(';')){
             lx.consume(token(';'));
             return ast;

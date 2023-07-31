@@ -81,11 +81,11 @@ class varDeclAST : public astBase {
     public:
     varDeclAST(location loc, std::string tid, std::string name_) 
     : astBase(loc, kind_varDecl)
-    , varTypeID(tid)
-    , name(name_) {}
-    std::string varTypeID, name;
+    , typeStr(tid)
+    , id(name_) {}
+    std::string typeStr, id;
     virtual void emitIR(lgf::streamer & out){
-        out<<varTypeID<<" "<<name;
+        out<<typeStr<<" "<<id;
     }
 };
 
@@ -94,7 +94,7 @@ class varAST : public astBase {
     varAST(location loc, std::string name)
     : astBase(loc, kind_variable)
     , id(name) {}
-    std::string id, typesid;
+    std::string id;
     virtual void emitIR(lgf::streamer & out){
         out<<id;
     }
@@ -110,12 +110,19 @@ class funcDeclAST : public astBase {
     std::vector<std::unique_ptr<astBase>> contents;
     virtual void emitIR(lgf::streamer & out){
         out<<"def "<<funcID<<"(";
-        if(args.size()>0) out<<dynamic_cast<varAST*>(args[0].get())->id;
+        if(args.size()>0) out<<dynamic_cast<varDeclAST*>(args[0].get())->id;
         for(auto i=1; i<args.size(); i++){
-            out<<", "<<dynamic_cast<varAST*>(args[i].get())->id;
+            out<<", "<<dynamic_cast<varDeclAST*>(args[i].get())->id;
         }
         out<<")";
+        if(!returnTypeStr.empty()){
+            out<<" -> "<<returnTypeStr;
+        }
     }
+    void setReturnType(std::string & str) {
+        returnTypeStr = str;
+    }
+    std::string returnTypeStr = "";
     bool contentDefined = 0;
 };
 

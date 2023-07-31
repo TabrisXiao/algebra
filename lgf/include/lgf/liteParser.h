@@ -15,7 +15,7 @@ class liteParser {
         tok_eof=-1,
     };
     liteParser() = default;
-    void loadBuffer(std::string ct) { buffer = ct; }
+    void loadBuffer(std::string ct) { buffer = ct; getNextToken();}
     char getNextChar(){
         if (charPtr > (buffer.size()-1) ) return EOF;
         return buffer[charPtr++];
@@ -43,7 +43,6 @@ class liteParser {
         return tok;
     }
     void parseError(std::string msg, std::string caller){
-        std::cerr<<"Parsing error at "<<caller<<": "<<msg<<std::endl;
         std::exit(EXIT_FAILURE);
     }
     int getCurToken(){
@@ -81,6 +80,7 @@ class liteParser {
     void parseGreaterThan(){ consume(int('>'));}
     void parseLeftParenthesis() {consume(int('('));}
     void parseRightParenthesis() {consume(int(')'));}
+    void parseComma() {consume(int(','));}
     char lastChar=' ';
     int charPtr=0, curTok;
     std::string buffer, identifierStr;

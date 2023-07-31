@@ -60,9 +60,9 @@ lgf::compiler::token lgf::compiler::lexer::getToken(){
         }
         return token(':');
     }
-    if(lastChar == token('/')){
+    if(lastChar == '/'){
         lastChar = getNextChar();
-        if(lastChar == token('/')) {
+        if(lastChar == '/') {
             lastChar = getNextChar();
             return tok_comment;
         }
@@ -70,6 +70,12 @@ lgf::compiler::token lgf::compiler::lexer::getToken(){
     }
     auto tok = token(lastChar);
     lastChar = getNextChar();
+
+    // checking arrow ->
+    if(tok == token('-') && lastChar == '>') {
+        tok = tok_arrow;
+        lastChar = getNextChar();
+    }
     return tok;
 }
 //---------------------------------------------------

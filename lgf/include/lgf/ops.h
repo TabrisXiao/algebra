@@ -40,9 +40,9 @@ class assignOp : public operation{
     public:
     assignOp() : operation("assign") {}
     ~assignOp() { }
-    static assignOp * build(LGFContext *ctx, type_t type, value* lhs, value* rhs){
+    static assignOp * build(LGFContext *ctx, value* lhs, value* rhs){
         auto op = new assignOp();
-        op->createValue(type, "");
+        op->createValue(rhs->getType(), "");
         op->registerInput(lhs, rhs);
         return op;
     }
@@ -110,8 +110,10 @@ class funcDefineOp : public graph {
         printer p;
         p<<"funcOp: "<<id<<" (";
         p<<getEntry().representOutputs()<<")";
+        if(returnType.getImpl()) p<<" -> "<<returnType.represent(); 
         return p.dump();
-    } 
+    }
+    type_t returnType;
 };
 
 class returnOp : public operation {
