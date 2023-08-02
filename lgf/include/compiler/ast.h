@@ -155,19 +155,42 @@ class binaryAST : public astBase {
     std::string binaryOp;
     bool irNotEnd = 0;
     virtual void emitIR(lgf::streamer & out){
+        if(lhs->kind==kind_binary) out<<"(";
         lhs->emitIR(out);
+        if(lhs->kind==kind_binary) out<<")";
         out<<" "<<binaryOp<<" ";
+        if(rhs->kind==kind_binary){
+            out<<"(";
+        }
         rhs->emitIR(out);
+        if(rhs->kind==kind_binary) out<<")";
     }
 };
 
 class funcCallAST : public astBase {
     public:
-    funcCallAST(location loc) : astBase(loc, kind_funcCall){}
+    funcCallAST(location loc, std::string _id) 
+    : astBase(loc, kind_funcCall)
+    , id(_id) {}
     std::unique_ptr<astBase>& arg(int n=0){
         return args[n];
     }
+    void addArg(std::unique_ptr<astBase> ptr){
+        args.push_back(std::move(ptr));
+    }
+    std::string id;
     std::vector<std::unique_ptr<astBase>> args;
+    virtual void emitIR(lgf::streamer & out){
+        out<<id<<"(";
+        if(args.size()!=0){
+            args[0]->emitIR(out);
+            for(auto i=1; i<args.size(); i++){
+                out<<", ";
+                args[i]->emitIR(out);
+            }
+        }
+        out<<")";
+    }
 };
 
 class returnAST : public astBase {
@@ -176,17 +199,16 @@ class returnAST : public astBase {
     bool hasValue(){
         return value == nullptr;
     }
-    void takeValue(std::unique_ptr<astBase>& ptr){
+    void addReturnValue(std::unique_ptr<astBase>& ptr){
         value=std::move(ptr);
     }
     std::unique_ptr<astBase> value=nullptr;
     virtual void emitIR(lgf::streamer & out){
-        out.printIndent();
         out<<"return";
         if(value){
+            out<<" ";
             value->emitIR(out);
         }
-        out<<"\n";
     }
 };
 

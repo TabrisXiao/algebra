@@ -1,12 +1,10 @@
-a;
-a+b;
-c = a+b;
+
 // test
-d = 3+ 1.2;
-e = d+3*b *c -c;
-def check(int a, double b, variable c);
+e = 3+ (a-b)*1.2;
+
 def sum(variable a, variable b) -> variable {
-    //test 
     return a+b;
 }
-return;
+
+c = sum(4, e);
+return e; 

@@ -46,6 +46,8 @@ class LGTranslator {
                 ptr = translateReturnOp(op);
             case kind_funcDecl:
                 ptr = translateFuncDef(op);
+            case kind_funcCall:
+                ptr = translateFuncCall(op);
             default:
                 translateError("unknown op type: "+std::to_string(op->kind));
                 return nullptr;
@@ -68,6 +70,11 @@ class LGTranslator {
             // parsing definition block;
         }
         return funcOp;
+    }
+    operation* translateFuncCall(std::unique_ptr<astBase>& op){
+        auto ast = dynamic_cast<funcCallAST*>(op.get());
+        
+        return nullptr;
     }
     operation* translateReturnOp(std::unique_ptr<astBase>& op){
         auto ast = dynamic_cast<returnAST*>(op.get());

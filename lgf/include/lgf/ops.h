@@ -92,8 +92,9 @@ class funcDefineOp : public graph {
     funcDefineOp() : graph("funcDefineOp") {}
     static funcDefineOp* build(LGFContext *ctx, std::string id_, lgf::type_t returnType_){
         auto op = new funcDefineOp();
-        op->createValue(returnType_, "");
+        op->returnType = returnType_;
         op->id = id_;
+        op->createValue(ctx->getType<mapping_t>(),"");
         return op;
     }
     // this builder for no return type func defining
@@ -113,7 +114,37 @@ class funcDefineOp : public graph {
         if(returnType.getImpl()) p<<" -> "<<returnType.represent(); 
         return p.dump();
     }
-    type_t returnType;
+    lgf::type_t returnType;
+};
+
+class funcCallOp : public operation{
+    public:
+    funcCallOp() = default;
+    static funcCallOp * build(LGFContext *ctx, value* callee){
+        auto op = new funcCallOp();
+        op->registerInput(callee);
+        auto& ret = callee->getDefiningOp<funcDefineOp>()->returnType;
+        if(ret.getImpl()){
+            op->hasReturn = 1;
+            op->createValue(ret, "");
+        }
+        return op;
+    }
+    template<typename ...ARGS>
+    static funcCallOp * build(LGFContext *ctx, value* callee, ARGS ... args){
+        auto op = build(ctx, callee);
+        op->registerInput(args...);
+        return op;
+    }
+    value * getCallee(){ return inputValue(0); }
+    value * arg(int n=0 ){ return inputValue(1); }
+    value * returnValue() { return outputValue(1); }
+    virtual std::string represent(){
+        printer p;
+        if( hasReturn ) p<<representOutputs()<<" = ";
+        p<<"func callOp: "<<returnValue()->getDefiningOp<funcDefineOp>()->id<<" ("<<representInputs()<<")";
+    }
+    bool hasReturn = 0;
 };
 
 class returnOp : public operation {

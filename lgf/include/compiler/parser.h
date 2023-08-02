@@ -49,6 +49,7 @@ class parser{
                     break;
                 case tok_number:
                     record = parseExpression();
+                    lx.consume(token(';'));
                     break;
                 case tok_import: 
                     parseImport();
@@ -65,6 +66,7 @@ class parser{
                 default:
                     parseError("Unknown token: "+lx.convertCurrentToken2String());
             }
+
             if(!record) break;
             module->addASTNode(std::move(record));
             //lgf::streamer sm;
@@ -78,20 +80,13 @@ class parser{
         auto ast = std::make_unique<returnAST>(lx.getLoc());
         lx.consume(tok_return);
         std::unique_ptr<astBase> record = nullptr;
-        switch(lx.getCurToken()){
-            case token(';'):
-                lx.consume(token(';'));
-                break;
-            case tok_identifier:
-                record = parseIdentifier();
-                break;
-            case tok_number:
-                record = parseNumber();
-                break;
-            default:
-                parseError("Unsupported return value");
-        }
-        if(record) ast->takeValue(record);
+        if(lx.getCurToken() == token(';')){
+            lx.consume(token(';'));
+            return ast;
+        } 
+        record = parseExpression();
+        if(record) ast->addReturnValue(std::move(record));
+        lx.consume(token(';'));
         return ast;
     }
     void parseArguments(std::vector<std::unique_ptr<astBase>>& vec){
@@ -134,7 +129,11 @@ class parser{
     std::unique_ptr<astBase> parseFuncDef(){
         lx.consume(tok_def);
         auto id = lx.identifierStr;
+        if(auto info = ctx.current_scope->findSymbolInfo(id)){
+            parseError("The identifier: "+id+"is defined in: "+info->loc.string());
+        }
         auto loc = lx.getLoc();
+        ctx.current_scope->addSymbolInfo(id, {"func", loc});
         auto ast = std::make_unique<funcDeclAST>(loc, id);
         lx.consume(tok_identifier);
         lx.consume(token('('));
@@ -145,7 +144,6 @@ class parser{
             ast->setReturnType(parseTypeName());
         }
         if(lx.getCurToken()==token(';')){
-            lx.consume(token(';'));
             return ast;
         }
         // parsing block of function definition
@@ -158,7 +156,7 @@ class parser{
         while(lx.getCurToken()!= token('}')){
             std::unique_ptr<astBase> record = nullptr;
             switch(lx.getCurToken()){
-                case tok_eof:
+                case token('}'):
                     break;
                 case tok_comment:
                     lx.getNextLine();
@@ -166,6 +164,7 @@ class parser{
                     continue;
                 case tok_number:
                     record = parseExpression();
+                    lx.consume(token(';'));
                     break;
                 case tok_identifier:
                     record = parseIdentifier();
@@ -192,6 +191,14 @@ class parser{
         lx.consume(tok_number);
         return std::make_unique<numberAST>(lx.getLoc(), nn);
     }
+    std::unique_ptr<astBase> parseParenExpr(){
+        lx.consume(token('('));
+        auto ast = parseExpression();
+        if(lx.getCurToken()!=token(')')) parseError("Missing ')' to complete parenthesis.");
+        lx.getNextToken();
+        if(!ast) return nullptr;
+        return ast;
+    }
     std::unique_ptr<astBase> parsePrimary(){
         switch(lx.getCurToken()){
             default:
@@ -201,6 +208,8 @@ class parser{
                 return parseCallOrExpr();
             case tok_number:
                 return parseNumber();
+            case token('('):
+                return parseParenExpr();
         }
     }
     std::unique_ptr<astBase> parseCallOrExpr(){
@@ -237,9 +246,7 @@ class parser{
                     return nullptr;
                 } 
             } 
-            if(nnTok == -1) {
-                lx.consume(token(';'));
-            }
+            
             lhs = std::make_unique<binaryAST>(loc, op, std::move(lhs), std::move(rhs));
         }
     }
@@ -250,6 +257,7 @@ class parser{
     }
 
     int binaryTokenPrioCheck(){
+        if(!isascii(lx.getCurToken())) return -1;
         switch(lx.getCurToken()){
             case token('='):
                 return 5;
@@ -302,10 +310,13 @@ class parser{
             lx.getNextToken();
             return lhs;
         }
-        return parseBinaryRHS(0, std::move(lhs));
+        auto ast = parseBinaryRHS(0, std::move(lhs));
+        lx.consume(token(';'));
+        return ast;
     }
 
     std::unique_ptr<astBase> parseVarDecl(location loc, std::string tid){
+        parseError("parseVarDecl Not implement yet!");
         TRACE_FUNC_CALL;
         if(auto ptr = ctx.current_scope->findSymbolInfo(tid)){
             if(ptr->category!= "type" || ptr->category!= "class"){
@@ -320,10 +331,28 @@ class parser{
         lx.consume(token(';'));
         return std::make_unique<varDeclAST>(loc, tid, id);
     }
+    void checkIfVarIDExists(std::string id){
+        if(auto info = ctx.current_scope->findSymbolInfo(id)){
+            if(info->category == "variable") return;
+            parseError(" \'"+id+"\' is not a variable name!");
+        }
+        parseError("variable name: "+id+" is unknown!");
+    }
 
     std::unique_ptr<astBase> parseFuncCall(location loc, std::string id){
-        parseError("Not implement");
-        return nullptr;
+        if(auto info = ctx.current_scope->findSymbolInfo(id)){}
+        else parseError("The function: "+id+" is unknown!");
+        lx.consume(token('('));
+        auto ast = std::make_unique<funcCallAST>(loc, id);
+        while(lx.getCurToken()!=token(')')){
+            auto arg = parseExpression();
+            ast->addArg(std::move(arg));
+            if(lx.getCurToken()!=token(',')) break;
+            lx.consume(token(','));
+        }
+        lx.consume(token(')'));
+        //lx.consume(token(';'));
+        return ast;
     }
     
     fileIO *io=nullptr;
