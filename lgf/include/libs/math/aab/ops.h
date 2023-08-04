@@ -4,7 +4,7 @@
 #include "lgf/types.h"
 #include "lgf/operation.h"
 
-namespace math::aab{
+namespace lgf::math::aab{
 
 // ---------- addOp ----------
 class addOp : public lgf::operation

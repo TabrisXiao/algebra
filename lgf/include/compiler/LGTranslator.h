@@ -3,7 +3,7 @@
 #define COMPILER_LGBUILDER_H
 #include "lgf/lgf.h"
 #include "compiler/ast.h"
-#include "libs/math/aab/ops.h"
+#include "libs/math/math.h"
 #include "context.h"
 #include "lgf/typeTable.h"
 
@@ -14,8 +14,9 @@ class LGTranslator {
     LGTranslator() = default;
     void build(std::unique_ptr<moduleAST> & main){
         registerLGFTypes();
+        lgf::math::registerTypes();
         pnt.gotoGraph(&c);
-        auto module = pnt.createOp<moduleOp>(ctx);
+        auto module = pnt.paint<moduleOp>(ctx);
         pnt.gotoGraph(module);
         declareVariables(*(astctx->current_scope));
         translateModuleAST(main);
@@ -37,17 +38,20 @@ class LGTranslator {
                 ptr = convertBinaryOp(op);
                 break;
             case kind_variable:
-                ptr = getVarDeclOp(op);
+                ptr = getVarValue(op);
                 break;
             case kind_number:
                 ptr = declareConstant(op);
                 break;
             case kind_return:
                 ptr = translateReturnOp(op);
+                break;
             case kind_funcDecl:
                 ptr = translateFuncDef(op);
+                break;
             case kind_funcCall:
                 ptr = translateFuncCall(op);
+                break;
             default:
                 translateError("unknown op type: "+std::to_string(op->kind));
                 return nullptr;
@@ -57,11 +61,12 @@ class LGTranslator {
     operation * translateFuncDef(std::unique_ptr<astBase>& op){
         auto ast = dynamic_cast<funcDeclAST*>(op.get());
         // assuming all function return variable for now.
-        auto funcOp = pnt.createOp<funcDefineOp>(ctx, ast->funcID, ctx->getType<lgf::variable>());
+        auto funcOp = pnt.paint<funcDefineOp>(ctx, ast->funcID, ctx->getType<lgf::variable>());
+        astctx->current_scope->findSymbolInfo(ast->funcID)->handle = funcOp->outputValue(1);
         for(auto i=0; i< ast->args.size(); i++){
             auto arg = dynamic_cast<varDeclAST*>(ast->args[i].get());
             auto argid = arg->id;
-            auto type = typeTable::get().parseTypeStr(ctx, arg->typeStr);
+            auto type = parseType(arg->typeStr);
             funcOp->registerArg(type, "arg");
         }
         if(!ast->returnTypeStr.empty())
@@ -73,8 +78,17 @@ class LGTranslator {
     }
     operation* translateFuncCall(std::unique_ptr<astBase>& op){
         auto ast = dynamic_cast<funcCallAST*>(op.get());
-        
-        return nullptr;
+        auto callee = astctx->current_scope->findSymbolInfo(ast->id)->handle;
+        std::vector<value*> args; 
+        args.reserve(5);
+        for(auto i=0; i<ast->args.size(); i++){
+            auto argOp = translateAST(ast->arg(i));
+            args.push_back(argOp->outputValue(1));
+        }
+        auto fnCall = pnt.sketch<funcCallOp>(ctx, callee);
+        fnCall->addArgs(args);
+        pnt.addToGraph(fnCall);
+        return fnCall;
     }
     operation* translateReturnOp(std::unique_ptr<astBase>& op){
         auto ast = dynamic_cast<returnAST*>(op.get());
@@ -82,9 +96,14 @@ class LGTranslator {
         if(ast->hasValue()) {
             value = translateAST(ast->value);
         }
-        auto retOp = pnt.createOp<returnOp>(ctx);
-        if(value) retOp->registerInput(value->outputValue(0));
-        else pnt.appendOp(retOp);
+        auto retOp = pnt.sketch<returnOp>(ctx);
+        if(value){
+            retOp->registerInput(value->outputValue(1));
+        } 
+        else{
+            pnt.appendOp(retOp);
+        }
+        pnt.addToGraph(retOp);
         return retOp;
     }
     void translateError(std::string msg){
@@ -94,25 +113,26 @@ class LGTranslator {
         for(auto& it : scp.stbl.table){
             auto & entry = it.second;
             if(entry.category != "variable") continue;
-            auto op = pnt.createOp<declOp>(ctx, ctx->getType<variable>());
+            auto type = parseType(entry.type);
+            auto op = pnt.paint<declOp>(ctx, type);
             op->output()->setSID("");
-            it.second.ptr=op;
+            it.second.handle=op->output();
         }
     }
-    operation * getVarDeclOp(std::unique_ptr<astBase>& op){
+    operation * getVarValue(std::unique_ptr<astBase>& op){
         auto var = dynamic_cast<varAST*>(op.get());
         auto id = var->id;
-        auto defop = astctx->current_scope->findSymbolInfo(var->id)->ptr;
-        THROW_WHEN(defop == nullptr, "The value for the variable: "+id+" is not defined yet!");
-        return defop;
+        auto owner = astctx->current_scope->findSymbolInfo(var->id)->handle->getDefiningOp();
+        THROW_WHEN(owner == nullptr, "The value for the variable: "+id+" is not defined yet!");
+        return owner;
     }
     operation* declareConstant(std::unique_ptr<astBase>& op){
         auto ast = dynamic_cast<numberAST*>(op.get());
         cstDeclOp * lgfop;
         if(ast->isInt()){
-            lgfop = pnt.createOp<cstDeclOp>(ctx, int(ast->number));
+            lgfop = pnt.paint<cstDeclOp>(ctx, int(ast->number));
         } else
-            lgfop = pnt.createOp<cstDeclOp>(ctx, ast->number);
+            lgfop = pnt.paint<cstDeclOp>(ctx, ast->number);
         return lgfop;
     }
     operation* convertBinaryOp(std::unique_ptr<astBase>& op){
@@ -122,22 +142,26 @@ class LGTranslator {
         auto bop = ast->binaryOp;
         if(bop == "+"){
             // all the operation converted from ast should contained only 1 output.
-            return pnt.createOp<math::aab::addOp>(ctx, lhs->outputValue(1), rhs->outputValue(1));
+            return pnt.paint<math::aab::addOp>(ctx, lhs->outputValue(1), rhs->outputValue(1));
         }else if(bop == "-"){
             // all the operation converted from ast should contained only 1 output.
-            return pnt.createOp<math::aab::minusOp>(ctx, lhs->outputValue(1), rhs->outputValue(1));
+            return pnt.paint<math::aab::minusOp>(ctx, lhs->outputValue(1), rhs->outputValue(1));
         }else if(bop == "*"){
-            return pnt.createOp<math::aab::multiplyOp>(ctx, lhs->outputValue(1), rhs->outputValue(1));
+            return pnt.paint<math::aab::multiplyOp>(ctx, lhs->outputValue(1), rhs->outputValue(1));
         }else if(bop == "="){
-            return pnt.createOp<assignOp>(ctx, lhs->outputValue(1), rhs->outputValue(1));
+            if(auto ptr = dynamic_cast<varAST*>(ast->lhs.get())){
+                auto ret = pnt.paint<assignOp>(ctx, lhs->outputValue(1), rhs->outputValue(1));
+                astctx->current_scope->findSymbolInfo(ptr->id)->handle=ret->outputValue(1);
+                return ret;
+            }else {
+                translateError("lhs of assignment has to be a variable.");
+            }
+            
         }
         return nullptr;
     }
-    type_t parseType(std::string id, std::string ir){
-        auto & func = typeTable::get().findParser(id);
-        liteParser p;
-        p.loadBuffer(ir);
-        return func(p, ctx);
+    type_t parseType(std::string typeStr){
+        return typeTable::get().parseTypeStr(ctx, typeStr);
     }
     std::unique_ptr<moduleAST> main;
     painter pnt;

@@ -104,6 +104,8 @@ class parser{
         auto type = lx.identifierStr;
         lx.consume(tok_identifier);
         if(lx.getCurToken() == token('<')){
+            lx.consume(token('<'));
+            type+='<';
             std::string tsub = parseTypeName();
             type+= tsub;
             while(lx.getCurToken()== token(',')){
@@ -111,6 +113,8 @@ class parser{
                 tsub = parseTypeName();
                 type+= tsub;
             }
+            type+='>';
+            lx.consume(token('>'));
         }
         return type;
     }
@@ -133,8 +137,8 @@ class parser{
             parseError("The identifier: "+id+"is defined in: "+info->loc.string());
         }
         auto loc = lx.getLoc();
-        ctx.current_scope->addSymbolInfo(id, {"func", loc});
         auto ast = std::make_unique<funcDeclAST>(loc, id);
+        ctx.current_scope->addSymbolInfo(id, {"func", loc});
         lx.consume(tok_identifier);
         lx.consume(token('('));
         parseArgSignatures(ast->args);
@@ -144,6 +148,7 @@ class parser{
             ast->setReturnType(parseTypeName());
         }
         if(lx.getCurToken()==token(';')){
+            lx.consume(token(';'));
             return ast;
         }
         // parsing block of function definition
@@ -224,7 +229,7 @@ class parser{
     }
     std::unique_ptr<astBase> parseValAST(location loc, std::string id){
         if(!ctx.current_scope->hasSymbolInfo(id)) {
-            ctx.current_scope->addSymbolInfo(id,{"variable", loc});
+            ctx.current_scope->addSymbolInfo(id,{"variable", loc, "variable"});
         }
         return std::make_unique<varAST>(loc, id);
     }
@@ -295,7 +300,9 @@ class parser{
         auto loc = lx.getLoc();
         lx.consume(tok_identifier);
         if(lx.getCurToken()== token('(')){
-            return parseFuncCall(loc, id);
+            auto ast = parseFuncCall(loc, id);
+            lx.consume(token(';'));
+            return ast;
         }
         // check if the id is declared before
         // if(lx.getCurToken()== tok_identifier){
@@ -340,10 +347,10 @@ class parser{
     }
 
     std::unique_ptr<astBase> parseFuncCall(location loc, std::string id){
-        if(auto info = ctx.current_scope->findSymbolInfo(id)){}
-        else parseError("The function: "+id+" is unknown!");
-        lx.consume(token('('));
         auto ast = std::make_unique<funcCallAST>(loc, id);
+        if(!ctx.current_scope->hasSymbolInfo(id))
+            parseError("The function: "+id+" is unknown!");
+        lx.consume(token('('));
         while(lx.getCurToken()!=token(')')){
             auto arg = parseExpression();
             ast->addArg(std::move(arg));

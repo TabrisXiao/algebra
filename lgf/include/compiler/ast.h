@@ -171,15 +171,14 @@ class funcCallAST : public astBase {
     public:
     funcCallAST(location loc, std::string _id) 
     : astBase(loc, kind_funcCall)
-    , id(_id) {}
+    , id(_id) { }
     std::unique_ptr<astBase>& arg(int n=0){
         return args[n];
     }
     void addArg(std::unique_ptr<astBase> ptr){
         args.push_back(std::move(ptr));
     }
-    std::string id;
-    std::vector<std::unique_ptr<astBase>> args;
+    
     virtual void emitIR(lgf::streamer & out){
         out<<id<<"(";
         if(args.size()!=0){
@@ -191,13 +190,16 @@ class funcCallAST : public astBase {
         }
         out<<")";
     }
+
+    std::string id;
+    std::vector<std::unique_ptr<astBase>> args;
 };
 
 class returnAST : public astBase {
     public:
     returnAST(location loc) : astBase(loc, kind_return) {}
     bool hasValue(){
-        return value == nullptr;
+        return value != nullptr;
     }
     void addReturnValue(std::unique_ptr<astBase>& ptr){
         value=std::move(ptr);

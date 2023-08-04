@@ -2,9 +2,8 @@
 // test
 e = 3+ (a-b)*1.2;
 
-def sum(variable a, variable b) -> variable {
-    return a+b;
-}
+def sum(variable a, variable b) -> variable ;
+def UnitMatrix(int a) -> tensor<variable>;
 
-c = sum(4, e);
-return e; 
+a = sum(4, e);
+return a; 
