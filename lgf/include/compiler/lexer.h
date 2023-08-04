@@ -23,6 +23,7 @@ enum token : int {
     tok_module = -104,// module
     tok_scope = -105, // ::
     tok_def  =  -106, // def
+    tok_arrow = -107, // ->
 };
 class lexer {
     public: 

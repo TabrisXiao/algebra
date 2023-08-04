@@ -1,98 +1,145 @@
 #ifndef MATH_TYPES_H
 #define MATH_TYPES_H
 #include "lgf/types.h"
+#include "lgf/typeTable.h"
 
-namespace math{
-class variable: public lgf::type_t {
+namespace lgf::math{
+
+class integer: public lgf::variable {
+    public:
+    integer() = default;
+    static std::unique_ptr<lgf::typeImpl> createImpl(){
+      return std::move(std::make_unique<lgf::typeImpl>("integer"));
+    }
+    static type_t parse(lgf::liteParser& paser, lgf::LGFContext* ctx){
+      return ctx->getType<integer>();
+    }
+};
+
+class natureNumber: public integer {
+    public:
+    natureNumber() = default;
+    static std::unique_ptr<lgf::typeImpl> createImpl(){
+      return std::move(std::make_unique<lgf::typeImpl>("natureNumber"));
+    }
+    static type_t parse(lgf::liteParser& paser, lgf::LGFContext* ctx){
+      return ctx->getType<natureNumber>();
+    }
+};
+
+class realNumber: public lgf::variable {
+    public:
+    realNumber() = default;
+    static std::unique_ptr<lgf::typeImpl> createImpl(){
+      return std::move(std::make_unique<lgf::typeImpl>("realNumber"));
+    }
+    static type_t parse(lgf::liteParser& paser, lgf::LGFContext* ctx){
+      return ctx->getType<realNumber>();
+    }
+};
+
+class rationalNumber: public lgf::variable {
+    public:
+    rationalNumber() = default;
+    static std::unique_ptr<lgf::typeImpl> createImpl(){
+      return std::move(std::make_unique<lgf::typeImpl>("rationalNumber"));
+    }
+    static type_t parse(lgf::liteParser& paser, lgf::LGFContext* ctx){
+      return ctx->getType<rationalNumber>();
+    }
+};
+
+class irrationalNumber: public lgf::variable {
   public:
-  variable() { id="variable"; }
-  static variable build(){
-    variable obj;
-    return obj;
+  irrationalNumber() = default;
+  static std::unique_ptr<lgf::typeImpl> createImpl(){
+    return std::move(std::make_unique<lgf::typeImpl>("irrationalNumber"));
+  }
+  static type_t parse(lgf::liteParser& paser, lgf::LGFContext* ctx){
+    return ctx->getType<irrationalNumber>();
   }
 };
 
-class natureNumber: public variable {
+class tensorTypeImpl : public lgf::typeImpl {
   public:
-  natureNumber() { id="natureNumber"; }
-  static natureNumber build(){
-    natureNumber obj;
-    return obj;
+  tensorTypeImpl(lgf::type_t elemType_, std::vector<int>& shapes)
+  : typeImpl("tensor")
+  , elemType(elemType_){
+    THROW_WHEN(shapes.size()<1, "tensor rank can't be less than 1!");
+    dims = shapes;
+  }
+  tensorTypeImpl(lgf::type_t elemType_)
+  : typeImpl("tensor")
+  , elemType(elemType_){
+    generalType = 1;
+  }
+  virtual std::string represent(){
+    printer p;
+    p<<id<<"<";
+    if(!generalType){
+      p<<dims[0];
+      if(dims.size()>1){
+        for(auto i=1; i<dims.size(); i++){
+          p<<"x"<<dims[i];
+        }
+      }
+      p<<", ";
+    }
+    p<<elemType.represent()<<">";
+    return p.dump();
+  }
+  lgf::type_t elemType;
+  std::vector<int> dims;
+  bool generalType = 0;
+};
+
+class tensor_t: public lgf::variable {
+  public:
+  tensor_t() = default;
+  static std::unique_ptr<lgf::typeImpl> createImpl(type_t elemType, std::vector<int> &shapes){
+    return std::move(std::make_unique<tensorTypeImpl>(elemType, shapes));
+  }
+  static std::unique_ptr<lgf::typeImpl> createImpl(type_t elemType){
+    return std::move(std::make_unique<tensorTypeImpl>(elemType));
+  }
+  int size(){
+    return dynamic_cast<tensorTypeImpl*>(impl)->dims.size();
+  }
+  type_t getElemType(){ return dynamic_cast<tensorTypeImpl*>(impl)->elemType; }
+  static type_t parse(lgf::liteParser& p, lgf::LGFContext* ctx){
+    p.parseLessThan();
+    bool isgeneral = 1;
+    std::vector<int> shapes;
+    if(p.getCurToken() == liteParser::tok_number){
+      int n = p.parseNumber();
+      shapes.push_back(n);
+      while(p.getCurToken()!=int(',')){
+        p.consume(int('x'));
+        n = p.parseNumber();
+        shapes.push_back(n);
+      }
+      p.parseComma();
+      isgeneral = 0;
+    }
+    auto elemID = p.parseIdentifier();
+    auto fc = typeTable::get().findParser(elemID);
+    auto elemType = fc(p, ctx);
+    p.parseGreaterThan();
+    if(isgeneral){
+      return ctx->getType<tensor_t>(elemType);
+    }
+    return ctx->getType<tensor_t>(elemType, shapes);
   }
 };
 
-class integer: public variable {
-  public:
-  integer() { id="integer"; }
-  static integer build(){
-    integer obj;
-    return obj;
-  }
-};
-
-class rationalNumber: public variable {
-  public:
-  rationalNumber() { id="rationalNumber"; }
-  static rationalNumber build(){
-    rationalNumber obj;
-    return obj;
-  }
-};
-
-class irrationalNumber: public variable {
-  public:
-  irrationalNumber() { id="irrationalNumber"; }
-  static irrationalNumber build(){
-    irrationalNumber obj;
-    return obj;
-  }
-};
-
-class realNumber: public variable {
-  public:
-  realNumber() { id="realNumber"; }
-  static realNumber build(){
-    realNumber obj;
-    return obj;
-  }
-};
-
-// class anyMatrix: public variable {
-//   public:
-//   anyMatrix() { id="anyMatrix"; }
-//   static anyMatrix build(){
-//     anyMatrix obj;
-//     return obj;
-//   }
-// };
-
-// class matrix: public anyMatrix {
-//   public:
-//   matrix() { id="matrix"; }
-//   static matrix build(type_t elemType, int rowDim, int colDim){
-//     matrix obj;
-//     obj.elemType_=elemType;
-//     obj.rowDim_=rowDim;
-//     obj.colDim_=colDim;
-//     return obj;
-//   }
-//   const type_t& elemType(){ return elemType_; }
-//   const int& rowDim(){ return rowDim_; }
-//   const int& colDim(){ return colDim_; }
-//   type_t elemType_;
-//   int rowDim_;
-//   int colDim_;
-// };
-
-class matrix: public lgf::variable {
-  public:
-  matrix(lgf::variable elem_t) : elemType(elem_t) { id="matrix"; }
-  static matrix build(lgf::variable t= lgf::variable()){
-    return matrix(t);
-  }
-  lgf::variable elemType;
-  int rowDim = -1, colDim = -1;
-};
+void registerTypes(){
+  REGISTER_TYPE(integer, "integer");
+  REGISTER_TYPE(natureNumber, "natureNumber");
+  REGISTER_TYPE(realNumber, "realNumber");
+  REGISTER_TYPE(rationalNumber, "rationalNumber");
+  REGISTER_TYPE(irrationalNumber, "irrationalNumber");
+  REGISTER_TYPE(tensor_t, "tensor");
+}
 
 }
 #endif

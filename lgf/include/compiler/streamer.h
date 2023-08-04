@@ -11,7 +11,7 @@ namespace lgf{
 
 class streamer
 {
-public:
+    public:
     streamer() = default;
     // makes the singleton to be unassignable / non-clonable
     //stream(stream &) = delete;
@@ -55,7 +55,7 @@ public:
         if(curIndentLevel<0) curIndentLevel = 0;
     }
     
-protected:
+    protected:
     
     std::ostream* os = &std::cout;
     std::stringstream ss;

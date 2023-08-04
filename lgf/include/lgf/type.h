@@ -7,12 +7,16 @@
 
 namespace lgf{
 class LGFContext;
+class LGFModule;
 class typeImpl{
     public:
     typeImpl(std::string sid) : id(sid){}
     virtual std::string represent(){
         return id;
     }
+    LGFModule* getModule(){ return module; }
+    // the module that this type belongs to
+    LGFModule* module=nullptr;
     std::string id;
 };
 
@@ -26,8 +30,10 @@ class type_t {
     void setID(std::string id_){ impl->id= id_;}
     std::string getSID() {return impl->id;}
     virtual std::string represent() const {
-        return impl->represent();
+        if(impl) return impl->represent();
+        return "Null";
     }
+
     bool operator==(const type_t& other){
         return this->represent() == other.represent();
     }

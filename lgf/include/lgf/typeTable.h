@@ -2,6 +2,7 @@
 #ifndef LGF_TYPETABLE_H
 #define LGF_TYPETABLE_H
 #include "symbolicTable.h"
+#include "exception.h"
 #include <functional>
 
 namespace lgf {
@@ -35,7 +36,16 @@ class typeTable {
         table.addEntry(id, info);
     }
     const paser_func_t& findParser(std::string key){
-        return table.find(key)->parser;
+        auto entry = table.find(key);
+        THROW_WHEN(entry==nullptr, "The type: "+key+" is unknown!");
+        return entry->parser;
+    }
+    type_t parseTypeStr(LGFContext* ctx, std::string & str ){
+        liteParser p;
+        p.loadBuffer(str);
+        auto id = p.parseIdentifier();
+        auto fc = findParser(id);
+        return fc(p, ctx);
     }
     protected:
     typeTable() = default;
@@ -44,5 +54,5 @@ class typeTable {
 };
 }
 #define REGISTER_TYPE(TYPE, ID)\
-    typeTable::get().registerType<TYPE>(ID)
+    lgf::typeTable::get().registerType<TYPE>(ID)
 #endif

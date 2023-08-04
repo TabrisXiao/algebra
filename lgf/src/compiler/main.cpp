@@ -22,10 +22,6 @@ int main(int argc, char* argv[]){
     lgf::compiler::compiler cmp;
     cmp.pser.typeIdTable.addEntry("var", nullptr);
     cmp.compileInput(inputFile);
-    
-    auto var_t = cmp.builder.ctx->getType<lgf::variable>();
-    auto list_t = cmp.builder.ctx->getType<lgf::listType>(var_t, 10);
-    std::cout<<list_t.represent()<<std::endl;
 
     std::cout<<"\n---- LGIR ----\n";
     cmp.builder.c.printGraph();

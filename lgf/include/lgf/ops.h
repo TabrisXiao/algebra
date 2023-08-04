@@ -40,9 +40,9 @@ class assignOp : public operation{
     public:
     assignOp() : operation("assign") {}
     ~assignOp() { }
-    static assignOp * build(LGFContext *ctx, type_t type, value* lhs, value* rhs){
+    static assignOp * build(LGFContext *ctx, value* lhs, value* rhs){
         auto op = new assignOp();
-        op->createValue(type, "");
+        op->createValue(rhs->getType(), "");
         op->registerInput(lhs, rhs);
         return op;
     }
@@ -92,26 +92,78 @@ class funcDefineOp : public graph {
     funcDefineOp() : graph("funcDefineOp") {}
     static funcDefineOp* build(LGFContext *ctx, std::string id_, lgf::type_t returnType_){
         auto op = new funcDefineOp();
-        op->createValue(returnType_, "");
+        op->returnType = returnType_;
         op->id = id_;
+        op->createValue(ctx->getType<mapping_t>(),"");
         return op;
     }
     // this builder for no return type func defining
     static funcDefineOp* build(LGFContext *ctx, std::string id_){
         auto op = new funcDefineOp();
         op->id = id_;
+        op->createValue(ctx->getType<mapping_t>(),"");
         return op;
     }
     void registerArg(type_t type, std::string id){
         getEntry().createValue(type, id);
     }
+    value* getCallee(){ return outputValue(1); }
     std::string id;
     virtual std::string represent(){ 
         printer p;
-        p<<"funcOp: "<<id<<" (";
+        p<<representOutputs()<<" = funcOp: "<<id<<" (";
         p<<getEntry().representOutputs()<<")";
+        if(returnType.getImpl()) p<<" -> "<<returnType.represent(); 
         return p.dump();
-    } 
+    }
+    lgf::type_t returnType;
+};
+
+class funcCallOp : public operation{
+    public:
+    funcCallOp() = default;
+    static funcCallOp * build(LGFContext *ctx, value* callee){
+        auto op = new funcCallOp();
+        op->registerInput(callee);
+        auto& ret = callee->getDefiningOp<funcDefineOp>()->returnType;
+        if(ret.getImpl()){
+            op->hasReturn = 1;
+            op->createValue(ret, "");
+        }
+        return op;
+    }
+    template<typename ...ARGS>
+    static funcCallOp * build(LGFContext *ctx, value* callee, ARGS ... args){
+        auto op = build(ctx, callee);
+        op->registerInput(args...);
+        return op;
+    }
+    void addArg(value* arg) {
+        registerInput(arg);
+    }
+    void addArgs(std::vector<value*> & vec){
+        for(auto arg : vec){
+            registerInput(arg);
+        }
+    }
+    value * getCallee(){ return inputValue(0); }
+    value * arg(int n=0 ){ return inputValue(n+1); }
+    value * returnValue() { return outputValue(1); }
+    virtual std::string represent(){
+        printer p;
+        auto callee = getCallee()->getDefiningOp<funcDefineOp>();
+        if( hasReturn ) p<<representOutputs()<<" = ";
+        p<<"func call: %"<<callee->getCallee()->getTraceID()<<" "<<callee->id<<" (";
+        if( getInputSize()>1){
+            p<<arg(0)->represent();
+            for(auto i = 1; i< getInputSize()-1; /* the first element is callee */ i++){
+                p<<", "<<arg(i)->represent();
+            }
+        }
+        p<<")";
+        return p.dump();
+    }
+    bool hasReturn = 0;
 };
 
 class returnOp : public operation {
@@ -123,10 +175,16 @@ class returnOp : public operation {
     }
     static returnOp * build(LGFContext *ctx, value* val){
         auto op = build(ctx);
-        op->registerInput(val);
+        if(val) op->registerInput(val);
         return op;
     }
-    virtual std::string represent(){return "return";}
+    virtual std::string represent(){
+        std::string res = "return";
+        if(getInputSize()) {
+            res =res+" "+inputValue(0)->represent();
+        }
+        return res;
+    }
 };
 
 }

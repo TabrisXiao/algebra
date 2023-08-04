@@ -57,8 +57,8 @@ class ASTContext {
         // variable: a variable id
         std::string category;
         location loc;
-        std::string extra="";
-        operation * ptr= nullptr;
+        std::string type;
+        value * handle= nullptr;
     };
 
     ASTContext() { current_scope = &root_scope; }

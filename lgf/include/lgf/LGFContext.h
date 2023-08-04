@@ -3,6 +3,7 @@
 #define LGFCONTEXT_H_
 
 #include "type.h"
+#include "symbolicTable.h"
 #include <memory>
 #include <vector>
 

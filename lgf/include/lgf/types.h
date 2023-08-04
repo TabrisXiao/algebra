@@ -18,6 +18,17 @@ class variable : public lgf::type_t {
     }
 };
 
+class mapping_t : public lgf::type_t {
+  public:
+  mapping_t() = default;
+  static std::unique_ptr<typeImpl> createImpl(){
+    return std::move(std::make_unique<typeImpl>("mapping"));
+  }
+  static type_t parse(liteParser& paser, LGFContext* ctx){
+    return ctx->getType<variable>();
+  }
+};
+
 class intType: public variable {
     public:
     intType() = default;
@@ -29,7 +40,8 @@ class intType: public variable {
     }
 };
 
-class doubleType: public variable {
+
+class doubleType: public intType {
     public:
     doubleType() = default;
     static std::unique_ptr<typeImpl> createImpl(){
@@ -47,9 +59,7 @@ class listTypeImpl : public typeImpl {
   , elemType(elemType_)
   , size(dim) {}
   virtual std::string represent(){
-    printer p;
-    p<<id<<"<"<<elemType.represent()<<", "<<std::to_string(size)<<">";
-    return p.dump();
+    return id+"<"+elemType.represent()+", "+std::to_string(size)+">";
   }
   int size=0;
   type_t elemType;
@@ -64,12 +74,23 @@ class listType : public type_t {
   int size(){
     return dynamic_cast<listTypeImpl*>(impl)->size;
   }
+  static type_t parse(liteParser& paser, LGFContext* ctx){
+    paser.parseLessThan();
+    int size = paser.parseNumber();
+    paser.parseComma();
+    auto elemID = paser.parseIdentifier();
+    auto fc = typeTable::get().findParser(elemID);
+    auto elemType = fc(paser, ctx);
+    paser.parseGreaterThan();
+    return ctx->getType<listType>(elemType, size);
+  }
 };
 
 void registerLGFTypes(){
   REGISTER_TYPE(variable, "variable");
-  REGISTER_TYPE(intType, "intType");
-  REGISTER_TYPE(doubleType, "doubleType");
+  REGISTER_TYPE(intType, "int");
+  REGISTER_TYPE(doubleType, "double");
+  REGISTER_TYPE(listType, "list");
 }
 
 }

@@ -18,18 +18,26 @@ class painter {
     painter(graph* reg_) { current_graph = reg_; }
     painter() = default;
     ~painter(){}
+    template<typename obj>
+    obj* sketch(){
+        return obj::build();
+    }
     template<typename obj, typename...ARGS>
-    obj* createOp(ARGS ...args){
+    obj* sketch(ARGS ...args){
+        return obj::build(args...);
+    }
+    template<typename obj, typename...ARGS>
+    obj* paint(ARGS ...args){
         CHECK_CONDITION(current_graph!=nullptr, "No graph associated to the painter!");
-        auto ptr = obj::build(args...);
+        auto ptr = sketch<obj>(args...);
         current_graph->registerOp(ptr);
         lastOp = ptr;
         return ptr;
     }
     template<typename obj>
-    obj* createOp(){
+    obj* paint(){
         CHECK_CONDITION(current_graph!=nullptr, "No graph associated to the painter!");
-        auto ptr = obj::build();
+        auto ptr = sketch<obj>();
         current_graph->registerOp(ptr);
         lastOp = ptr;
         return ptr;
@@ -39,6 +47,11 @@ class painter {
     // it will be later than the current lastOp
     void appendOp(operation* op){
         op->dependOn(lastOp);
+        lastOp = op;
+    }
+    //add op to the current graph
+    void addToGraph(operation* op){
+        current_graph->registerOp(op);
     }
 
     // create a new op to replace the op1's users

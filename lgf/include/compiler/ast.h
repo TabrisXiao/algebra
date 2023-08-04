@@ -81,11 +81,11 @@ class varDeclAST : public astBase {
     public:
     varDeclAST(location loc, std::string tid, std::string name_) 
     : astBase(loc, kind_varDecl)
-    , varTypeID(tid)
-    , name(name_) {}
-    std::string varTypeID, name;
+    , typeStr(tid)
+    , id(name_) {}
+    std::string typeStr, id;
     virtual void emitIR(lgf::streamer & out){
-        out<<varTypeID<<" "<<name;
+        out<<typeStr<<" "<<id;
     }
 };
 
@@ -94,7 +94,7 @@ class varAST : public astBase {
     varAST(location loc, std::string name)
     : astBase(loc, kind_variable)
     , id(name) {}
-    std::string id, typesid;
+    std::string id;
     virtual void emitIR(lgf::streamer & out){
         out<<id;
     }
@@ -110,12 +110,19 @@ class funcDeclAST : public astBase {
     std::vector<std::unique_ptr<astBase>> contents;
     virtual void emitIR(lgf::streamer & out){
         out<<"def "<<funcID<<"(";
-        if(args.size()>0) out<<dynamic_cast<varAST*>(args[0].get())->id;
+        if(args.size()>0) out<<dynamic_cast<varDeclAST*>(args[0].get())->id;
         for(auto i=1; i<args.size(); i++){
-            out<<", "<<dynamic_cast<varAST*>(args[i].get())->id;
+            out<<", "<<dynamic_cast<varDeclAST*>(args[i].get())->id;
         }
         out<<")";
+        if(!returnTypeStr.empty()){
+            out<<" -> "<<returnTypeStr;
+        }
     }
+    void setReturnType(std::string & str) {
+        returnTypeStr = str;
+    }
+    std::string returnTypeStr = "";
     bool contentDefined = 0;
 };
 
@@ -148,18 +155,43 @@ class binaryAST : public astBase {
     std::string binaryOp;
     bool irNotEnd = 0;
     virtual void emitIR(lgf::streamer & out){
+        if(lhs->kind==kind_binary) out<<"(";
         lhs->emitIR(out);
+        if(lhs->kind==kind_binary) out<<")";
         out<<" "<<binaryOp<<" ";
+        if(rhs->kind==kind_binary){
+            out<<"(";
+        }
         rhs->emitIR(out);
+        if(rhs->kind==kind_binary) out<<")";
     }
 };
 
 class funcCallAST : public astBase {
     public:
-    funcCallAST(location loc) : astBase(loc, kind_funcCall){}
+    funcCallAST(location loc, std::string _id) 
+    : astBase(loc, kind_funcCall)
+    , id(_id) { }
     std::unique_ptr<astBase>& arg(int n=0){
         return args[n];
     }
+    void addArg(std::unique_ptr<astBase> ptr){
+        args.push_back(std::move(ptr));
+    }
+    
+    virtual void emitIR(lgf::streamer & out){
+        out<<id<<"(";
+        if(args.size()!=0){
+            args[0]->emitIR(out);
+            for(auto i=1; i<args.size(); i++){
+                out<<", ";
+                args[i]->emitIR(out);
+            }
+        }
+        out<<")";
+    }
+
+    std::string id;
     std::vector<std::unique_ptr<astBase>> args;
 };
 
@@ -167,19 +199,18 @@ class returnAST : public astBase {
     public:
     returnAST(location loc) : astBase(loc, kind_return) {}
     bool hasValue(){
-        return value == nullptr;
+        return value != nullptr;
     }
-    void takeValue(std::unique_ptr<astBase>& ptr){
+    void addReturnValue(std::unique_ptr<astBase>& ptr){
         value=std::move(ptr);
     }
     std::unique_ptr<astBase> value=nullptr;
     virtual void emitIR(lgf::streamer & out){
-        out.printIndent();
         out<<"return";
         if(value){
+            out<<" ";
             value->emitIR(out);
         }
-        out<<"\n";
     }
 };
 
