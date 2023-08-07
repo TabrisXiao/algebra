@@ -12,7 +12,7 @@ template<typename info>
 class scope{
     public:
     scope() = default;
-    scope(scope* p) : parent(p) {}
+    scope(std::string name, scope* p) : id(name), parent(p) {}
     info* findSymbolInfo(std::string id){
         return stbl.find(id);
     }
@@ -25,7 +25,7 @@ class scope{
     scope& findScope(std::string name) {
         // parse scope string
         auto & iter = subscope.find(name);
-        THROW_WHEN(iter == subscope.end(), "Scope name: \'"+name+"\' doesn't     exist!");
+        THROW_WHEN(iter == subscope.end(), "The scope name: "+name+" doesn't exist!");
         return (*iter).second;
     }
     scope& findScope(std::queue<std::string>& path){
@@ -40,8 +40,9 @@ class scope{
     }
     void registerScope(std::string name){
         if(hasScope(name)) return;
-        subscope.insert(std::make_pair(name, scope(this)));
+        subscope.insert(std::make_pair(name, scope(name, this)));
     }
+    std::string id;
     symbolTable<info> stbl;
     scope* parent = nullptr;
     std::map<std::string, scope> subscope;
@@ -64,7 +65,7 @@ class ASTContext {
     ASTContext() { current_scope = &root_scope; }
     scope<idinfo>& findScope(std::string name){
         return root_scope.findScope(name);
-    }
+    } 
     void addSymbolInfoToScope(std::string name, std::queue<std::string> scope_path, idinfo info){
         auto scp = root_scope.findScope(scope_path);
         scp.addSymbolInfo(name, info);
@@ -81,6 +82,13 @@ class ASTContext {
     }
     void moveToParentScope(){
         current_scope = current_scope->parent;
+    }
+    scope<idinfo>* getScope(std::queue<std::string> path){
+        return &(current_scope->findScope(path));
+    }
+    void createScopeAndEnter(std::string name){
+        current_scope->registerScope(name);
+        current_scope = &(current_scope->findScope(name));
     }
     
     scope<idinfo>* current_scope = nullptr;

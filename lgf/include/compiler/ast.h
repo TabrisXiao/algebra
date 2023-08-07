@@ -1,6 +1,6 @@
 
-#ifndef COMPILER_AST_H
-#define COMPILER_AST_H
+#ifndef LGF_COMPILER_AST_H
+#define LGF_COMPILER_AST_H
 
 #include <vector>
 #include <string>
@@ -123,7 +123,7 @@ class funcDeclAST : public astBase {
         returnTypeStr = str;
     }
     std::string returnTypeStr = "";
-    bool contentDefined = 0;
+    bool isAbstract = 1;
 };
 
 class numberAST : public astBase {

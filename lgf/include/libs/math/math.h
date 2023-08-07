@@ -4,5 +4,6 @@
 
 #include "types.h"
 #include "aab/aab.h"
+#include "LinearAlg/linearAlg.h"
 
 #endif

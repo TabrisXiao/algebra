@@ -9,7 +9,7 @@
 #include <map>
 #include <functional>
 #include "lgf/operation.h"
-#include "context.h"
+#include "ASTContext.h"
 #include <stack>
 
 namespace lgf::compiler{
@@ -18,6 +18,10 @@ namespace lgf::compiler{
 
 class parser{
     public:
+    struct idinfo_t {
+        std::string id;
+        scope<ASTContext::idinfo>* scope;
+    };
     parser(fileIO *io_) : io(io_) {}
     std::unique_ptr<moduleAST> parse(fs::path path){
         lx.loadBuffer(path);
@@ -91,9 +95,9 @@ class parser{
     }
     void parseArguments(std::vector<std::unique_ptr<astBase>>& vec){
         while(lx.getCurToken() == tok_identifier){
-            auto id = lx.identifierStr;
             auto loc = lx.getLoc();
-            vec.push_back(parseValAST(loc, id));
+            auto idif = parseIdInfo();
+            vec.push_back(parseValAST(loc, idif));
             lx.consume(tok_identifier);
             if(lx.getCurToken() != token(',')) break;
             lx.consume(token(','));
@@ -123,6 +127,7 @@ class parser{
             auto type = parseTypeName();
             auto id = lx.identifierStr;
             auto loc = lx.getLoc();
+            ctx.addSymbolInfoToCurrentScope(id, {"arg", loc});
             auto ptr = std::make_unique<varDeclAST>(loc, type, id);
             vec.push_back(std::move(ptr));
             lx.consume(tok_identifier);
@@ -134,13 +139,14 @@ class parser{
         lx.consume(tok_def);
         auto id = lx.identifierStr;
         if(auto info = ctx.current_scope->findSymbolInfo(id)){
-            parseError("The identifier: "+id+"is defined in: "+info->loc.string());
+            parseError("The identifier: \'"+id+"\' is defined in: "+info->loc.string());
         }
         auto loc = lx.getLoc();
         auto ast = std::make_unique<funcDeclAST>(loc, id);
-        ctx.current_scope->addSymbolInfo(id, {"func", loc});
+        ctx.addSymbolInfoToCurrentScope(id, {"func", loc});
         lx.consume(tok_identifier);
         lx.consume(token('('));
+        ctx.createScopeAndEnter(id);
         parseArgSignatures(ast->args);
         lx.consume(token(')'));
         if(lx.getCurToken()==tok_arrow){
@@ -149,12 +155,14 @@ class parser{
         }
         if(lx.getCurToken()==token(';')){
             lx.consume(token(';'));
+            ctx.moveToParentScope();
             return ast;
         }
         // parsing block of function definition
         lx.consume(token('{'));
-        ast->contentDefined = 1;
+        ast->isAbstract = 0;
         parseBlock(ast->contents);
+        ctx.moveToParentScope();
         return ast;
     }
     void parseBlock(std::vector<std::unique_ptr<astBase>> &content){
@@ -217,21 +225,35 @@ class parser{
                 return parseParenExpr();
         }
     }
-    std::unique_ptr<astBase> parseCallOrExpr(){
+    idinfo_t parseIdInfo(){
         auto id = lx.identifierStr;
-        auto loc = lx.getLoc();
+        auto scope = ctx.current_scope;
         lx.consume(tok_identifier);
-        if(lx.getCurToken()==token('(')){
-            return parseFuncCall(loc, id);
+        if(lx.getCurToken() == token('.')) 
+            scope = &(ctx.root_scope);
+        while(lx.getCurToken() == token('.')){
+            if(!scope) parseError("The scope: "+id+" doesn't exists!");
+            scope = &(scope->findScope(id));
+            lx.getCurToken() == token('.');
+            id = lx.identifierStr;
+            lx.consume(tok_identifier);
+        }
+        return idinfo_t{id, scope};
+    }
+    std::unique_ptr<astBase> parseCallOrExpr(){
+        auto loc = lx.getLoc();
+        auto idif = parseIdInfo();
+        if(lx.getCurToken()==token('(') ){
+            return parseFuncCall(loc, idif);
         }else {
-            return parseValAST(loc, id);
+            return parseValAST(loc, idif);
         }
     }
-    std::unique_ptr<astBase> parseValAST(location loc, std::string id){
-        if(!ctx.current_scope->hasSymbolInfo(id)) {
-            ctx.current_scope->addSymbolInfo(id,{"variable", loc, "variable"});
+    std::unique_ptr<astBase> parseValAST(location loc, idinfo_t idif){
+        if(!idif.scope->hasSymbolInfo(idif.id)) {
+            idif.scope->addSymbolInfo(idif.id,{"variable", loc, "variable"});
         }
-        return std::make_unique<varAST>(loc, id);
+        return std::make_unique<varAST>(loc, idif.id);
     }
     std::unique_ptr<astBase> parseBinaryRHS(int tokWeight, std::unique_ptr<astBase> lhs){
         while(true){
@@ -251,7 +273,6 @@ class parser{
                     return nullptr;
                 } 
             } 
-            
             lhs = std::make_unique<binaryAST>(loc, op, std::move(lhs), std::move(rhs));
         }
     }
@@ -296,11 +317,10 @@ class parser{
         return nullptr;
     }
     std::unique_ptr<astBase> parseIdentifier(){
-        auto id = lx.identifierStr;
         auto loc = lx.getLoc();
-        lx.consume(tok_identifier);
+        auto idif = parseIdInfo();
         if(lx.getCurToken()== token('(')){
-            auto ast = parseFuncCall(loc, id);
+            auto ast = parseFuncCall(loc, idif);
             lx.consume(token(';'));
             return ast;
         }
@@ -312,7 +332,7 @@ class parser{
         //     //}
         //     return parseVarDecl(loc, id);
         // }
-        auto lhs = parseValAST(loc, id);
+        auto lhs = parseValAST(loc, idif);
         if(lx.getCurToken() == token(';')){
             lx.getNextToken();
             return lhs;
@@ -346,10 +366,11 @@ class parser{
         parseError("variable name: "+id+" is unknown!");
     }
 
-    std::unique_ptr<astBase> parseFuncCall(location loc, std::string id){
-        auto ast = std::make_unique<funcCallAST>(loc, id);
-        if(!ctx.current_scope->hasSymbolInfo(id))
-            parseError("The function: "+id+" is unknown!");
+    std::unique_ptr<astBase> parseFuncCall(location loc, idinfo_t idif){
+        auto info = idif.scope->findSymbolInfo(idif.id);
+        if(info==nullptr || info->category!="func")
+        parseError("The function: "+idif.id+" is unknown!");
+        auto ast = std::make_unique<funcCallAST>(loc, idif.id);  
         lx.consume(token('('));
         while(lx.getCurToken()!=token(')')){
             auto arg = parseExpression();

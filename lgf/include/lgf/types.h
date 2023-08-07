@@ -86,13 +86,6 @@ class listType : public type_t {
   }
 };
 
-void registerLGFTypes(){
-  REGISTER_TYPE(variable, "variable");
-  REGISTER_TYPE(intType, "int");
-  REGISTER_TYPE(doubleType, "double");
-  REGISTER_TYPE(listType, "list");
-}
-
 }
 
 #endif

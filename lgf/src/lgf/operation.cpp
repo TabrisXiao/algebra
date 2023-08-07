@@ -55,9 +55,9 @@ std::string operation::representInputs(){
     if(getInputSize() == 0) return "";
     printer p;
     auto ins = getInputs();
-    p<<ins[0]->getTR();
+    p<<ins[0]->represent();
     for(auto iter = ins.begin()+1; iter != ins.end(); iter++){
-        p<<", "<<(*iter)->getTR();
+        p<<", "<<(*iter)->represent();
     }
     return p.dump();
 }
@@ -80,11 +80,11 @@ std::string operation::representOutputs(){
 void operation::print(){
     global::stream::getInstance().printIndent();
     //printOutputs();
-    global::stream::getInstance() << represent();
-    if(auto g = expandToGraph()){
-        global::stream::getInstance() <<" ";
-        g->print();
-    } else global::stream::getInstance() <<"\n";
+    global::stream::getInstance() << represent()<<"\n";
+    //if(auto g = expandToGraph()){
+    //    global::stream::getInstance() <<" ";
+    //    g->print();
+    //} else global::stream::getInstance() <<"\n";
 }
 //---------------------------------------------------
 

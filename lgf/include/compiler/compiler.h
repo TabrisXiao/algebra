@@ -9,6 +9,7 @@
 #include "compiler/parser.h"
 #include "compiler/streamer.h"
 #include "compiler/LGTranslator.h"
+#include "lgf/LGFModule.h"
 #include "utils.h"
 
 namespace lgf::compiler{
@@ -22,8 +23,14 @@ class compiler {
         main = pser.parse(f);
         lgf::streamer sm;
         main->emitIR(sm);
+        importModule<lgfModule>();
         builder.astctx = &(pser.ctx);
         builder.build(main);
+    }
+    template<typename module>
+    void importModule(){
+        module a;
+        a.registerTypes();
     }
     fileIO io;
     parser pser;

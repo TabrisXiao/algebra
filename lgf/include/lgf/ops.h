@@ -82,6 +82,7 @@ class cstDeclOp : public lgf::operation {
         p<<v;
         return p.dump();
     }
+    value* output(){ return outputValue(1); }
     bool isInt = 0;
     int intValue;
     double doubleValue;
@@ -108,15 +109,32 @@ class funcDefineOp : public graph {
         getEntry().createValue(type, id);
     }
     value* getCallee(){ return outputValue(1); }
+    value* argument(int n) { return getEntry().outputValue(n+1); }
     std::string id;
     virtual std::string represent(){ 
         printer p;
-        p<<representOutputs()<<" = funcOp: "<<id<<" (";
+        p<<representOutputs()<<" = func ";
+        if(isAbstract)p<<"Register";
+        else p<<"Def";
+        p<<" : "<<id<<" (";
         p<<getEntry().representOutputs()<<")";
         if(returnType.getImpl()) p<<" -> "<<returnType.represent(); 
         return p.dump();
     }
+    bool isAbstract = 1;
     lgf::type_t returnType;
+    virtual void print(){
+        global::stream::getInstance().printIndent();
+        std::string code = represent();
+        // add space if the represent is not empty
+        // {} no reprsent, shoudn't have space
+        // module {}, have represent "module", should have space
+        // between "module" and the {}.
+        global::stream::getInstance()<<represent();
+        if(!isAbstract){
+            printGraph();
+        } else global::stream::getInstance()<<"\n";
+    }
 };
 
 class funcCallOp : public operation{
