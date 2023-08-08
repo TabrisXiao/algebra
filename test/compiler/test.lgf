@@ -1,11 +1,4 @@
+import math
 
 // test
 e = 3+ (a-b)*1.2;
-
-def sum(variable a, variable b) -> variable {
-    return a+b;
-}
-def UnitMatrix(int a) -> tensor<variable>;
-
-a = sum(4, 3.2);
-return a; 

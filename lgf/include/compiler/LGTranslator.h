@@ -12,16 +12,19 @@ namespace lgf::compiler {
 class LGTranslator {
     public: 
     LGTranslator() = default;
-    void build(std::unique_ptr<moduleAST> & main){
+    void build(programAST* program){
+        astctx = program->getContext();
         lgf::math::registerTypes();
         pnt.gotoGraph(&c);
-        auto module = pnt.paint<moduleOp>(ctx);
-        pnt.gotoGraph(module);
-        declareVariables(*(astctx->current_scope));
-        translateModuleAST(main);
+        for(auto & moduleast : program->modules){
+            auto module = pnt.paint<moduleOp>(ctx);
+            pnt.gotoGraph(module);
+            declareVariables(*(astctx->current_scope));
+            translateModuleAST(moduleast.get());
+        }
         c.assignID(0);
     }
-    void translateModuleAST(std::unique_ptr<moduleAST> & main){
+    void translateModuleAST(moduleAST* main){
         transplateASTScope(main->contents);
     }
     void transplateASTScope(std::vector<std::unique_ptr<astBase>>& contents){
@@ -176,7 +179,7 @@ class LGTranslator {
     std::unique_ptr<moduleAST> main;
     painter pnt;
     canvas c;
-    ASTContext *astctx;
+    ASTContext *astctx=nullptr;
     LGFContext context;
     LGFContext *ctx = &context;
 };

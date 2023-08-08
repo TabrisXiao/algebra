@@ -18,11 +18,11 @@ class variable : public lgf::type_t {
     }
 };
 
-class mapping_t : public lgf::type_t {
+class reference_t : public lgf::type_t {
   public:
-  mapping_t() = default;
+  reference_t() = default;
   static std::unique_ptr<typeImpl> createImpl(){
-    return std::move(std::make_unique<typeImpl>("mapping"));
+    return std::move(std::make_unique<typeImpl>("ref"));
   }
   static type_t parse(liteParser& paser, LGFContext* ctx){
     return ctx->getType<variable>();

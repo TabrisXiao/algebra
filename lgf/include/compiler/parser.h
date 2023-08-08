@@ -11,6 +11,7 @@
 #include "lgf/operation.h"
 #include "ASTContext.h"
 #include <stack>
+#include <fstream>
 
 namespace lgf::compiler{
 #define TRACE_FUNC_CALL \
@@ -18,14 +19,19 @@ namespace lgf::compiler{
 
 class parser{
     public:
+    using scope_t = scope<ASTContext::idinfo>;
     struct idinfo_t {
         std::string id;
-        scope<ASTContext::idinfo>* scope;
-    };
-    parser(fileIO *io_) : io(io_) {}
-    std::unique_ptr<moduleAST> parse(fs::path path){
+        scope_t* scope;
+    };  
+    parser(fileIO *io_) : io(io_) { }
+    programAST* parse(fs::path path, programAST* ast_){
+        program = ast_;
+        ctx = ast_->getContext();
         lx.loadBuffer(path);
-        return parseModule();
+        auto m = parseModule();
+        program->addModule(std::move(m));
+        return program;
     }
     void parseError(const char * msg){
         std::cerr<<lx.getLoc().string()<<": Error: "<<msg;
@@ -39,6 +45,7 @@ class parser{
         lx.getNextToken();
         current_scopeid = scopeid;
         auto module = std::make_unique<moduleAST>(lx.getLoc(), scopeid++);
+        TRACE_FUNC_CALL;
         while(true){
             std::unique_ptr<astBase> record = nullptr;
             switch(lx.getCurToken()){
@@ -52,10 +59,9 @@ class parser{
                     record = parseModule();
                     break;
                 case tok_number:
-                    record = parseExpression();
-                    lx.consume(token(';'));
+                    parseError("Can't have number in module space");
                     break;
-                case tok_import: 
+                case tok_import:
                     parseImport();
                     break;
                 case tok_identifier:
@@ -65,7 +71,7 @@ class parser{
                     record = parseFuncDef();
                     break;
                 case tok_return:
-                    record = parseReturn();
+                    parseError("keyword return is illegal here.");
                     break;
                 default:
                     parseError("Unknown token: "+lx.convertCurrentToken2String());
@@ -127,7 +133,7 @@ class parser{
             auto type = parseTypeName();
             auto id = lx.identifierStr;
             auto loc = lx.getLoc();
-            ctx.addSymbolInfoToCurrentScope(id, {"arg", loc});
+            ctx->addSymbolInfoToCurrentScope(id, {"arg", loc});
             auto ptr = std::make_unique<varDeclAST>(loc, type, id);
             vec.push_back(std::move(ptr));
             lx.consume(tok_identifier);
@@ -138,15 +144,15 @@ class parser{
     std::unique_ptr<astBase> parseFuncDef(){
         lx.consume(tok_def);
         auto id = lx.identifierStr;
-        if(auto info = ctx.current_scope->findSymbolInfo(id)){
+        if(auto info = ctx->current_scope->findSymbolInfo(id)){
             parseError("The identifier: \'"+id+"\' is defined in: "+info->loc.string());
         }
         auto loc = lx.getLoc();
         auto ast = std::make_unique<funcDeclAST>(loc, id);
-        ctx.addSymbolInfoToCurrentScope(id, {"func", loc});
+        ctx->addSymbolInfoToCurrentScope(id, {"func", loc});
         lx.consume(tok_identifier);
         lx.consume(token('('));
-        ctx.createScopeAndEnter(id);
+        ctx->createScopeAndEnter(id);
         parseArgSignatures(ast->args);
         lx.consume(token(')'));
         if(lx.getCurToken()==tok_arrow){
@@ -155,14 +161,14 @@ class parser{
         }
         if(lx.getCurToken()==token(';')){
             lx.consume(token(';'));
-            ctx.moveToParentScope();
+            ctx->moveToParentScope();
             return ast;
         }
         // parsing block of function definition
         lx.consume(token('{'));
         ast->isAbstract = 0;
         parseBlock(ast->contents);
-        ctx.moveToParentScope();
+        ctx->moveToParentScope();
         return ast;
     }
     void parseBlock(std::vector<std::unique_ptr<astBase>> &content){
@@ -225,16 +231,16 @@ class parser{
                 return parseParenExpr();
         }
     }
-    idinfo_t parseIdInfo(){
+    idinfo_t parseIdInfo(scope_t* scope = nullptr ){
         auto id = lx.identifierStr;
-        auto scope = ctx.current_scope;
+        if(!scope) scope = ctx->current_scope;
         lx.consume(tok_identifier);
-        if(lx.getCurToken() == token('.')) 
-            scope = &(ctx.root_scope);
-        while(lx.getCurToken() == token('.')){
+        if(lx.getCurToken() == tok_scope) 
+            scope = &(ctx->root_scope);
+        while(lx.getCurToken() == tok_scope){
             if(!scope) parseError("The scope: "+id+" doesn't exists!");
             scope = &(scope->findScope(id));
-            lx.getCurToken() == token('.');
+            lx.getCurToken() == tok_scope;
             id = lx.identifierStr;
             lx.consume(tok_identifier);
         }
@@ -301,25 +307,23 @@ class parser{
                 return -1;
         }
     }
-    void parseImport(){
-        lx.consume(tok_import);
-        std::string file = lx.buffer;
-        lx.getNextLine();
-        lx.getNextToken();
-        auto ifile = io->findInclude(file);
-        if(ifile.empty()) parseError("Can't find the fiile: "+file);
-        lexer lxer;
-        lxer.loadBuffer(ifile);
-        // TODO: parse the imported module;
-    }
-    
+
     std::unique_ptr<astBase> parseDeclaration(){
         return nullptr;
     }
     std::unique_ptr<astBase> parseIdentifier(){
+        auto id = lx.identifierStr;
         auto loc = lx.getLoc();
-        auto idif = parseIdInfo();
-        if(lx.getCurToken()== token('(')){
+        lx.consume(tok_identifier);
+        idinfo_t idif = {id, ctx->current_scope};
+        if(lx.getCurToken() == tok_scope){
+            lx.consume(tok_scope);
+            auto scope = ctx->root_scope.findScope(id);
+            idif = parseIdInfo(&scope);
+        }
+        auto info = idif.scope->findSymbolInfo(idif.id);
+        if(info &&( info->category == "func" || info->category == "mfunc") ){
+            lx.consume(token('('));
             auto ast = parseFuncCall(loc, idif);
             lx.consume(token(';'));
             return ast;
@@ -344,8 +348,7 @@ class parser{
 
     std::unique_ptr<astBase> parseVarDecl(location loc, std::string tid){
         parseError("parseVarDecl Not implement yet!");
-        TRACE_FUNC_CALL;
-        if(auto ptr = ctx.current_scope->findSymbolInfo(tid)){
+        if(auto ptr = ctx->current_scope->findSymbolInfo(tid)){
             if(ptr->category!= "type" || ptr->category!= "class"){
                 parseError("The type \'"+tid+"\' is not defined yet!");
             }
@@ -359,7 +362,7 @@ class parser{
         return std::make_unique<varDeclAST>(loc, tid, id);
     }
     void checkIfVarIDExists(std::string id){
-        if(auto info = ctx.current_scope->findSymbolInfo(id)){
+        if(auto info = ctx->current_scope->findSymbolInfo(id)){
             if(info->category == "variable") return;
             parseError(" \'"+id+"\' is not a variable name!");
         }
@@ -382,13 +385,31 @@ class parser{
         //lx.consume(token(';'));
         return ast;
     }
+
+    void parseImport(){
+        lx.consume(tok_import);
+        auto path = lx.identifierStr+lx.buffer;
+        lx.getNextLine();
+        std::replace(path.begin(), path.end(), '.', '/');
+        path+=".lgf";
+        if(!io) parseError("File IO is broken!");
+        auto file = io->findInclude(path);
+        parser ip(io);
+        if(file.empty()) parseError("Can't find the import module: "+file.string());
+        ip.lx.consume(tok_module);
+        auto moduleId = ip.lx.identifierStr;
+        ip.lx.consume(tok_identifier);
+        ctx->createScopeAndEnter(moduleId);
+        ip.parse(file, program);
+    }
     
     fileIO *io=nullptr;
     lexer lx;
-    ASTContext ctx;
+    ASTContext* ctx;
     symbolTable<std::function<type_t()>> typeIdTable;
     unsigned int current_scopeid, scopeid = 0;
     std::stack<std::string> scope_trace;
+    programAST* program;
 };
 
 }

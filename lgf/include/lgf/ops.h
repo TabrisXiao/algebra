@@ -14,6 +14,7 @@ class moduleOp : public graph{
     ~moduleOp(){}
     static moduleOp * build(LGFContext *ctx){
         auto op = new moduleOp();
+        op->createValue(ctx->getType<reference_t>(),"");
         return op;
     }
     virtual std::string represent() {return getSID();}
@@ -95,14 +96,14 @@ class funcDefineOp : public graph {
         auto op = new funcDefineOp();
         op->returnType = returnType_;
         op->id = id_;
-        op->createValue(ctx->getType<mapping_t>(),"");
+        op->createValue(ctx->getType<reference_t>(),"");
         return op;
     }
     // this builder for no return type func defining
     static funcDefineOp* build(LGFContext *ctx, std::string id_){
         auto op = new funcDefineOp();
         op->id = id_;
-        op->createValue(ctx->getType<mapping_t>(),"");
+        op->createValue(ctx->getType<reference_t>(),"");
         return op;
     }
     void registerArg(type_t type, std::string id){

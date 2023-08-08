@@ -2,6 +2,7 @@
 #ifndef COMPILER_CONTEXT_H
 #define COMPILER_CONTEXT_H
 #include "lgf/symbolicTable.h"
+#include "lgf/operation.h"
 #include "utils.h"
 #include <queue>
 #include <stack>
@@ -94,7 +95,6 @@ class ASTContext {
     scope<idinfo>* current_scope = nullptr;
     scope<idinfo> root_scope;
 };
-
 
 }
 

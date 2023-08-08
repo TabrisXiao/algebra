@@ -19,13 +19,14 @@ class compiler {
     compiler() : pser(&io) {};
     void compileInput(std::string file){
         auto f = io.getFile(file);
+        io.addIncludePath(f.parent_path());
         COMPIELR_THROW_WHEN(f.empty(), "Can't find the file: "+file);
-        main = pser.parse(f);
+        pser.parse(f, ast.get());
         lgf::streamer sm;
-        main->emitIR(sm);
+        
+        ast->emitIR(sm);
         importModule<lgfModule>();
-        builder.astctx = &(pser.ctx);
-        builder.build(main);
+        builder.build(ast.get());
     }
     template<typename module>
     void importModule(){
@@ -34,7 +35,7 @@ class compiler {
     }
     fileIO io;
     parser pser;
-    std::unique_ptr<moduleAST> main;
+    std::unique_ptr<programAST> ast;
     LGTranslator builder;
 };
 

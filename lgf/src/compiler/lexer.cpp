@@ -42,6 +42,7 @@ lgf::compiler::token lgf::compiler::lexer::getToken(){
         if(identifierStr == "module") return tok_module;
         if(identifierStr == "class") return tok_struct;
         if(identifierStr == "def") return tok_def;
+        if(identifierStr == "mdef") return tok_member;
         if(identifierStr == "import") return tok_import;
         if(identifierStr == "return") return tok_return;
 

@@ -7,6 +7,7 @@
 #include "lexer.h"
 #include "lgf/printer.h"
 #include "streamer.h"
+#include "ASTContext.h"
 #include <optional>
 
 namespace lgf::compiler {
@@ -56,6 +57,22 @@ class moduleAST : public astBase {
         out.printIndent();
         out<<"}\n";
     }
+};
+
+class programAST {
+    public:
+    programAST() = default;
+    void addModule(std::unique_ptr<moduleAST>&& ptr){
+        modules.push_back(std::move(ptr));
+    }
+    std::vector<std::unique_ptr<moduleAST>> modules;
+    void emitIR(lgf::streamer & out){
+        for(auto & each : modules){
+            each->emitIR(out);
+        }
+    }
+    ASTContext* getContext(){ return &ctx; }
+    ASTContext ctx;
 };
 
 class structAST : public astBase {
