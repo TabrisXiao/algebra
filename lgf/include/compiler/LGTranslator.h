@@ -21,6 +21,7 @@ class LGTranslator {
             pnt.gotoGraph(module);
             declareVariables(*(astctx->current_scope));
             translateModuleAST(moduleast.get());
+            pnt.gotoParentGraph();
         }
         c.assignID(0);
     }
@@ -121,7 +122,7 @@ class LGTranslator {
     void translateError(std::string msg){
         std::cerr<<"Translation error: "<<msg<<std::endl;
     }
-    void declareVariables(scope<ASTContext::idinfo>& scp){
+    void declareVariables(scope<idinfo>& scp){
         for(auto& it : scp.stbl.table){
             auto & entry = it.second;
             if(entry.category == "variable"){

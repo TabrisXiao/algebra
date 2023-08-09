@@ -49,21 +49,29 @@ class scope{
     std::map<std::string, scope> subscope;
 };
 
-class ASTContext {
-    public:
-    struct idinfo {
-        //category can be:
-        // type : a type name
-        // func : a id of a function
-        // class: a id of a class object
-        // variable: a variable id
-        std::string category;
-        location loc;
-        std::string type;
-        value * handle= nullptr;
-    };
+struct idinfo {
+    //category can be:
+    // type : a type name
+    // func : a id of a function
+    // arg  : argument of a function
+    // var  : a variable id
+    std::string category;
+    location loc;
+    std::string type;
+    value * handle= nullptr;
+};
 
-    ASTContext() { current_scope = &root_scope; }
+struct moduleInfo {
+    std::string name;
+    symbolTable<idinfo> ids;
+};
+
+class ASTContext : public nestedSymbolicTable<moduleInfo> {
+    public:
+    ASTContext() {
+        module = &main; 
+        current_scope = &root_scope;
+    }
     scope<idinfo>& findScope(std::string name){
         return root_scope.findScope(name);
     } 
@@ -94,6 +102,9 @@ class ASTContext {
     
     scope<idinfo>* current_scope = nullptr;
     scope<idinfo> root_scope;
+    unsigned int module_id = 0;
+    moduleInfo main;
+    moduleInfo* module = nullptr;
 };
 
 }

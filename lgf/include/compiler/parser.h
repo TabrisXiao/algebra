@@ -19,17 +19,33 @@ namespace lgf::compiler{
 
 class parser{
     public:
-    using scope_t = scope<ASTContext::idinfo>;
+    using scope_t = scope<idinfo>;
     struct idinfo_t {
         std::string id;
         scope_t* scope;
-    };  
+    };
+    ~parser(){}
     parser(fileIO *io_) : io(io_) { }
-    programAST* parse(fs::path path, programAST* ast_){
+    programAST* parseMainFile(fs::path path, programAST* ast_){
         program = ast_;
         ctx = ast_->getContext();
         lx.loadBuffer(path);
-        auto m = parseModule();
+        lx.getNextToken();
+        if(lx.getCurToken()==tok_module)
+            lx.readNextLine();
+        auto m = parseModule("main");
+        program->addModule(std::move(m));
+        return program;
+    }
+    programAST* parseModuleFile(fs::path path, programAST* ast_){
+        program = ast_;
+        ctx = ast_->getContext();
+        lx.loadBuffer(path);
+        lx.getNextToken();
+        lx.consume(tok_module);
+        auto id = lx.parseIdentifier();
+        ctx->createScopeAndEnter(id);
+        auto m = parseModule(id);
         program->addModule(std::move(m));
         return program;
     }
@@ -41,11 +57,9 @@ class parser{
         parseError(msg.c_str());
     }
 
-    std::unique_ptr<moduleAST> parseModule(){
-        lx.getNextToken();
-        current_scopeid = scopeid;
-        auto module = std::make_unique<moduleAST>(lx.getLoc(), scopeid++);
-        TRACE_FUNC_CALL;
+    std::unique_ptr<moduleAST> parseModule(std::string name){
+        auto module = std::make_unique<moduleAST>(lx.getLoc(), ctx->module_id++);
+        module->name = name;
         while(true){
             std::unique_ptr<astBase> record = nullptr;
             switch(lx.getCurToken()){
@@ -55,15 +69,16 @@ class parser{
                     lx.getNextLine();
                     lx.getNextToken();
                     continue;
-                case tok_module:
-                    record = parseModule();
-                    break;
+                //case tok_module:
+                //    lx.consume(tok_module);
+                //    record = parseModule(lx.parseIdentifier());
+                //    break;
                 case tok_number:
                     parseError("Can't have number in module space");
                     break;
                 case tok_import:
                     parseImport();
-                    break;
+                    continue;
                 case tok_identifier:
                     record = parseIdentifier();
                     break;
@@ -82,8 +97,11 @@ class parser{
             //lgf::streamer sm;
             //module->emitIR(sm);
         }
-        if(lx.getCurToken()!= tok_eof) parseError("Module is not closed!");
-        current_scopeid = module->previous_id;
+        if(lx.getCurToken()!= tok_eof){
+            std::cout<<"curTok: "<<lx.convertCurrentToken2String()<<std::endl;
+            parseError("Module is not closed!");
+            
+        } 
         return std::move(module);
     }
     std::unique_ptr<astBase> parseReturn(){
@@ -390,24 +408,20 @@ class parser{
         lx.consume(tok_import);
         auto path = lx.identifierStr+lx.buffer;
         lx.getNextLine();
+        lx.getNextToken();
         std::replace(path.begin(), path.end(), '.', '/');
         path+=".lgf";
         if(!io) parseError("File IO is broken!");
         auto file = io->findInclude(path);
         parser ip(io);
         if(file.empty()) parseError("Can't find the import module: "+file.string());
-        ip.lx.consume(tok_module);
-        auto moduleId = ip.lx.identifierStr;
-        ip.lx.consume(tok_identifier);
-        ctx->createScopeAndEnter(moduleId);
-        ip.parse(file, program);
+        ip.parseModuleFile(file, program);
     }
     
     fileIO *io=nullptr;
     lexer lx;
     ASTContext* ctx;
     symbolTable<std::function<type_t()>> typeIdTable;
-    unsigned int current_scopeid, scopeid = 0;
     std::stack<std::string> scope_trace;
     programAST* program;
 };

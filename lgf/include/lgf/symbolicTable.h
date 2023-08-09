@@ -4,6 +4,7 @@
 #include <map>
 #include <string>
 #include <memory>
+#include <queue>
 
 namespace lgf{
 
@@ -31,6 +32,41 @@ class symbolTable {
     }
 
     std::map<std::string, meta> table;
+};
+
+template<typename meta>
+class nestedSymbolicTable{
+    public: 
+    nestedSymbolicTable() = default;
+    virtual ~nestedSymbolicTable(){}
+    nestedSymbolicTable(std::string key): id(key){}
+    nestedSymbolicTable<meta>* findTable(std::string key){
+        auto itr = table.find(key);
+        if( itr == table.end()) return nullptr;
+        return &((*itr).second);
+    }
+    meta* getData(std::string key){
+        auto itr = table.find(key);
+        if( itr == table.end()) return nullptr;
+        return &((*itr).second.data);
+    }
+    nestedSymbolicTable<meta>* addTable(std::string key){
+        if(auto ptr = findTable(key)) return ptr;
+        table[key] = nestedSymbolicTable<meta>(key);
+        return &(table[key]);
+    }
+    nestedSymbolicTable<meta>* findTable(std::queue<std::string>& keys){
+        while(keys.size()){
+            auto key = keys.pop();
+            if(auto ptr = findTable(key))
+                return ptr->findTable(keys);
+            return nullptr;
+        }
+    }
+    
+    std::string id;
+    meta data;
+    std::map<std::string, nestedSymbolicTable<meta>> table;
 };
 
 }

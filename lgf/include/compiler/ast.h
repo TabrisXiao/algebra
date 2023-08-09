@@ -37,16 +37,16 @@ class moduleAST : public astBase {
     public:
     moduleAST(location loc, int id_, int previous_scop_id = 0)
     : astBase(loc, kind_module)
-    , id(id_)
-    , previous_id(previous_scop_id) {}
+    , id(id_) {}
     void addASTNode(std::unique_ptr<astBase>&& ptr){
         contents.push_back(std::move(ptr));
     }
     std::vector<std::unique_ptr<astBase>> contents;
-    unsigned int id, previous_id=0;
+    unsigned int id;
+    std::string name;
     virtual void emitIR(lgf::streamer & out){
         out.printIndent();
-        out<<"module #"<<id<<" {\n";
+        out<<"module #"<<id<<" : "<<name<<" {\n";
         out.incrIndentLevel();
         for(auto & op : contents){
             out.printIndent();

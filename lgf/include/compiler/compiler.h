@@ -18,10 +18,11 @@ class compiler {
     public: 
     compiler() : pser(&io) {};
     void compileInput(std::string file){
+        ast=std::make_unique<programAST>();
         auto f = io.getFile(file);
         io.addIncludePath(f.parent_path());
         COMPIELR_THROW_WHEN(f.empty(), "Can't find the file: "+file);
-        pser.parse(f, ast.get());
+        pser.parseMainFile(f, ast.get());
         lgf::streamer sm;
         
         ast->emitIR(sm);

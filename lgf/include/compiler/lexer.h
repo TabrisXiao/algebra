@@ -99,6 +99,11 @@ class lexer {
         }
         getNextToken();
     }
+    std::string parseIdentifier(){
+        auto ret = identifierStr;
+        consume(tok_identifier);
+        return ret;
+    }
     
     token getCurToken(){
         return curTok;
