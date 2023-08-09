@@ -9,46 +9,6 @@
 
 namespace lgf::compiler{
 
-template<typename info>
-class scope{
-    public:
-    scope() = default;
-    scope(std::string name, scope* p) : id(name), parent(p) {}
-    info* findSymbolInfo(std::string id){
-        return stbl.find(id);
-    }
-    void addSymbolInfo(std::string id, info info){
-        stbl.addEntry(id, info);
-    }
-    bool hasSymbolInfo(std::string id){
-        return stbl.has(id);
-    }
-    scope& findScope(std::string name) {
-        // parse scope string
-        auto & iter = subscope.find(name);
-        THROW_WHEN(iter == subscope.end(), "The scope name: "+name+" doesn't exist!");
-        return (*iter).second;
-    }
-    scope& findScope(std::queue<std::string>& path){
-        if(path.size() == 0 ) return *this;
-        auto &_scope = subscope.find(path.front());
-        path.pop();
-        return (*_scope).second.findScope(path);
-    }
-    bool hasScope(std::string name){
-        if(subscope.find(name) == subscope.end()) return 0;
-        return 1;
-    }
-    void registerScope(std::string name){
-        if(hasScope(name)) return;
-        subscope.insert(std::make_pair(name, scope(name, this)));
-    }
-    std::string id;
-    symbolTable<info> stbl;
-    scope* parent = nullptr;
-    std::map<std::string, scope> subscope;
-};
-
 struct idinfo {
     //category can be:
     // type : a type name
@@ -63,48 +23,53 @@ struct idinfo {
 
 struct moduleInfo {
     std::string name;
+    nestedSymbolicTable<moduleInfo>* parent = nullptr;
     symbolTable<idinfo> ids;
 };
 
 class ASTContext : public nestedSymbolicTable<moduleInfo> {
     public:
     ASTContext() {
-        module = &main; 
-        current_scope = &root_scope;
     }
-    scope<idinfo>& findScope(std::string name){
-        return root_scope.findScope(name);
+    nestedSymbolicTable<moduleInfo>* findModule(std::string name){
+        return findTable(name);
     } 
-    void addSymbolInfoToScope(std::string name, std::queue<std::string> scope_path, idinfo info){
-        auto scp = root_scope.findScope(scope_path);
-        scp.addSymbolInfo(name, info);
-    }
+    // void addSymbolInfoToScope(std::string name, std::queue<std::string> scope_path, idinfo info){
+    //     auto scp = root_scope.findScope(scope_path);
+    //     scp.addSymbolInfo(name, info);
+    // }
 
     void addSymbolInfoToCurrentScope(std::string name, idinfo info){
-        current_scope->addSymbolInfo(name,info);
+        module->getData()->ids.addEntry(name, info);
     }
-    void moveToSubscope(std::string name){
-        current_scope = &(current_scope->findScope(name));
+    idinfo * findSymbolInfoInCurrentModule(std::string name){
+        return module->getData()->ids.find(name);
     }
-    void moveToSubscope(std::queue<std::string> path){
-        current_scope = &(current_scope->findScope(path));
+    // void moveToSubscope(std::string name){
+    //     current_scope = &(current_scope->findScope(name));
+    // }
+    void moveToSubmodule(std::string name){
+        if(auto ptr = findModule(name))
+            module = ptr;
+        THROW_WHEN(true, "The submodule: "+name+" doesn't exists!");
+        return;
     }
-    void moveToParentScope(){
-        current_scope = current_scope->parent;
+    void moveToParentModule(){
+        module = module->getData()->parent;
     }
-    scope<idinfo>* getScope(std::queue<std::string> path){
-        return &(current_scope->findScope(path));
-    }
-    void createScopeAndEnter(std::string name){
-        current_scope->registerScope(name);
-        current_scope = &(current_scope->findScope(name));
+    // scope<idinfo>* getScope(std::queue<std::string> path){
+    //     return &(current_scope->findScope(path));
+    // }
+    // void createScopeAndEnter(std::string name){
+    //     current_scope->registerScope(name);
+    //     current_scope = &(current_scope->findScope(name));
+    // }
+    void createSubmoduleAndEnter(std::string name){
+        module = module->addTable(name, {name, module});
     }
     
-    scope<idinfo>* current_scope = nullptr;
-    scope<idinfo> root_scope;
     unsigned int module_id = 0;
-    moduleInfo main;
-    moduleInfo* module = nullptr;
+    nestedSymbolicTable<moduleInfo>* module = this;
 };
 
 }

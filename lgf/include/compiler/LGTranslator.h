@@ -19,7 +19,7 @@ class LGTranslator {
         for(auto & moduleast : program->modules){
             auto module = pnt.paint<moduleOp>(ctx);
             pnt.gotoGraph(module);
-            declareVariables(*(astctx->current_scope));
+            declareVariables(astctx->module->getData()->ids);
             translateModuleAST(moduleast.get());
             pnt.gotoParentGraph();
         }
@@ -65,14 +65,14 @@ class LGTranslator {
         auto ast = dynamic_cast<funcDeclAST*>(op.get());
         // assuming all function return variable for now.
         auto funcOp = pnt.paint<funcDefineOp>(ctx, ast->funcID, ctx->getType<lgf::variable>());
-        astctx->current_scope->findSymbolInfo(ast->funcID)->handle = funcOp->outputValue(1);
-        astctx->moveToSubscope(ast->funcID);
+        astctx->findSymbolInfoInCurrentModule(ast->funcID)->handle = funcOp->outputValue(1);
+        astctx->moveToSubmodule(ast->funcID);
         for(auto i=0; i< ast->args.size(); i++){
             auto arg = dynamic_cast<varDeclAST*>(ast->args[i].get());
             auto argid = arg->id;
             auto type = parseType(arg->typeStr);
             funcOp->registerArg(type, "arg");
-            astctx->current_scope->findSymbolInfo(argid)->handle = funcOp->argument(i);
+            astctx->findSymbolInfoInCurrentModule(argid)->handle = funcOp->argument(i);
         }
         if(!ast->returnTypeStr.empty())
             funcOp->returnType = typeTable::get().parseTypeStr(ctx,ast->returnTypeStr);
@@ -80,16 +80,16 @@ class LGTranslator {
         if(!ast->isAbstract){
             funcOp->isAbstract = 0;
             pnt.gotoGraph(funcOp);
-            declareVariables(*(astctx->current_scope));
+            declareVariables(astctx->module->getData()->ids);
             transplateASTScope(ast->contents);
             pnt.gotoParentGraph();
         }
-        astctx->moveToParentScope();
+        astctx->moveToParentModule();
         return funcOp->getCallee();
     }
     value* translateFuncCall(std::unique_ptr<astBase>& op){
         auto ast = dynamic_cast<funcCallAST*>(op.get());
-        auto callee = astctx->current_scope->findSymbolInfo(ast->id)->handle;
+        auto callee = astctx->findSymbolInfoInCurrentModule(ast->id)->handle;
         std::vector<value*> args; 
         args.reserve(5);
         for(auto i=0; i<ast->args.size(); i++){
@@ -122,8 +122,8 @@ class LGTranslator {
     void translateError(std::string msg){
         std::cerr<<"Translation error: "<<msg<<std::endl;
     }
-    void declareVariables(scope<idinfo>& scp){
-        for(auto& it : scp.stbl.table){
+    void declareVariables(symbolTable<idinfo>& idtbl){
+        for(auto& it : idtbl.table){
             auto & entry = it.second;
             if(entry.category == "variable"){
                 auto type = parseType(entry.type);
@@ -136,7 +136,7 @@ class LGTranslator {
     value * getVarValue(std::unique_ptr<astBase>& op){
         auto var = dynamic_cast<varAST*>(op.get());
         auto id = var->id;
-        auto val = astctx->current_scope->findSymbolInfo(var->id)->handle;
+        auto val = astctx->findSymbolInfoInCurrentModule(var->id)->handle;
         THROW_WHEN(val == nullptr, "The value for the variable: "+id+" is not defined yet!");
         return val;
     }
@@ -165,7 +165,7 @@ class LGTranslator {
         }else if(bop == "="){
             if(auto ptr = dynamic_cast<varAST*>(ast->lhs.get())){
                 auto ret = pnt.paint<assignOp>(ctx, lhs, rhs)->output();
-                astctx->current_scope->findSymbolInfo(ptr->id)->handle=ret;
+                astctx->findSymbolInfoInCurrentModule(ptr->id)->handle=ret;
                 return ret;
             }else {
                 translateError("lhs of assignment has to be a variable.");

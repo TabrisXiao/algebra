@@ -39,20 +39,23 @@ class nestedSymbolicTable{
     public: 
     nestedSymbolicTable() = default;
     virtual ~nestedSymbolicTable(){}
-    nestedSymbolicTable(std::string key): id(key){}
+    nestedSymbolicTable(std::string key, meta d): id(key), data(d){}
     nestedSymbolicTable<meta>* findTable(std::string key){
         auto itr = table.find(key);
         if( itr == table.end()) return nullptr;
         return &((*itr).second);
+    }
+    meta* getData(){
+        return &data;
     }
     meta* getData(std::string key){
         auto itr = table.find(key);
         if( itr == table.end()) return nullptr;
         return &((*itr).second.data);
     }
-    nestedSymbolicTable<meta>* addTable(std::string key){
+    nestedSymbolicTable<meta>* addTable(std::string key, meta data){
         if(auto ptr = findTable(key)) return ptr;
-        table[key] = nestedSymbolicTable<meta>(key);
+        table[key] = nestedSymbolicTable<meta>(key, data);
         return &(table[key]);
     }
     nestedSymbolicTable<meta>* findTable(std::queue<std::string>& keys){
