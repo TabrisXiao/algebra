@@ -4,7 +4,6 @@
 #include "lgf/symbolicTable.h"
 #include "lgf/operation.h"
 #include "utils.h"
-#include <queue>
 #include <stack>
 
 namespace lgf::compiler{
@@ -21,6 +20,7 @@ struct idinfo {
     value * handle= nullptr;
 };
 
+
 struct moduleInfo {
     std::string name;
     nestedSymbolicTable<moduleInfo>* parent = nullptr;
@@ -31,9 +31,16 @@ class ASTContext : public nestedSymbolicTable<moduleInfo> {
     public:
     ASTContext() {
     }
-    nestedSymbolicTable<moduleInfo>* findModule(std::string name){
+    nestedSymbolicTable<moduleInfo>* findL1Module(std::string name){
         return findTable(name);
-    } 
+    }
+    nestedSymbolicTable<moduleInfo>* findModule(std::string name){
+        return module->findTable(name);
+    }
+    
+    nestedSymbolicTable<moduleInfo>* findModule(std::vector<std::string> path){
+        return findNestTable(path);
+    }
     // void addSymbolInfoToScope(std::string name, std::queue<std::string> scope_path, idinfo info){
     //     auto scp = root_scope.findScope(scope_path);
     //     scp.addSymbolInfo(name, info);
@@ -49,8 +56,10 @@ class ASTContext : public nestedSymbolicTable<moduleInfo> {
     //     current_scope = &(current_scope->findScope(name));
     // }
     void moveToSubmodule(std::string name){
-        if(auto ptr = findModule(name))
+        if(auto ptr = module->findTable(name)){
             module = ptr;
+            return;
+        }
         THROW_WHEN(true, "The submodule: "+name+" doesn't exists!");
         return;
     }
@@ -66,6 +75,9 @@ class ASTContext : public nestedSymbolicTable<moduleInfo> {
     // }
     void createSubmoduleAndEnter(std::string name){
         module = module->addTable(name, {name, module});
+    }
+    void resetModulePtr(){
+        module = this;
     }
     
     unsigned int module_id = 0;

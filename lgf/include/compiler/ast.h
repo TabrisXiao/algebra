@@ -22,6 +22,8 @@ enum astKind{
     kind_number,
     kind_return,
     kind_binary,
+    kind_getRef,
+    kind_accessModule,
 };
 
 class astBase {
@@ -108,10 +110,12 @@ class varDeclAST : public astBase {
 
 class varAST : public astBase {
     public:
-    varAST(location loc, std::string name)
+    varAST(location loc, std::string name, bool isModule_)
     : astBase(loc, kind_variable)
-    , id(name) {}
+    , id(name)
+    , isModuleID(isModule_) {}
     std::string id;
+    bool isModuleID;
     virtual void emitIR(lgf::streamer & out){
         out<<id;
     }
@@ -181,6 +185,38 @@ class binaryAST : public astBase {
         }
         rhs->emitIR(out);
         if(rhs->kind==kind_binary) out<<")";
+    }
+};
+
+class getReferenceAST : public astBase {
+    public:
+    getReferenceAST(location loc,
+    std::unique_ptr<astBase>& lhs_,
+    std::unique_ptr<astBase>& rhs_)
+    : astBase(loc, kind_getRef)
+    , module(std::move(lhs_))
+    , member(std::move(rhs_)) {}
+    std::unique_ptr<astBase> module, member;
+    virtual void emitIR(lgf::streamer & out){
+        module->emitIR(out);
+        out<<"::";
+        member->emitIR(out);
+    }
+};
+
+class accessDataAST : public astBase {
+    public:
+    accessDataAST(location loc,
+    std::unique_ptr<astBase>& lhs_,
+    std::unique_ptr<astBase>& rhs_)
+    : astBase(loc, kind_accessModule)
+    , module(std::move(lhs_))
+    , member(std::move(rhs_)) {}
+    std::unique_ptr<astBase> module, member;
+    virtual void emitIR(lgf::streamer & out){
+        module->emitIR(out);
+        out<<".";
+        member->emitIR(out);
     }
 };
 

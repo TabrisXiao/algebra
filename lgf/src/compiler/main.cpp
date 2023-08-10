@@ -20,7 +20,6 @@ int main(int argc, char* argv[]){
         count+=2;
     }
     lgf::compiler::compiler cmp;
-    cmp.pser.typeIdTable.addEntry("var", nullptr);
     cmp.compileInput(inputFile);
 
     std::cout<<"\n---- LGIR ----\n";

@@ -19,11 +19,6 @@ namespace lgf::compiler{
 
 class parser{
     public:
-    using scope_t = symbolTable<idinfo>;
-    struct idinfo_t {
-        std::string id;
-        nestedSymbolicTable<moduleInfo>* module;
-    };
     ~parser(){}
     parser(fileIO *io_) : io(io_) { }
     programAST* parseMainFile(fs::path path, programAST* ast_){
@@ -37,14 +32,12 @@ class parser{
         program->addModule(std::move(m));
         return program;
     }
-    programAST* parseModuleFile(fs::path path, programAST* ast_){
-        program = ast_;
-        ctx = ast_->getContext();
+    programAST* parseModuleFile(fs::path path, programAST* ast){
+        program = ast;
+        ctx = ast->getContext();
         lx.loadBuffer(path);
         lx.getNextToken();
-        lx.consume(tok_module);
-        auto id = lx.parseIdentifier();
-        ctx->createSubmoduleAndEnter(id);
+        auto id = path.stem().string();
         auto m = parseModule(id);
         program->addModule(std::move(m));
         return program;
@@ -58,8 +51,10 @@ class parser{
     }
 
     std::unique_ptr<moduleAST> parseModule(std::string name){
+        ctx->createSubmoduleAndEnter(name);
         auto module = std::make_unique<moduleAST>(lx.getLoc(), ctx->module_id++);
         module->name = name;
+        std::string id;
         while(true){
             std::unique_ptr<astBase> record = nullptr;
             switch(lx.getCurToken()){
@@ -69,10 +64,13 @@ class parser{
                     lx.getNextLine();
                     lx.getNextToken();
                     continue;
-                //case tok_module:
-                //    lx.consume(tok_module);
-                //    record = parseModule(lx.parseIdentifier());
-                //    break;
+                case tok_module:
+                    lx.consume(tok_module);
+                    id = lx.parseIdentifier();
+                    lx.consume(token('('));
+                    record = parseModule(id);
+                    lx.consume(token(')'));
+                    break;
                 case tok_number:
                     parseError("Can't have number in module space");
                     break;
@@ -101,7 +99,8 @@ class parser{
             std::cout<<"curTok: "<<lx.convertCurrentToken2String()<<std::endl;
             parseError("Module is not closed!");
             
-        } 
+        }
+        ctx->moveToParentModule();
         return std::move(module);
     }
     std::unique_ptr<astBase> parseReturn(){
@@ -151,7 +150,7 @@ class parser{
             auto type = parseTypeName();
             auto id = lx.identifierStr;
             auto loc = lx.getLoc();
-            ctx->addSymbolInfoToCurrentScope(id, {"arg", loc});
+            //ctx->addSymbolInfoToCurrentScope(id, {"arg", loc, type});
             auto ptr = std::make_unique<varDeclAST>(loc, type, id);
             vec.push_back(std::move(ptr));
             lx.consume(tok_identifier);
@@ -249,21 +248,6 @@ class parser{
                 return parseParenExpr();
         }
     }
-    // idinfo_t parseIdInfo(scope_t* scope = nullptr ){
-    //     auto id = lx.identifierStr;
-    //     if(!scope) scope = ctx->module;
-    //     lx.consume(tok_identifier);
-    //     if(lx.getCurToken() == tok_scope) 
-    //         scope = &(ctx->getData()->ids);
-    //     while(lx.getCurToken() == tok_scope){
-    //         if(!scope) parseError("The scope: "+id+" doesn't exists!");
-    //         scope = &(scope->findScope(id));
-    //         lx.getCurToken() == tok_scope;
-    //         id = lx.identifierStr;
-    //         lx.consume(tok_identifier);
-    //     }
-    //     return idinfo_t{id, scope};
-    // }
     std::unique_ptr<astBase> parseCallOrExpr(){
         auto loc = lx.getLoc();
         auto id = lx.parseIdentifier();
@@ -274,17 +258,25 @@ class parser{
         }
     }
     std::unique_ptr<astBase> parseValAST(location loc, std::string id){
-        //if(!idif.scope->hasSymbolInfo(idif.id)) {
-        //    idif.scope->addSymbolInfo(idif.id,{"variable", loc, "variable"});
-        //}
-        return std::make_unique<varAST>(loc, id);
+        bool isModule = 0;
+        if(auto ptr = ctx->findSymbolInfoInCurrentModule(id)){
+            if(ptr->category != "var") parseError("The identifier \""+id+"\"  is not a variable and is defined at "+ptr->loc.string());
+        }else if(auto ptr = ctx->findModule(id)){
+            isModule = 1;
+        } else {
+            ctx->addSymbolInfoToCurrentScope(id, {"var", loc, "variable"});
+        }
+        return std::make_unique<varAST>(loc, id, isModule);
     }
     std::unique_ptr<astBase> parseBinaryRHS(int tokWeight, std::unique_ptr<astBase> lhs){
         while(true){
+            bool isReference = 0, isAccess = 0;
             std::string op;
             auto nextTok = binaryTokenPrioCheck();
             op+=static_cast<char>(lx.getCurToken());
             if(nextTok <= tokWeight ) return lhs;
+            if(lx.getCurToken() == tok_scope) isReference = 1;
+            if(lx.getCurToken() == token('.')) isAccess = 1;
             lx.getNextToken();
             auto loc = lx.getLoc();
             auto rhs = parsePrimary();
@@ -296,8 +288,12 @@ class parser{
                 if(!rhs){
                     return nullptr;
                 } 
-            } 
-            lhs = std::make_unique<binaryAST>(loc, op, std::move(lhs), std::move(rhs));
+            }
+            if(isReference){
+                lhs = std::make_unique<getReferenceAST>(loc, std::move(lhs), std::move(rhs));
+            } else if(isAccess){
+                lhs = std::make_unique<accessDataAST>(loc, std::move(lhs), std::move(rhs));
+            } else lhs = std::make_unique<binaryAST>(loc, op, std::move(lhs), std::move(rhs));
         }
     }
     std::unique_ptr<astBase> parseExpression(){
@@ -307,7 +303,7 @@ class parser{
     }
 
     int binaryTokenPrioCheck(){
-        if(!isascii(lx.getCurToken())) return -1;
+        //if(!isascii(lx.getCurToken())) return -1;
         switch(lx.getCurToken()){
             case token('='):
                 return 5;
@@ -321,6 +317,10 @@ class parser{
                 return 40;
             case token('%'):
                 return 30;
+            case token('.'):
+                return 50;
+            case token(tok_scope):
+                return 50;
             default:
                 return -1;
         }
@@ -407,14 +407,15 @@ class parser{
         auto file = io->findInclude(path);
         parser ip(io);
         if(file.empty()) parseError("Can't find the import module: "+file.string());
+        auto curModule = ctx->module;
+        ctx->moveToParentModule();
         ip.parseModuleFile(file, program);
+        ctx->module = curModule;
     }
     
     fileIO *io=nullptr;
     lexer lx;
     ASTContext* ctx;
-    symbolTable<std::function<type_t()>> typeIdTable;
-    std::stack<std::string> scope_trace;
     programAST* program;
 };
 

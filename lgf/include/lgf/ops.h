@@ -12,12 +12,14 @@ class moduleOp : public graph{
     public:
     moduleOp() : graph("module"){}
     ~moduleOp(){}
-    static moduleOp * build(LGFContext *ctx){
+    static moduleOp * build(LGFContext *ctx, std::string id = ""){
         auto op = new moduleOp();
+        op->name = id;
         op->createValue(ctx->getType<reference_t>(),"");
         return op;
     }
-    virtual std::string represent() {return getSID();}
+    std::string name="";
+    virtual std::string represent() {return getSID()+" "+name;}
 };
 
 class declOp : public operation{

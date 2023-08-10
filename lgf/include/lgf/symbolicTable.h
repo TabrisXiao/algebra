@@ -66,6 +66,11 @@ class nestedSymbolicTable{
             return nullptr;
         }
     }
+    nestedSymbolicTable<meta>* findNestTable(std::vector<std::string> path, int i=0){
+        if(i >= path.size()) return this;
+        auto ptr = findTable(path[i]);
+        return ptr->findNestTable(path, i++);
+    }
     
     std::string id;
     meta data;

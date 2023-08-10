@@ -14,21 +14,24 @@ class LGTranslator {
     LGTranslator() = default;
     void build(programAST* program){
         astctx = program->getContext();
+        astctx->resetModulePtr();
         lgf::math::registerTypes();
         pnt.gotoGraph(&c);
         for(auto & moduleast : program->modules){
-            auto module = pnt.paint<moduleOp>(ctx);
-            pnt.gotoGraph(module);
-            declareVariables(astctx->module->getData()->ids);
-            translateModuleAST(moduleast.get());
-            pnt.gotoParentGraph();
+            transplateASTModule(moduleast.get());
         }
         c.assignID(0);
     }
-    void translateModuleAST(moduleAST* main){
-        transplateASTScope(main->contents);
+    void transplateASTModule(moduleAST* ast){
+        auto module = pnt.paint<moduleOp>(ctx, ast->name);
+        pnt.gotoGraph(module);
+        astctx->moveToSubmodule(ast->name);
+        declareVariables(astctx->module->getData()->ids);
+        translateASTBlock(ast->contents);
+        pnt.gotoParentGraph();
+        astctx->moveToParentModule();
     }
-    void transplateASTScope(std::vector<std::unique_ptr<astBase>>& contents){
+    void translateASTBlock(std::vector<std::unique_ptr<astBase>>& contents){
         for(auto & op : contents){
             translateAST(op);
         }
@@ -37,6 +40,8 @@ class LGTranslator {
         auto kind = op->kind;
         value* ptr= nullptr;
         switch(kind){
+            case kind_getRef:
+                ptr = translateModuleRef(op);
             case kind_binary:
                 ptr = convertBinaryOp(op);
                 break;
@@ -61,6 +66,10 @@ class LGTranslator {
         }
         return ptr;
     }
+    value * translateModuleRef(std::unique_ptr<astBase>& op){
+        auto ast = dynamic_cast<getReferenceAST*>(op.get());
+        
+    }
     value * translateFuncDef(std::unique_ptr<astBase>& op){
         auto ast = dynamic_cast<funcDeclAST*>(op.get());
         // assuming all function return variable for now.
@@ -81,7 +90,7 @@ class LGTranslator {
             funcOp->isAbstract = 0;
             pnt.gotoGraph(funcOp);
             declareVariables(astctx->module->getData()->ids);
-            transplateASTScope(ast->contents);
+            translateASTBlock(ast->contents);
             pnt.gotoParentGraph();
         }
         astctx->moveToParentModule();
@@ -136,9 +145,9 @@ class LGTranslator {
     value * getVarValue(std::unique_ptr<astBase>& op){
         auto var = dynamic_cast<varAST*>(op.get());
         auto id = var->id;
-        auto val = astctx->findSymbolInfoInCurrentModule(var->id)->handle;
-        THROW_WHEN(val == nullptr, "The value for the variable: "+id+" is not defined yet!");
-        return val;
+        auto info = astctx->findSymbolInfoInCurrentModule(var->id);
+        THROW_WHEN(info == nullptr, "The value for the variable: "+id+" is not defined yet!");
+        return info->handle;
     }
     value* declareConstant(std::unique_ptr<astBase>& op){
         auto ast = dynamic_cast<numberAST*>(op.get());
@@ -151,9 +160,12 @@ class LGTranslator {
     }
     value* convertBinaryOp(std::unique_ptr<astBase>& op){
         auto ast = dynamic_cast<binaryAST*>(op.get());
+        TRACE_FUNC_CALL;
         auto lhs = translateAST(ast->lhs);
+        std::cout<<"lhs finished..."<<std::endl; 
         auto rhs = translateAST(ast->rhs);
         auto bop = ast->binaryOp;
+        std::cout<<"making binaryop..."<<std::endl; 
         if(bop == "+"){
             // all the operation converted from ast should contained only 1 output.
             return pnt.paint<math::aab::addOp>(ctx, lhs, rhs)->output();
@@ -177,12 +189,21 @@ class LGTranslator {
     type_t parseType(std::string typeStr){
         return typeTable::get().parseTypeStr(ctx, typeStr);
     }
+    void moveToSubmodule(std::string name){
+        astctx->moveToSubmodule(name);
+        module_tracer.push_back(name);
+    }
+    void moveToParentModule(){
+        astctx->moveToParentModule();
+        module_tracer.pop_back();
+    }
     std::unique_ptr<moduleAST> main;
     painter pnt;
     canvas c;
     ASTContext *astctx=nullptr;
     LGFContext context;
     LGFContext *ctx = &context;
+    std::vector<std::string> module_tracer;
 };
 
 }

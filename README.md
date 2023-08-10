@@ -51,3 +51,7 @@ A LGF modules includes the definitions for types, operations and the transform p
 * Support the function name overloading.
 * Parse function definition block.
 * Add verification pass for ops. 
+
+### In progress
+* create `getOp` to get the member variable to avoid to create links inbetween the member function and member variable
+* register each symbol correctly for `parser`
