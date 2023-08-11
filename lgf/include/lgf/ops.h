@@ -18,6 +18,7 @@ class moduleOp : public graph{
         op->createValue(ctx->getType<reference_t>(),"");
         return op;
     }
+    value* output(){ return outputValue(1);}
     std::string name="";
     virtual std::string represent() {return getSID()+" "+name;}
 };
@@ -36,6 +37,29 @@ class declOp : public operation{
         printer p;
         p<<representOutputs()<<" : Declare";
         return p.dump();
+    }
+};
+
+class referenceOp : public operation {
+    public:
+    referenceOp() : operation ("ref") {}
+    ~referenceOp() {}
+    static referenceOp * build(LGFContext* ctx, type_t retType, value* val){
+        auto op = new referenceOp();
+        op->createValue(retType, "");
+        op->refValue = val;
+        return op; 
+    }
+    bool isRefValid(){
+        if(!refValue) return 0;
+        if(auto ptr = refValue->getDefiningOp<operation>()) return 1;
+        refValue = nullptr;
+        return refValue;
+    }
+    value* output(){ return outputValue(1);}
+    value * refValue = nullptr;
+    virtual std::string represent(){
+        return representOutputs()+" = @"+refValue->represent();
     }
 };
 

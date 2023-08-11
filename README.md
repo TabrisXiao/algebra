@@ -53,5 +53,4 @@ A LGF modules includes the definitions for types, operations and the transform p
 * Add verification pass for ops. 
 
 ### In progress
-* create `getOp` to get the member variable to avoid to create links inbetween the member function and member variable
-* register each symbol correctly for `parser`
+* create `refOp` to get the member variable to avoid to create links inbetween the member function and member variable, this op should hold the reference value from the module or function but it should not be a user of that value. The problem is that we need to check if the operator owning the value referred is still valid or not.

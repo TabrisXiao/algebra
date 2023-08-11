@@ -30,6 +30,7 @@ class parser{
             lx.readNextLine();
         auto m = parseModule("main");
         program->addModule(std::move(m));
+        registerID(program);
         return program;
     }
     programAST* parseModuleFile(fs::path path, programAST* ast){
@@ -51,7 +52,6 @@ class parser{
     }
 
     std::unique_ptr<moduleAST> parseModule(std::string name){
-        ctx->createSubmoduleAndEnter(name);
         auto module = std::make_unique<moduleAST>(lx.getLoc(), ctx->module_id++);
         module->name = name;
         std::string id;
@@ -98,9 +98,7 @@ class parser{
         if(lx.getCurToken()!= tok_eof){
             std::cout<<"curTok: "<<lx.convertCurrentToken2String()<<std::endl;
             parseError("Module is not closed!");
-            
         }
-        ctx->moveToParentModule();
         return std::move(module);
     }
     std::unique_ptr<astBase> parseReturn(){
@@ -150,7 +148,6 @@ class parser{
             auto type = parseTypeName();
             auto id = lx.identifierStr;
             auto loc = lx.getLoc();
-            //ctx->addSymbolInfoToCurrentScope(id, {"arg", loc, type});
             auto ptr = std::make_unique<varDeclAST>(loc, type, id);
             vec.push_back(std::move(ptr));
             lx.consume(tok_identifier);
@@ -161,15 +158,10 @@ class parser{
     std::unique_ptr<astBase> parseFuncDef(){
         lx.consume(tok_def);
         auto id = lx.identifierStr;
-        if(auto info = ctx->findSymbolInfoInCurrentModule(id)){
-            parseError("The identifier: \'"+id+"\' is defined in: "+info->loc.string());
-        }
         auto loc = lx.getLoc();
         auto ast = std::make_unique<funcDeclAST>(loc, id);
-        ctx->addSymbolInfoToCurrentScope(id, {"func", loc});
         lx.consume(tok_identifier);
         lx.consume(token('('));
-        ctx->createSubmoduleAndEnter(id);
         parseArgSignatures(ast->args);
         lx.consume(token(')'));
         if(lx.getCurToken()==tok_arrow){
@@ -178,14 +170,12 @@ class parser{
         }
         if(lx.getCurToken()==token(';')){
             lx.consume(token(';'));
-            ctx->moveToParentModule();
             return ast;
         }
         // parsing block of function definition
         lx.consume(token('{'));
         ast->isAbstract = 0;
         parseBlock(ast->contents);
-        ctx->moveToParentModule();
         return ast;
     }
     void parseBlock(std::vector<std::unique_ptr<astBase>> &content){
@@ -209,11 +199,11 @@ class parser{
                     record = parseReturn();
                     break;
                 case tok_module:
-                    parseError("Can not define module here");
+                    parseError("Can not define module here.");
                 case tok_def:
-                    parseError("Can not define function here");
+                    parseError("Can not define function here.");
                 case tok_import:
-                    parseError("Can not import module here");
+                    parseError("Can not import module here.");
                 default:
                     parseError("Unknown token: "+lx.convertCurrentToken2String());
             }
@@ -259,13 +249,6 @@ class parser{
     }
     std::unique_ptr<astBase> parseValAST(location loc, std::string id){
         bool isModule = 0;
-        if(auto ptr = ctx->findSymbolInfoInCurrentModule(id)){
-            if(ptr->category != "var") parseError("The identifier \""+id+"\"  is not a variable and is defined at "+ptr->loc.string());
-        }else if(auto ptr = ctx->findModule(id)){
-            isModule = 1;
-        } else {
-            ctx->addSymbolInfoToCurrentScope(id, {"var", loc, "variable"});
-        }
         return std::make_unique<varAST>(loc, id, isModule);
     }
     std::unique_ptr<astBase> parseBinaryRHS(int tokWeight, std::unique_ptr<astBase> lhs){
@@ -358,11 +341,11 @@ class parser{
 
     std::unique_ptr<astBase> parseVarDecl(location loc, std::string tid){
         parseError("parseVarDecl Not implement yet!");
-        if(auto ptr = ctx->findSymbolInfoInCurrentModule(tid)){
-            if(ptr->category!= "type" || ptr->category!= "class"){
-                parseError("The type \'"+tid+"\' is not defined yet!");
-            }
-        }
+        // if(auto ptr = ctx->findSymbolInfoInCurrentModule(tid)){
+        //     if(ptr->category!= "type" || ptr->category!= "class"){
+        //         parseError("The type \'"+tid+"\' is not defined yet!");
+        //     }
+        // }
         auto id = lx.identifierStr;
         lx.consume(tok_identifier);
         // TODO: support to parse the case:
@@ -372,11 +355,11 @@ class parser{
         return std::make_unique<varDeclAST>(loc, tid, id);
     }
     void checkIfVarIDExists(std::string id){
-        if(auto info = ctx->findSymbolInfoInCurrentModule(id)){
-            if(info->category == "variable") return;
-            parseError(" \'"+id+"\' is not a variable name!");
-        }
-        parseError("variable name: "+id+" is unknown!");
+        // if(auto info = ctx->findSymbolInfoInCurrentModule(id)){
+        //     if(info->category == "variable") return;
+        //     parseError(" \'"+id+"\' is not a variable name!");
+        // }
+        // parseError("variable name: "+id+" is unknown!");
     }
 
     std::unique_ptr<astBase> parseFuncCall(location loc, std::string id){
@@ -407,12 +390,82 @@ class parser{
         auto file = io->findInclude(path);
         parser ip(io);
         if(file.empty()) parseError("Can't find the import module: "+file.string());
-        auto curModule = ctx->module;
-        ctx->moveToParentModule();
         ip.parseModuleFile(file, program);
-        ctx->module = curModule;
     }
     
+    void registerID(programAST* program){
+        ctx->resetModulePtr();
+        for(auto & module : program->modules){
+            auto ptr = dynamic_cast<moduleAST*>(module.get());
+            ctx->createSubmoduleAndEnter(ptr->name);
+            scanBlock(module->contents);
+            ctx->moveToParentModule();
+        }
+    }
+    void scanBlock(std::vector<std::unique_ptr<astBase>>& vec){
+        for(auto &ast : vec){
+            scanAST(ast);
+        }
+    }
+    void scanAST(std::unique_ptr<astBase>& ptr){
+        switch(ptr->kind){
+            case kind_binary:
+                scanBinaryAST(ptr);
+                break;
+            case kind_funcDecl:
+                scanFuncDefAST(ptr);
+                break;
+            case kind_funcCall:
+                scanFuncCall(ptr);
+                break;
+            case kind_variable:
+                scanVarAST(ptr);
+                break;
+            case kind_getRef:
+                scanGetRefAST(ptr);
+                break;
+            default:
+                break;
+        }
+    }
+    void scanGetRefAST(std::unique_ptr<astBase>& ptr){
+        auto ast = dynamic_cast<getReferenceAST*>(ptr.get());
+        auto var = dynamic_cast<varAST*>(ast->module.get());
+        var->isModuleID = 1;
+        if(ast->member->kind!=kind_variable)
+            scanGetRefAST(ast->member);
+    }
+    void scanVarAST(std::unique_ptr<astBase>& ptr){
+        auto ast = dynamic_cast<varAST*>(ptr.get());
+        if(ctx->hasSymbol(ast->id)) return;
+        ctx->addSymbolInfoToCurrentScope(ast->id,{"var",ast->loc, ""});
+    }
+    void scanBinaryAST(std::unique_ptr<astBase>& ptr){
+        auto ast = dynamic_cast<binaryAST*>(ptr.get());
+        scanAST(ast->lhs);
+        scanAST(ast->lhs);
+    }
+    void ensureIDAvaliable(std::string id){
+        if(auto ptr = ctx->findSymbolInfoInCurrentModule(id))
+            parseError("id "+id+" is redefined, original definition is at "+ptr->loc.string());
+    }
+    idinfo* ensureIDExists(std::string id){
+        if(auto ptr = ctx->findSymbolInfoInCurrentModule(id))
+            return ptr;
+        else parseError("id "+id+" is unknown.");
+    }
+    void scanFuncDefAST(std::unique_ptr<astBase>& ptr){
+        auto ast = dynamic_cast<funcDeclAST*>(ptr.get());
+        ensureIDAvaliable(ast->funcID);
+        ctx->addSymbolInfoToCurrentScope(ast->funcID, {"func", ast->loc});
+    }
+    void scanFuncCall(std::unique_ptr<astBase>& ptr){
+        auto ast = dynamic_cast<funcCallAST*>(ptr.get());
+        auto idif = ensureIDExists(ast->id);
+        if(idif->category!="func") parseError("id "+ast->id+" is not a function and is defined at "+idif->loc.string());
+        scanBlock(ast->args);
+    }
+
     fileIO *io=nullptr;
     lexer lx;
     ASTContext* ctx;

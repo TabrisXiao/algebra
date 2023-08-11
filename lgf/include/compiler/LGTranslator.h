@@ -22,10 +22,19 @@ class LGTranslator {
         }
         c.assignID(0);
     }
+    void printModuleList(){
+        std::cout<<"map ("<<astctx->module->getData()->name<<") size "<<astctx->module->table.size()<<", list: ";
+        for(auto & pair : astctx->module->table){
+            std::cout<<pair.first<<", ";
+        }
+        std::cout<<"\n";
+    }
     void transplateASTModule(moduleAST* ast){
         auto module = pnt.paint<moduleOp>(ctx, ast->name);
         pnt.gotoGraph(module);
         astctx->moveToSubmodule(ast->name);
+        printModuleList();
+        astctx->module->getData()->ref = module->output();
         declareVariables(astctx->module->getData()->ids);
         translateASTBlock(ast->contents);
         pnt.gotoParentGraph();
@@ -67,22 +76,43 @@ class LGTranslator {
         return ptr;
     }
     value * translateModuleRef(std::unique_ptr<astBase>& op){
+               TRACE_FUNC_CALL;
         auto ast = dynamic_cast<getReferenceAST*>(op.get());
-        
+        if(!ast) translateError("Illegal identifier following the scope op.");
+        auto id = dynamic_cast<varAST*>(ast->module.get())->id;
+        temp_ptr = temp_ptr->findTable(id);
+        if(!temp_ptr) {
+            translateError("modoule is unknonw: "+id);
+        }
+        TRACE_FUNC_CALL;
+        value* rhs = nullptr;
+        if(ast->member->kind == kind_funcCall){
+            auto fc = dynamic_cast<funcCallAST*>(ast->member.get());
+            if(auto info = temp_ptr->getData()->ids.find(fc->id)){
+                rhs = info->handle;
+                if(!rhs) translateError("Function name is unknown: "+fc->id);
+            } else translateError("id name is unknown: "+fc->id);
+        } else {
+            return translateModuleRef(ast->member);
+        }
+        temp_ptr=astctx;
+        auto refop = pnt.paint<referenceOp>(ctx, rhs->getType(), rhs);
+        return refop->output();
     }
     value * translateFuncDef(std::unique_ptr<astBase>& op){
         auto ast = dynamic_cast<funcDeclAST*>(op.get());
         // assuming all function return variable for now.
         auto funcOp = pnt.paint<funcDefineOp>(ctx, ast->funcID, ctx->getType<lgf::variable>());
-        astctx->findSymbolInfoInCurrentModule(ast->funcID)->handle = funcOp->outputValue(1);
-        astctx->moveToSubmodule(ast->funcID);
+        astctx->findSymbolInfoInCurrentModule(ast->funcID)->handle = funcOp->getCallee();
+        astctx->createSubmoduleAndEnter(ast->funcID);
         for(auto i=0; i< ast->args.size(); i++){
             auto arg = dynamic_cast<varDeclAST*>(ast->args[i].get());
             auto argid = arg->id;
             auto type = parseType(arg->typeStr);
             funcOp->registerArg(type, "arg");
-            astctx->findSymbolInfoInCurrentModule(argid)->handle = funcOp->argument(i);
+            astctx->addSymbolInfoToCurrentScope(argid, {"arg", arg->loc, arg->typeStr, funcOp->argument(i)});
         }
+        TRACE_FUNC_CALL;
         if(!ast->returnTypeStr.empty())
             funcOp->returnType = typeTable::get().parseTypeStr(ctx,ast->returnTypeStr);
         
@@ -93,7 +123,7 @@ class LGTranslator {
             translateASTBlock(ast->contents);
             pnt.gotoParentGraph();
         }
-        astctx->moveToParentModule();
+        astctx->deleteCurrentModule();
         return funcOp->getCallee();
     }
     value* translateFuncCall(std::unique_ptr<astBase>& op){
@@ -189,21 +219,15 @@ class LGTranslator {
     type_t parseType(std::string typeStr){
         return typeTable::get().parseTypeStr(ctx, typeStr);
     }
-    void moveToSubmodule(std::string name){
-        astctx->moveToSubmodule(name);
-        module_tracer.push_back(name);
-    }
-    void moveToParentModule(){
-        astctx->moveToParentModule();
-        module_tracer.pop_back();
-    }
+
+    
     std::unique_ptr<moduleAST> main;
     painter pnt;
     canvas c;
     ASTContext *astctx=nullptr;
     LGFContext context;
     LGFContext *ctx = &context;
-    std::vector<std::string> module_tracer;
+    nestedSymbolicTable<moduleInfo>* temp_ptr = astctx;
 };
 
 }
