@@ -18,6 +18,7 @@ class compiler {
     public: 
     compiler() : pser(&io) {};
     void compileInput(std::string file){
+        option::get().log_lv_trace = 0;
         ast=std::make_unique<programAST>();
         auto f = io.getFile(file);
         io.addIncludePath(f.parent_path());

@@ -25,7 +25,7 @@ class reference_t : public lgf::type_t {
     return std::move(std::make_unique<typeImpl>("ref"));
   }
   static type_t parse(liteParser& paser, LGFContext* ctx){
-    return ctx->getType<variable>();
+    return ctx->getType<reference_t>();
   }
 };
 

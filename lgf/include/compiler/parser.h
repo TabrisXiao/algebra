@@ -428,17 +428,27 @@ class parser{
                 break;
         }
     }
+    
     void scanGetRefAST(std::unique_ptr<astBase>& ptr){
         auto ast = dynamic_cast<getReferenceAST*>(ptr.get());
         auto var = dynamic_cast<varAST*>(ast->module.get());
         var->isModuleID = 1;
-        if(ast->member->kind!=kind_variable)
-            scanGetRefAST(ast->member);
+        auto path = ast->getPath();
+        auto fc = ast->getEndAST();
+        auto id = fc->id;
+        //check if the func id exists in 
+        //the module pointed by path
+        if(auto info = ctx->findSymbol(id, path)){
+            if(info->category != "func") 
+                parseError(id+" is not a function.");
+        }else {
+            parseError("Can't find '"+id+"' in "+ast->printPath(path));
+        }
     }
     void scanVarAST(std::unique_ptr<astBase>& ptr){
         auto ast = dynamic_cast<varAST*>(ptr.get());
         if(ctx->hasSymbol(ast->id)) return;
-        ctx->addSymbolInfoToCurrentScope(ast->id,{"var",ast->loc, ""});
+        ctx->addSymbolInfoToCurrentScope(ast->id,{"var",ast->loc, "variable"});
     }
     void scanBinaryAST(std::unique_ptr<astBase>& ptr){
         auto ast = dynamic_cast<binaryAST*>(ptr.get());

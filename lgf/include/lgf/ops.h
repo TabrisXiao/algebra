@@ -44,9 +44,9 @@ class referenceOp : public operation {
     public:
     referenceOp() : operation ("ref") {}
     ~referenceOp() {}
-    static referenceOp * build(LGFContext* ctx, type_t retType, value* val){
+    static referenceOp * build(LGFContext* ctx,  value* val){
         auto op = new referenceOp();
-        op->createValue(retType, "");
+        op->createValue(ctx->getType<reference_t>(), "");
         op->refValue = val;
         return op; 
     }
@@ -56,8 +56,9 @@ class referenceOp : public operation {
         refValue = nullptr;
         return refValue;
     }
+    value* getValue() { return refValue; }
     value* output(){ return outputValue(1);}
-    value * refValue = nullptr;
+    value* refValue = nullptr;
     virtual std::string represent(){
         return representOutputs()+" = @"+refValue->represent();
     }
@@ -169,7 +170,8 @@ class funcCallOp : public operation{
     funcCallOp() = default;
     static funcCallOp * build(LGFContext *ctx, value* callee){
         auto op = new funcCallOp();
-        op->registerInput(callee);
+        op->funPtr = callee;
+        //op->registerInput(callee);
         auto& ret = callee->getDefiningOp<funcDefineOp>()->returnType;
         if(ret.getImpl()){
             op->hasReturn = 1;
@@ -191,24 +193,25 @@ class funcCallOp : public operation{
             registerInput(arg);
         }
     }
-    value * getCallee(){ return inputValue(0); }
-    value * arg(int n=0 ){ return inputValue(n+1); }
+    value * getCallee(){ return funPtr; }
+    value * arg(int n=0 ){ return inputValue(n); }
     value * returnValue() { return outputValue(1); }
     virtual std::string represent(){
         printer p;
         auto callee = getCallee()->getDefiningOp<funcDefineOp>();
         if( hasReturn ) p<<representOutputs()<<" = ";
-        p<<"func call: %"<<callee->getCallee()->getTraceID()<<" "<<callee->id<<" (";
-        if( getInputSize()>1){
+        p<<"call: @"<<callee->id<<"( ";
+        if( getInputSize()>0){
             p<<arg(0)->represent();
-            for(auto i = 1; i< getInputSize()-1; /* the first element is callee */ i++){
+            for(auto i = 1; i< getInputSize(); i++){
                 p<<", "<<arg(i)->represent();
             }
         }
-        p<<")";
+        p<<" )";
         return p.dump();
     }
     bool hasReturn = 0;
+    value* funPtr = nullptr;
 };
 
 class returnOp : public operation {

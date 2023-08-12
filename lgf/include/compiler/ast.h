@@ -188,22 +188,6 @@ class binaryAST : public astBase {
     }
 };
 
-class getReferenceAST : public astBase {
-    public:
-    getReferenceAST(location loc,
-    std::unique_ptr<astBase>& lhs_,
-    std::unique_ptr<astBase>& rhs_)
-    : astBase(loc, kind_getRef)
-    , module(std::move(lhs_))
-    , member(std::move(rhs_)) {}
-    std::unique_ptr<astBase> module, member;
-    virtual void emitIR(lgf::streamer & out){
-        module->emitIR(out);
-        out<<"::";
-        member->emitIR(out);
-    }
-};
-
 class accessDataAST : public astBase {
     public:
     accessDataAST(location loc,
@@ -246,6 +230,51 @@ class funcCallAST : public astBase {
 
     std::string id;
     std::vector<std::unique_ptr<astBase>> args;
+};
+
+class getReferenceAST : public astBase {
+    public:
+    getReferenceAST(location loc,
+    std::unique_ptr<astBase>& lhs_,
+    std::unique_ptr<astBase>& rhs_)
+    : astBase(loc, kind_getRef)
+    , module(std::move(lhs_))
+    , member(std::move(rhs_)) {}
+    std::unique_ptr<astBase> module, member;
+    virtual void emitIR(lgf::streamer & out){
+        module->emitIR(out);
+        out<<"::";
+        member->emitIR(out);
+    }
+    std::vector<std::string> getPath(){
+        std::vector<std::string> buffer;
+        getPathImpl(buffer);
+        return buffer;
+    }
+    void getPathImpl(std::vector<std::string>& vec){
+        auto ptr = dynamic_cast<varAST*>(module.get());
+        ptr->isModuleID = 1;
+        vec.push_back(ptr->id);
+        if(auto ast = dynamic_cast<getReferenceAST*>(member.get())){
+            return ast->getPathImpl(vec);
+        }
+    }
+    funcCallAST* getEndAST(){
+        if(auto ptr = dynamic_cast<getReferenceAST*>(member.get())) 
+            return ptr->getEndAST();
+        // funcCallAST is the only ast supported to be a member so far.
+        auto ret = dynamic_cast<funcCallAST*>(member.get());
+        return ret;
+    }
+    std::string printPath(std::vector<std::string>& path){
+        std::string buffer;
+        if(path.size() ==0 ) return buffer;
+        buffer = path[0];
+        for(auto iter = path.begin()+1; iter!=path.end(); iter++){
+            buffer=buffer+"::"+*iter;
+        }
+        return buffer;
+    }
 };
 
 class returnAST : public astBase {

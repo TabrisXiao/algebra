@@ -53,6 +53,16 @@ class ASTContext : public nestedSymbolicTable<moduleInfo> {
     idinfo * findSymbolInfoInCurrentModule(std::string name){
         return module->getData()->ids.find(name);
     }
+    idinfo * findSymbol(std::string id, std::vector<std::string> path){
+        if(auto m = findModule(path)){
+            if(auto info = m->getData()->ids.find(id))
+                return info;
+        }
+        return nullptr;
+    }
+    std::string getCurrentModuleName(){
+        return module->getData()->name;
+    }
     bool hasSymbol(std::string name){
         if(auto ptr = findSymbolInfoInCurrentModule(name)) return 1;
         return 0;
@@ -77,7 +87,7 @@ class ASTContext : public nestedSymbolicTable<moduleInfo> {
     }
     void moveToParentModule(){
         module = module->getData()->parent;
-        abs_path.pop_back();
+        //abs_path.pop_back();
     }
     // scope<idinfo>* getScope(std::queue<std::string> path){
     //     return &(current_scope->findScope(path));
@@ -88,11 +98,11 @@ class ASTContext : public nestedSymbolicTable<moduleInfo> {
     // }
     void createSubmoduleAndEnter(std::string name){
         module = module->addTable(name, {name, module});
-        abs_path.push_back(name);
+        //abs_path.push_back(name);
     }
     void resetModulePtr(){
         module = this;
-        abs_path.clear();
+        //abs_path.clear();
     }
     void deleteCurrentModule(){
         auto name = module->getData()->name;
@@ -103,7 +113,7 @@ class ASTContext : public nestedSymbolicTable<moduleInfo> {
     
     unsigned int module_id = 0;
     nestedSymbolicTable<moduleInfo>* module = this;
-    std::vector<std::string> abs_path;
+    //std::vector<std::string> abs_path;
 };
 
 }
