@@ -30,7 +30,7 @@ class fileIO{
         return path;
     }
 
-    void addIncludePath(std::string p){
+    void addIncludePath(fs::path p){
         includePaths.push_back(fs::absolute(p));
     }
     fs::path findInclude(std::string file){

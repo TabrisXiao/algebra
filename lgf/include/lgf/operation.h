@@ -81,7 +81,7 @@ public:
 
     void addUsesr(operation *op){
         if(std::find(users.begin(), users.end(), op)!=users.end()){
-            std::cout<<"user exists!"<<std::endl;
+            std::cout<<"lgf::value::addUser Runtime Warning: user exists!"<<std::endl;
             return;
         }
         users.push_back(op);
@@ -158,20 +158,25 @@ public :
             inputs.push_back(val);
         }
     }
+    void registerInputs(std::vector<value*> &args){
+        for(auto ptr : args){
+            registerInput(ptr);
+        }
+    }
     // register the input at the given position. Other inputs after 
     // that index will be push back by 1 pos.
     void registerInputAt( value* val, int pos);
     
     // Attach an op means this op will depends on that one and
     // it is connected as an acceptor of the op.
-    dependencyValue* getDependecyValue() { 
+    dependencyValue* getIndirectDependecyValue() { 
         return dynamic_cast<dependencyValue*>(outputs[0].get()); }
     void appendTo(operation *op){
-        auto dep = op->getDependecyValue();
+        auto dep = op->getIndirectDependecyValue();
         this->registerInput(dep);
     }
     void dependOn(operation* op){
-        this->registerInput(outputValue(0));
+        this->registerInput(op->outputValue(0));
     }
     value* createValue();
     value* createValue(type_t& type, std::string sid);
@@ -254,6 +259,7 @@ class graph : public operation{
         public:
         graphEntry(graph* g) : operation("", g){}
         virtual std::string represent() { return ""; }
+        virtual void print() override {}
     };
     graph() = default;
     graph(std::string id, graph* pg = nullptr)
@@ -275,8 +281,9 @@ class graph : public operation{
         std::queue<operation *> _vq;
         std::vector<operation *> vertice_buffer;
         vertice_buffer.reserve(getNodeSize());
-        for(auto op: entry.getDependecyValue()->getUsers())
+        for(auto op: entry.getIndirectDependecyValue()->getUsers())
             _vq.push(op);
+        _vq.push(&entry);
         while (_vq.size())
         {
             auto v = _vq.front();

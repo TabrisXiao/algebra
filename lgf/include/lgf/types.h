@@ -18,14 +18,14 @@ class variable : public lgf::type_t {
     }
 };
 
-class mapping_t : public lgf::type_t {
+class reference_t : public lgf::type_t {
   public:
-  mapping_t() = default;
+  reference_t() = default;
   static std::unique_ptr<typeImpl> createImpl(){
-    return std::move(std::make_unique<typeImpl>("mapping"));
+    return std::move(std::make_unique<typeImpl>("ref"));
   }
   static type_t parse(liteParser& paser, LGFContext* ctx){
-    return ctx->getType<variable>();
+    return ctx->getType<reference_t>();
   }
 };
 
@@ -85,13 +85,6 @@ class listType : public type_t {
     return ctx->getType<listType>(elemType, size);
   }
 };
-
-void registerLGFTypes(){
-  REGISTER_TYPE(variable, "variable");
-  REGISTER_TYPE(intType, "int");
-  REGISTER_TYPE(doubleType, "double");
-  REGISTER_TYPE(listType, "list");
-}
 
 }
 

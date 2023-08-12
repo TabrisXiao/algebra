@@ -27,6 +27,45 @@ class addOp : public lgf::operation
     }
 };
 
+// ---------- minusOp ----------
+class sumOp : public lgf::operation {
+    public:
+    sumOp() : operation("aab::sumOp") {}
+    static sumOp* build(lgf::LGFContext* ctx, std::vector<value*>& vec){
+        auto op = new sumOp();
+        op->registerInputs(vec);
+        op->createValue(vec[0]->getType(), "");
+        return op;
+    }
+    lgf::value* input(int i=0){ return inputValue(i); }
+    lgf::value* output(){ return outputValue(1); }
+    virtual std::string represent(){
+        printer p;
+        p<<representOutputs()<<" = "<<getSID() <<" : "<<representInputs();
+        return p.dump();
+    }
+};
+
+// ---------- negativeOp ----------
+class negativeOp : public lgf::operation
+{
+    public:
+    public:
+    negativeOp() : operation("aab::negative") {}
+    static negativeOp* build(lgf::LGFContext* ctx, lgf::value* input){
+        auto op = new negativeOp();
+        op->registerInput(input);
+        op->createValue(input->getType(), "");
+        return op;
+    }
+    lgf::value* input(){ return inputValue(0); }
+    lgf::value* output(){ return outputValue(1); }
+    virtual std::string represent(){
+        printer p;
+        p<<representOutputs()<<" = "<<getSID() <<" : "<<input()->represent();
+        return p.dump();
+    }
+};
 
 // ---------- minusOp ----------
 class minusOp : public lgf::operation

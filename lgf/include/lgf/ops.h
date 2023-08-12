@@ -12,11 +12,15 @@ class moduleOp : public graph{
     public:
     moduleOp() : graph("module"){}
     ~moduleOp(){}
-    static moduleOp * build(LGFContext *ctx){
+    static moduleOp * build(LGFContext *ctx, std::string id = ""){
         auto op = new moduleOp();
+        op->name = id;
+        op->createValue(ctx->getType<reference_t>(),"");
         return op;
     }
-    virtual std::string represent() {return getSID();}
+    value* output(){ return outputValue(1);}
+    std::string name="";
+    virtual std::string represent() {return getSID()+" "+name;}
 };
 
 class declOp : public operation{
@@ -33,6 +37,30 @@ class declOp : public operation{
         printer p;
         p<<representOutputs()<<" : Declare";
         return p.dump();
+    }
+};
+
+class referenceOp : public operation {
+    public:
+    referenceOp() : operation ("ref") {}
+    ~referenceOp() {}
+    static referenceOp * build(LGFContext* ctx,  value* val){
+        auto op = new referenceOp();
+        op->createValue(ctx->getType<reference_t>(), "");
+        op->refValue = val;
+        return op; 
+    }
+    bool isRefValid(){
+        if(!refValue) return 0;
+        if(auto ptr = refValue->getDefiningOp<operation>()) return 1;
+        refValue = nullptr;
+        return refValue;
+    }
+    value* getValue() { return refValue; }
+    value* output(){ return outputValue(1);}
+    value* refValue = nullptr;
+    virtual std::string represent(){
+        return representOutputs()+" = @"+refValue->represent();
     }
 };
 
@@ -82,6 +110,7 @@ class cstDeclOp : public lgf::operation {
         p<<v;
         return p.dump();
     }
+    value* output(){ return outputValue(1); }
     bool isInt = 0;
     int intValue;
     double doubleValue;
@@ -94,29 +123,46 @@ class funcDefineOp : public graph {
         auto op = new funcDefineOp();
         op->returnType = returnType_;
         op->id = id_;
-        op->createValue(ctx->getType<mapping_t>(),"");
+        op->createValue(ctx->getType<reference_t>(),"");
         return op;
     }
     // this builder for no return type func defining
     static funcDefineOp* build(LGFContext *ctx, std::string id_){
         auto op = new funcDefineOp();
         op->id = id_;
-        op->createValue(ctx->getType<mapping_t>(),"");
+        op->createValue(ctx->getType<reference_t>(),"");
         return op;
     }
     void registerArg(type_t type, std::string id){
         getEntry().createValue(type, id);
     }
     value* getCallee(){ return outputValue(1); }
+    value* argument(int n) { return getEntry().outputValue(n+1); }
     std::string id;
     virtual std::string represent(){ 
         printer p;
-        p<<representOutputs()<<" = funcOp: "<<id<<" (";
+        p<<representOutputs()<<" = func ";
+        if(isAbstract)p<<"Register";
+        else p<<"Def";
+        p<<" : "<<id<<" (";
         p<<getEntry().representOutputs()<<")";
         if(returnType.getImpl()) p<<" -> "<<returnType.represent(); 
         return p.dump();
     }
+    bool isAbstract = 1;
     lgf::type_t returnType;
+    virtual void print(){
+        global::stream::getInstance().printIndent();
+        std::string code = represent();
+        // add space if the represent is not empty
+        // {} no reprsent, shoudn't have space
+        // module {}, have represent "module", should have space
+        // between "module" and the {}.
+        global::stream::getInstance()<<represent();
+        if(!isAbstract){
+            printGraph();
+        } else global::stream::getInstance()<<"\n";
+    }
 };
 
 class funcCallOp : public operation{
@@ -124,7 +170,8 @@ class funcCallOp : public operation{
     funcCallOp() = default;
     static funcCallOp * build(LGFContext *ctx, value* callee){
         auto op = new funcCallOp();
-        op->registerInput(callee);
+        op->funPtr = callee;
+        //op->registerInput(callee);
         auto& ret = callee->getDefiningOp<funcDefineOp>()->returnType;
         if(ret.getImpl()){
             op->hasReturn = 1;
@@ -146,24 +193,25 @@ class funcCallOp : public operation{
             registerInput(arg);
         }
     }
-    value * getCallee(){ return inputValue(0); }
-    value * arg(int n=0 ){ return inputValue(n+1); }
+    value * getCallee(){ return funPtr; }
+    value * arg(int n=0 ){ return inputValue(n); }
     value * returnValue() { return outputValue(1); }
     virtual std::string represent(){
         printer p;
         auto callee = getCallee()->getDefiningOp<funcDefineOp>();
         if( hasReturn ) p<<representOutputs()<<" = ";
-        p<<"func call: %"<<callee->getCallee()->getTraceID()<<" "<<callee->id<<" (";
-        if( getInputSize()>1){
+        p<<"call: @"<<callee->id<<"( ";
+        if( getInputSize()>0){
             p<<arg(0)->represent();
-            for(auto i = 1; i< getInputSize()-1; /* the first element is callee */ i++){
+            for(auto i = 1; i< getInputSize(); i++){
                 p<<", "<<arg(i)->represent();
             }
         }
-        p<<")";
+        p<<" )";
         return p.dump();
     }
     bool hasReturn = 0;
+    value* funPtr = nullptr;
 };
 
 class returnOp : public operation {

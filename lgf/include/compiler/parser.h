@@ -9,8 +9,9 @@
 #include <map>
 #include <functional>
 #include "lgf/operation.h"
-#include "context.h"
+#include "ASTContext.h"
 #include <stack>
+#include <fstream>
 
 namespace lgf::compiler{
 #define TRACE_FUNC_CALL \
@@ -18,10 +19,29 @@ namespace lgf::compiler{
 
 class parser{
     public:
-    parser(fileIO *io_) : io(io_) {}
-    std::unique_ptr<moduleAST> parse(fs::path path){
+    ~parser(){}
+    parser(fileIO *io_) : io(io_) { }
+    programAST* parseMainFile(fs::path path, programAST* ast_){
+        program = ast_;
+        ctx = ast_->getContext();
         lx.loadBuffer(path);
-        return parseModule();
+        lx.getNextToken();
+        if(lx.getCurToken()==tok_module)
+            lx.readNextLine();
+        auto m = parseModule("main");
+        program->addModule(std::move(m));
+        registerID(program);
+        return program;
+    }
+    programAST* parseModuleFile(fs::path path, programAST* ast){
+        program = ast;
+        ctx = ast->getContext();
+        lx.loadBuffer(path);
+        lx.getNextToken();
+        auto id = path.stem().string();
+        auto m = parseModule(id);
+        program->addModule(std::move(m));
+        return program;
     }
     void parseError(const char * msg){
         std::cerr<<lx.getLoc().string()<<": Error: "<<msg;
@@ -31,10 +51,10 @@ class parser{
         parseError(msg.c_str());
     }
 
-    std::unique_ptr<moduleAST> parseModule(){
-        lx.getNextToken();
-        current_scopeid = scopeid;
-        auto module = std::make_unique<moduleAST>(lx.getLoc(), scopeid++);
+    std::unique_ptr<moduleAST> parseModule(std::string name){
+        auto module = std::make_unique<moduleAST>(lx.getLoc(), ctx->module_id++);
+        module->name = name;
+        std::string id;
         while(true){
             std::unique_ptr<astBase> record = nullptr;
             switch(lx.getCurToken()){
@@ -45,15 +65,18 @@ class parser{
                     lx.getNextToken();
                     continue;
                 case tok_module:
-                    record = parseModule();
+                    lx.consume(tok_module);
+                    id = lx.parseIdentifier();
+                    lx.consume(token('('));
+                    record = parseModule(id);
+                    lx.consume(token(')'));
                     break;
                 case tok_number:
-                    record = parseExpression();
-                    lx.consume(token(';'));
+                    parseError("Can't have number in module space");
                     break;
-                case tok_import: 
+                case tok_import:
                     parseImport();
-                    break;
+                    continue;
                 case tok_identifier:
                     record = parseIdentifier();
                     break;
@@ -61,7 +84,7 @@ class parser{
                     record = parseFuncDef();
                     break;
                 case tok_return:
-                    record = parseReturn();
+                    parseError("keyword return is illegal here.");
                     break;
                 default:
                     parseError("Unknown token: "+lx.convertCurrentToken2String());
@@ -72,8 +95,10 @@ class parser{
             //lgf::streamer sm;
             //module->emitIR(sm);
         }
-        if(lx.getCurToken()!= tok_eof) parseError("Module is not closed!");
-        current_scopeid = module->previous_id;
+        if(lx.getCurToken()!= tok_eof){
+            std::cout<<"curTok: "<<lx.convertCurrentToken2String()<<std::endl;
+            parseError("Module is not closed!");
+        }
         return std::move(module);
     }
     std::unique_ptr<astBase> parseReturn(){
@@ -91,8 +116,8 @@ class parser{
     }
     void parseArguments(std::vector<std::unique_ptr<astBase>>& vec){
         while(lx.getCurToken() == tok_identifier){
-            auto id = lx.identifierStr;
             auto loc = lx.getLoc();
+            auto id = lx.parseIdentifier();
             vec.push_back(parseValAST(loc, id));
             lx.consume(tok_identifier);
             if(lx.getCurToken() != token(',')) break;
@@ -133,12 +158,8 @@ class parser{
     std::unique_ptr<astBase> parseFuncDef(){
         lx.consume(tok_def);
         auto id = lx.identifierStr;
-        if(auto info = ctx.current_scope->findSymbolInfo(id)){
-            parseError("The identifier: "+id+"is defined in: "+info->loc.string());
-        }
         auto loc = lx.getLoc();
         auto ast = std::make_unique<funcDeclAST>(loc, id);
-        ctx.current_scope->addSymbolInfo(id, {"func", loc});
         lx.consume(tok_identifier);
         lx.consume(token('('));
         parseArgSignatures(ast->args);
@@ -153,7 +174,7 @@ class parser{
         }
         // parsing block of function definition
         lx.consume(token('{'));
-        ast->contentDefined = 1;
+        ast->isAbstract = 0;
         parseBlock(ast->contents);
         return ast;
     }
@@ -178,11 +199,11 @@ class parser{
                     record = parseReturn();
                     break;
                 case tok_module:
-                    parseError("Can not define module here");
+                    parseError("Can not define module here.");
                 case tok_def:
-                    parseError("Can not define function here");
+                    parseError("Can not define function here.");
                 case tok_import:
-                    parseError("Can not import module here");
+                    parseError("Can not import module here.");
                 default:
                     parseError("Unknown token: "+lx.convertCurrentToken2String());
             }
@@ -218,27 +239,27 @@ class parser{
         }
     }
     std::unique_ptr<astBase> parseCallOrExpr(){
-        auto id = lx.identifierStr;
         auto loc = lx.getLoc();
-        lx.consume(tok_identifier);
-        if(lx.getCurToken()==token('(')){
+        auto id = lx.parseIdentifier();
+        if(lx.getCurToken()==token('(') ){
             return parseFuncCall(loc, id);
         }else {
             return parseValAST(loc, id);
         }
     }
     std::unique_ptr<astBase> parseValAST(location loc, std::string id){
-        if(!ctx.current_scope->hasSymbolInfo(id)) {
-            ctx.current_scope->addSymbolInfo(id,{"variable", loc, "variable"});
-        }
-        return std::make_unique<varAST>(loc, id);
+        bool isModule = 0;
+        return std::make_unique<varAST>(loc, id, isModule);
     }
     std::unique_ptr<astBase> parseBinaryRHS(int tokWeight, std::unique_ptr<astBase> lhs){
         while(true){
+            bool isReference = 0, isAccess = 0;
             std::string op;
             auto nextTok = binaryTokenPrioCheck();
             op+=static_cast<char>(lx.getCurToken());
             if(nextTok <= tokWeight ) return lhs;
+            if(lx.getCurToken() == tok_scope) isReference = 1;
+            if(lx.getCurToken() == token('.')) isAccess = 1;
             lx.getNextToken();
             auto loc = lx.getLoc();
             auto rhs = parsePrimary();
@@ -250,9 +271,12 @@ class parser{
                 if(!rhs){
                     return nullptr;
                 } 
-            } 
-            
-            lhs = std::make_unique<binaryAST>(loc, op, std::move(lhs), std::move(rhs));
+            }
+            if(isReference){
+                lhs = std::make_unique<getReferenceAST>(loc, std::move(lhs), std::move(rhs));
+            } else if(isAccess){
+                lhs = std::make_unique<accessDataAST>(loc, std::move(lhs), std::move(rhs));
+            } else lhs = std::make_unique<binaryAST>(loc, op, std::move(lhs), std::move(rhs));
         }
     }
     std::unique_ptr<astBase> parseExpression(){
@@ -262,7 +286,7 @@ class parser{
     }
 
     int binaryTokenPrioCheck(){
-        if(!isascii(lx.getCurToken())) return -1;
+        //if(!isascii(lx.getCurToken())) return -1;
         switch(lx.getCurToken()){
             case token('='):
                 return 5;
@@ -276,30 +300,23 @@ class parser{
                 return 40;
             case token('%'):
                 return 30;
+            case token('.'):
+                return 50;
+            case token(tok_scope):
+                return 50;
             default:
                 return -1;
         }
     }
-    void parseImport(){
-        lx.consume(tok_import);
-        std::string file = lx.buffer;
-        lx.getNextLine();
-        lx.getNextToken();
-        auto ifile = io->findInclude(file);
-        if(ifile.empty()) parseError("Can't find the fiile: "+file);
-        lexer lxer;
-        lxer.loadBuffer(ifile);
-        // TODO: parse the imported module;
-    }
-    
+
     std::unique_ptr<astBase> parseDeclaration(){
         return nullptr;
     }
     std::unique_ptr<astBase> parseIdentifier(){
-        auto id = lx.identifierStr;
+        auto id = lx.parseIdentifier();
         auto loc = lx.getLoc();
-        lx.consume(tok_identifier);
-        if(lx.getCurToken()== token('(')){
+        if( lx.getCurToken() == token('(') ){
+            lx.consume(token('('));
             auto ast = parseFuncCall(loc, id);
             lx.consume(token(';'));
             return ast;
@@ -324,12 +341,11 @@ class parser{
 
     std::unique_ptr<astBase> parseVarDecl(location loc, std::string tid){
         parseError("parseVarDecl Not implement yet!");
-        TRACE_FUNC_CALL;
-        if(auto ptr = ctx.current_scope->findSymbolInfo(tid)){
-            if(ptr->category!= "type" || ptr->category!= "class"){
-                parseError("The type \'"+tid+"\' is not defined yet!");
-            }
-        }
+        // if(auto ptr = ctx->findSymbolInfoInCurrentModule(tid)){
+        //     if(ptr->category!= "type" || ptr->category!= "class"){
+        //         parseError("The type \'"+tid+"\' is not defined yet!");
+        //     }
+        // }
         auto id = lx.identifierStr;
         lx.consume(tok_identifier);
         // TODO: support to parse the case:
@@ -339,17 +355,18 @@ class parser{
         return std::make_unique<varDeclAST>(loc, tid, id);
     }
     void checkIfVarIDExists(std::string id){
-        if(auto info = ctx.current_scope->findSymbolInfo(id)){
-            if(info->category == "variable") return;
-            parseError(" \'"+id+"\' is not a variable name!");
-        }
-        parseError("variable name: "+id+" is unknown!");
+        // if(auto info = ctx->findSymbolInfoInCurrentModule(id)){
+        //     if(info->category == "variable") return;
+        //     parseError(" \'"+id+"\' is not a variable name!");
+        // }
+        // parseError("variable name: "+id+" is unknown!");
     }
 
     std::unique_ptr<astBase> parseFuncCall(location loc, std::string id){
-        auto ast = std::make_unique<funcCallAST>(loc, id);
-        if(!ctx.current_scope->hasSymbolInfo(id))
-            parseError("The function: "+id+" is unknown!");
+        // auto info = idif.scope->find(idif.id);
+        // if(info==nullptr || info->category!="func")
+        // parseError("The function: "+idif.id+" is unknown!");
+        auto ast = std::make_unique<funcCallAST>(loc, id);  
         lx.consume(token('('));
         while(lx.getCurToken()!=token(')')){
             auto arg = parseExpression();
@@ -361,13 +378,108 @@ class parser{
         //lx.consume(token(';'));
         return ast;
     }
+
+    void parseImport(){
+        lx.consume(tok_import);
+        auto path = lx.identifierStr+lx.buffer;
+        lx.getNextLine();
+        lx.getNextToken();
+        std::replace(path.begin(), path.end(), '.', '/');
+        path+=".lgf";
+        if(!io) parseError("File IO is broken!");
+        auto file = io->findInclude(path);
+        parser ip(io);
+        if(file.empty()) parseError("Can't find the import module: "+file.string());
+        ip.parseModuleFile(file, program);
+    }
     
+    void registerID(programAST* program){
+        ctx->resetModulePtr();
+        for(auto & module : program->modules){
+            auto ptr = dynamic_cast<moduleAST*>(module.get());
+            ctx->createSubmoduleAndEnter(ptr->name);
+            scanBlock(module->contents);
+            ctx->moveToParentModule();
+        }
+    }
+    void scanBlock(std::vector<std::unique_ptr<astBase>>& vec){
+        for(auto &ast : vec){
+            scanAST(ast);
+        }
+    }
+    void scanAST(std::unique_ptr<astBase>& ptr){
+        switch(ptr->kind){
+            case kind_binary:
+                scanBinaryAST(ptr);
+                break;
+            case kind_funcDecl:
+                scanFuncDefAST(ptr);
+                break;
+            case kind_funcCall:
+                scanFuncCall(ptr);
+                break;
+            case kind_variable:
+                scanVarAST(ptr);
+                break;
+            case kind_getRef:
+                scanGetRefAST(ptr);
+                break;
+            default:
+                break;
+        }
+    }
+    
+    void scanGetRefAST(std::unique_ptr<astBase>& ptr){
+        auto ast = dynamic_cast<getReferenceAST*>(ptr.get());
+        auto var = dynamic_cast<varAST*>(ast->module.get());
+        var->isModuleID = 1;
+        auto path = ast->getPath();
+        auto fc = ast->getEndAST();
+        auto id = fc->id;
+        //check if the func id exists in 
+        //the module pointed by path
+        if(auto info = ctx->findSymbol(id, path)){
+            if(info->category != "func") 
+                parseError(id+" is not a function.");
+        }else {
+            parseError("Can't find '"+id+"' in "+ast->printPath(path));
+        }
+    }
+    void scanVarAST(std::unique_ptr<astBase>& ptr){
+        auto ast = dynamic_cast<varAST*>(ptr.get());
+        if(ctx->hasSymbol(ast->id)) return;
+        ctx->addSymbolInfoToCurrentScope(ast->id,{"var",ast->loc, "variable"});
+    }
+    void scanBinaryAST(std::unique_ptr<astBase>& ptr){
+        auto ast = dynamic_cast<binaryAST*>(ptr.get());
+        scanAST(ast->lhs);
+        scanAST(ast->lhs);
+    }
+    void ensureIDAvaliable(std::string id){
+        if(auto ptr = ctx->findSymbolInfoInCurrentModule(id))
+            parseError("id "+id+" is redefined, original definition is at "+ptr->loc.string());
+    }
+    idinfo* ensureIDExists(std::string id){
+        if(auto ptr = ctx->findSymbolInfoInCurrentModule(id))
+            return ptr;
+        else parseError("id "+id+" is unknown.");
+    }
+    void scanFuncDefAST(std::unique_ptr<astBase>& ptr){
+        auto ast = dynamic_cast<funcDeclAST*>(ptr.get());
+        ensureIDAvaliable(ast->funcID);
+        ctx->addSymbolInfoToCurrentScope(ast->funcID, {"func", ast->loc});
+    }
+    void scanFuncCall(std::unique_ptr<astBase>& ptr){
+        auto ast = dynamic_cast<funcCallAST*>(ptr.get());
+        auto idif = ensureIDExists(ast->id);
+        if(idif->category!="func") parseError("id "+ast->id+" is not a function and is defined at "+idif->loc.string());
+        scanBlock(ast->args);
+    }
+
     fileIO *io=nullptr;
     lexer lx;
-    ASTContext ctx;
-    symbolTable<std::function<type_t()>> typeIdTable;
-    unsigned int current_scopeid, scopeid = 0;
-    std::stack<std::string> scope_trace;
+    ASTContext* ctx;
+    programAST* program;
 };
 
 }

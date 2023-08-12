@@ -40,13 +40,18 @@ class painter {
         auto ptr = sketch<obj>();
         current_graph->registerOp(ptr);
         lastOp = ptr;
+        
         return ptr;
     }
 
     // making an Op depends on the lastOp so that in a dependency walk order, 
     // it will be later than the current lastOp
     void appendOp(operation* op){
-        op->dependOn(lastOp);
+        if(auto g = dynamic_cast<graph*>(lastOp)){
+            op->dependOn(&(g->getEntry()));
+        } else{
+            op->dependOn(lastOp);
+        }
         lastOp = op;
     }
     //add op to the current graph

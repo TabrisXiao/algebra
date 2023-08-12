@@ -23,7 +23,8 @@ enum token : int {
     tok_module = -104,// module
     tok_scope = -105, // ::
     tok_def  =  -106, // def
-    tok_arrow = -107, // ->
+    tok_member = -107, // mdef
+    tok_arrow = -108, // ->
 };
 class lexer {
     public: 
@@ -31,12 +32,29 @@ class lexer {
     lexer(std::filesystem::path file) {
         loadBuffer(file);
     }
+    void reset(){
+        buffer = "";
+        curCol =0; curLine = 0;
+    }
     ~lexer(){ file.close(); }
     void loadBuffer(std::filesystem::path path){
+        if(file.is_open()) file.close();
         std::string pathstr = path.string();
         loc = location({std::make_shared<std::string>(std::move(pathstr)), 0,0});
         file.open(path);
         THROW_WHEN(!file.is_open(), "Can't open the file: "+pathstr);
+        buffer="";
+    }
+
+    void loadBufferTo(location &loc){
+        loadBuffer(std::filesystem::path(*(loc.file.get())));
+        for(auto i=0; i<loc.line; i++){
+            getNextLine();
+        }
+        for(auto i=0; i<loc.col; i++){
+            getNextChar();
+        }
+        curCol =loc.col; curLine = loc.line;
     }
 
     static constexpr bool isalpha(unsigned ch) { return (ch | 32) - 'a' < 26; }
@@ -80,6 +98,11 @@ class lexer {
             std::exit(EXIT_FAILURE);
         }
         getNextToken();
+    }
+    std::string parseIdentifier(){
+        auto ret = identifierStr;
+        consume(tok_identifier);
+        return ret;
     }
     
     token getCurToken(){

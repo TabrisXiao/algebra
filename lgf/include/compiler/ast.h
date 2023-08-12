@@ -1,12 +1,13 @@
 
-#ifndef COMPILER_AST_H
-#define COMPILER_AST_H
+#ifndef LGF_COMPILER_AST_H
+#define LGF_COMPILER_AST_H
 
 #include <vector>
 #include <string>
 #include "lexer.h"
 #include "lgf/printer.h"
 #include "streamer.h"
+#include "ASTContext.h"
 #include <optional>
 
 namespace lgf::compiler {
@@ -21,6 +22,8 @@ enum astKind{
     kind_number,
     kind_return,
     kind_binary,
+    kind_getRef,
+    kind_accessModule,
 };
 
 class astBase {
@@ -36,16 +39,16 @@ class moduleAST : public astBase {
     public:
     moduleAST(location loc, int id_, int previous_scop_id = 0)
     : astBase(loc, kind_module)
-    , id(id_)
-    , previous_id(previous_scop_id) {}
+    , id(id_) {}
     void addASTNode(std::unique_ptr<astBase>&& ptr){
         contents.push_back(std::move(ptr));
     }
     std::vector<std::unique_ptr<astBase>> contents;
-    unsigned int id, previous_id=0;
+    unsigned int id;
+    std::string name;
     virtual void emitIR(lgf::streamer & out){
         out.printIndent();
-        out<<"module #"<<id<<" {\n";
+        out<<"module #"<<id<<" : "<<name<<" {\n";
         out.incrIndentLevel();
         for(auto & op : contents){
             out.printIndent();
@@ -56,6 +59,22 @@ class moduleAST : public astBase {
         out.printIndent();
         out<<"}\n";
     }
+};
+
+class programAST {
+    public:
+    programAST() = default;
+    void addModule(std::unique_ptr<moduleAST>&& ptr){
+        modules.push_back(std::move(ptr));
+    }
+    std::vector<std::unique_ptr<moduleAST>> modules;
+    void emitIR(lgf::streamer & out){
+        for(auto & each : modules){
+            each->emitIR(out);
+        }
+    }
+    ASTContext* getContext(){ return &ctx; }
+    ASTContext ctx;
 };
 
 class structAST : public astBase {
@@ -91,10 +110,12 @@ class varDeclAST : public astBase {
 
 class varAST : public astBase {
     public:
-    varAST(location loc, std::string name)
+    varAST(location loc, std::string name, bool isModule_)
     : astBase(loc, kind_variable)
-    , id(name) {}
+    , id(name)
+    , isModuleID(isModule_) {}
     std::string id;
+    bool isModuleID;
     virtual void emitIR(lgf::streamer & out){
         out<<id;
     }
@@ -123,7 +144,7 @@ class funcDeclAST : public astBase {
         returnTypeStr = str;
     }
     std::string returnTypeStr = "";
-    bool contentDefined = 0;
+    bool isAbstract = 1;
 };
 
 class numberAST : public astBase {
@@ -167,6 +188,22 @@ class binaryAST : public astBase {
     }
 };
 
+class accessDataAST : public astBase {
+    public:
+    accessDataAST(location loc,
+    std::unique_ptr<astBase>& lhs_,
+    std::unique_ptr<astBase>& rhs_)
+    : astBase(loc, kind_accessModule)
+    , module(std::move(lhs_))
+    , member(std::move(rhs_)) {}
+    std::unique_ptr<astBase> module, member;
+    virtual void emitIR(lgf::streamer & out){
+        module->emitIR(out);
+        out<<".";
+        member->emitIR(out);
+    }
+};
+
 class funcCallAST : public astBase {
     public:
     funcCallAST(location loc, std::string _id) 
@@ -193,6 +230,51 @@ class funcCallAST : public astBase {
 
     std::string id;
     std::vector<std::unique_ptr<astBase>> args;
+};
+
+class getReferenceAST : public astBase {
+    public:
+    getReferenceAST(location loc,
+    std::unique_ptr<astBase>& lhs_,
+    std::unique_ptr<astBase>& rhs_)
+    : astBase(loc, kind_getRef)
+    , module(std::move(lhs_))
+    , member(std::move(rhs_)) {}
+    std::unique_ptr<astBase> module, member;
+    virtual void emitIR(lgf::streamer & out){
+        module->emitIR(out);
+        out<<"::";
+        member->emitIR(out);
+    }
+    std::vector<std::string> getPath(){
+        std::vector<std::string> buffer;
+        getPathImpl(buffer);
+        return buffer;
+    }
+    void getPathImpl(std::vector<std::string>& vec){
+        auto ptr = dynamic_cast<varAST*>(module.get());
+        ptr->isModuleID = 1;
+        vec.push_back(ptr->id);
+        if(auto ast = dynamic_cast<getReferenceAST*>(member.get())){
+            return ast->getPathImpl(vec);
+        }
+    }
+    funcCallAST* getEndAST(){
+        if(auto ptr = dynamic_cast<getReferenceAST*>(member.get())) 
+            return ptr->getEndAST();
+        // funcCallAST is the only ast supported to be a member so far.
+        auto ret = dynamic_cast<funcCallAST*>(member.get());
+        return ret;
+    }
+    std::string printPath(std::vector<std::string>& path){
+        std::string buffer;
+        if(path.size() ==0 ) return buffer;
+        buffer = path[0];
+        for(auto iter = path.begin()+1; iter!=path.end(); iter++){
+            buffer=buffer+"::"+*iter;
+        }
+        return buffer;
+    }
 };
 
 class returnAST : public astBase {
