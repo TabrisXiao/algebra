@@ -378,18 +378,25 @@ class parser{
         //lx.consume(token(';'));
         return ast;
     }
-
     void parseImport(){
+        TRACE_LOG;
         lx.consume(tok_import);
-        auto path = lx.identifierStr+lx.buffer;
+        auto path = lx.buffer;
+        if(lx.identifierStr != "lgf"){
+            path = lx.identifierStr+"."+path;
+        }
         lx.getNextLine();
         lx.getNextToken();
-        std::replace(path.begin(), path.end(), '.', '/');
+        std::replace(path.begin(), path.end(), '.', '\\');
         path+=".lgf";
+        // replace the lgf folder by the root path
+        
+        std::cout<<"path: "<<path<<std::endl;
         if(!io) parseError("File IO is broken!");
         auto file = io->findInclude(path);
         parser ip(io);
         if(file.empty()) parseError("Can't find the import module: "+file.string());
+        lx.getNextToken();
         ip.parseModuleFile(file, program);
     }
     

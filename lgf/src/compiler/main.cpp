@@ -20,6 +20,10 @@ int main(int argc, char* argv[]){
         count+=2;
     }
     lgf::compiler::compiler cmp;
+    lgf::compiler::option::get().log_lv_trace = 0;
+    auto p = fs::current_path()/fs::path("lgf/include/libs");
+    cmp.io.addIncludePath(p.string());
+    cmp.setRootPath(p.string());
     cmp.compileInput(inputFile);
     
     std::cout<<"\n---- LGIR ----\n";

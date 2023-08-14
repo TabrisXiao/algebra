@@ -38,6 +38,7 @@ class fileIO{
     }
     std::vector<fs::path> includePaths;
     std::vector<fs::path> inputPaths;
+    std::string internalModulePath;
 };
 
 }
