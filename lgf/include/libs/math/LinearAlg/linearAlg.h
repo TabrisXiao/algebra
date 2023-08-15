@@ -7,7 +7,9 @@ namespace lgf::math{
 class LinearAlgModule : public LGFModule {
     public:
     LinearAlgModule() = default;
-    virtual void registerTypes(){}
+    virtual void registerInterface(){
+        
+    }
 };
 }
 

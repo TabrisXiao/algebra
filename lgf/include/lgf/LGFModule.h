@@ -9,7 +9,8 @@ namespace lgf{
 class LGFModule{
     public:
     LGFModule() = default;
-    virtual void registerTypes() = 0;
+    virtual void registerTypes() {}
+    virtual void registerInterface() {}
     virtual void registerInitPass() {}
 };
 

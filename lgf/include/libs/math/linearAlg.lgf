@@ -1,0 +1,2 @@
+
+def UnitMatrix(int a) -> tensor<variable>;

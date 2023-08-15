@@ -50,6 +50,10 @@ class parser{
     void parseError(std::string msg){
         parseError(msg.c_str());
     }
+    void compileErrorAt(astBase* op, std::string msg){
+        std::cerr<<op->loc.string()<<": Error: "<<msg;
+        std::exit(EXIT_FAILURE);
+    }
 
     std::unique_ptr<moduleAST> parseModule(std::string name){
         auto module = std::make_unique<moduleAST>(lx.getLoc(), ctx->module_id++);
@@ -255,13 +259,13 @@ class parser{
         while(true){
             bool isReference = 0, isAccess = 0;
             std::string op;
+            auto loc = lx.getLoc();
             auto nextTok = binaryTokenPrioCheck();
             op+=static_cast<char>(lx.getCurToken());
             if(nextTok <= tokWeight ) return lhs;
             if(lx.getCurToken() == tok_scope) isReference = 1;
             if(lx.getCurToken() == token('.')) isAccess = 1;
             lx.getNextToken();
-            auto loc = lx.getLoc();
             auto rhs = parsePrimary();
             if(!rhs)   
                 parseError("Expression isn't complete.");
@@ -447,9 +451,9 @@ class parser{
         //the module pointed by path
         if(auto info = ctx->findSymbol(id, path)){
             if(info->category != "func") 
-                parseError(id+" is not a function.");
+                compileErrorAt(ast, id+" is not a function.");
         }else {
-            parseError("Can't find '"+id+"' in "+ast->printPath(path));
+            compileErrorAt(ast, "Can't find function '"+id+"' in "+ast->printPath(path)+".");
         }
     }
     void scanVarAST(std::unique_ptr<astBase>& ptr){
@@ -460,7 +464,7 @@ class parser{
     void scanBinaryAST(std::unique_ptr<astBase>& ptr){
         auto ast = dynamic_cast<binaryAST*>(ptr.get());
         scanAST(ast->lhs);
-        scanAST(ast->lhs);
+        scanAST(ast->rhs);
     }
     void ensureIDAvaliable(std::string id){
         if(auto ptr = ctx->findSymbolInfoInCurrentModule(id))
@@ -469,7 +473,7 @@ class parser{
     idinfo* ensureIDExists(std::string id){
         if(auto ptr = ctx->findSymbolInfoInCurrentModule(id))
             return ptr;
-        else parseError("id "+id+" is unknown.");
+        return nullptr;
     }
     void scanFuncDefAST(std::unique_ptr<astBase>& ptr){
         auto ast = dynamic_cast<funcDeclAST*>(ptr.get());
@@ -479,7 +483,8 @@ class parser{
     void scanFuncCall(std::unique_ptr<astBase>& ptr){
         auto ast = dynamic_cast<funcCallAST*>(ptr.get());
         auto idif = ensureIDExists(ast->id);
-        if(idif->category!="func") parseError("id "+ast->id+" is not a function and is defined at "+idif->loc.string());
+        if(!idif) compileErrorAt(ast, "id "+ast->id+" is unknown.");
+        if(idif->category!="func") compileErrorAt(ast, "id "+ast->id+" is not a function and is defined at "+idif->loc.string());
         scanBlock(ast->args);
     }
 

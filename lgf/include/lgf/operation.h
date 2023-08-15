@@ -89,7 +89,7 @@ public:
     void dropUser(operation *op);
     void dropUsers();
     template<typename t>
-    void type_guard(){
+    void type_check(){
         if(dynamic_cast<t>(vtp)) return;
         std::cerr<<"Value type mismatch!"<<std::endl;
         std::exit(EXIT_FAILURE); 

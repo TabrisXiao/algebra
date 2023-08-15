@@ -20,4 +20,8 @@
         std::exit(EXIT_FAILURE); \
     }
 
+#define THROW(msg)\
+    std::cerr<<"Runtime Error: " __FILE__ ":"<< std::to_string(__LINE__)<< ": "<<msg<<"\n"; \
+    std::exit(EXIT_FAILURE); \
+
 #endif
