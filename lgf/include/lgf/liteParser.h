@@ -74,6 +74,7 @@ class liteParser {
         consume(tok_identifier);
         return num;
     }
+    void parseColon(){ consume(int(':')); }
     void parseLeftSqaureBracket() { consume(int('['));}
     void parseRightSqaureBracket() { consume(int(']'));}
     void parseLessThan(){ consume(int('<'));}
