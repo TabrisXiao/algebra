@@ -33,13 +33,12 @@ class parser{
         registerID(program);
         return program;
     }
-    programAST* parseModuleFile(fs::path path, programAST* ast){
+    programAST* parseModuleFile(std::string mname, fs::path path, programAST* ast){
         program = ast;
         ctx = ast->getContext();
         lx.loadBuffer(path);
         lx.getNextToken();
-        auto id = path.stem().string();
-        auto m = parseModule(id);
+        auto m = parseModule(mname);
         program->addModule(std::move(m));
         return program;
     }
@@ -49,6 +48,10 @@ class parser{
     }
     void parseError(std::string msg){
         parseError(msg.c_str());
+    }
+    void parseError(astBase* ast, std::string msg){
+        std::cerr<<ast->loc.string()<<": Error: "<<msg;
+        std::exit(EXIT_FAILURE);
     }
     void compileErrorAt(astBase* op, std::string msg){
         std::cerr<<op->loc.string()<<": Error: "<<msg;
@@ -263,11 +266,10 @@ class parser{
             auto nextTok = binaryTokenPrioCheck();
             op+=static_cast<char>(lx.getCurToken());
             if(nextTok <= tokWeight ) return lhs;
-            if(lx.getCurToken() == tok_scope) isReference = 1;
             if(lx.getCurToken() == token('.')) isAccess = 1;
             lx.getNextToken();
             auto rhs = parsePrimary();
-            if(!rhs)   
+            if(!rhs)
                 parseError("Expression isn't complete.");
             auto nnTok = binaryTokenPrioCheck();
             if(nextTok < nnTok ){
@@ -276,10 +278,8 @@ class parser{
                     return nullptr;
                 } 
             }
-            if(isReference){
-                lhs = std::make_unique<getReferenceAST>(loc, std::move(lhs), std::move(rhs));
-            } else if(isAccess){
-                lhs = std::make_unique<accessDataAST>(loc, std::move(lhs), std::move(rhs));
+            if(isAccess){
+                lhs = std::make_unique<accessAST>(loc, std::move(lhs), std::move(rhs));
             } else lhs = std::make_unique<binaryAST>(loc, op, std::move(lhs), std::move(rhs));
         }
     }
@@ -305,8 +305,6 @@ class parser{
             case token('%'):
                 return 30;
             case token('.'):
-                return 50;
-            case token(tok_scope):
                 return 50;
             default:
                 return -1;
@@ -386,31 +384,40 @@ class parser{
         TRACE_LOG;
         lx.consume(tok_import);
         auto path = lx.buffer;
+        auto mname = path;
         if(lx.identifierStr != "lgf"){
             path = lx.identifierStr+"."+path;
+            mname= lx.identifierStr+"."+mname; 
+        }
+        std::replace(path.begin(), path.end(), '.', '\\');
+        path+=".lgf";
+        
+        size_t pos = 0;
+        while ((pos = mname.find(".", pos)) !=               std::string::npos) {
+            mname.replace(pos, 1,  "::");
+            pos += 2;
         }
         lx.getNextLine();
         lx.getNextToken();
-        std::replace(path.begin(), path.end(), '.', '\\');
-        path+=".lgf";
         // replace the lgf folder by the root path
         
-        std::cout<<"path: "<<path<<std::endl;
         if(!io) parseError("File IO is broken!");
         auto file = io->findInclude(path);
         parser ip(io);
         if(file.empty()) parseError("Can't find the import module: "+file.string());
         lx.getNextToken();
-        ip.parseModuleFile(file, program);
+        ip.parseModuleFile(mname, file, program);
     }
     
     void registerID(programAST* program){
+        TRACE_LOG;
         ctx->resetModulePtr();
         for(auto & module : program->modules){
             auto ptr = dynamic_cast<moduleAST*>(module.get());
-            ctx->createSubmoduleAndEnter(ptr->name);
+            bool isMain = ptr->name== "main";
+            if(!isMain)ctx->createSubmoduleAndEnter(ptr->name);
             scanBlock(module->contents);
-            ctx->moveToParentModule();
+            if(!isMain)ctx->moveToParentModule();
         }
     }
     void scanBlock(std::vector<std::unique_ptr<astBase>>& vec){
@@ -432,29 +439,20 @@ class parser{
             case kind_variable:
                 scanVarAST(ptr);
                 break;
-            case kind_getRef:
-                scanGetRefAST(ptr);
+            case kind_access:
+                scanAccessAST(ptr);
                 break;
             default:
                 break;
         }
     }
     
-    void scanGetRefAST(std::unique_ptr<astBase>& ptr){
-        auto ast = dynamic_cast<getReferenceAST*>(ptr.get());
-        auto var = dynamic_cast<varAST*>(ast->module.get());
-        var->isModuleID = 1;
-        auto path = ast->getPath();
-        auto fc = ast->getEndAST();
-        auto id = fc->id;
-        //check if the func id exists in 
-        //the module pointed by path
-        if(auto info = ctx->findSymbol(id, path)){
-            if(info->category != "func") 
-                compileErrorAt(ast, id+" is not a function.");
-        }else {
-            compileErrorAt(ast, "Can't find function '"+id+"' in "+ast->printPath(path)+".");
-        }
+    void scanAccessAST(std::unique_ptr<astBase>& ptr){
+        auto ast = dynamic_cast<accessAST*>(ptr.get());
+        auto var = dynamic_cast<varAST*>(ast->lhs.get());
+        if(auto varInfo = ctx->findSymbolInfoInCurrentModule(var->id)){
+        } else if(auto minfo = ctx->findModule(var->id)){
+        }else parseError(var, "Can't find the id: "+var->id);
     }
     void scanVarAST(std::unique_ptr<astBase>& ptr){
         auto ast = dynamic_cast<varAST*>(ptr.get());
@@ -466,10 +464,7 @@ class parser{
         scanAST(ast->lhs);
         scanAST(ast->rhs);
     }
-    void ensureIDAvaliable(std::string id){
-        if(auto ptr = ctx->findSymbolInfoInCurrentModule(id))
-            parseError("id "+id+" is redefined, original definition is at "+ptr->loc.string());
-    }
+
     idinfo* ensureIDExists(std::string id){
         if(auto ptr = ctx->findSymbolInfoInCurrentModule(id))
             return ptr;
@@ -477,7 +472,8 @@ class parser{
     }
     void scanFuncDefAST(std::unique_ptr<astBase>& ptr){
         auto ast = dynamic_cast<funcDeclAST*>(ptr.get());
-        ensureIDAvaliable(ast->funcID);
+        if(auto ptr = ctx->findSymbolInfoInCurrentModule(ast->funcID))
+            parseError(ast, "id "+ast->funcID+" is redefined, original definition is at "+ptr->loc.string());
         ctx->addSymbolInfoToCurrentScope(ast->funcID, {"func", ast->loc});
     }
     void scanFuncCall(std::unique_ptr<astBase>& ptr){
@@ -491,6 +487,7 @@ class parser{
     fileIO *io=nullptr;
     lexer lx;
     ASTContext* ctx;
+    LGFContext* lgfctx = nullptr;
     programAST* program;
 };
 

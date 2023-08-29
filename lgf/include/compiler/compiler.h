@@ -22,11 +22,13 @@ class compiler {
         auto f = io.getFile(file);
         io.addIncludePath(f.parent_path());
         COMPIELR_THROW_WHEN(f.empty(), "Can't find the file: "+file);
+        pser.lgfctx = &ctx;
         pser.parseMainFile(f, ast.get());
         lgf::streamer sm;
         
         ast->emitIR(sm);
         importModule<lgfModule>();
+        builder.ctx = &ctx;
         builder.build(ast.get());
     }
     template<typename module>
@@ -40,6 +42,7 @@ class compiler {
     fileIO io;
     parser pser;
     std::unique_ptr<programAST> ast;
+    LGFContext ctx;
     LGTranslator builder;
 };
 

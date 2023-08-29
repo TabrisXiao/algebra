@@ -78,7 +78,8 @@ class nestedSymbolicTable{
     nestedSymbolicTable<meta>* findNestTable(std::vector<std::string> path, int i=0){
         if(i >= path.size()) return this;
         auto ptr = findTable(path[i]);
-        THROW_WHEN(!ptr, "Can't find the module: "+path[i]);
+        if(!ptr) return nullptr;
+        //THROW_WHEN(!ptr, "Can't find the nested table: "+path[i]);
         i++;
         return ptr->findNestTable(path, i);
     }

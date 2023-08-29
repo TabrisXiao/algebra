@@ -328,11 +328,8 @@ class graph : public operation{
         clean();
         return;
     }
-    // add operation to this graph
-    void attachToEntrance(operation* op){ 
-        op->appendTo(dynamic_cast<operation*>(&entry)); }
     // regist the op in this graph into book, if this op has no
-    // inputs, it will be added as an entrance op.
+    // inputs, it will be appended to the entrance op.
     void registerOp(operation* op);
     graph* getGraph() {return dynamic_cast<graph*>(this);}
 

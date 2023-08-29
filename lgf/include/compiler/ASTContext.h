@@ -3,6 +3,7 @@
 #define COMPILER_CONTEXT_H
 #include "lgf/symbolicTable.h"
 #include "lgf/operation.h"
+#include "lgf/liteParser.h"
 #include "utils.h"
 #include <stack>
 
@@ -36,12 +37,17 @@ class ASTContext : public nestedSymbolicTable<moduleInfo> {
         return findTable(name);
     }
     nestedSymbolicTable<moduleInfo>* findModule(std::string name){
-        return module->findTable(name);
+        // module name has the form:
+        // parent::child::module
+        liteParser lp(name);
+        auto id = lp.parseIdentifier();
+        if(lp.isEOF()){
+            return module->findTable(id);
+        }
+        module = module->findTable(id);
+        return findModule(lp.getBuffer());
     }
     
-    nestedSymbolicTable<moduleInfo>* findModule(std::vector<std::string> path){
-        return findNestTable(path);
-    }
     // void addSymbolInfoToScope(std::string name, std::queue<std::string> scope_path, idinfo info){
     //     auto scp = root_scope.findScope(scope_path);
     //     scp.addSymbolInfo(name, info);
@@ -53,7 +59,7 @@ class ASTContext : public nestedSymbolicTable<moduleInfo> {
     idinfo * findSymbolInfoInCurrentModule(std::string name){
         return module->getData()->ids.find(name);
     }
-    idinfo * findSymbol(std::string id, std::vector<std::string> path){
+    idinfo * findSymbol(std::string id, std::string path){
         if(auto m = findModule(path)){
             if(auto info = m->getData()->ids.find(id))
                 return info;
@@ -97,7 +103,14 @@ class ASTContext : public nestedSymbolicTable<moduleInfo> {
     //     current_scope = &(current_scope->findScope(name));
     // }
     void createSubmoduleAndEnter(std::string name){
+        if(name.empty()) return;
+        liteParser lp(name);
+        auto id = lp.parseIdentifier();
         module = module->addTable(name, {name, module});
+        if(!lp.isEOF()){
+            lp.parseDot();
+            return createSubmoduleAndEnter(lp.getBuffer());
+        }
         //abs_path.push_back(name);
     }
     void resetModulePtr(){

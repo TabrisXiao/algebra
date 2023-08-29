@@ -3,7 +3,7 @@
 #define COMPILER_LGFTRANSLATOR_H
 #include "lgf/lgf.h"
 #include "compiler/ast.h"
-#include "libs/math/math.h"
+#include "libs/math.h"
 #include "ASTContext.h"
 #include "lgf/typeTable.h"
 
@@ -34,7 +34,8 @@ class LGTranslator {
         TRACE_LOG;
         auto module = pnt.paint<moduleOp>(ctx, ast->name);
         pnt.gotoGraph(module);
-        astctx->moveToSubmodule(ast->name);
+        bool isMain = ast->name=="main";
+        if(!isMain) astctx->moveToSubmodule(ast->name);
         if(option::get().log_lv_trace){
             std::cout<<"[--trace--]: ";
             printModuleList();
@@ -42,7 +43,7 @@ class LGTranslator {
         astctx->module->getData()->ref = module->output();
         declareVariables(astctx->module->getData()->ids);
         translateASTBlock(ast->contents);
-        pnt.gotoParentGraph();
+        if(!isMain) pnt.gotoParentGraph();
         astctx->moveToParentModule();
     }
     void translateASTBlock(std::vector<std::unique_ptr<astBase>>& contents){
@@ -54,8 +55,8 @@ class LGTranslator {
         auto kind = op->kind;
         value* ptr= nullptr;
         switch(kind){
-            case kind_getRef:
-                ptr = translateModuleRef(op);
+            case kind_access:
+                ptr = translateAccessAST(op);
                 break;
             case kind_binary:
                 ptr = convertBinaryOp(op);
@@ -81,20 +82,49 @@ class LGTranslator {
         }
         return ptr;
     }
-    value * translateModuleRef(std::unique_ptr<astBase>& op){
+
+    value * translateAccessAST(std::unique_ptr<astBase>& op){
         TRACE_LOG;
-        auto ast = dynamic_cast<getReferenceAST*>(op.get());
-        auto path = ast->getPath();
-        auto fc = ast->getEndAST();
-        value* callee = nullptr;
-        if(auto info = astctx->findSymbol(fc->id, path)){
-            callee = info->handle;
-            if(!callee) translateError("Function name is unknown: "+fc->id);
-            auto op = pnt.sketch<funcCallOp>(ctx, callee);
-            return convertFunCall(fc, op);
-        } 
+        auto ast = dynamic_cast<accessAST*>(op.get());
+        varAST* lhs = nullptr;
+        accessAST * last= nullptr;
+        auto curASTModuleLoc = astctx->module;
+        while(ast){
+            lhs = dynamic_cast<varAST*>(ast->lhs.get());
+            auto id = lhs->id;
+            if( auto idinfo = astctx->findSymbolInfoInCurrentModule(id) ){
+            }else {
+                std::cout<<"move to "<<id<<std::endl;
+                astctx->moveToSubmodule(id);
+            }
+            last = ast;
+            ast = dynamic_cast<accessAST*>(ast->rhs.get());
+        }
+
+        // if the final access object is a function
+        if(auto fc = dynamic_cast<funcCallAST*>(last->rhs.get())){
+            value* callee = nullptr;
+            if(auto info = astctx->findSymbolInfoInCurrentModule(fc->id)){
+                callee = info->handle;
+                if(!callee) translateError("Function name is unknown: "+fc->id);
+                auto op = pnt.sketch<funcCallOp>(ctx, callee);
+                astctx->module = curASTModuleLoc;
+                return convertFunCall(fc, op);
+            }
+            translateError("id name is unknown: "+fc->id);
+        }
+        translateError("Unknown access type");
+        // auto mname = ast->getParentModuleName();
+        // auto fc = ast->getEndAST();
+        // value* callee = nullptr;
+        // if(auto info = astctx->findSymbol(fc->id, mname)){
+        //     callee = info->handle;
+        //     if(!callee) translateError("Function name is unknown: "+fc->id);
+        //     auto op = pnt.sketch<funcCallOp>(ctx, callee);
+        //     return convertFunCall(fc, op);
+        // } 
         // it means translation fails
-        translateError("id name is unknown: "+fc->id);
+        
         return nullptr;
     }
     value * translateFuncDef(std::unique_ptr<astBase>& op){
@@ -224,8 +254,7 @@ class LGTranslator {
     painter pnt;
     canvas c;
     ASTContext *astctx=nullptr;
-    LGFContext context;
-    LGFContext *ctx = &context;
+    LGFContext *ctx = nullptr;
     nestedSymbolicTable<moduleInfo>* temp_ptr = astctx;
 };
 

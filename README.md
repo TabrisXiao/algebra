@@ -54,10 +54,10 @@ The `LinearAlg` lib contains the following ops:
 
 ### Planning
 * Support the binary op: `<=`, `>=`, `==`, etc.
-* Add the scope name for each identifiers
 * Support the function name overloading.
 * Add verification for ops. 
 * design the regularization pass.
 * design the pass converting the funcCall to the LGF ops.
 * design the APIs arch.
-* Support the member functions accessing the member variable.
+* Support the member functions accessing the member variable from `.` binary op.
+* Change the IR of `accessOp` to show the module name that the accessing object belongs to.
