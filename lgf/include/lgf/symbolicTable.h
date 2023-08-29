@@ -22,13 +22,14 @@ class symbolTable {
         if( itr == table.end()) return 0;
         return 1;
     }
-    void addEntry(std::string key, meta entry){
+    meta* addEntry(std::string key, meta entry){
         THROW_WHEN(has(key) ,"The key: "+key+" already exists!");
         table[key] = entry;
+        return &(table[key]);
     }
     template<typename ...ARGS>
-    void addEntry(std::string key, ARGS ... args){
-        addEntry(key, meta(args...));
+    meta* addEntry(std::string key, ARGS ... args){
+        return addEntry(key, meta(args...));
     }
 
     std::map<std::string, meta> table;
@@ -48,6 +49,9 @@ class nestedSymbolicTable{
     meta* getData(){
         return &data;
     }
+    void addData(meta d){
+        data = d;
+    }
     meta* getData(std::string key){
         auto itr = table.find(key);
         if( itr == table.end()) return nullptr;
@@ -56,6 +60,11 @@ class nestedSymbolicTable{
     nestedSymbolicTable<meta>* addTable(std::string key, meta data){
         if(auto ptr = findTable(key)) return ptr;
         table[key] = nestedSymbolicTable<meta>(key, data);
+        return &(table[key]);
+    }
+    nestedSymbolicTable<meta>* createOrGetTable(std::string key){
+        if(auto ptr = findTable(key)) return ptr;
+        table[key] = nestedSymbolicTable<meta>();
         return &(table[key]);
     }
     nestedSymbolicTable<meta>* findTable(std::queue<std::string>& keys){
@@ -69,7 +78,8 @@ class nestedSymbolicTable{
     nestedSymbolicTable<meta>* findNestTable(std::vector<std::string> path, int i=0){
         if(i >= path.size()) return this;
         auto ptr = findTable(path[i]);
-        THROW_WHEN(!ptr, "Can't find the module: "+path[i]);
+        if(!ptr) return nullptr;
+        //THROW_WHEN(!ptr, "Can't find the nested table: "+path[i]);
         i++;
         return ptr->findNestTable(path, i);
     }

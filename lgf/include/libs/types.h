@@ -105,6 +105,10 @@ class tensor_t: public lgf::variable {
   int size(){
     return dynamic_cast<tensorTypeImpl*>(impl)->dims.size();
   }
+  std::vector<int>& shape(){
+    return dynamic_cast<tensorTypeImpl*>(impl)->dims;
+  }
+  bool isAbstract () { return dynamic_cast<tensorTypeImpl*>(impl)->generalType; }
   type_t getElemType(){ return dynamic_cast<tensorTypeImpl*>(impl)->elemType; }
   static type_t parse(lgf::liteParser& p, lgf::LGFContext* ctx){
     p.parseLessThan();

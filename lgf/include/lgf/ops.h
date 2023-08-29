@@ -170,8 +170,8 @@ class funcCallOp : public operation{
     funcCallOp() = default;
     static funcCallOp * build(LGFContext *ctx, value* callee){
         auto op = new funcCallOp();
-        op->funPtr = callee;
-        //op->registerInput(callee);
+        //op->funPtr = callee;
+        op->registerInput(callee);
         auto& ret = callee->getDefiningOp<funcDefineOp>()->returnType;
         if(ret.getImpl()){
             op->hasReturn = 1;
@@ -193,17 +193,17 @@ class funcCallOp : public operation{
             registerInput(arg);
         }
     }
-    value * getCallee(){ return funPtr; }
-    value * arg(int n=0 ){ return inputValue(n); }
+    value * getCallee(){ return inputValue(0); }
+    value * arg(int n=0 ){ return inputValue(n+1); }
     value * returnValue() { return outputValue(1); }
     virtual std::string represent(){
         printer p;
         auto callee = getCallee()->getDefiningOp<funcDefineOp>();
         if( hasReturn ) p<<representOutputs()<<" = ";
-        p<<"call: @"<<callee->id<<"( ";
-        if( getInputSize()>0){
+        p<<"call "<<getCallee()->represent()<<" @ "<<callee->id<<"( ";
+        if( getInputSize()>1){
             p<<arg(0)->represent();
-            for(auto i = 1; i< getInputSize(); i++){
+            for(auto i = 1; i< getInputSize()-1; i++){
                 p<<", "<<arg(i)->represent();
             }
         }

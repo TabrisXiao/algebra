@@ -11,6 +11,8 @@ namespace lgf{
 
 class LGFContext {
     public: 
+    using mTable = symbolTable<std::unique_ptr<LGFModule>>;
+    using regionTable = nestedSymbolicTable<mTable>;
     LGFContext() = default;
     template<typename tp>
     tp getOrCreateType(std::unique_ptr<typeImpl>&& imp){
@@ -40,8 +42,28 @@ class LGFContext {
         }
         return nullptr;
     }
+    template<typename module_t>
+    module_t* registerModule(std::string name){
+        // the name of module should be like
+        // region::subregion::module_name
+        liteParser parser.loadBuffer(name);
+        std::string id = parser.parseIdentifier();
+        auto* rptr = root_region.createOrGetTable(id);
+        if(parser.getCurToken()==int(':')) 
+            parser.parseColon();
+        while(parser.getCurToken()==int(':')){
+            parser.parseColon();
+            id = parser.parseIdentifier();
+            if(parser.getCurToken()!=int(':')) break;
+            rptr=rptr->createOrGetTable(id);
+            parser.parserColon();
+        }
+        if(auto module = rptr->getData()->find(id)) return module.get();
+        return rptr->getData()->addEntry(id, module_t());
+    }
 
     std::vector<std::unique_ptr<typeImpl>> types;
+    regionTable root_region;
 };
 
 }

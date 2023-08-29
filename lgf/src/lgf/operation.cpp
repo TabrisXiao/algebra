@@ -189,8 +189,9 @@ void graph::print() {
 void graph::printGraph() {
     global::stream::getInstance()<<"{\n";
     global::stream::getInstance().incrIndentLevel();
-    walk([&](operation* op){ 
-        op->print();}, 1);
+    for(auto & op : nodes){
+        op->print();
+    }
     global::stream::getInstance().decrIndentLevel();
     global::stream::getInstance().printIndent();
     global::stream::getInstance()<<"}\n";
@@ -198,7 +199,7 @@ void graph::printGraph() {
 
 void graph::assignID(int n0 ){
     int n = n0;
-    walk([&](operation* op){
+    for(auto & op : nodes){
         op->assignValueID(n);
         if(auto g = dynamic_cast<graph*>(op)){
             int gn = 0;
@@ -206,13 +207,22 @@ void graph::assignID(int n0 ){
             g->getEntry().assignValueID(entryn);
             g->assignID(gn);
         }
-    }, 1);
+    }
+    // walk([&](operation* op){
+    //     op->assignValueID(n);
+    //     if(auto g = dynamic_cast<graph*>(op)){
+    //         int gn = 0;
+    //         int entryn = 0;
+    //         g->getEntry().assignValueID(entryn);
+    //         g->assignID(gn);
+    //     }
+    // }, 1);
 }
 //---------------------------------------------------
 
 void graph::registerOp(operation* op){
     op->setParentGraph(this);
-    if(op->getInputSize() == 0) attachToEntrance(op);
+    if(op->getInputSize() == 0) op->appendTo(dynamic_cast<operation*>(&entry)); 
     nodes.push_back(op);
 }
 //---------------------------------------------------

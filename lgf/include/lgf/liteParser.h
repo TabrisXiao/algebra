@@ -15,7 +15,12 @@ class liteParser {
         tok_eof=-1,
     };
     liteParser() = default;
+    liteParser(std::string c){ loadBuffer(c); }
     void loadBuffer(std::string ct) { buffer = ct; getNextToken();}
+    bool isEOF() { return curTok == tok_eof; }
+    std::string getBuffer(){
+        return buffer.substr(charPtr);
+    }
     char getNextChar(){
         if (charPtr > (buffer.size()-1) ) return EOF;
         return buffer[charPtr++];
@@ -74,6 +79,7 @@ class liteParser {
         consume(tok_identifier);
         return num;
     }
+    void parseColon(){ consume(int(':')); }
     void parseLeftSqaureBracket() { consume(int('['));}
     void parseRightSqaureBracket() { consume(int(']'));}
     void parseLessThan(){ consume(int('<'));}
@@ -81,6 +87,7 @@ class liteParser {
     void parseLeftParenthesis() {consume(int('('));}
     void parseRightParenthesis() {consume(int(')'));}
     void parseComma() {consume(int(','));}
+    void parseDot(){ consume(int('.')); }
     char lastChar=' ';
     int charPtr=0, curTok;
     std::string buffer, identifierStr;

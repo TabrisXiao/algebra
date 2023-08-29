@@ -19,7 +19,7 @@ def check(int a) {
     return;
 }
 ```
-
+The scope operator `::` can be used to access the member function of a module. It can also used to avoid the name confliction. However, it can't be used to access the member functions that accessing member variables (since these functions can only be called after a module initialized).
 
 ## Design
 
@@ -33,7 +33,7 @@ The conception of module is similar to the conception of `class`. It is a set co
 ```
 import math;
 lib = math();
-a = math.sum(2,3); // can access the function in math without self as argument
+a = math::sum(2,3); // can access the function in math without self as argument
 lib.a = a;
 lib.check(); // here the check is assume to be defined as check(self) inside the math module
 ```
@@ -42,16 +42,22 @@ lib.check(); // here the check is assume to be defined as check(self) inside the
 #### LGF modules
 A LGF modules includes the definitions for types, operations and the transform passes. For each module, it should have a corresponding header file encoded using the lgf syntax inorder to register the identifiers to parser. 
 
-### Feature need to support
-* Support the binary op: `<=`, `>=`, `==`, etc.
-* Add the scope name for each identifiers
-* Design the module struct
-* Add `import` feature to load modules
-* APIs design
-* Support the function name overloading.
-* Parse function definition block.
-* Add verification pass for ops. 
 
-### In progress
-* create `refOp` to get the member variable to avoid to create links inbetween the member function and member variable, this op should hold the reference value from the module or function but it should not be a user of that value. The problem is that we need to check if the operator owning the value referred is still valid or not. (need to verify)
-* Fix the issue of getting the function call such like `math::UnitMatrix(2)`.
+### Linear Algebra
+The `LinearAlg` lib contains the following ops:
+* `UnitMatrix(int n)`: define a unit matrix with dimension `nxn`.
+* `Transpose(matrix)`: Transpose a matrix.
+* `Determinant(matrix)`: Calculate the determinant of the matrix.
+* `Scaling(matrix, scale)`: Multiply each element of `matrix` by `scale`.
+* `Slice(matrix)`: Slice the matrix into row vectors.
+* `DirectProduct(matrix, matrix)`: 
+
+### Planning
+* Support the binary op: `<=`, `>=`, `==`, etc.
+* Support the function name overloading.
+* Add verification for ops. 
+* design the regularization pass.
+* design the pass converting the funcCall to the LGF ops.
+* design the APIs arch.
+* Support the member functions accessing the member variable from `.` binary op.
+* Change the IR of `accessOp` to show the module name that the accessing object belongs to.

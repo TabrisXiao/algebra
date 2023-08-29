@@ -23,7 +23,7 @@ enum astKind{
     kind_return,
     kind_binary,
     kind_getRef,
-    kind_accessModule,
+    kind_access,
 };
 
 class astBase {
@@ -188,19 +188,19 @@ class binaryAST : public astBase {
     }
 };
 
-class accessDataAST : public astBase {
+class accessAST : public astBase {
     public:
-    accessDataAST(location loc,
+    accessAST(location loc,
     std::unique_ptr<astBase>& lhs_,
     std::unique_ptr<astBase>& rhs_)
-    : astBase(loc, kind_accessModule)
-    , module(std::move(lhs_))
-    , member(std::move(rhs_)) {}
-    std::unique_ptr<astBase> module, member;
+    : astBase(loc, kind_access)
+    , lhs(std::move(lhs_))
+    , rhs(std::move(rhs_)) {}
+    std::unique_ptr<astBase> lhs, rhs;
     virtual void emitIR(lgf::streamer & out){
-        module->emitIR(out);
+        lhs->emitIR(out);
         out<<".";
-        member->emitIR(out);
+        rhs->emitIR(out);
     }
 };
 
@@ -246,19 +246,12 @@ class getReferenceAST : public astBase {
         out<<"::";
         member->emitIR(out);
     }
-    std::vector<std::string> getPath(){
-        std::vector<std::string> buffer;
-        getPathImpl(buffer);
-        return buffer;
+    std::string getParentModuleName(){
+        auto ast = dynamic_cast<moduleAST*>(module.get());
+        std::cout<<"ast: "<<ast<<std::endl;
+        return ast->name;
     }
-    void getPathImpl(std::vector<std::string>& vec){
-        auto ptr = dynamic_cast<varAST*>(module.get());
-        ptr->isModuleID = 1;
-        vec.push_back(ptr->id);
-        if(auto ast = dynamic_cast<getReferenceAST*>(member.get())){
-            return ast->getPathImpl(vec);
-        }
-    }
+    
     funcCallAST* getEndAST(){
         if(auto ptr = dynamic_cast<getReferenceAST*>(member.get())) 
             return ptr->getEndAST();
