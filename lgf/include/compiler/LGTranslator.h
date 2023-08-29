@@ -94,7 +94,6 @@ class LGTranslator {
             auto id = lhs->id;
             if( auto idinfo = astctx->findSymbolInfoInCurrentModule(id) ){
             }else {
-                std::cout<<"move to "<<id<<std::endl;
                 astctx->moveToSubmodule(id);
             }
             last = ast;
