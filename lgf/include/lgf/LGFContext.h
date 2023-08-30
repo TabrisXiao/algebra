@@ -4,8 +4,10 @@
 
 #include "type.h"
 #include "symbolicTable.h"
+#include "typeTable.h"
 #include <memory>
 #include <vector>
+//#include "moduleTable.h"
 
 namespace lgf{
 
@@ -45,25 +47,32 @@ class LGFContext {
     template<typename module_t>
     module_t* registerModule(std::string name){
         // the name of module should be like
-        // region::subregion::module_name
+        // region.subregion.module_name
         liteParser parser.loadBuffer(name);
         std::string id = parser.parseIdentifier();
         auto* rptr = root_region.createOrGetTable(id);
-        if(parser.getCurToken()==int(':')) 
-            parser.parseColon();
-        while(parser.getCurToken()==int(':')){
-            parser.parseColon();
+        while(parser.getCurToken()==int('.')){
+            parser.parseDot();
             id = parser.parseIdentifier();
-            if(parser.getCurToken()!=int(':')) break;
+            if(parser.getCurToken()!=int('.')) break;
             rptr=rptr->createOrGetTable(id);
-            parser.parserColon();
         }
         if(auto module = rptr->getData()->find(id)) return module.get();
         return rptr->getData()->addEntry(id, module_t());
     }
+    template<typename type>
+    void registerType(std::string id){
+        tptable.registerType<type>(id);
+    }
+    typeTable& getTypeTable() { return tptable; }
+    type_t parseTypeStr(std::string str){
+        return tptable.parseTypeStr(this, str);
+    }
+    
 
     std::vector<std::unique_ptr<typeImpl>> types;
     regionTable root_region;
+    typeTable tptable;
 };
 
 }

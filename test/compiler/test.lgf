@@ -1,4 +1,4 @@
-import lgf.linearAlg
+import lgf.LinearAlg
 
-e = linearAlg.UnitMatrix(5);
+e = LinearAlg.UnitMatrix(5) + 4;
 // a = linearAlg::Sum(2,3);

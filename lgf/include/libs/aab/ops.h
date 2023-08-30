@@ -1,10 +1,10 @@
 
 #ifndef MATH_AAB_OPS_H
 #define MATH_AAB_OPS_H
-#include "lgf/types.h"
 #include "lgf/operation.h"
+#include "libs/builtin/types.h"
 
-namespace lgf::math::aab{
+namespace lgf::aab{
 
 // ---------- addOp ----------
 class addOp : public lgf::operation

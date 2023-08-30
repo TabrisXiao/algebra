@@ -1,11 +1,13 @@
 
 #ifndef COMPILER_LGFTRANSLATOR_H
 #define COMPILER_LGFTRANSLATOR_H
-#include "lgf/lgf.h"
+#include "libs/Builtin/Builtin.h"
+#include "libs/aab/ops.h"
 #include "compiler/ast.h"
-#include "libs/math.h"
 #include "ASTContext.h"
 #include "lgf/typeTable.h"
+#include "libs/moduleManager.h"
+#include "lgf/pass.h"
 
 namespace lgf::compiler {
 
@@ -16,7 +18,6 @@ class LGTranslator {
         TRACE_LOG;
         astctx = program->getContext();
         astctx->resetModulePtr();
-        lgf::math::registerTypes();
         pnt.gotoGraph(&c);
         for(auto & moduleast : program->modules){
             transplateASTModule(moduleast.get());
@@ -32,6 +33,9 @@ class LGTranslator {
     }
     void transplateASTModule(moduleAST* ast){
         TRACE_LOG;
+        if(!ast->internalID.empty()){
+            moduleManager::get().loadInternalModule(ast->internalID, ctx);
+        }
         auto module = pnt.paint<moduleOp>(ctx, ast->name);
         pnt.gotoGraph(module);
         bool isMain = ast->name=="main";
@@ -141,7 +145,7 @@ class LGTranslator {
             astctx->addSymbolInfoToCurrentScope(argid, {"arg", arg->loc, arg->typeStr, funcOp->argument(i)});
         }
         if(!ast->returnTypeStr.empty())
-            funcOp->returnType = typeTable::get().parseTypeStr(ctx,ast->returnTypeStr);
+            funcOp->returnType = ctx->parseTypeStr(ast->returnTypeStr);
         
         if(!ast->isAbstract){
             funcOp->isAbstract = 0;
@@ -227,15 +231,15 @@ class LGTranslator {
         auto bop = ast->binaryOp;
         if(bop == "+"){
             // all the operation converted from ast should contained only 1 output.
-            return pnt.paint<math::aab::addOp>(ctx, lhs, rhs)->output();
+            return pnt.paint<aab::addOp>(ctx, lhs, rhs)->output();
         }else if(bop == "-"){
             // all the operation converted from ast should contained only 1 output.
-            return pnt.paint<math::aab::minusOp>(ctx, lhs, rhs)->output();
+            return pnt.paint<aab::minusOp>(ctx, lhs, rhs)->output();
         }else if(bop == "*"){
-            return pnt.paint<math::aab::multiplyOp>(ctx, lhs, rhs)->output();
+            return pnt.paint<aab::multiplyOp>(ctx, lhs, rhs)->output();
         }else if(bop == "="){
             if(auto ptr = dynamic_cast<varAST*>(ast->lhs.get())){
-                auto ret = pnt.paint<assignOp>(ctx, lhs, rhs)->output();
+                auto ret = pnt.paint<updateOp>(ctx, lhs, rhs)->output();
                 astctx->findSymbolInfoInCurrentModule(ptr->id)->handle=ret;
                 return ret;
             }else {
@@ -245,9 +249,8 @@ class LGTranslator {
         return nullptr;
     }
     type_t parseType(std::string typeStr){
-        return typeTable::get().parseTypeStr(ctx, typeStr);
+        return ctx->parseTypeStr(typeStr);
     }
-
     
     std::unique_ptr<moduleAST> main;
     painter pnt;
@@ -255,6 +258,7 @@ class LGTranslator {
     ASTContext *astctx=nullptr;
     LGFContext *ctx = nullptr;
     nestedSymbolicTable<moduleInfo>* temp_ptr = astctx;
+    //passManager moduleInitPassManager;
 };
 
 }

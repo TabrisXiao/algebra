@@ -1,5 +1,5 @@
-#ifndef INTERNALOPS_H_
-#define INTERNALOPS_H_
+#ifndef LGF_BUILTIN_OPS_H_
+#define LGF_BUILTIN_OPS_H_
 #include "lgf/operation.h"
 #include "lgf/LGFContext.h"
 #include "lgf/group.h"
@@ -40,6 +40,17 @@ class declOp : public operation{
     }
 };
 
+// class updateOp : public operation {
+//     public:
+//     updateOp() : operation("update"){}
+//     static declOp * build(LGFContext *ctx, type_t type) {
+//         auto op = new declOp();
+//         op->setSID("declOp");
+//         op->createValue(type, "");
+//         return op;
+//     }
+// };
+
 class referenceOp : public operation {
     public:
     referenceOp() : operation ("ref") {}
@@ -64,12 +75,12 @@ class referenceOp : public operation {
     }
 };
 
-class assignOp : public operation{
+class updateOp : public operation{
     public:
-    assignOp() : operation("assign") {}
-    ~assignOp() { }
-    static assignOp * build(LGFContext *ctx, value* lhs, value* rhs){
-        auto op = new assignOp();
+    updateOp() : operation("update") {}
+    ~updateOp() { }
+    static updateOp * build(LGFContext *ctx, value* lhs, value* rhs){
+        auto op = new updateOp();
         op->createValue(rhs->getType(), "");
         op->registerInput(lhs, rhs);
         return op;
@@ -80,7 +91,7 @@ class assignOp : public operation{
     value * output(){ return outputValue(1); }
     virtual std::string represent(){
         printer p;
-        p<<representOutputs()<<" = "<<getSID() <<" : "<<inputValue(1)->represent()<<" -> "<<inputValue(0)->represent();
+        p<<representOutputs()<<" = "<<getSID() <<" : "<<inputValue(0)->represent()<< " = "<<inputValue(1)->represent();
         return p.dump();
     }
 };

@@ -2,10 +2,10 @@
 #ifndef MATH_AAB_OPS_H
 #define MATH_AAB_OPS_H
 #include "lgf/types.h"
-#include "math/types.h"
 #include "lgf/operation.h"
+#include "types.h"
 
-namespace lgf::math::LinearAlg{
+namespace lgf::LinearAlg{
 
 // ---------- addOp ----------
 // class addOp : public lgf::operation
@@ -116,10 +116,10 @@ class determinant : public lgf::operation {
     public:
     determinant () = default;
     static determinant* build(lgf::LGFContext*, lgf::value *input){
-        input->type_guard<math::tensor_t>();
+        input->type_guard<tensor_t>();
         auto op = new determinant();
         op->setSID("linearAlg::determinant");
-        op->createValue(input->getType<math::tensor_t>().getElemType(), "");
+        op->createValue(input->getType<tensor_t>().getElemType(), "");
         return op;
     }
 };

@@ -33,12 +33,12 @@ class parser{
         registerID(program);
         return program;
     }
-    programAST* parseModuleFile(std::string mname, fs::path path, programAST* ast){
+    programAST* parseModuleFile(std::string mname, fs::path path, programAST* ast, std::string internalID){
         program = ast;
         ctx = ast->getContext();
         lx.loadBuffer(path);
         lx.getNextToken();
-        auto m = parseModule(mname);
+        auto m = parseModule(mname, internalID);
         program->addModule(std::move(m));
         return program;
     }
@@ -58,8 +58,9 @@ class parser{
         std::exit(EXIT_FAILURE);
     }
 
-    std::unique_ptr<moduleAST> parseModule(std::string name){
+    std::unique_ptr<moduleAST> parseModule(std::string name, std::string internalID=""){
         auto module = std::make_unique<moduleAST>(lx.getLoc(), ctx->module_id++);
+        module->internalID = internalID;
         module->name = name;
         std::string id;
         while(true){
@@ -385,18 +386,16 @@ class parser{
         lx.consume(tok_import);
         auto path = lx.buffer;
         auto mname = path;
+        std::string internalID;
         if(lx.identifierStr != "lgf"){
             path = lx.identifierStr+"."+path;
             mname= lx.identifierStr+"."+mname; 
+        } else {
+            internalID = mname;
         }
         std::replace(path.begin(), path.end(), '.', '\\');
         path+=".lgf";
         
-        size_t pos = 0;
-        while ((pos = mname.find(".", pos)) !=               std::string::npos) {
-            mname.replace(pos, 1,  "::");
-            pos += 2;
-        }
         lx.getNextLine();
         lx.getNextToken();
         // replace the lgf folder by the root path
@@ -406,7 +405,7 @@ class parser{
         parser ip(io);
         if(file.empty()) parseError("Can't find the import module: "+file.string());
         lx.getNextToken();
-        ip.parseModuleFile(mname, file, program);
+        ip.parseModuleFile(mname, file, program, internalID);
     }
     
     void registerID(programAST* program){
