@@ -2,13 +2,16 @@
 #define LGF_MATHLIB_LINEARALG_H
 #include "ops.h"
 #include "lgf/LGFModule.h"
+#include "libs/Builtin/types.h"
+#include "types.h"
+#include "passes.h"
 
-namespace lgf::math{
+namespace lgf{
 class LinearAlgModule : public LGFModule {
     public:
     LinearAlgModule() = default;
-    virtual void registerInterface(){
-        
+    static void registerTypes(LGFContext *ctx){
+        ctx->registerType<tensor_t>("tensor");
     }
 };
 }

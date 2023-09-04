@@ -26,7 +26,6 @@ int main(int argc, char* argv[]){
     cmp.setRootPath(p.string());
     cmp.compileInput(inputFile);
     
-    std::cout<<"\n---- LGIR ----\n";
-    cmp.builder.c.printGraph();
+
     return 0;
 }

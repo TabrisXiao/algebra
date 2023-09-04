@@ -17,13 +17,11 @@ class typeTable {
         typeInfo() = default;
         paser_func_t parser;
     };
-    typeTable(typeTable &) = delete;
-    typeTable(typeTable &&) = delete;
-    ~typeTable() { delete instance; }
-    static typeTable& get(){
-        if(!instance) instance = new typeTable();
-        return *instance;
-    }
+    typeTable() =  default;
+    // typeTable(typeTable &) = delete;
+    // typeTable(typeTable &&) = delete;
+    // ~typeTable() { delete instance; }
+
     void registerType(std::string id, paser_func_t& func){
         typeInfo info;
         info.parser = func;
@@ -48,11 +46,7 @@ class typeTable {
         return fc(p, ctx);
     }
     protected:
-    typeTable() = default;
-    inline static typeTable *instance=nullptr;
     symbolTable<typeInfo> table;
 };
 }
-#define REGISTER_TYPE(TYPE, ID)\
-    lgf::typeTable::get().registerType<TYPE>(ID)
 #endif

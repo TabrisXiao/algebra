@@ -4,7 +4,7 @@ file(GLOB_RECURSE headers
 set(
     sources
     operation.cpp   
-    painter.cpp
+    pass.cpp
 )
 
 create_cpp_library(

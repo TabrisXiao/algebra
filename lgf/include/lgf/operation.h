@@ -96,7 +96,19 @@ public:
     }
     
     // get the list of all ops using this value as a input;
+    std::unique_ptr<value>* getPtr();
     std::vector<operation*> getUsers();
+    void replaceBy(value *v){
+        // this value will be lost after replace
+        auto thisvalue = getPtr();
+        auto thatvalue = v->getPtr();
+        thisvalue->swap(*thatvalue);
+        auto thisptr = thisvalue->get();
+        auto thatptr = thatvalue->get();
+        thisptr->setDefiningOp(thatptr->getDefiningOp());
+        thisptr->setType(thatptr->getType());
+        thisptr->setSID(thatptr->getSID());
+    }
 
     private:
     operation *defop = nullptr;

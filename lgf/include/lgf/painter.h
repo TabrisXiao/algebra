@@ -4,6 +4,7 @@
 #include <iostream>
 #include <unordered_set>
 #include <memory.h>
+#include <algorithm>
 #include "global.h"
 #include "operation.h"
 
@@ -15,16 +16,15 @@ class rewriterBase;
 
 class painter {
     public : 
-    painter(graph* reg_) { current_graph = reg_; }
-    painter() = default;
+    painter(LGFContext * ctx_) : ctx(ctx_) {}
     ~painter(){}
     template<typename obj>
     obj* sketch(){
-        return obj::build();
+        return obj::build(ctx);
     }
     template<typename obj, typename...ARGS>
     obj* sketch(ARGS ...args){
-        return obj::build(args...);
+        return obj::build(ctx, args...);
     }
     template<typename obj, typename...ARGS>
     obj* paint(ARGS ...args){
@@ -59,12 +59,32 @@ class painter {
         current_graph->registerOp(op);
     }
 
+    // // create a new op to replace the op1's users
+    // template<typename obj, typename...ARGS>
+    // obj* replaceOp(operation *op1, ARGS ...args){
+    //     auto op2 = sketch<obj>(args...);
+    //     op1->replaceBy(op2);
+    //     op1->dropAllInputs();
+    //     op1->setRemovable();
+    //     return op2;
+    // }
+
     // create a new op to replace the op1's users
     template<typename obj, typename...ARGS>
     obj* replaceOp(operation *op1, ARGS ...args){
-        auto op2 = createOp<obj>(args...);
-        op1->replaceBy(op2);
+        auto op2 = sketch<obj>(args...);
         op1->dropAllInputs();
+        for(auto i=0; i<op1->getOutputSize(); i++){
+            op1->outputValue(i)->replaceBy(op2->outputValue(i));
+        }
+        auto & nodes = op1->getParentGraph()->getNodeList();
+        //std::replace(nodes.begin(), nodes.end(), op1, op2);
+        for(auto & node : nodes) {
+            if(node == op1) {
+                node = op2;
+            }
+        }
+        op2->setParentGraph(op1->getParentGraph());
         op1->setRemovable();
         return op2;
     }
@@ -93,6 +113,7 @@ class painter {
     void gotoGraph(graph * reg_) {
         current_graph = reg_;
     }
+    
     graph* getGraph(){ return current_graph;}
     void gotoParentGraph(){
         if(!current_graph) return;
@@ -102,43 +123,25 @@ class painter {
         if(!current_graph) return nullptr;
         return current_graph->getParentGraph(); }
 
-    // addRewriter will create a rewriter using the arguments;
-    template<typename T, typename ...ARGS>
-    void addRewriter(ARGS...arg){ 
-        auto ptr = std::make_unique<T>(arg...);
-        rewriters.push_back(std::move(ptr));
-    }
-
-    bool applyRewriterOnce();
-    int applyRewriterGreedy();
-
-    bool walkApplyRewriterOnce(bool deepwalk = 0);
-
-    // Translation is a special method to apply rewriters,
-    // It walk only once through a graph in the dependency order
-    // and apply all the applicable rewriters to the ops.
-    // So this method is only safe for the case that all rewriters
-    // are order free.
-    bool translation();
-
-    private: 
     graph *current_graph = nullptr;
     operation * lastOp = nullptr;
-    std::vector<std::unique_ptr<rewriterBase>> rewriters;
+    LGFContext *ctx = nullptr;
 };
 
 class rewriterBase {
     public:
     rewriterBase() = default;
     virtual ~rewriterBase() = default;
-    virtual int execute(painter &, operation * op) = 0;
+    virtual int execute( painter &, operation * op) = 0;
+    LGFContext* getContext(){ return ctx; }
+    LGFContext *ctx = nullptr;
 };
 
 template<typename concreteOp>
 class rewriter : public rewriterBase{
     public : rewriter() = default;
-    virtual bool rewrite(painter &, concreteOp *op) = 0;
-    virtual int execute(painter & rewriter,operation* op) override final{
+    virtual bool rewrite( painter &, concreteOp *op) = 0;
+    virtual int execute( painter & rewriter,operation* op) override final{
         // rewrite return value: 
         // 1 rewrite happen
         // 0 rewrite failed or not matched

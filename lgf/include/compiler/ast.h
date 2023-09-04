@@ -59,6 +59,7 @@ class moduleAST : public astBase {
         out.printIndent();
         out<<"}\n";
     }
+    std::string internalID;
 };
 
 class programAST {

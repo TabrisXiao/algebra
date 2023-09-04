@@ -1,0 +1,5 @@
+
+def Sin(variable a) -> variable;
+def Cos(variable a) -> variable;
+def Power(variable x, variable y) -> variable;
+def Derivative(variable f) -> variable;

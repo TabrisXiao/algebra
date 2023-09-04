@@ -1,10 +1,10 @@
 
 #ifndef MATH_AAB_OPS_H
 #define MATH_AAB_OPS_H
-#include "lgf/types.h"
 #include "lgf/operation.h"
+#include "libs/builtin/types.h"
 
-namespace lgf::math::aab{
+namespace lgf::AAB{
 
 // ---------- addOp ----------
 class addOp : public lgf::operation
@@ -118,6 +118,69 @@ class inverseOp : public lgf::operation
         auto op = new inverseOp();
         op->registerInput(input);
         op->createValue(input->getType(), "");
+        return op;
+    }
+    lgf::value* input(){ return inputValue(0); }
+    lgf::value* output(){ return outputValue(1); }
+};
+
+class powerOp : public lgf::operation
+{
+    public:
+    powerOp() : operation("aab::power"){}
+    static powerOp* build(lgf::LGFContext* ctx, lgf::value* x, lgf::value *y){
+        auto op = new powerOp();
+        op->registerInput(x, y);
+        op->createValue(x->getType(), "");
+        return op;
+    }
+    lgf::value* power(){ return inputValue(1); }
+    lgf::value* x(){ return inputValue(0); }
+    lgf::value* output() { return outputValue(1); }
+};
+
+class function1DOp: public lgf::operation {
+    public:
+    function1DOp(std::string name) : operation(name){}
+    static function1DOp* build(lgf::LGFContext* ctx, lgf::value* x){
+        auto op = new function1DOp("function1DOp");
+        op->registerInput(x);
+        op->createValue(x->getType(), "");
+        return op;
+    }
+    lgf::value* x(){ return inputValue(0); }
+    lgf::value* output(){ return outputValue(1); }
+};
+
+class funcSineOp : public function1DOp{
+    public:
+    funcSineOp() :  function1DOp("sine"){}
+    static funcSineOp* build (lgf::LGFContext* ctx, lgf::value* x){
+        auto op = new funcSineOp();
+        op->registerInput(x);
+        op->createValue(x->getType(), "");
+        return op;
+    }
+};
+
+class funcCosOp : public function1DOp{
+    public:
+    funcCosOp(): function1DOp("cos"){}
+    static funcCosOp* build (lgf::LGFContext* ctx, lgf::value* x){
+        auto op = new funcCosOp();
+        op->registerInput(x);
+        op->createValue(x->getType(), "");
+        return op;
+    }
+};
+
+class derivativeOp : public operation {
+    public:
+    derivativeOp() : operation("derivative"){}
+    static derivativeOp* build(lgf::LGFContext* ctx, lgf::value* func){
+        auto op = new derivativeOp();
+        op->registerInput(func);
+        op->createValue(func->getType(), "");
         return op;
     }
     lgf::value* input(){ return inputValue(0); }

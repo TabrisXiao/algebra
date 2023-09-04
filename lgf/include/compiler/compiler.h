@@ -9,14 +9,18 @@
 #include "compiler/parser.h"
 #include "compiler/streamer.h"
 #include "compiler/LGTranslator.h"
-#include "lgf/LGFModule.h"
+#include "libs/moduleManager.h"
 #include "utils.h"
 
 namespace lgf::compiler{
 
 class compiler {
     public: 
-    compiler() : pser(&io) {};
+    compiler() 
+    : pser(&io)
+    , builder( &ctx) {
+        moduleManager::get().loadInternalModule("Builtin", &ctx, nullptr);
+    };
     void compileInput(std::string file){
         ast=std::make_unique<programAST>();
         auto f = io.getFile(file);
@@ -27,14 +31,9 @@ class compiler {
         lgf::streamer sm;
         
         ast->emitIR(sm);
-        importModule<lgfModule>();
         builder.ctx = &ctx;
+        builder.printTranslatedIR = 1;
         builder.build(ast.get());
-    }
-    template<typename module>
-    void importModule(){
-        module a;
-        a.registerTypes();
     }
     void setRootPath(std::string p){
         io.internalModulePath = p;

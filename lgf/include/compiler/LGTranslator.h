@@ -1,27 +1,36 @@
 
 #ifndef COMPILER_LGFTRANSLATOR_H
 #define COMPILER_LGFTRANSLATOR_H
-#include "lgf/lgf.h"
+#include "libs/Builtin/Builtin.h"
+#include "libs/aab/ops.h"
 #include "compiler/ast.h"
-#include "libs/math.h"
 #include "ASTContext.h"
 #include "lgf/typeTable.h"
+#include "libs/moduleManager.h"
+#include "lgf/pass.h"
 
 namespace lgf::compiler {
 
 class LGTranslator {
     public: 
-    LGTranslator() = default;
+    LGTranslator(LGFContext* c)
+    : ctx(c)
+    , pnt(c) { }
     void build(programAST* program){
         TRACE_LOG;
         astctx = program->getContext();
         astctx->resetModulePtr();
-        lgf::math::registerTypes();
         pnt.gotoGraph(&c);
         for(auto & moduleast : program->modules){
             transplateASTModule(moduleast.get());
         }
-        c.assignID(0);
+        
+        moduleManager::get().start = &c;
+        moduleManager::get().bPrintFinalIR = printTranslatedIR;
+        if(printInitIRForEachModule){
+            moduleManager::get().enablePrintAfterPass();
+        }
+        moduleManager::get().run();
     }
     void printModuleList(){
         std::cout<<"map ("<<astctx->module->getData()->name<<") size "<<astctx->module->table.size()<<", list: ";
@@ -32,7 +41,10 @@ class LGTranslator {
     }
     void transplateASTModule(moduleAST* ast){
         TRACE_LOG;
-        auto module = pnt.paint<moduleOp>(ctx, ast->name);
+        auto module = pnt.paint<moduleOp>(ast->name);
+        if(!ast->internalID.empty()){
+            moduleManager::get().loadInternalModule(ast->internalID, ctx, module);
+        }
         pnt.gotoGraph(module);
         bool isMain = ast->name=="main";
         if(!isMain) astctx->moveToSubmodule(ast->name);
@@ -106,7 +118,7 @@ class LGTranslator {
             if(auto info = astctx->findSymbolInfoInCurrentModule(fc->id)){
                 callee = info->handle;
                 if(!callee) translateError("Function name is unknown: "+fc->id);
-                auto op = pnt.sketch<funcCallOp>(ctx, callee);
+                auto op = pnt.sketch<funcCallOp>(callee);
                 astctx->module = curASTModuleLoc;
                 return convertFunCall(fc, op);
             }
@@ -130,7 +142,7 @@ class LGTranslator {
         TRACE_LOG;
         auto ast = dynamic_cast<funcDeclAST*>(op.get());
         // assuming all function return variable for now.
-        auto funcOp = pnt.paint<funcDefineOp>(ctx, ast->funcID, ctx->getType<lgf::variable>());
+        auto funcOp = pnt.paint<funcDefineOp>(ast->funcID, ctx->getType<lgf::variable>());
         astctx->findSymbolInfoInCurrentModule(ast->funcID)->handle = funcOp->getCallee();
         astctx->createSubmoduleAndEnter(ast->funcID);
         for(auto i=0; i< ast->args.size(); i++){
@@ -141,7 +153,7 @@ class LGTranslator {
             astctx->addSymbolInfoToCurrentScope(argid, {"arg", arg->loc, arg->typeStr, funcOp->argument(i)});
         }
         if(!ast->returnTypeStr.empty())
-            funcOp->returnType = typeTable::get().parseTypeStr(ctx,ast->returnTypeStr);
+            funcOp->returnType = ctx->parseTypeStr(ast->returnTypeStr);
         
         if(!ast->isAbstract){
             funcOp->isAbstract = 0;
@@ -156,7 +168,7 @@ class LGTranslator {
     value* translateFuncCall(std::unique_ptr<astBase>& op){
         auto ast = dynamic_cast<funcCallAST*>(op.get());
         auto callee = astctx->findSymbolInfoInCurrentModule(ast->id)->handle;
-        auto fnCall = pnt.sketch<funcCallOp>(ctx, callee);
+        auto fnCall = pnt.sketch<funcCallOp>(callee);
         return convertFunCall(ast, fnCall);
     }
     value* convertFunCall(funcCallAST* ast, funcCallOp *op){
@@ -177,7 +189,7 @@ class LGTranslator {
         if(ast->hasValue()) {
             val = translateAST(ast->value);
         }
-        auto retOp = pnt.sketch<returnOp>(ctx);
+        auto retOp = pnt.sketch<returnOp>();
         value* ret = nullptr;
         if(val){
             retOp->registerInput(val);
@@ -197,7 +209,7 @@ class LGTranslator {
             auto & entry = it.second;
             if(entry.category == "var"){
                 auto type = parseType(entry.type);
-                auto op = pnt.paint<declOp>(ctx, type);
+                auto op = pnt.paint<declOp>(type);
                 op->output()->setSID("");
                 it.second.handle=op->output();
             }
@@ -214,9 +226,9 @@ class LGTranslator {
         auto ast = dynamic_cast<numberAST*>(op.get());
         cstDeclOp * lgfop;
         if(ast->isInt()){
-            lgfop = pnt.paint<cstDeclOp>(ctx, int(ast->number));
+            lgfop = pnt.paint<cstDeclOp>( int(ast->number));
         } else
-            lgfop = pnt.paint<cstDeclOp>(ctx, ast->number);
+            lgfop = pnt.paint<cstDeclOp>( ast->number);
         return lgfop->output();;
     }
     value* convertBinaryOp(std::unique_ptr<astBase>& op){
@@ -227,17 +239,18 @@ class LGTranslator {
         auto bop = ast->binaryOp;
         if(bop == "+"){
             // all the operation converted from ast should contained only 1 output.
-            return pnt.paint<math::aab::addOp>(ctx, lhs, rhs)->output();
+            return pnt.paint<AAB::addOp>(lhs, rhs)->output();
         }else if(bop == "-"){
             // all the operation converted from ast should contained only 1 output.
-            return pnt.paint<math::aab::minusOp>(ctx, lhs, rhs)->output();
+            return pnt.paint<AAB::minusOp>(lhs, rhs)->output();
         }else if(bop == "*"){
-            return pnt.paint<math::aab::multiplyOp>(ctx, lhs, rhs)->output();
+            return pnt.paint<AAB::multiplyOp>(lhs, rhs)->output();
         }else if(bop == "="){
             if(auto ptr = dynamic_cast<varAST*>(ast->lhs.get())){
-                auto ret = pnt.paint<assignOp>(ctx, lhs, rhs)->output();
-                astctx->findSymbolInfoInCurrentModule(ptr->id)->handle=ret;
-                return ret;
+                // auto ret = pnt.paint<updateOp>(ctx, lhs, rhs)->output();
+                // astctx->findSymbolInfoInCurrentModule(ptr->id)->handle=ret;
+                // return ret;
+                return rhs;
             }else {
                 translateError("lhs of assignment has to be a variable.");
             }
@@ -245,9 +258,8 @@ class LGTranslator {
         return nullptr;
     }
     type_t parseType(std::string typeStr){
-        return typeTable::get().parseTypeStr(ctx, typeStr);
+        return ctx->parseTypeStr(typeStr);
     }
-
     
     std::unique_ptr<moduleAST> main;
     painter pnt;
@@ -255,6 +267,8 @@ class LGTranslator {
     ASTContext *astctx=nullptr;
     LGFContext *ctx = nullptr;
     nestedSymbolicTable<moduleInfo>* temp_ptr = astctx;
+    bool printInitIRForEachModule = 0;
+    bool printTranslatedIR = 0;
 };
 
 }

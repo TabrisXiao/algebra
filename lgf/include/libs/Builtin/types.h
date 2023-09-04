@@ -1,9 +1,8 @@
 
-#ifndef INTERNAL_TYPES_H_
-#define INTERNAL_TYPES_H_
-#include "type.h"
-#include "LGFContext.h"
-#include "typeTable.h"
+#ifndef LGF_BUILTIN_TYPES_H_
+#define LGF_BUILTIN_TYPES_H_
+#include "lgf/type.h"
+#include "lgf/LGFContext.h"
 
 namespace lgf{
 
@@ -79,7 +78,7 @@ class listType : public type_t {
     int size = paser.parseNumber();
     paser.parseComma();
     auto elemID = paser.parseIdentifier();
-    auto fc = typeTable::get().findParser(elemID);
+    auto fc = ctx->getTypeTable().findParser(elemID);
     auto elemType = fc(paser, ctx);
     paser.parseGreaterThan();
     return ctx->getType<listType>(elemType, size);
