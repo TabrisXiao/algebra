@@ -16,8 +16,10 @@ namespace lgf::compiler{
 
 class compiler {
     public: 
-    compiler() : pser(&io) {
-        moduleManager::get().loadInternalModule("Builtin", &ctx);
+    compiler() 
+    : pser(&io)
+    , builder( &ctx) {
+        moduleManager::get().loadInternalModule("Builtin", &ctx, nullptr);
     };
     void compileInput(std::string file){
         ast=std::make_unique<programAST>();
@@ -30,6 +32,7 @@ class compiler {
         
         ast->emitIR(sm);
         builder.ctx = &ctx;
+        builder.printTranslatedIR = 1;
         builder.build(ast.get());
     }
     void setRootPath(std::string p){

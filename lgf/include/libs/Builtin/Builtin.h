@@ -21,7 +21,18 @@ class LGFBaseModule : public LGFModule {
     }
     virtual void pipeline(passManager& pm){}
 };
+namespace Builtin{
 
+class InterfaceInitPass : public passBase {
+    public:
+    InterfaceInitPass(moduleOp *) : passBase("BuiltinInterfaceInitPass") {}
+    virtual bool run() {return 0; }
+};
+
+std::unique_ptr<passBase> createInterfaceInitPass(moduleOp *m){
+    return std::make_unique<InterfaceInitPass>(m);
+}
+}
 }
 
 #endif

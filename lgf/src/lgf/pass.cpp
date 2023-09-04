@@ -1,54 +1,54 @@
 
-#include "lgf/painter.h"
+#include "lgf/pass.h"
 //#include "utility.h"
 using namespace lgf;
 
-bool painter::applyRewriterOnce(){
+bool passBase::applyRewriterOnce(painter &p, graph* g){
     bool ischanged = 0;
+    p.gotoGraph(g);
     for(auto ptr=rewriters.begin(); ptr!=rewriters.end(); ptr++)
     {
-        auto nodes = current_graph->getNodeList(); 
+        auto nodes = g->getNodeList(); 
         for(auto & node : nodes){
             if(node->isRemovable() || !node->isActive()) continue;
-            ischanged = (*ptr).get()->execute(*this, node) ||ischanged;
+            ischanged = (*ptr).get()->execute(p, node) ||ischanged;
         }
-        current_graph->clean();
     }
-    current_graph->verify();
+    g->verify();
     return ischanged;
 }
 //---------------------------------------------------
 
-int painter::applyRewriterGreedy(){
-    bool repeat = applyRewriterOnce();
-    current_graph->clean();
+int passBase::applyRewriterGreedy(painter &p, graph* g){
+    p.gotoGraph(g);
+    bool repeat = applyRewriterOnce(p, g);
+    g->clean();
     int counts = 1;
     while(repeat){
         counts++;
-        repeat = applyRewriterOnce();
-        current_graph->clean();
+        repeat = applyRewriterOnce(p, g);
+        g->clean();
     }
     return counts;
 }
 
-bool painter::walkApplyRewriterOnce(bool deepWalk){
-    current_graph->walk([&](operation* op){
+bool passBase::walkApplyRewriterOnce(painter &p, graph* g, bool deepWalk){
+    p.gotoGraph(g);
+    g->walk([&](operation* op){
         if(op->isRemovable() || !op->isActive()) return;
         for(auto ptr=rewriters.begin(); ptr!=rewriters.end(); ptr++){
-            (*ptr).get()->execute(*this, op);
+            (*ptr).get()->execute(p, op);
         }
     }, 1, 1, 1, deepWalk);
-    current_graph->clean();
     return 0;
 }
 
-bool painter::translation(){
-    current_graph->walk([&](operation* op){
+bool passBase::translation(painter &p, graph* g){
+    g->walk([&](operation* op){
         if(op->isRemovable() || !op->isActive()) return;
         for(auto ptr=rewriters.begin(); ptr!=rewriters.end(); ptr++){
-            (*ptr).get()->execute(*this, op);
+            (*ptr).get()->execute(p, op);
         }
     }, 1, 1, 1, 0);
-    current_graph->clean();
     return 0;
 }

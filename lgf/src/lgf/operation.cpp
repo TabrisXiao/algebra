@@ -49,6 +49,17 @@ void value::dropUsers(){
     }
 }
 
+//---------------------------------------------------
+std::unique_ptr<value>* value::getPtr(){
+    auto op = getDefiningOp();
+    for(auto & output : op->getOutputs()){
+        if(this == output.get()){
+            return &output;
+        }
+    }
+    return nullptr;
+}
+
 //////////////////////////////////////////////////////
 
 std::string operation::representInputs(){
@@ -190,6 +201,7 @@ void graph::printGraph() {
     global::stream::getInstance()<<"{\n";
     global::stream::getInstance().incrIndentLevel();
     for(auto & op : nodes){
+        if(op->isRemovable() || !op->isActive()) continue;
         op->print();
     }
     global::stream::getInstance().decrIndentLevel();
@@ -235,8 +247,10 @@ void graph::clean()
         if(op->isRemovable()){
             delete op;
             iter = nodes.erase(iter);
+        } else if (auto g = dynamic_cast<graph*>(op)){
+            g->clean();
         }
-        else iter++;
+        iter++;
     }
 }
 //---------------------------------------------------

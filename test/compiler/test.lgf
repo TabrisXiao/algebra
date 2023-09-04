@@ -1,4 +1,5 @@
+import lgf.AAB
 import lgf.LinearAlg
 
-e = LinearAlg.UnitMatrix(5) + 4;
-// a = linearAlg::Sum(2,3);
+a = AAB.Power(3, 3)+5;
+// e = LinearAlg.UnitMatrix(5) + 4;

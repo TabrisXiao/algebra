@@ -1,9 +1,9 @@
 #ifndef MATH_TYPES_H
 #define MATH_TYPES_H
-#include "lgf/types.h"
+#include "libs/Builtin/types.h"
 #include "lgf/typeTable.h"
 
-namespace lgf::math{
+namespace lgf{
 
 class integer: public lgf::variable {
     public:
@@ -60,14 +60,38 @@ class irrationalNumber: public lgf::variable {
   }
 };
 
-// void registerTypes(){
-//   REGISTER_TYPE(integer, "integer");
-//   REGISTER_TYPE(natureNumber, "natureNumber");
-//   REGISTER_TYPE(realNumber, "realNumber");
-//   REGISTER_TYPE(rationalNumber, "rationalNumber");
-//   REGISTER_TYPE(irrationalNumber, "irrationalNumber");
-//   REGISTER_TYPE(tensor_t, "tensor");
-// }
+class infinitesimalImpl : public lgf::typeImpl { 
+  public: 
+  infinitesimalImpl(lgf::type_t elemType_)
+  : typeImpl("infinitesimal")
+  , elemType(elemType_) {}
+
+  virtual std::string represent(){
+    printer p;
+    p<<id<<"<";
+    p<<elemType.represent()<<">";
+    return p.dump();
+  }
+  lgf::type_t elemType;
+};
+
+class infinitesimal : public lgf::variable {
+  public:
+  infinitesimal() = default;
+  static std::unique_ptr<lgf::typeImpl> createImpl(type_t elemType){
+    return std::move(std::make_unique<infinitesimalImpl>(elemType));
+  }
+  type_t getElemType(){ return dynamic_cast<tensorTypeImpl*>(impl)->elemType; }
+
+  static type_t parse(lgf::liteParser& p, lgf::LGFContext* ctx){
+    p.parseLessThan();
+    auto elemID = p.parseIdentifier();
+    auto fc = ctx->getTypeTable().findParser(elemID);
+    auto elemType = fc(p, ctx);
+    p.parseGreaterThan();
+    return ctx->getType<tensor_t>(elemType);
+  }
+};
 
 }
 #endif

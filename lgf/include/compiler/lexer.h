@@ -88,6 +88,11 @@ class lexer {
     token getToken();
     token getNextToken(){
         curTok = getToken();
+        if (curTok == tok_comment) {
+            getNextLine();
+            lastChar = ' ';
+            return getNextToken();
+        }
         return curTok;
     }
 

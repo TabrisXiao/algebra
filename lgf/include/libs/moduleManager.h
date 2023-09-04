@@ -6,14 +6,17 @@
 #include <functional>
 #include "Builtin/Builtin.h"
 #include "LinearAlg/LinearAlg.h"
+#include "AAB/aab.h"
 #include "lgf/LGFContext.h"
 
 namespace lgf {
-class moduleManager {
+class moduleManager : public passManager{
     public:
+    using create_pass_func_t = std::function<std::unique_ptr<passBase>(moduleOp*)>;
     using type_reg_func_t = std::function<void(LGFContext*)>;
     struct moduleInfo {
         type_reg_func_t type_reg_f;
+        create_pass_func_t init_pass_creator;
     };
     moduleManager(moduleManager &) = delete;
     moduleManager(moduleManager &&) = delete;
@@ -28,16 +31,19 @@ class moduleManager {
         return table.find(id);
     }
 
-    void loadInternalModule(std::string mid, LGFContext *ctx){
+    void loadInternalModule(std::string mid, LGFContext *ctx, lgf::moduleOp* module){
         auto entry = _mtble->findInfo(mid);
         THROW_WHEN(entry==nullptr, "The module: "+mid+" is unknown!");
+        addPass(entry->init_pass_creator(module));
         entry->type_reg_f(ctx);
     }
 
     protected:
     moduleManager(){
-        table.addEntry("Builtin", {&LGFBaseModule::registerTypes});
-        table.addEntry("LinearAlg", {&LinearAlgModule::registerTypes});
+        name = "LGFModule Init";
+        table.addEntry("Builtin", {&LGFBaseModule::registerTypes, &Builtin::createInterfaceInitPass});
+        table.addEntry("LinearAlg", {&LinearAlgModule::registerTypes, &LinearAlg::createInterfaceInitPass});
+        table.addEntry("AAB", {&AABModule::registerTypes, &AAB::createInterfaceInitPass});
     }
     inline static moduleManager *_mtble=nullptr;
     symbolTable<moduleInfo> table;

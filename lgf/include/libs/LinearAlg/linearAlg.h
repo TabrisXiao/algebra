@@ -4,6 +4,7 @@
 #include "lgf/LGFModule.h"
 #include "libs/Builtin/types.h"
 #include "types.h"
+#include "passes.h"
 
 namespace lgf{
 class LinearAlgModule : public LGFModule {

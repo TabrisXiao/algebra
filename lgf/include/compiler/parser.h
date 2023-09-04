@@ -22,6 +22,7 @@ class parser{
     ~parser(){}
     parser(fileIO *io_) : io(io_) { }
     programAST* parseMainFile(fs::path path, programAST* ast_){
+        TRACE_LOG;
         program = ast_;
         ctx = ast_->getContext();
         lx.loadBuffer(path);
@@ -68,10 +69,10 @@ class parser{
             switch(lx.getCurToken()){
                 case tok_eof:
                     break;
-                case tok_comment:
-                    lx.getNextLine();
-                    lx.getNextToken();
-                    continue;
+                // case tok_comment:
+                //     lx.getNextLine();
+                //     lx.getNextToken();
+                //     continue;
                 case tok_module:
                     lx.consume(tok_module);
                     id = lx.parseIdentifier();
@@ -366,6 +367,7 @@ class parser{
     }
 
     std::unique_ptr<astBase> parseFuncCall(location loc, std::string id){
+        TRACE_LOG;
         // auto info = idif.scope->find(idif.id);
         // if(info==nullptr || info->category!="func")
         // parseError("The function: "+idif.id+" is unknown!");
