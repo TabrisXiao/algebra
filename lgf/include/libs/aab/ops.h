@@ -3,6 +3,7 @@
 #define MATH_AAB_OPS_H
 #include "lgf/operation.h"
 #include "libs/builtin/types.h"
+#include "lgf/group.h"
 
 namespace lgf::AAB{
 
@@ -10,7 +11,7 @@ namespace lgf::AAB{
 class addOp : public lgf::operation
 {
     public:
-    addOp() : operation("aab::add") {}
+    addOp() : operation("AAB::add") {}
     static addOp* build(lgf::LGFContext* ctx, lgf::value* lhs, lgf::value* rhs){
         auto op = new addOp();
         op->registerInput(lhs, rhs);
@@ -30,7 +31,7 @@ class addOp : public lgf::operation
 // ---------- minusOp ----------
 class sumOp : public lgf::operation {
     public:
-    sumOp() : operation("aab::sumOp") {}
+    sumOp() : operation("AAB::sumOp") {}
     static sumOp* build(lgf::LGFContext* ctx, std::vector<value*>& vec){
         auto op = new sumOp();
         op->registerInputs(vec);
@@ -51,7 +52,7 @@ class negativeOp : public lgf::operation
 {
     public:
     public:
-    negativeOp() : operation("aab::negative") {}
+    negativeOp() : operation("AAB::negative") {}
     static negativeOp* build(lgf::LGFContext* ctx, lgf::value* input){
         auto op = new negativeOp();
         op->registerInput(input);
@@ -68,10 +69,10 @@ class negativeOp : public lgf::operation
 };
 
 // ---------- minusOp ----------
-class minusOp : public lgf::operation
+class minusOp : public lgf::operation, public normalizer
 {
     public:
-    minusOp() : operation("aab::minus") {}
+    minusOp() : operation("AAB::minus") {}
     static minusOp* build(lgf::LGFContext* ctx, lgf::value* lhs, lgf::value* rhs){
         auto op = new minusOp();
         op->registerInput(lhs, rhs);
@@ -86,13 +87,17 @@ class minusOp : public lgf::operation
         p<<representOutputs()<<" = "<<getSID() <<" : "<<lhs()->represent()<<" - "<<rhs()->represent();
         return p.dump();
     }
+    virtual bool rewrite(painter& p, operation* op){
+        std::cout<<"---------------find minus renomalizer!"<<std::endl;
+        return 0;
+    }
 };
 
 // ---------- multiplyOp ----------
 class multiplyOp : public lgf::operation
 {
     public:
-    multiplyOp() : operation("aab::multiply") {}
+    multiplyOp() : operation("AAB::multiply") {}
     static multiplyOp* build(lgf::LGFContext* ctx, lgf::value* lhs, lgf::value* rhs){
         auto op = new multiplyOp();
         op->registerInput(lhs, rhs);
@@ -113,7 +118,7 @@ class multiplyOp : public lgf::operation
 class inverseOp : public lgf::operation
 {
     public:
-    inverseOp() : operation("aab::inverse") {}
+    inverseOp() : operation("AAB::inverse") {}
     static inverseOp* build(lgf::LGFContext* ctx, lgf::value* input){
         auto op = new inverseOp();
         op->registerInput(input);
@@ -124,10 +129,26 @@ class inverseOp : public lgf::operation
     lgf::value* output(){ return outputValue(1); }
 };
 
+// ---------- quotientOp ----------
+class quotientOp : public lgf::operation
+{
+    public:
+    quotientOp() : operation("AAB::quotient"){}
+    static quotientOp* build(lgf::LGFContext *ctx, lgf::value* x, lgf::value* y){
+        auto op = new quotientOp();
+        op->registerInput(x, y);
+        op->createValue(x->getType(), "");
+        return op;
+    }
+    lgf::value* numerator(){ return inputValue(0); }
+    lgf::value* denominator(){ return inputValue(1); }
+    lgf::value* output(){ return outputValue(1); }
+};
+
 class powerOp : public lgf::operation
 {
     public:
-    powerOp() : operation("aab::power"){}
+    powerOp() : operation("AAB::power"){}
     static powerOp* build(lgf::LGFContext* ctx, lgf::value* x, lgf::value *y){
         auto op = new powerOp();
         op->registerInput(x, y);
@@ -177,13 +198,13 @@ class funcCosOp : public function1DOp{
 class derivativeOp : public operation {
     public:
     derivativeOp() : operation("derivative"){}
-    static derivativeOp* build(lgf::LGFContext* ctx, lgf::value* func){
+    static derivativeOp* build(lgf::LGFContext* ctx, lgf::value* func, value* var){
         auto op = new derivativeOp();
-        op->registerInput(func);
+        op->registerInput(func, var);
         op->createValue(func->getType(), "");
         return op;
     }
-    lgf::value* input(){ return inputValue(0); }
+    lgf::value* func(){ return inputValue(0); }
     lgf::value* output(){ return outputValue(1); }
 };
 
