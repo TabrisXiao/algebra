@@ -13,20 +13,22 @@ namespace lgf::compiler {
 
 class LGTranslator {
     public: 
-    LGTranslator(LGFContext* c)
-    : ctx(c)
-    , pnt(c) { }
+    LGTranslator(LGFContext* c_, canvas* can)
+    : ctx(c_)
+    , pnt(c_)
+    , c(can) { }
     void build(programAST* program){
         TRACE_LOG;
         astctx = program->getContext();
         astctx->resetModulePtr();
-        pnt.gotoGraph(&c);
+        pnt.gotoGraph(c);
         for(auto & moduleast : program->modules){
             transplateASTModule(moduleast.get());
         }
         
-        moduleManager::get().start = &c;
+        moduleManager::get().start = c;
         moduleManager::get().bPrintFinalIR = printTranslatedIR;
+        moduleManager::get().bPrintInitialIR = printTranslatedIR;
         if(printInitIRForEachModule){
             moduleManager::get().enablePrintAfterPass();
         }
@@ -263,7 +265,7 @@ class LGTranslator {
     
     std::unique_ptr<moduleAST> main;
     painter pnt;
-    canvas c;
+    canvas* c;
     ASTContext *astctx=nullptr;
     LGFContext *ctx = nullptr;
     nestedSymbolicTable<moduleInfo>* temp_ptr = astctx;

@@ -5,7 +5,6 @@
 #include "painter.h"
 
 namespace lgf{
-
 class passBase {
 public :
     passBase (const char * name) : _pass_name (name) {}
@@ -45,12 +44,22 @@ public :
     graph * g=nullptr;
 };
 
+
+
+
+
+
 class passManager{
     public : 
     passManager() = default;
-    passManager(graph *op) {start = op;}
+    passManager(LGFContext* c, graph *op) {ctx = c, start = op;}
     void enablePrintAfterPass(){bPrintAfterPass = 1;}
     void run(){
+        if(bPrintInitialIR) 
+        {   OSTREAM<<"\n------ Initial "<<name<<" ------\n";
+            start->assignID(0);
+            start->print();
+        }
         if(bPrintAfterPass){
                 OSTREAM<<"------ Init IR ------\n";
                 start->assignID(0);
@@ -68,7 +77,7 @@ class passManager{
             }
         }
         if(bPrintFinalIR) 
-        {   OSTREAM<<"\n------ "<<name<<" ------\n";
+        {   OSTREAM<<"\n------ IR after "<<name<<" ------\n";
             start->assignID(0);
             start->print();
         }
@@ -79,10 +88,12 @@ class passManager{
         ps->ctx = ctx;
         passes.push_back(std::move(ps));
     }
+    void addNormalizationPass();
     std::vector<std::unique_ptr<passBase>> passes;
 
     bool bPrintAfterPass = 0;
     bool bPrintBeforePass = 0;
+    bool bPrintInitialIR = 0;
     bool bPrintFinalIR = 0;
     graph * start = nullptr;
     LGFContext* ctx = nullptr;

@@ -1,5 +1,6 @@
 
 #include "lgf/pass.h"
+#include "lgf/group.h"
 //#include "utility.h"
 using namespace lgf;
 
@@ -12,6 +13,9 @@ bool passBase::applyRewriterOnce(painter &p, graph* g){
         for(auto & node : nodes){
             if(node->isRemovable() || !node->isActive()) continue;
             ischanged = (*ptr).get()->execute(p, node) ||ischanged;
+            if(auto subg = dynamic_cast<graph*>(node)){
+                applyRewriterOnce(p, subg);
+            }
         }
     }
     g->verify();
@@ -51,4 +55,8 @@ bool passBase::translation(painter &p, graph* g){
         }
     }, 1, 1, 1, 0);
     return 0;
+}
+
+void passManager::addNormalizationPass(){
+    addPass(std::make_unique<normalizationPass>());
 }
