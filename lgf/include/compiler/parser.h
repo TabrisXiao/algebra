@@ -19,6 +19,7 @@ namespace lgf::compiler{
 
 class parser{
     public:
+    using region = nestedSymbolicTable<moduleInfo>;
     ~parser(){}
     parser(fileIO *io_) : io(io_) { }
     programAST* parseMainFile(fs::path path, programAST* ast_){
@@ -435,24 +436,35 @@ class parser{
                 scanFuncDefAST(ptr);
                 break;
             case kind_funcCall:
-                scanFuncCall(ptr);
+                scanFuncCall(ptr, ctx->module);
                 break;
             case kind_variable:
                 scanVarAST(ptr);
                 break;
             case kind_access:
-                scanAccessAST(ptr);
+                scanAccessAST(ptr, ctx->module);
                 break;
             default:
                 break;
         }
     }
     
-    void scanAccessAST(std::unique_ptr<astBase>& ptr){
+    void scanAccessAST(std::unique_ptr<astBase>& ptr,
+    nestedSymbolicTable<moduleInfo>* workRegion){
         auto ast = dynamic_cast<accessAST*>(ptr.get());
         auto var = dynamic_cast<varAST*>(ast->lhs.get());
+        auto cmodule = ctx->module;
         if(auto varInfo = ctx->findSymbolInfoInCurrentModule(var->id)){
+            parseError(ast, "Access module haven't implementyet!");
         } else if(auto minfo = ctx->findModule(var->id)){
+            ctx->module = minfo;
+            if(auto last = dynamic_cast<accessAST*>(ast->rhs.get())){
+                scanAccessAST(ast->rhs, cmodule);
+            }
+            if(auto fc = dynamic_cast<funcCallAST*>(ast->rhs.get())){
+                ctx->module = cmodule;
+                scanFuncCall(ast->rhs, minfo);
+            }
         }else parseError(var, "Can't find the id: "+var->id);
     }
     void scanVarAST(std::unique_ptr<astBase>& ptr){
@@ -477,12 +489,14 @@ class parser{
             parseError(ast, "id "+ast->funcID+" is redefined, original definition is at "+ptr->loc.string());
         ctx->addSymbolInfoToCurrentScope(ast->funcID, {"func", ast->loc});
     }
-    void scanFuncCall(std::unique_ptr<astBase>& ptr){
+    void scanFuncCall(std::unique_ptr<astBase>& ptr, region* funcRegion){
         auto ast = dynamic_cast<funcCallAST*>(ptr.get());
-        auto idif = ensureIDExists(ast->id);
+        auto idif = funcRegion->getData()->ids.find(ast->id);
         if(!idif) compileErrorAt(ast, "id "+ast->id+" is unknown.");
         if(idif->category!="func") compileErrorAt(ast, "id "+ast->id+" is not a function and is defined at "+idif->loc.string());
-        scanBlock(ast->args);
+        for(auto & arg : ast->args){
+            scanAST(arg);
+        }
     }
 
     fileIO *io=nullptr;

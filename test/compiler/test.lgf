@@ -1,6 +1,6 @@
 import lgf.AAB
 import lgf.LinearAlg
 
-x;
-a = AAB.Derivative(x*x, x) -5;
+
+a = AAB.Derivative(x*x, x) - 5;
 // e = LinearAlg.UnitMatrix(5) + 4;
