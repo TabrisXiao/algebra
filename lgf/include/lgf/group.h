@@ -10,14 +10,14 @@ namespace lgf{
 class group {
     public:
     group() = default;
-    virtual bool rewrite( painter &, operation *op) = 0;
+    virtual bool rewrite( painter, operation *op) = 0;
 };
 
 template<typename groupType>
 class groupRewriter : public rewriterBase{
     public: 
     groupRewriter() = default;
-    virtual int execute( painter & rewriter,operation* op) override final{
+    virtual int execute( painter rewriter,operation* op) override final{
         // rewrite return value: 
         // 1 rewrite happen
         // 0 rewrite failed or not matched

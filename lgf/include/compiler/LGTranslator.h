@@ -182,7 +182,7 @@ class LGTranslator {
             op->registerInput(arg);
         }
         //op->addArgs(args);
-        pnt.addToGraph(op);
+        pnt.addOpAtCurrentPoint(op);
         return op->returnValue();
     }
     value* translateReturnOp(std::unique_ptr<astBase>& op){
@@ -199,7 +199,7 @@ class LGTranslator {
         else{
             pnt.appendOp(retOp);
         }
-        pnt.addToGraph(retOp);
+        pnt.addOpAtCurrentPoint(retOp);
         
         return ret;
     }

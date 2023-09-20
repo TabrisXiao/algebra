@@ -355,9 +355,7 @@ class graph : public operation{
         clean();
         return;
     }
-    // regist the op in this graph into book, if this op has no
-    // inputs, it will be appended to the entrance op.
-    void registerOp(operation* op);
+
     graph* getGraph() {return dynamic_cast<graph*>(this);}
 
     virtual void printGraph();
@@ -374,6 +372,10 @@ class graph : public operation{
             THROW_WHEN(op->verify(), "Op verification failed!");
         }, 1);
     }
+
+    // this function sort the nodes in a order that the op depends on
+    // others will always behind its inputs.
+    //void sortByDepdency();
 
     // return how many operations graph contained
     int getNodeSize(){ return int(nodes.size()); }

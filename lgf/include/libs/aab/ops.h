@@ -58,7 +58,7 @@ class addOp : public lgf::operation, public normalizer
         return p.dump();
     }
 
-    virtual bool rewrite(painter& p, operation* op){
+    virtual bool rewrite(painter p, operation* op){
         
         return 0;
     }
@@ -105,7 +105,7 @@ class minusOp : public lgf::operation, public normalizer
         p<<representOutputs()<<" = "<<getSID() <<" : "<<lhs()->represent()<<" - "<<rhs()->represent();
         return p.dump();
     }
-    virtual bool rewrite(painter& p, operation* op){
+    virtual bool rewrite(painter p, operation* op){
         std::cout<<"---------------find minus renomalizer!"<<std::endl;
         return 0;
     }
@@ -146,7 +146,7 @@ class inverseOp : public lgf::operation, public normalizer
     }
     lgf::value* input(){ return inputValue(0); }
     lgf::value* output(){ return outputValue(1); }
-    virtual bool rewrite(painter& p, operation* op){
+    virtual bool rewrite(painter p, operation* op){
         // needs to make it as inverse(x) = 1/x
         return 0;
     }
@@ -264,6 +264,13 @@ class factorOp : public operation, public normalizer{
         int count = 0;
         lgf::value* ret=nullptr;
     };
+
+    virtual std::string represent(){
+        printer p;
+        p<<representOutputs()<<" = "<<getSID() <<" : "<<target()->represent()<<" out of "<<exp()->represent();
+        return p.dump();
+    }
+
     factorInfo factorImpl(painter& p, value* nodeValue, value* target){
         factorInfo info;
         // check if current value is the target
@@ -304,15 +311,20 @@ class factorOp : public operation, public normalizer{
         info.ret = nodeValue;
         return info;
     }
-    virtual bool rewrite(painter& p, operation* op){
+    virtual bool rewrite(painter p, operation* op){
         auto fop = dynamic_cast<factorOp*>(op);
         auto exp = fop->exp();
         auto target = fop->target();
         auto info = factorImpl(p, exp, target);
+        p.setPaintPointAt(op);
         if(info.count==1){
-            std::cout<<"replaceing"<<std::endl;
             p.replaceOp<multiplyOp>(fop, target, info.ret);
-            std::cout<<"done"<<std::endl;
+        } else if(info.count>1){
+            auto cst = p.paint<cstDeclOp>(info.count);
+            auto power = p.paint<powerOp>(target, cst->output());
+            p.replaceOp<multiplyOp>(fop, power->output(), info.ret);
+        } else {
+            fop->replaceBy(exp->getDefiningOp());
         }
         return 0;
     }

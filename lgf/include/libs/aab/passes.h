@@ -8,10 +8,10 @@ namespace lgf::AAB{
 class InterfaceInitRewriter : public rewriter<funcDefineOp>{
     public:
     InterfaceInitRewriter() = default;
-    virtual bool rewrite(painter &p, funcDefineOp *op){
+    virtual bool rewrite(painter p, funcDefineOp *op){
         auto users = op->getCallee()->getUsers();
         for(auto & user : users){
-            auto tempg = p.current_graph;
+            auto tempg = p.getGraph();
             auto fc = dynamic_cast<funcCallOp*>(user);
             if(op->id=="Power"){
                 p.gotoGraph(user->getParentGraph());
@@ -48,6 +48,7 @@ class InterfaceInitPass : public passBase{
         painter p(getContext());
         addRewriter<InterfaceInitRewriter>(); 
         applyRewriterOnce(p, module);
+        module->erase();
         return 0;
     }
     moduleOp* module = nullptr;

@@ -12,7 +12,7 @@ namespace LinearAlg{
 class UnitMatrixInterfaceInit : public rewriter<funcDefineOp>{
     public:
     UnitMatrixInterfaceInit() = default;
-    bool rewrite(painter & p, funcDefineOp* op){
+    bool rewrite(painter p, funcDefineOp* op){
         auto users = op->getCallee()->getUsers();
         for(auto & user : users){
 
@@ -27,7 +27,9 @@ class InterfaceInitPass : public passBase{
     InterfaceInitPass(moduleOp* op) : passBase("LinearAlgInterfaceInitPass") {
         module = op;
     }
-    virtual bool run() final { return 0; }
+    virtual bool run() final { 
+        module->erase();
+        return 0; }
     moduleOp *module = nullptr;
 };
 

@@ -236,13 +236,6 @@ void graph::assignID(int n0 ){
 }
 //---------------------------------------------------
 
-void graph::registerOp(operation* op){
-    op->setParentGraph(this);
-    if(op->getInputSize() == 0) op->appendTo(dynamic_cast<operation*>(&entry)); 
-    nodes.push_back(op);
-}
-//---------------------------------------------------
-
 void graph::clean()
 {
     for(auto iter = nodes.begin(); iter!=nodes.end(); )

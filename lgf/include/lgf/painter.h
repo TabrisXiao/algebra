@@ -16,7 +16,14 @@ class rewriterBase;
 
 class painter {
     public : 
+    struct paintPoint{
+        graph* g=nullptr;
+        std::vector<operation*>::iterator iter;
+    };
     painter(LGFContext * ctx_) : ctx(ctx_) {}
+    painter(painter &p)
+    : point(p.getPaintPoint())
+    , ctx(p.getContext()){}
     ~painter(){}
     template<typename obj>
     obj* sketch(){
@@ -28,20 +35,40 @@ class painter {
     }
     template<typename obj, typename...ARGS>
     obj* paint(ARGS ...args){
-        CHECK_CONDITION(current_graph!=nullptr, "No graph associated to the painter!");
-        auto ptr = sketch<obj>(args...);
-        current_graph->registerOp(ptr);
-        lastOp = ptr;
-        return ptr;
+        CHECK_CONDITION(point.g!=nullptr, "No graph associated to the painter!");
+        auto op = sketch<obj>(args...);
+        //add to graph
+        op->setParentGraph(point.g);
+        if(op->getInputSize() == 0) 
+            op->appendTo(dynamic_cast<operation*>(&(point.g->getEntry())));
+        point.iter = point.g->getNodeList().insert(point.iter, op)+1;
+        lastOp = op;
+        return op;
     }
     template<typename obj>
     obj* paint(){
         CHECK_CONDITION(current_graph!=nullptr, "No graph associated to the painter!");
-        auto ptr = sketch<obj>();
-        current_graph->registerOp(ptr);
-        lastOp = ptr;
-        
-        return ptr;
+        auto op = sketch<obj>();
+        //add to graph
+        op->setParentGraph(point.g);
+        if(op->getInputSize() == 0) 
+            op->appendTo(dynamic_cast<operation*>(&(point.g->getEntry())));
+        point.iter = point.g->getNodeList().insert(point.iter, op)+1;
+        lastOp = op;
+        return op;
+    }
+
+    void setPaintPointAt(operation* op){
+        point.g = op->getParentGraph();
+        auto & vec = point.g->getNodeList();
+        point.iter=std::find(vec.begin(), vec.end(),op);
+    }
+
+    void addOpAtCurrentPoint(operation* op){
+        op->setParentGraph(point.g);
+        if(op->getInputSize() == 0) 
+            op->appendTo(dynamic_cast<operation*>(&(point.g->getEntry())));
+        point.iter = point.g->getNodeList().insert(point.iter, op);
     }
 
     // making an Op depends on the lastOp so that in a dependency walk order, 
@@ -54,20 +81,6 @@ class painter {
         }
         lastOp = op;
     }
-    //add op to the current graph
-    void addToGraph(operation* op){
-        current_graph->registerOp(op);
-    }
-
-    // // create a new op to replace the op1's users
-    // template<typename obj, typename...ARGS>
-    // obj* replaceOp(operation *op1, ARGS ...args){
-    //     auto op2 = sketch<obj>(args...);
-    //     op1->replaceBy(op2);
-    //     op1->dropAllInputs();
-    //     op1->setRemovable();
-    //     return op2;
-    // }
 
     // create a new op to replace the op1's users
     template<typename obj>
@@ -130,19 +143,22 @@ class painter {
         return ;}
     
     void gotoGraph(graph * reg_) {
-        current_graph = reg_;
+        point.g = reg_;
+        point.iter = reg_->getNodeList().end();
     }
+
+    paintPoint getPaintPoint(){ return point; }
     
-    graph* getGraph(){ return current_graph;}
+    graph* getGraph(){ return point.g;}
     void gotoParentGraph(){
-        if(!current_graph) return;
-        current_graph = current_graph->getParentGraph(); 
+        if(!point.g) return;
+        gotoGraph(point.g->getParentGraph());
     }
     graph* getParentGraph(){ 
-        if(!current_graph) return nullptr;
-        return current_graph->getParentGraph(); }
-
-    graph *current_graph = nullptr;
+        if(!point.g) return nullptr;
+        return point.g->getParentGraph(); }
+    LGFContext * getContext(){ return ctx; }
+    paintPoint point;
     operation * lastOp = nullptr;
     LGFContext *ctx = nullptr;
 };
@@ -151,7 +167,7 @@ class rewriterBase {
     public:
     rewriterBase() = default;
     virtual ~rewriterBase() = default;
-    virtual int execute( painter &, operation * op) = 0;
+    virtual int execute( painter, operation * op) = 0;
     LGFContext* getContext(){ return ctx; }
     LGFContext *ctx = nullptr;
 };
@@ -159,8 +175,8 @@ class rewriterBase {
 template<typename concreteOp>
 class rewriter : public rewriterBase{
     public : rewriter() = default;
-    virtual bool rewrite( painter &, concreteOp *op) = 0;
-    virtual int execute( painter & rewriter,operation* op) override final{
+    virtual bool rewrite( painter, concreteOp *op) = 0;
+    virtual int execute( painter rewriter,operation* op) override final{
         // rewrite return value: 
         // 1 rewrite happen
         // 0 rewrite failed or not matched
