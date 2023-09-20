@@ -176,10 +176,14 @@ void operation::replaceBy(operation* new_op){
         auto output = outputs[i].get();
         auto& users = output->getUsers();
         for(auto &user : users){
-            user->inputs[i] = new_op->outputs[i].get();
+            for(auto j =0; j<user->getInputSize(); j++){
+                if( user->inputs[j] == output )
+                    user->inputs[j] = new_op->outputs[i].get();
+            }
         }
         output->getUsers().clear();
     }
+    erase();
 }
 
 //////////////////////////////////////////////////////
@@ -245,12 +249,12 @@ void graph::clean()
     {
         operation* op =(*iter);
         if(op->isRemovable()){
-            delete op;
             iter = nodes.erase(iter);
+            delete op;
         } else if (auto g = dynamic_cast<graph*>(op)){
             g->clean();
-        }
-        iter++;
+            iter++;
+        } else iter++;
     }
 }
 //---------------------------------------------------

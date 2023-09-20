@@ -8,7 +8,38 @@
 namespace lgf::AAB{
 
 // ---------- addOp ----------
-class addOp : public lgf::operation
+
+// ---------- minusOp ----------
+class sumOp : public lgf::operation {
+    public:
+    sumOp() : operation("AAB::sumOp") {}
+    static sumOp* build(lgf::LGFContext* ctx, std::vector<value*>& vec){
+        auto op = new sumOp();
+        op->registerInputs(vec);
+        op->createValue(vec[0]->getType(), "");
+        return op;
+    }
+    static sumOp* build(lgf::LGFContext* ctx){
+        auto op = new sumOp();
+        return op;
+    }
+    template<typename ...ARGS>
+    static sumOp* build(lgf::LGFContext* ctx, ARGS ... args ){
+        auto op = new sumOp();
+        op->registerInput(args...);
+        op->createValue(op->inputValue(0)->getType(), "");
+        return op;
+    }
+    lgf::value* input(int i=0){ return inputValue(i); }
+    lgf::value* output(){ return outputValue(1); }
+    virtual std::string represent(){
+        printer p;
+        p<<representOutputs()<<" = "<<getSID() <<" : "<<representInputs();
+        return p.dump();
+    }
+};
+
+class addOp : public lgf::operation, public normalizer
 {
     public:
     addOp() : operation("AAB::add") {}
@@ -26,26 +57,13 @@ class addOp : public lgf::operation
         p<<representOutputs()<<" = "<<getSID() <<" : "<<inputValue(0)->represent()<<" + "<<inputValue(1)->represent();
         return p.dump();
     }
+
+    virtual bool rewrite(painter& p, operation* op){
+        
+        return 0;
+    }
 };
 
-// ---------- minusOp ----------
-class sumOp : public lgf::operation {
-    public:
-    sumOp() : operation("AAB::sumOp") {}
-    static sumOp* build(lgf::LGFContext* ctx, std::vector<value*>& vec){
-        auto op = new sumOp();
-        op->registerInputs(vec);
-        op->createValue(vec[0]->getType(), "");
-        return op;
-    }
-    lgf::value* input(int i=0){ return inputValue(i); }
-    lgf::value* output(){ return outputValue(1); }
-    virtual std::string represent(){
-        printer p;
-        p<<representOutputs()<<" = "<<getSID() <<" : "<<representInputs();
-        return p.dump();
-    }
-};
 
 // ---------- negativeOp ----------
 class negativeOp : public lgf::operation
@@ -109,13 +127,14 @@ class multiplyOp : public lgf::operation
     lgf::value* output(){ return outputValue(1); }
     virtual std::string represent(){
         printer p;
+        //std::cout<<outputValue(1)<<std::endl;
         p<<representOutputs()<<" = "<<getSID() <<" : "<<inputValue(0)->represent()<<" * "<<inputValue(1)->represent();
         return p.dump();
     }
 };
 
 // ---------- inverseOp ----------
-class inverseOp : public lgf::operation
+class inverseOp : public lgf::operation, public normalizer
 {
     public:
     inverseOp() : operation("AAB::inverse") {}
@@ -127,6 +146,10 @@ class inverseOp : public lgf::operation
     }
     lgf::value* input(){ return inputValue(0); }
     lgf::value* output(){ return outputValue(1); }
+    virtual bool rewrite(painter& p, operation* op){
+        // needs to make it as inverse(x) = 1/x
+        return 0;
+    }
 };
 
 // ---------- quotientOp ----------
@@ -158,13 +181,14 @@ class powerOp : public lgf::operation
     lgf::value* power(){ return inputValue(1); }
     lgf::value* x(){ return inputValue(0); }
     lgf::value* output() { return outputValue(1); }
+
 };
 
 class function1DOp: public lgf::operation {
     public:
     function1DOp(std::string name) : operation(name){}
     static function1DOp* build(lgf::LGFContext* ctx, lgf::value* x){
-        auto op = new function1DOp("function1DOp");
+        auto op = new function1DOp("AAB::function1DOp");
         op->registerInput(x);
         op->createValue(x->getType(), "");
         return op;
@@ -175,7 +199,7 @@ class function1DOp: public lgf::operation {
 
 class funcSineOp : public function1DOp{
     public:
-    funcSineOp() :  function1DOp("sine"){}
+    funcSineOp() :  function1DOp("AAB::sine"){}
     static funcSineOp* build (lgf::LGFContext* ctx, lgf::value* x){
         auto op = new funcSineOp();
         op->registerInput(x);
@@ -186,13 +210,28 @@ class funcSineOp : public function1DOp{
 
 class funcCosOp : public function1DOp{
     public:
-    funcCosOp(): function1DOp("cos"){}
+    funcCosOp(): function1DOp("AAB::cos"){}
     static funcCosOp* build (lgf::LGFContext* ctx, lgf::value* x){
         auto op = new funcCosOp();
         op->registerInput(x);
         op->createValue(x->getType(), "");
         return op;
     }
+};
+
+class permuteOp : public operation {
+    public:
+    permuteOp() : operation("AAB::permuteOp"){}
+    static permuteOp* build(lgf::LGFContext* ctx, type_t type, value* input, value* from_, value* to_){
+        auto op = new permuteOp();
+        op->registerInput(input, from_, to_);
+        op->createValue(type, "");
+        return op;
+    }
+    value* input() {return inputValue(0);}
+    value* from() {return inputValue(1);}
+    value* to() { return inputValue(2); }
+    value* output(){ return outputValue(1); }
 };
 
 class derivativeOp : public operation {
@@ -208,6 +247,76 @@ class derivativeOp : public operation {
     lgf::value* output(){ return outputValue(1); }
 };
 
-}
+class factorOp : public operation, public normalizer{
+    public:
+    factorOp() : operation("AAB::factor") {}
+    static factorOp* build(lgf::LGFContext* ctx, lgf::value* exp, lgf::value* target){
+        auto op = new factorOp();
+        op->registerInput(exp, target);
+        op->createValue(exp->getType(), "");
+        return op;
+    }
+    lgf::value* exp() { return inputValue(0); }
+    lgf::value* target() { return inputValue(1); }
+    lgf::value* output(){ return outputValue(1); }
 
+    struct factorInfo {
+        int count = 0;
+        lgf::value* ret=nullptr;
+    };
+    factorInfo factorImpl(painter& p, value* nodeValue, value* target){
+        factorInfo info;
+        // check if current value is the target
+        if(target == nodeValue ){
+            return info;
+        }
+        
+        if(auto multiop = nodeValue->getDefiningOp<multiplyOp>()){
+            auto linfo = factorImpl(p, multiop->lhs(), target);
+            auto rinfo = factorImpl(p, multiop->rhs(), target);
+            bool removeOp = 0;
+            info.count = rinfo.count+linfo.count;
+            // check if lhs is the target
+            if(!linfo.ret ){
+                info.count++;
+                info.ret = rinfo.ret;
+                removeOp = 1;
+            }
+            // check if rhs is the target
+            if(!rinfo.ret){
+                info.count++;
+                info.ret = linfo.ret;
+                removeOp = 1;
+            }
+            
+            if( info.ret ){
+                multiop->replaceBy(info.ret->getDefiningOp());
+            } else if(removeOp) {
+                multiop->erase();
+            } else {
+                info.ret = multiop->output();
+            }
+            return info;
+        }else if(auto addop = nodeValue->getDefiningOp<addOp>()){
+            auto linfo = factorImpl(p, addop->lhs(), target);
+            auto rinfo = factorImpl(p, addop->rhs(), target);
+        }
+        info.ret = nodeValue;
+        return info;
+    }
+    virtual bool rewrite(painter& p, operation* op){
+        auto fop = dynamic_cast<factorOp*>(op);
+        auto exp = fop->exp();
+        auto target = fop->target();
+        auto info = factorImpl(p, exp, target);
+        if(info.count==1){
+            std::cout<<"replaceing"<<std::endl;
+            p.replaceOp<multiplyOp>(fop, target, info.ret);
+            std::cout<<"done"<<std::endl;
+        }
+        return 0;
+    }
+};
+
+}
 #endif

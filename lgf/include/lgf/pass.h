@@ -45,10 +45,6 @@ public :
 };
 
 
-
-
-
-
 class passManager{
     public : 
     passManager() = default;
@@ -68,6 +64,7 @@ class passManager{
             }
         for(auto pass=passes.begin(); pass!=passes.end(); pass++){
             (*pass)->run();
+            //std::cout<<"pass: "<<(*pass)->_pass_name<<" finished."<<std::endl;
             start->clean();
             if(bPrintAfterPass){
                 OSTREAM<<"------ IR after pass: "<<(*pass).get()->_pass_name<<" ------\n";

@@ -70,6 +70,25 @@ class painter {
     // }
 
     // create a new op to replace the op1's users
+    template<typename obj>
+    obj* replaceOp(operation *op1){
+        auto op2 = sketch<obj>();
+        op1->dropAllInputs();
+        for(auto i=0; i<op1->getOutputSize(); i++){
+            op1->outputValue(i)->replaceBy(op2->outputValue(i));
+        }
+        
+        auto & nodes = op1->getParentGraph()->getNodeList();
+        //std::replace(nodes.begin(), nodes.end(), op1, op2);
+        for(auto & node : nodes) {
+            if(node == op1) {
+                node = op2;
+            }
+        }
+        op2->setParentGraph(op1->getParentGraph());
+        op1->setRemovable();
+        return op2;
+    }
     template<typename obj, typename...ARGS>
     obj* replaceOp(operation *op1, ARGS ...args){
         auto op2 = sketch<obj>(args...);

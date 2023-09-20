@@ -29,6 +29,10 @@ class InterfaceInitRewriter : public rewriter<funcDefineOp>{
                 p.gotoGraph(user->getParentGraph());
                 p.replaceOp<derivativeOp>( user, fc->arg(0), fc->arg(1));
                 p.gotoGraph(tempg);
+            }else if(op->id=="Factor"){
+                p.gotoGraph(user->getParentGraph());
+                p.replaceOp<factorOp>( user, fc->arg(0), fc->arg(1));
+                p.gotoGraph(tempg);
             }
         }
         return 0;

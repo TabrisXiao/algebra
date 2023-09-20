@@ -95,13 +95,18 @@ public:
         std::exit(EXIT_FAILURE); 
     }
     
-    // get the list of all ops using this value as a input;
+    // get the unique_ptr owning this value
     std::unique_ptr<value>* getPtr();
+    // get the list of all ops using this value as a input;
     std::vector<operation*> getUsers();
+
+    // this function replace the current value content by the new one
+    // provided. The provided value will be swapped by the old one.
     void replaceBy(value *v){
-        // this value will be lost after replace
         auto thisvalue = getPtr();
         auto thatvalue = v->getPtr();
+        // return if one of them is invalid
+        if(!thisvalue || !thatvalue ) return;
         thisvalue->swap(*thatvalue);
         auto thisptr = thisvalue->get();
         auto thatptr = thatvalue->get();
@@ -153,6 +158,7 @@ public :
     // op old : input1,  ...        output1, output2, ...
     //                                 |        |
     // op new : input1, input2, ... output1, output2, ...
+    // this op will be erased after the replacement
     void replaceBy(operation* new_op);
     
     // replace the n-th input by the value v. 
@@ -243,6 +249,15 @@ public :
 
     std::vector<value*>& getInputs(){ return inputs;}
     graph * expandToGraph();
+
+    void erase(){
+        dropAllInputs();
+        // drop users of output values from this op
+        for(auto i = 0; i< getOutputSize(); i++){
+            outputValue(i)->dropUser(this);
+        }
+        setRemovable();
+    }
 
     private:
     std::vector<value*> inputs;
