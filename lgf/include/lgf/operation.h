@@ -100,20 +100,25 @@ public:
     // get the list of all ops using this value as a input;
     std::vector<operation*> getUsers();
 
-    // this function replace the current value content by the new one
-    // provided. The provided value will be swapped by the old one.
-    void replaceBy(value *v){
+    // swap the value with the provided one. 
+    // generally used for replacing the value for its users by a new one.
+    void swap(value* v){
         auto thisvalue = getPtr();
         auto thatvalue = v->getPtr();
-        // return if one of them is invalid
         if(!thisvalue || !thatvalue ) return;
         thisvalue->swap(*thatvalue);
         auto thisptr = thisvalue->get();
         auto thatptr = thatvalue->get();
-        thisptr->setDefiningOp(thatptr->getDefiningOp());
+        type_t temptype = thisptr->getType();
+        operation *ptr = thisptr->getDefiningOp();
         thisptr->setType(thatptr->getType());
-        thisptr->setSID(thatptr->getSID());
+        thisptr->setDefiningOp(thatptr->getDefiningOp());
+        thatptr->setType(temptype);
+        thatptr->setDefiningOp(thatptr->getDefiningOp());
     }
+
+    // switch the user of this value from one Op to an other.
+    void switchUser(operation *from, operation* to, int index);
 
     private:
     operation *defop = nullptr;
@@ -172,6 +177,10 @@ public :
         auto values = {args...};
         for (auto val : values)
         {
+            if(val->getDefiningOp() == this) {
+                WARNING("Skipped register the input causing cycle dependence!");
+                continue;
+            }
             val->addUsesr(this);
             inputs.push_back(val);
         }
@@ -199,6 +208,30 @@ public :
     value* createValue();
     value* createValue(type_t& type, std::string sid);
 
+    // drop all inputs to this operation, and remove all connects
+    // associated to the op.
+    void dropAllInputs();
+
+    // drop the input value
+    void dropInputValue(value* v){
+        auto iter = std::find(inputs.begin(), inputs.end(), v);
+        if(iter == inputs.end()) return;
+        inputs.erase(iter);
+    }
+
+    void erase(){
+        dropAllInputs();
+        // drop users of output values from this op
+        for(auto i = 0; i< getOutputSize(); i++){
+            outputValue(i)->dropUser(this);
+        }
+        setRemovable();
+    }
+
+    std::vector<value*>& getInputs(){ return inputs;}
+    std::vector<std::unique_ptr<value>>& getOutputs() const {
+        return const_cast<std::vector<std::unique_ptr<value>>&>(outputs);
+    }
     value* outputValue(int n=0){return outputs[n].get();}
     value* inputValue(int n=0) {return inputs[n];}
     size_t getInputSize() const;
@@ -207,10 +240,6 @@ public :
     // assign trace id to the value created in this operation. 
     // The start of the trace id is specified by the argument n.
     virtual void assignValueID(int& n);
-
-    // drop all inputs to this operation, and remove all connects
-    // associated to the op.
-    void dropAllInputs();
 
     // detach the input edges from this operation and disconnect
     // the outputs from their users, this operation still connecting to
@@ -228,10 +257,6 @@ public :
 
     bool isDependencyFullfilled();
 
-    std::vector<std::unique_ptr<value>>& getOutputs() const {
-        return const_cast<std::vector<std::unique_ptr<value>>&>(outputs);
-    }
-
     void setActivation(bool a ){ bActive = a; }
     bool isActive(){return bActive; }
 
@@ -247,17 +272,8 @@ public :
     void setParentGraph(graph* g){ graph_ = g; }
     virtual bool verify() { return 0; }
 
-    std::vector<value*>& getInputs(){ return inputs;}
+    
     graph * expandToGraph();
-
-    void erase(){
-        dropAllInputs();
-        // drop users of output values from this op
-        for(auto i = 0; i< getOutputSize(); i++){
-            outputValue(i)->dropUser(this);
-        }
-        setRemovable();
-    }
 
     private:
     std::vector<value*> inputs;

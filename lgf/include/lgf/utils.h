@@ -16,5 +16,23 @@ constexpr bool isspace(unsigned ch) {
     return ch == ' ' || (ch - '\t') < 5;
 }
 
+class logicResult {
+  public:
+  logicResult() = delete;
+  logicResult(logicResult& res) { value = res; }
+  static logicResult success() {
+    return logicResult(0);
+  }
+  static logicResult fail() {
+    return logicResult(1);
+  }
+  bool getValue() const { return value; }
+  bool operator ==(const logicResult& a){ return value == a.getValue(); }
+  operator bool () const { return value; }
+  private:
+  logicResult(bool t) { value = t; }
+  bool value = 0;
+};
+
 }
 #endif

@@ -13,27 +13,21 @@ class InterfaceInitRewriter : public rewriter<funcDefineOp>{
         for(auto & user : users){
             auto tempg = p.getGraph();
             auto fc = dynamic_cast<funcCallOp*>(user);
+            p.gotoGraph(user->getParentGraph());
             if(op->id=="Power"){
-                p.gotoGraph(user->getParentGraph());
                 p.replaceOp<powerOp>( user, fc->arg(0), fc->arg(1));
-                p.gotoGraph(tempg);
             }else if(op->id=="Sin"){
-                p.gotoGraph(user->getParentGraph());
                 p.replaceOp<funcSineOp>( user, fc->arg(0));
-                p.gotoGraph(tempg);
             }else if(op->id=="Cos"){
-                p.gotoGraph(user->getParentGraph());
                 p.replaceOp<funcCosOp>( user, fc->arg(0));
-                p.gotoGraph(tempg);
             }else if(op->id=="Derivative"){
-                p.gotoGraph(user->getParentGraph());
                 p.replaceOp<derivativeOp>( user, fc->arg(0), fc->arg(1));
-                p.gotoGraph(tempg);
             }else if(op->id=="Factor"){
-                p.gotoGraph(user->getParentGraph());
                 p.replaceOp<factorOp>( user, fc->arg(0), fc->arg(1));
-                p.gotoGraph(tempg);
+            }else if(op->id=="Distribute"){
+                p.replaceOp<distributeOp>( user, fc->arg(0));
             }
+            p.gotoGraph(tempg);
         }
         return 0;
     } 

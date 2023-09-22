@@ -57,4 +57,4 @@ The `LinearAlg` lib contains the following ops:
 * Add verification for ops. 
 * design the APIs arch.
 * Change the IR of `accessOp` to show the module name that the accessing object belongs to.
-* add logicalResult object to unify the logical return standard.
+* add `verify()` function to `operation` to prevent cycle dependency and other issues.

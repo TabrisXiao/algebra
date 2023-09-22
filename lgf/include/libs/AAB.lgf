@@ -4,3 +4,4 @@ def Cos(variable a) -> variable;
 def Power(variable x, variable y) -> variable;
 def Derivative(variable f) -> variable;
 def Factor(variable x, variable target) -> variable;
+def Distribute(variable x) -> variable;

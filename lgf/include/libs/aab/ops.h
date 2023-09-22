@@ -4,6 +4,7 @@
 #include "lgf/operation.h"
 #include "libs/builtin/types.h"
 #include "lgf/group.h"
+#include "pattern.h"
 
 namespace lgf::AAB{
 
@@ -247,6 +248,41 @@ class derivativeOp : public operation {
     lgf::value* output(){ return outputValue(1); }
 };
 
+class distributeOp : public operation, public normalizer{
+    public:
+    distributeOp(): operation("AAB::distribute") {}
+    static distributeOp* build(LGFContext* ctx, value *input){
+        auto op = new distributeOp();
+        op->registerInput(input);
+        op->createValue(input->getType(), "");
+        return op;
+    }
+    value *input(){ return inputValue(0); }
+    value *output(){return outputValue(1); }
+    
+    void distribute(painter p, operation* op){ 
+        if(logicResult::success() == rDistributivePattern<multiplyOp, addOp>(op->inputValue(0)->getDefiningOp())){z
+            auto root = op->inputValue(0)->getDefiningOp<multiplyOp>();
+            auto lhs = root->inputValue(0);
+            auto rhs = root->inputValue(1);
+            auto addop = rhs->getDefiningOp<addOp>();
+            p.setPaintPointAt(addop);
+            auto addl = p.paint<multiplyOp>(lhs, addop->lhs());
+            auto addr = p.paint<multiplyOp>(lhs, addop->rhs());
+            auto newaddop = p.replaceOp<addOp>(addop, addl->output(), addr->output());
+            root->replaceBy(newaddop);
+            root->erase();
+        }
+    }
+    virtual bool rewrite(painter p, operation* op){
+        //auto input = dynamic_cast<distributeOp*>(op)->input();
+        distribute(p, op);
+        op->replaceBy(op->inputValue(0)->getDefiningOp());
+        op->erase();
+        return 0;
+    }
+};
+
 class factorOp : public operation, public normalizer{
     public:
     factorOp() : operation("AAB::factor") {}
@@ -307,13 +343,21 @@ class factorOp : public operation, public normalizer{
         }else if(auto addop = nodeValue->getDefiningOp<addOp>()){
             auto linfo = factorImpl(p, addop->lhs(), target);
             auto rinfo = factorImpl(p, addop->rhs(), target);
+            info.count = linfo.count;
+            bool rebuild = 0;
+            value* nlhs, *nrhs;
+            if( info.count > rinfo.count) info.count = rinfo.count;
+            if(linfo.count > info.count) {
+                rebuild = 1;
+                
+            }
         }
         info.ret = nodeValue;
         return info;
     }
     virtual bool rewrite(painter p, operation* op){
         auto fop = dynamic_cast<factorOp*>(op);
-        auto exp = fop->exp();
+        auto exp = fop->exp();                                                                                                  
         auto target = fop->target();
         auto info = factorImpl(p, exp, target);
         p.setPaintPointAt(op);

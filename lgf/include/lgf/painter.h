@@ -88,7 +88,7 @@ class painter {
         auto op2 = sketch<obj>();
         op1->dropAllInputs();
         for(auto i=0; i<op1->getOutputSize(); i++){
-            op1->outputValue(i)->replaceBy(op2->outputValue(i));
+            op1->outputValue(i)->swap(op2->outputValue(i));
         }
         
         auto & nodes = op1->getParentGraph()->getNodeList();
@@ -107,7 +107,7 @@ class painter {
         auto op2 = sketch<obj>(args...);
         op1->dropAllInputs();
         for(auto i=0; i<op1->getOutputSize(); i++){
-            op1->outputValue(i)->replaceBy(op2->outputValue(i));
+            op1->outputValue(i)->swap(op2->outputValue(i));
         }
         auto & nodes = op1->getParentGraph()->getNodeList();
         //std::replace(nodes.begin(), nodes.end(), op1, op2);

@@ -48,8 +48,23 @@ void value::dropUsers(){
         dropUser(op);
     }
 }
-
 //---------------------------------------------------
+
+void value::switchUser(operation *from, operation* to, int index){
+    // if the op switch to is already a user, then skip.
+    if(users.end() == std::find(users.begin(), users.end(), to)){
+        return;
+    }
+    auto iter = std::find(users.begin(), users.end(), from);
+    // skip the function if the op switch from is not a user
+    if(iter==users.end()) return;
+    auto op = *iter;
+    op->dropInputValue(this);
+    *iter = to;
+    to->registerInputAt(this, index);
+}
+//---------------------------------------------------
+
 std::unique_ptr<value>* value::getPtr(){
     auto op = getDefiningOp();
     for(auto & output : op->getOutputs()){
@@ -183,7 +198,6 @@ void operation::replaceBy(operation* new_op){
         }
         output->getUsers().clear();
     }
-    erase();
 }
 
 //////////////////////////////////////////////////////
