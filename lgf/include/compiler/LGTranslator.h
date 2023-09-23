@@ -103,6 +103,7 @@ class LGTranslator {
         varAST* lhs = nullptr;
         accessAST * last= nullptr;
         auto curASTModuleLoc = astctx->module;
+        // get the obj def through module access chain
         while(ast){
             lhs = dynamic_cast<varAST*>(ast->lhs.get());
             auto id = lhs->id;
@@ -175,13 +176,10 @@ class LGTranslator {
     }
     value* convertFunCall(funcCallAST* ast, funcCallOp *op){
         TRACE_LOG;
-        //std::vector<value*> args; 
         for(auto i=0; i<ast->args.size(); i++){
             auto arg = translateAST(ast->arg(i));
-            //args.push_back(arg);
             op->registerInput(arg);
         }
-        //op->addArgs(args);
         pnt.addOpAtCurrentPoint(op);
         return op->returnValue();
     }

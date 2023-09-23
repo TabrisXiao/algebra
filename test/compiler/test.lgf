@@ -3,5 +3,5 @@ import lgf.LinearAlg
 
 
 //a = AAB.Derivative(x*x, x) + 5*x + 4;
-b = AAB.Distribute( x*(x+b) );
+cb = AAB.Distribute( (x+y)*(x+y)*(x+y) );
 //c = AAB.Factor( x*b, y);

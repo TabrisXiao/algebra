@@ -3,14 +3,64 @@
 #define LGF_PASS_H_
 #include "operation.h"
 #include "painter.h"
+#include "utils.h"
 
 namespace lgf{
+
+class resultCode : public byteCode<int8_t>{
+    public: 
+    enum result: int8_t {
+        default_result,
+        success_result
+    };
+    resultCode(): byteCode() { value = 0; }
+    resultCode(int8_t v): byteCode(int8_t(v)){}
+    static resultCode success(){
+        return resultCode(int8_t(resultCode::result::success_result));
+    }
+    static resultCode fail(){
+        return resultCode();
+    }
+
+    static resultCode pass(){
+        return resultCode(int8_t(resultCode::result::default_result));
+    }
+    
+    bool isSuccess(){
+        return check(success_result);
+    }
+};
+
+
+class rewriterBase {
+    public:
+    rewriterBase() = default;
+    virtual ~rewriterBase() = default;
+    virtual resultCode execute( painter, operation * op) = 0;
+    LGFContext* getContext(){ return ctx; }
+    LGFContext *ctx = nullptr;
+};
+
+template<typename concreteOp>
+class rewriter : public rewriterBase{
+    public : rewriter() = default;
+    virtual resultCode rewrite( painter, concreteOp *op) = 0;
+    virtual resultCode execute( painter rewriter,operation* op) override final{
+        if(auto cop = dynamic_cast<concreteOp*>(op))
+        {
+            auto sig = rewrite(rewriter, cop);
+            return sig;
+        }
+        return resultCode::pass();
+    }
+};
+
 class passBase {
 public :
     passBase (const char * name) : _pass_name (name) {}
 
     // the return value is not defined yet.
-    virtual bool run() = 0;
+    virtual resultCode run() = 0;
 
     graph * getGraph(){ return g; }
     void gotoGraph(graph *reg){ g = reg;}
@@ -23,10 +73,10 @@ public :
         rewriters.push_back(std::move(ptr));
     }
 
-    bool applyRewriterOnce(painter &p, graph* g);
-    int applyRewriterGreedy(painter &p, graph* g);
+    resultCode applyRewriterOnce(painter &p, graph* g);
+    resultCode applyRewriterGreedy(painter &p, graph* g);
 
-    bool walkApplyRewriterOnce(painter &p, graph* g,bool deepwalk = 0);
+    resultCode walkApplyRewriterOnce(painter &p, graph* g,bool deepwalk = 0);
 
     // Translation is a special method to apply rewriters,
     // It walk only once through a graph in the dependency order
@@ -56,7 +106,7 @@ class passManager{
             start->assignID(0);
             start->print();
         }
-        if(bPrintAfterPass){
+        if(bPrintBeforePass){
                 OSTREAM<<"------ Init IR ------\n";
                 start->assignID(0);
                 start->print();
@@ -65,6 +115,7 @@ class passManager{
         for(auto pass=passes.begin(); pass!=passes.end(); pass++){
             (*pass)->run();
             //std::cout<<"pass: "<<(*pass)->_pass_name<<" finished."<<std::endl;
+            start->graphValidation();
             start->clean();
             if(bPrintAfterPass){
                 OSTREAM<<"------ IR after pass: "<<(*pass).get()->_pass_name<<" ------\n";

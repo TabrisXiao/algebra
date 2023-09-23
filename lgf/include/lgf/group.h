@@ -10,23 +10,20 @@ namespace lgf{
 class group {
     public:
     group() = default;
-    virtual bool rewrite( painter, operation *op) = 0;
+    virtual resultCode rewrite( painter, operation *op) = 0;
 };
 
 template<typename groupType>
 class groupRewriter : public rewriterBase{
     public: 
     groupRewriter() = default;
-    virtual int execute( painter rewriter,operation* op) override final{
-        // rewrite return value: 
-        // 1 rewrite happen
-        // 0 rewrite failed or not matched
+    virtual resultCode execute( painter rewriter,operation* op) override final{
         if(auto g = dynamic_cast<groupType*>(op))
         {
             auto sig = g->rewrite(rewriter, op);
-            return int(sig);
+            return sig;
         }
-        return 0;
+        return resultCode::pass();
     }
 };
 
@@ -38,7 +35,7 @@ class normalizer : public group {
 class normalizationPass : public passBase {
     public: 
     normalizationPass() : passBase("normalization"){}
-    virtual bool run(){
+    virtual resultCode run(){
         painter p(getContext());
         addRewriter<groupRewriter<normalizer>>();
         return applyRewriterGreedy(p, getGraph());

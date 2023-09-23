@@ -31,7 +31,7 @@ class compiler {
         LGTranslator builder(&ctx, &g);
         ast->emitIR(sm);
         builder.ctx = &ctx;
-        builder.printTranslatedIR = 0;
+        builder.printTranslatedIR = 1;
         builder.build(ast.get());
 
         compileGraph();

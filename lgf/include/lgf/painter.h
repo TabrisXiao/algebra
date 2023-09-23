@@ -66,9 +66,9 @@ class painter {
 
     void addOpAtCurrentPoint(operation* op){
         op->setParentGraph(point.g);
-        if(op->getInputSize() == 0) 
+        if(op->getInputSize() == 0)
             op->appendTo(dynamic_cast<operation*>(&(point.g->getEntry())));
-        point.iter = point.g->getNodeList().insert(point.iter, op);
+        point.iter = point.g->getNodeList().insert(point.iter, op)+1;
     }
 
     // making an Op depends on the lastOp so that in a dependency walk order, 
@@ -99,7 +99,7 @@ class painter {
             }
         }
         op2->setParentGraph(op1->getParentGraph());
-        op1->setRemovable();
+        op1->erase();
         return op2;
     }
     template<typename obj, typename...ARGS>
@@ -117,7 +117,7 @@ class painter {
             }
         }
         op2->setParentGraph(op1->getParentGraph());
-        op1->setRemovable();
+        op1->erase();
         return op2;
     }
 
@@ -125,7 +125,7 @@ class painter {
         op->dropAllInputs();
         // drop users of output values from this op
         for(auto i = 0; i<op->getOutputSize(); i++){
-            op->outputValue(i)->dropUser(op);
+            op->outputValue(i)->disconnectOp(op);
         }
         op->setRemovable();
     }
@@ -163,31 +163,6 @@ class painter {
     LGFContext *ctx = nullptr;
 };
 
-class rewriterBase {
-    public:
-    rewriterBase() = default;
-    virtual ~rewriterBase() = default;
-    virtual int execute( painter, operation * op) = 0;
-    LGFContext* getContext(){ return ctx; }
-    LGFContext *ctx = nullptr;
-};
-
-template<typename concreteOp>
-class rewriter : public rewriterBase{
-    public : rewriter() = default;
-    virtual bool rewrite( painter, concreteOp *op) = 0;
-    virtual int execute( painter rewriter,operation* op) override final{
-        // rewrite return value: 
-        // 1 rewrite happen
-        // 0 rewrite failed or not matched
-        if(auto cop = dynamic_cast<concreteOp*>(op))
-        {
-            auto sig = rewrite(rewriter, cop);
-            return int(sig);
-        }
-        return 0;
-    }
-};
 
 
 }

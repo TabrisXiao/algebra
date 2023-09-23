@@ -40,7 +40,7 @@ class sumOp : public lgf::operation {
     }
 };
 
-class addOp : public lgf::operation, public normalizer
+class addOp : public lgf::operation
 {
     public:
     addOp() : operation("AAB::add") {}
@@ -57,11 +57,6 @@ class addOp : public lgf::operation, public normalizer
         printer p;
         p<<representOutputs()<<" = "<<getSID() <<" : "<<inputValue(0)->represent()<<" + "<<inputValue(1)->represent();
         return p.dump();
-    }
-
-    virtual bool rewrite(painter p, operation* op){
-        
-        return 0;
     }
 };
 
@@ -106,9 +101,9 @@ class minusOp : public lgf::operation, public normalizer
         p<<representOutputs()<<" = "<<getSID() <<" : "<<lhs()->represent()<<" - "<<rhs()->represent();
         return p.dump();
     }
-    virtual bool rewrite(painter p, operation* op){
+    virtual resultCode rewrite(painter p, operation* op){
         std::cout<<"---------------find minus renomalizer!"<<std::endl;
-        return 0;
+        return resultCode::pass();
     }
 };
 
@@ -147,9 +142,9 @@ class inverseOp : public lgf::operation, public normalizer
     }
     lgf::value* input(){ return inputValue(0); }
     lgf::value* output(){ return outputValue(1); }
-    virtual bool rewrite(painter p, operation* op){
+    virtual resultCode rewrite(painter p, operation* op){
         // needs to make it as inverse(x) = 1/x
-        return 0;
+        return resultCode::pass();
     }
 };
 
@@ -260,26 +255,99 @@ class distributeOp : public operation, public normalizer{
     value *input(){ return inputValue(0); }
     value *output(){return outputValue(1); }
     
-    void distribute(painter p, operation* op){ 
-        if(logicResult::success() == rDistributivePattern<multiplyOp, addOp>(op->inputValue(0)->getDefiningOp())){z
-            auto root = op->inputValue(0)->getDefiningOp<multiplyOp>();
+    resultCode distribute(painter p, operation* op){
+        resultCode result;
+        operation* newop=nullptr;
+        if(auto root = dynamic_cast<multiplyOp*>(op)){
             auto lhs = root->inputValue(0);
             auto rhs = root->inputValue(1);
-            auto addop = rhs->getDefiningOp<addOp>();
-            p.setPaintPointAt(addop);
-            auto addl = p.paint<multiplyOp>(lhs, addop->lhs());
-            auto addr = p.paint<multiplyOp>(lhs, addop->rhs());
-            auto newaddop = p.replaceOp<addOp>(addop, addl->output(), addr->output());
-            root->replaceBy(newaddop);
-            root->erase();
+            if(logicResult::success() == rDistributivePattern<multiplyOp,  addOp>(op)){
+                auto addop = rhs->getDefiningOp<addOp>();
+                p.setPaintPointAt(root);
+                auto addl = p.paint<multiplyOp>(lhs, addop->lhs());
+                auto addr = p.paint<multiplyOp>(lhs, addop->rhs());
+                addop->output()->disconnectOp(root);
+                addop->toughed();
+                newop = p.replaceOp<addOp>(root, addl->output(), addr->output());
+                result.add(resultCode::success());
+                p.getGraph()->clean();
+            }else if(
+                logicResult::success() == lDistributivePattern<multiplyOp,  addOp>(op)
+            ){
+                auto addop = lhs->getDefiningOp<addOp>();
+                p.setPaintPointAt(root);
+                auto addl = p.paint<multiplyOp>(addop->lhs(), rhs);
+                auto addr = p.paint<multiplyOp>(addop->rhs(), rhs);
+                addop->output()->disconnectOp(root);
+                addop->toughed();
+                newop = p.replaceOp<addOp>(root, addl->output(), addr->output());
+                result.add(resultCode::success());
+            } else {
+                newop = root;
+            }
+            if(result.isSuccess()){
+                root->replaceBy(newop);
+                root->erase();
+            }
+        }else {
+            newop = dynamic_cast<addOp*>(op);
+        }
+        if(newop){
+            result.add(distribute(p, newop->inputValue(0)->getDefiningOp()));
+            result.add(distribute(p, newop->inputValue(1)->getDefiningOp()));
+        }
+        return result;
+    }
+    virtual resultCode rewrite(painter p, operation* op){
+        auto input = dynamic_cast<distributeOp*>(op)->input();
+        auto res = distribute(p, input->getDefiningOp());
+        if(!res.isSuccess()){
+            op->replaceBy(op->inputValue(0)->getDefiningOp());
+            op->erase();
+        }
+        
+        return res;
+    }
+};
+
+class associateOp : public operation, public normalizer {
+    public:
+    associateOp() : operation("AAB::associate"){}
+    static associateOp* build(LGFContext* ctx, value* input, value* target){
+        auto op = new associateOp();
+        op->registerInput(input);
+        op->createValue(input->getType(), "");
+        return op;
+    }
+
+    resultCode transformIfEqual(painter p, operation* op, value* target, int hand){
+        int other = hand == 1 ? 0 : 1;
+        if(op->outputValue(1) == target){
+            p.setPaintPointAt(op);
+            p.replaceOp<cstDeclOp>(op, 1);
+            op->erase();
+            return resultCode::success();
+        } else if( auto mulop = dynamic_cast<multiplyOp*>(op)){
+            if(mulop->inputValue(hand)==target){
+                
+            }
+        }
+        return resultCode::fail();
+    }
+
+    resultCode associate(painter p, operation* op, int l = 0, int r = 1){
+        resultCode result;
+        if(auto addop = dynamic_cast<addOp*>(op)){
+            value* val1 = addop->inputValue(l);
+            value* val2 = addop->inputValue(r);
+            if(auto multi = val1->getDefiningOp<multiplyOp>()){
+                val1 = multi->inputValue(l);
+                
+            }
         }
     }
-    virtual bool rewrite(painter p, operation* op){
-        //auto input = dynamic_cast<distributeOp*>(op)->input();
-        distribute(p, op);
-        op->replaceBy(op->inputValue(0)->getDefiningOp());
-        op->erase();
-        return 0;
+    virtual resultCode rewrite(painter p, operation* op){
+        return resultCode::pass();
     }
 };
 
@@ -349,13 +417,12 @@ class factorOp : public operation, public normalizer{
             if( info.count > rinfo.count) info.count = rinfo.count;
             if(linfo.count > info.count) {
                 rebuild = 1;
-                
             }
         }
         info.ret = nodeValue;
         return info;
     }
-    virtual bool rewrite(painter p, operation* op){
+    virtual resultCode rewrite(painter p, operation* op){
         auto fop = dynamic_cast<factorOp*>(op);
         auto exp = fop->exp();                                                                                                  
         auto target = fop->target();

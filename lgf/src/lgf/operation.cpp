@@ -27,12 +27,19 @@ std::string value::represent() {
 void value::print() { global::stream::getInstance()<<represent()<<"\n"; };
 //---------------------------------------------------
 
-std::vector<operation*> value::getUsers() {
+std::vector<operation*>& value::getUsers() {
     return users;
 }
 //---------------------------------------------------
 
-void value::dropUser(operation *op){
+void value::removeOp(operation *op){
+    auto &iter = std::find(users.begin(), users.end(), op);
+    if(iter==users.end()) return;
+    users.erase(iter);
+}
+//---------------------------------------------------
+
+void value::disconnectOp(operation *op){
     auto &iter = std::find(users.begin(), users.end(), op);
     if(iter==users.end()) return;
     auto user = (*iter);
@@ -43,9 +50,9 @@ void value::dropUser(operation *op){
 }
 //---------------------------------------------------
 
-void value::dropUsers(){ 
+void value::disconnectUsers(){ 
     for(auto op : users){
-        dropUser(op);
+        disconnectOp(op);
     }
 }
 //---------------------------------------------------
@@ -152,7 +159,7 @@ size_t operation::getOutputSize() const {
 
 void operation::dropAllInputs(){
     for(auto input: inputs){
-        input->dropUser(this);
+        input->disconnectOp(this);
     }
     inputs.clear();
 }
@@ -174,7 +181,7 @@ graph* operation::expandToGraph()
 
 void operation::replaceInputValue(int n, value* v){
     if(n+1 > inputs.size())return;
-    inputs[n]->dropUser(this);
+    inputs[n]->disconnectOp(this);
     // update the corresponding valueRef to the new one
     inputs[n]=v;
     v->addUsesr(this);

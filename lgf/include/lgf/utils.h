@@ -16,6 +16,9 @@ constexpr bool isspace(unsigned ch) {
     return ch == ' ' || (ch - '\t') < 5;
 }
 
+}
+
+namespace lgf{
 class logicResult {
   public:
   logicResult() = delete;
@@ -34,5 +37,22 @@ class logicResult {
   bool value = 0;
 };
 
+// byteCode is a template object to encode type tag into binary type:
+// 
+template<typename byteType>
+class byteCode {
+  public:
+  using byte_t = byteType;
+  byteCode(){}
+  byteCode(byteType& val) { value = val; }
+  byteCode(byteCode& code ){ value = code.value;}
+  
+  byteCode shift(byteType& val) { value |= 1<<val; return *this; }
+  byteCode add(byteCode& val) { value |= val.value; return *this; }
+  bool check(byteType val){ 
+    return (value & val) == val;
+  }
+  byte_t value=0;
+};
 }
 #endif
