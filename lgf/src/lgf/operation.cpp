@@ -27,12 +27,19 @@ std::string value::represent() {
 void value::print() { global::stream::getInstance()<<represent()<<"\n"; };
 //---------------------------------------------------
 
-std::vector<operation*> value::getUsers() {
+std::vector<operation*>& value::getUsers() {
     return users;
 }
 //---------------------------------------------------
 
-void value::dropUser(operation *op){
+void value::removeOp(operation *op){
+    auto &iter = std::find(users.begin(), users.end(), op);
+    if(iter==users.end()) return;
+    users.erase(iter);
+}
+//---------------------------------------------------
+
+void value::disconnectOp(operation *op){
     auto &iter = std::find(users.begin(), users.end(), op);
     if(iter==users.end()) return;
     auto user = (*iter);
@@ -43,13 +50,28 @@ void value::dropUser(operation *op){
 }
 //---------------------------------------------------
 
-void value::dropUsers(){ 
+void value::disconnectUsers(){ 
     for(auto op : users){
-        dropUser(op);
+        disconnectOp(op);
     }
 }
-
 //---------------------------------------------------
+
+void value::switchUser(operation *from, operation* to, int index){
+    // if the op switch to is already a user, then skip.
+    if(users.end() == std::find(users.begin(), users.end(), to)){
+        return;
+    }
+    auto iter = std::find(users.begin(), users.end(), from);
+    // skip the function if the op switch from is not a user
+    if(iter==users.end()) return;
+    auto op = *iter;
+    op->dropInputValue(this);
+    *iter = to;
+    to->registerInputAt(this, index);
+}
+//---------------------------------------------------
+
 std::unique_ptr<value>* value::getPtr(){
     auto op = getDefiningOp();
     for(auto & output : op->getOutputs()){
@@ -137,7 +159,7 @@ size_t operation::getOutputSize() const {
 
 void operation::dropAllInputs(){
     for(auto input: inputs){
-        input->dropUser(this);
+        input->disconnectOp(this);
     }
     inputs.clear();
 }
@@ -159,7 +181,7 @@ graph* operation::expandToGraph()
 
 void operation::replaceInputValue(int n, value* v){
     if(n+1 > inputs.size())return;
-    inputs[n]->dropUser(this);
+    inputs[n]->disconnectOp(this);
     // update the corresponding valueRef to the new one
     inputs[n]=v;
     v->addUsesr(this);
@@ -176,7 +198,10 @@ void operation::replaceBy(operation* new_op){
         auto output = outputs[i].get();
         auto& users = output->getUsers();
         for(auto &user : users){
-            user->inputs[i] = new_op->outputs[i].get();
+            for(auto j =0; j<user->getInputSize(); j++){
+                if( user->inputs[j] == output )
+                    user->inputs[j] = new_op->outputs[i].get();
+            }
         }
         output->getUsers().clear();
     }
@@ -232,25 +257,18 @@ void graph::assignID(int n0 ){
 }
 //---------------------------------------------------
 
-void graph::registerOp(operation* op){
-    op->setParentGraph(this);
-    if(op->getInputSize() == 0) op->appendTo(dynamic_cast<operation*>(&entry)); 
-    nodes.push_back(op);
-}
-//---------------------------------------------------
-
 void graph::clean()
 {
     for(auto iter = nodes.begin(); iter!=nodes.end(); )
     {
         operation* op =(*iter);
         if(op->isRemovable()){
-            delete op;
             iter = nodes.erase(iter);
+            delete op;
         } else if (auto g = dynamic_cast<graph*>(op)){
             g->clean();
-        }
-        iter++;
+            iter++;
+        } else iter++;
     }
 }
 //---------------------------------------------------

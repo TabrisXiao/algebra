@@ -1,46 +1,52 @@
 
 #include "lgf/pass.h"
+#include "lgf/group.h"
 //#include "utility.h"
 using namespace lgf;
 
-bool passBase::applyRewriterOnce(painter &p, graph* g){
-    bool ischanged = 0;
+resultCode passBase::applyRewriterOnce(painter &p, graph* g){
+    resultCode result;
     p.gotoGraph(g);
     for(auto ptr=rewriters.begin(); ptr!=rewriters.end(); ptr++)
     {
         auto nodes = g->getNodeList(); 
         for(auto & node : nodes){
             if(node->isRemovable() || !node->isActive()) continue;
-            ischanged = (*ptr).get()->execute(p, node) ||ischanged;
+            result.add((*ptr).get()->execute(p, node));
+            if(auto subg = dynamic_cast<graph*>(node)){
+                result.add(applyRewriterOnce(p, subg));
+            }
         }
     }
-    g->verify();
-    return ischanged;
+    return result;
 }
 //---------------------------------------------------
 
-int passBase::applyRewriterGreedy(painter &p, graph* g){
+resultCode passBase::applyRewriterGreedy(painter &p, graph* g){
     p.gotoGraph(g);
-    bool repeat = applyRewriterOnce(p, g);
+    auto result = applyRewriterOnce(p, g);
     g->clean();
     int counts = 1;
-    while(repeat){
+    auto final_result = result;
+    while(result.isSuccess()){
         counts++;
-        repeat = applyRewriterOnce(p, g);
+        result = applyRewriterOnce(p, g);
+        final_result.add(result);
         g->clean();
     }
-    return counts;
+    return final_result;
 }
 
-bool passBase::walkApplyRewriterOnce(painter &p, graph* g, bool deepWalk){
+resultCode passBase::walkApplyRewriterOnce(painter &p, graph* g, bool deepWalk){
     p.gotoGraph(g);
+    resultCode result;
     g->walk([&](operation* op){
         if(op->isRemovable() || !op->isActive()) return;
         for(auto ptr=rewriters.begin(); ptr!=rewriters.end(); ptr++){
-            (*ptr).get()->execute(p, op);
+            result.add((*ptr).get()->execute(p, op));
         }
     }, 1, 1, 1, deepWalk);
-    return 0;
+    return result;
 }
 
 bool passBase::translation(painter &p, graph* g){
@@ -51,4 +57,8 @@ bool passBase::translation(painter &p, graph* g){
         }
     }, 1, 1, 1, 0);
     return 0;
+}
+
+void passManager::addNormalizationPass(){
+    addPass(std::make_unique<normalizationPass>());
 }

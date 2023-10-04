@@ -25,7 +25,6 @@ int main(int argc, char* argv[]){
     cmp.io.addIncludePath(p.string());
     cmp.setRootPath(p.string());
     cmp.compileInput(inputFile);
-    
 
     return 0;
 }

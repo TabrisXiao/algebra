@@ -8,25 +8,35 @@ namespace lgf::AAB{
 class InterfaceInitRewriter : public rewriter<funcDefineOp>{
     public:
     InterfaceInitRewriter() = default;
-    virtual bool rewrite(painter &p, funcDefineOp *op){
+    virtual resultCode rewrite(painter p, funcDefineOp *op){
         auto users = op->getCallee()->getUsers();
+        resultCode ret;
         for(auto & user : users){
-            auto tempg = p.current_graph;
+            auto tempg = p.getGraph();
+            auto fc = dynamic_cast<funcCallOp*>(user);
+            p.gotoGraph(user->getParentGraph());
             if(op->id=="Power"){
-                p.gotoGraph(user->getParentGraph());
-                p.replaceOp<powerOp>( user, op->argument(0), op->argument(1));
-                p.gotoGraph(tempg);
+                p.replaceOp<powerOp>( user, fc->arg(0), fc->arg(1));
+                ret.add(resultCode::success());
             }else if(op->id=="Sin"){
-                p.gotoGraph(user->getParentGraph());
-                p.replaceOp<funcSineOp>( user, op->argument(0));
-                p.gotoGraph(tempg);
+                p.replaceOp<funcSineOp>( user, fc->arg(0));
+                ret.add(resultCode::success());
             }else if(op->id=="Cos"){
-                p.gotoGraph(user->getParentGraph());
-                p.replaceOp<funcCosOp>( user, op->argument(0));
-                p.gotoGraph(tempg);
+                p.replaceOp<funcCosOp>( user, fc->arg(0));
+                ret.add(resultCode::success());
+            }else if(op->id=="Derivative"){
+                p.replaceOp<derivativeOp>( user, fc->arg(0), fc->arg(1));
+                ret.add(resultCode::success());
+            }else if(op->id=="Factor"){
+                p.replaceOp<factorOp>( user, fc->arg(0), fc->arg(1));
+                ret.add(resultCode::success());
+            }else if(op->id=="Distribute"){
+                p.replaceOp<distributeOp>( user, fc->arg(0));
+                ret.add(resultCode::success());
             }
+            p.gotoGraph(tempg);
         }
-        return 0;
+        return ret;
     } 
 };
 
@@ -35,11 +45,12 @@ class InterfaceInitPass : public passBase{
     InterfaceInitPass(moduleOp *m)
     : passBase("AABInterfaceInitPass")
     , module(m) {}
-    virtual bool run() final{
+    virtual resultCode run() final{
         painter p(getContext());
         addRewriter<InterfaceInitRewriter>(); 
-        applyRewriterOnce(p, module);
-        return 0;
+        auto result = applyRewriterOnce(p, module);
+        module->erase();
+        return result;
     }
     moduleOp* module = nullptr;
 };

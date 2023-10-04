@@ -86,8 +86,11 @@ public:
         }
         users.push_back(op);
     }
-    void dropUser(operation *op);
-    void dropUsers();
+    void disconnectOp(operation *op);
+    void disconnectUsers();
+    // this function only remove the user from users but not modify the inputs for that user.
+    // this type of function has to be used with caution!
+    void removeOp(operation*);
     template<typename t>
     void type_check(){
         if(dynamic_cast<t>(vtp)) return;
@@ -95,20 +98,31 @@ public:
         std::exit(EXIT_FAILURE); 
     }
     
-    // get the list of all ops using this value as a input;
+    // get the unique_ptr owning this value
     std::unique_ptr<value>* getPtr();
-    std::vector<operation*> getUsers();
-    void replaceBy(value *v){
-        // this value will be lost after replace
+    // get the list of all ops using this value as a input;
+    std::vector<operation*>& getUsers();
+    size_t getUserSize() { return users.size(); }
+
+    // swap the value with the provided one. 
+    // generally used for replacing the value for its users by a new one.
+    void swap(value* v){
         auto thisvalue = getPtr();
         auto thatvalue = v->getPtr();
+        if(!thisvalue || !thatvalue ) return;
         thisvalue->swap(*thatvalue);
         auto thisptr = thisvalue->get();
         auto thatptr = thatvalue->get();
-        thisptr->setDefiningOp(thatptr->getDefiningOp());
+        type_t temptype = thisptr->getType();
+        operation *ptr = thisptr->getDefiningOp();
         thisptr->setType(thatptr->getType());
-        thisptr->setSID(thatptr->getSID());
+        thisptr->setDefiningOp(thatptr->getDefiningOp());
+        thatptr->setType(temptype);
+        thatptr->setDefiningOp(ptr);
     }
+
+    // switch the user of this value from one Op to an other.
+    void switchUser(operation *from, operation* to, int index);
 
     private:
     operation *defop = nullptr;
@@ -153,7 +167,14 @@ public :
     // op old : input1,  ...        output1, output2, ...
     //                                 |        |
     // op new : input1, input2, ... output1, output2, ...
+    // this op will be erased after the replacement
     void replaceBy(operation* new_op);
+
+    void replaceInput(int j, value* val){
+        inputs[j]->removeOp(this);
+        inputs[j] = val;
+        val->addUsesr(this);
+    }
     
     // replace the n-th input by the value v. 
     // the connection to the original value will break
@@ -166,6 +187,10 @@ public :
         auto values = {args...};
         for (auto val : values)
         {
+            if(val->getDefiningOp() == this) {
+                WARNING("Skipped register the input causing cycle dependence!");
+                continue;
+            }
             val->addUsesr(this);
             inputs.push_back(val);
         }
@@ -193,6 +218,30 @@ public :
     value* createValue();
     value* createValue(type_t& type, std::string sid);
 
+    // drop all inputs to this operation, and remove all connects
+    // associated to the op.
+    void dropAllInputs();
+
+    // drop the input value
+    void dropInputValue(value* v){
+        auto iter = std::find(inputs.begin(), inputs.end(), v);
+        if(iter == inputs.end()) return;
+        inputs.erase(iter);
+    }
+
+    void erase(){
+        dropAllInputs();
+        // drop users of output values from this op
+        for(auto i = 0; i< getOutputSize(); i++){
+            outputValue(i)->disconnectOp(this);
+        }
+        setRemovable();
+    }
+
+    std::vector<value*>& getInputs(){ return inputs;}
+    std::vector<std::unique_ptr<value>>& getOutputs() const {
+        return const_cast<std::vector<std::unique_ptr<value>>&>(outputs);
+    }
     value* outputValue(int n=0){return outputs[n].get();}
     value* inputValue(int n=0) {return inputs[n];}
     size_t getInputSize() const;
@@ -201,10 +250,6 @@ public :
     // assign trace id to the value created in this operation. 
     // The start of the trace id is specified by the argument n.
     virtual void assignValueID(int& n);
-
-    // drop all inputs to this operation, and remove all connects
-    // associated to the op.
-    void dropAllInputs();
 
     // detach the input edges from this operation and disconnect
     // the outputs from their users, this operation still connecting to
@@ -222,15 +267,13 @@ public :
 
     bool isDependencyFullfilled();
 
-    std::vector<std::unique_ptr<value>>& getOutputs() const {
-        return const_cast<std::vector<std::unique_ptr<value>>&>(outputs);
-    }
-
     void setActivation(bool a ){ bActive = a; }
     bool isActive(){return bActive; }
 
     void setExploration(bool a){ bExplored = a; }
     bool isExplored(){ return bExplored; }
+    bool isValid(){ return bValid; }
+    void toughed(){ bValid = 0; }
 
     bool isRemovable(){ return bRemove; }
     void setRemovable(){ 
@@ -239,9 +282,17 @@ public :
 
     graph* getParentGraph(){return graph_;}
     void setParentGraph(graph* g){ graph_ = g; }
-    virtual bool verify() { return 0; }
+    virtual void redundantCheck(){
+        for(auto & val: outputs ){
+            if(val->getUserSize()==0) setRemovable();
+        }
+    }
+    bool validation() { 
+        redundantCheck();
+        return 0; 
+    }
 
-    std::vector<value*>& getInputs(){ return inputs;}
+    
     graph * expandToGraph();
 
     private:
@@ -258,6 +309,7 @@ public :
     //virtual graph* getSubgraph(){ return nullptr;}
     bool bActive = 1;
     bool bExplored = 0;
+    bool bValid = 1;
 
     // this is a member used to remove the operation efficiently. 
     // Should be used solely for removing process in graph.
@@ -340,9 +392,7 @@ class graph : public operation{
         clean();
         return;
     }
-    // regist the op in this graph into book, if this op has no
-    // inputs, it will be appended to the entrance op.
-    void registerOp(operation* op);
+
     graph* getGraph() {return dynamic_cast<graph*>(this);}
 
     virtual void printGraph();
@@ -353,12 +403,19 @@ class graph : public operation{
     void clean();
     // entrances are the ops have no inputs
     operation&  getEntry(){ return entry; }
-    virtual void verifyGraph() { 
-        this->verify();
-        walk([&](operation* op){
-            THROW_WHEN(op->verify(), "Op verification failed!");
-        }, 1);
+    void graphValidation() { 
+        for(auto& op : nodes){
+            if(auto g = dynamic_cast<graph*>(op)){
+                g->graphValidation();
+            }
+            if(op->isValid()) continue;
+            op->validation();
+        }
     }
+
+    // this function sort the nodes in a order that the op depends on
+    // others will always behind its inputs.
+    //void sortByDepdency();
 
     // return how many operations graph contained
     int getNodeSize(){ return int(nodes.size()); }

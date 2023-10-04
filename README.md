@@ -19,7 +19,7 @@ def check(int a) {
     return;
 }
 ```
-The scope operator `::` can be used to access the member function of a module. It can also used to avoid the name confliction. However, it can't be used to access the member functions that accessing member variables (since these functions can only be called after a module initialized).
+The dot operator `.` can be used to access the member function of a module. It can also used to avoid the name confliction. However, it can't be used to access the member functions that accessing member variables (since these functions can only be called after a module initialized).
 
 ## Design
 
@@ -29,11 +29,11 @@ LGFCompiler consists by three parts:
 * LGFInference: produce the final APIs from the Logic graph
 
 ### Module
-The conception of module is similar to the conception of `class`. It is a set containing functions and/or variables as member functions/variables. Functions can be accessed from outside of the module but the variables can only be accessed after the module is initialized. Member functions can only access the module variable by using the `self` keyword like `python`. To access the module, the dot `.` symbol is used to access modules. The usage can be illustrated as: 
+The conception of module is similar to the conception of `class`. It is a set containing functions and/or variables as member functions/variables. Functions can be accessed from outside of the module but the variables can only be accessed after the module is initialized. To access the module, the dot `.` symbol is used to access modules. The usage can be illustrated as: 
 ```
 import math;
 lib = math();
-a = math::sum(2,3); // can access the function in math without self as argument
+a = math.sum(2,3); // can access the function in math without self as argument
 lib.a = a;
 lib.check(); // here the check is assume to be defined as check(self) inside the math module
 ```
@@ -55,7 +55,6 @@ The `LinearAlg` lib contains the following ops:
 ### Planning
 * Support the binary op: `<=`, `>=`, `==`, etc.
 * Add verification for ops. 
-* design the regularization pass.
-* design the pass converting the funcCall to the LGF ops.
 * design the APIs arch.
 * Change the IR of `accessOp` to show the module name that the accessing object belongs to.
+* add `verify()` function to `operation` to prevent cycle dependency and other issues.

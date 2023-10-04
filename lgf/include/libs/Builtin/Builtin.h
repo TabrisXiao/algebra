@@ -26,7 +26,7 @@ namespace Builtin{
 class InterfaceInitPass : public passBase {
     public:
     InterfaceInitPass(moduleOp *) : passBase("BuiltinInterfaceInitPass") {}
-    virtual bool run() {return 0; }
+    virtual resultCode run() {return resultCode::pass(); }
 };
 
 std::unique_ptr<passBase> createInterfaceInitPass(moduleOp *m){

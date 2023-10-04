@@ -13,20 +13,22 @@ namespace lgf::compiler {
 
 class LGTranslator {
     public: 
-    LGTranslator(LGFContext* c)
-    : ctx(c)
-    , pnt(c) { }
+    LGTranslator(LGFContext* c_, canvas* can)
+    : ctx(c_)
+    , pnt(c_)
+    , c(can) { }
     void build(programAST* program){
         TRACE_LOG;
         astctx = program->getContext();
         astctx->resetModulePtr();
-        pnt.gotoGraph(&c);
+        pnt.gotoGraph(c);
         for(auto & moduleast : program->modules){
             transplateASTModule(moduleast.get());
         }
         
-        moduleManager::get().start = &c;
+        moduleManager::get().start = c;
         moduleManager::get().bPrintFinalIR = printTranslatedIR;
+        moduleManager::get().bPrintInitialIR = printTranslatedIR;
         if(printInitIRForEachModule){
             moduleManager::get().enablePrintAfterPass();
         }
@@ -101,6 +103,7 @@ class LGTranslator {
         varAST* lhs = nullptr;
         accessAST * last= nullptr;
         auto curASTModuleLoc = astctx->module;
+        // get the obj def through module access chain
         while(ast){
             lhs = dynamic_cast<varAST*>(ast->lhs.get());
             auto id = lhs->id;
@@ -173,14 +176,11 @@ class LGTranslator {
     }
     value* convertFunCall(funcCallAST* ast, funcCallOp *op){
         TRACE_LOG;
-        //std::vector<value*> args; 
         for(auto i=0; i<ast->args.size(); i++){
             auto arg = translateAST(ast->arg(i));
-            //args.push_back(arg);
             op->registerInput(arg);
         }
-        //op->addArgs(args);
-        pnt.addToGraph(op);
+        pnt.addOpAtCurrentPoint(op);
         return op->returnValue();
     }
     value* translateReturnOp(std::unique_ptr<astBase>& op){
@@ -197,7 +197,7 @@ class LGTranslator {
         else{
             pnt.appendOp(retOp);
         }
-        pnt.addToGraph(retOp);
+        pnt.addOpAtCurrentPoint(retOp);
         
         return ret;
     }
@@ -263,7 +263,7 @@ class LGTranslator {
     
     std::unique_ptr<moduleAST> main;
     painter pnt;
-    canvas c;
+    canvas* c;
     ASTContext *astctx=nullptr;
     LGFContext *ctx = nullptr;
     nestedSymbolicTable<moduleInfo>* temp_ptr = astctx;
