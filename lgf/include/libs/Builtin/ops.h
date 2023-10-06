@@ -14,6 +14,7 @@ class moduleOp : public graph{
     ~moduleOp(){}
     static moduleOp * build(LGFContext *ctx, std::string id = ""){
         auto op = new moduleOp();
+        op->setNontrivial();
         op->name = id;
         op->createValue(ctx->getType<reference_t>(),"");
         return op;
@@ -23,7 +24,7 @@ class moduleOp : public graph{
     virtual std::string represent() {return getSID()+" "+name;}
 };
 
-class declOp : public operation{
+class declOp : public operation, public normalizer{
     public:
     declOp() : operation("declOp") {}
     static declOp * build(LGFContext *ctx, type_t type) {
@@ -37,6 +38,13 @@ class declOp : public operation{
         printer p;
         p<<representOutputs()<<" : Declare";
         return p.dump();
+    }
+    virtual resultCode rewrite(painter p, operation* op){
+        if(op->outputValue(1)->getUserSize() == 0){
+            op->erase();
+            return resultCode::success();
+        }
+        return resultCode::pass();
     }
 };
 
@@ -132,6 +140,7 @@ class funcDefineOp : public graph {
     funcDefineOp() : graph("funcDefineOp") {}
     static funcDefineOp* build(LGFContext *ctx, std::string id_, lgf::type_t returnType_){
         auto op = new funcDefineOp();
+        op->setNontrivial();
         op->returnType = returnType_;
         op->id = id_;
         op->createValue(ctx->getType<reference_t>(),"");
@@ -181,6 +190,7 @@ class funcCallOp : public operation{
     funcCallOp() = default;
     static funcCallOp * build(LGFContext *ctx, value* callee){
         auto op = new funcCallOp();
+        op->setNontrivial();
         //op->funPtr = callee;
         op->registerInput(callee);
         auto& ret = callee->getDefiningOp<funcDefineOp>()->returnType;
@@ -230,11 +240,13 @@ class returnOp : public operation {
     returnOp() = default;
     static returnOp * build(LGFContext *ctx){
         auto op = new returnOp();
+        op->setNontrivial();
         return op;
     }
     static returnOp * build(LGFContext *ctx, value* val){
         auto op = build(ctx);
         if(val) op->registerInput(val);
+        op->setNontrivial();
         return op;
     }
     virtual std::string represent(){

@@ -19,6 +19,9 @@ class LGTranslator {
     , c(can) { }
     void build(programAST* program){
         TRACE_LOG;
+        moduleManager::get().start = c;
+        moduleManager::get().loadDefaultTranslationPipeline();
+        moduleManager::get().loadInternalModule("Builtin", ctx, nullptr);
         astctx = program->getContext();
         astctx->resetModulePtr();
         pnt.gotoGraph(c);
@@ -26,7 +29,6 @@ class LGTranslator {
             transplateASTModule(moduleast.get());
         }
         
-        moduleManager::get().start = c;
         moduleManager::get().bPrintFinalIR = printTranslatedIR;
         moduleManager::get().bPrintInitialIR = printTranslatedIR;
         if(printInitIRForEachModule){
@@ -184,6 +186,7 @@ class LGTranslator {
         return op->returnValue();
     }
     value* translateReturnOp(std::unique_ptr<astBase>& op){
+        std::cout<<"translate return op\n";
         auto ast = dynamic_cast<returnAST*>(op.get());
         value *val = nullptr;
         if(ast->hasValue()) {
@@ -207,10 +210,9 @@ class LGTranslator {
     void declareVariables(symbolTable<idinfo>& idtbl){
         for(auto& it : idtbl.table){
             auto & entry = it.second;
-            if(entry.category == "var"){
+            if(entry.category == "var" && !entry.handle ){
                 auto type = parseType(entry.type);
                 auto op = pnt.paint<declOp>(type);
-                op->output()->setSID("");
                 it.second.handle=op->output();
             }
         }
@@ -248,7 +250,7 @@ class LGTranslator {
         }else if(bop == "="){
             if(auto ptr = dynamic_cast<varAST*>(ast->lhs.get())){
                 // auto ret = pnt.paint<updateOp>(ctx, lhs, rhs)->output();
-                // astctx->findSymbolInfoInCurrentModule(ptr->id)->handle=ret;
+                astctx->findSymbolInfoInCurrentModule(ptr->id)->handle=rhs;
                 // return ret;
                 return rhs;
             }else {
@@ -267,7 +269,7 @@ class LGTranslator {
     ASTContext *astctx=nullptr;
     LGFContext *ctx = nullptr;
     nestedSymbolicTable<moduleInfo>* temp_ptr = astctx;
-    bool printInitIRForEachModule = 0;
+    bool printInitIRForEachModule = 1;
     bool printTranslatedIR = 0;
 };
 

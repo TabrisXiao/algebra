@@ -100,19 +100,22 @@ class passManager{
     passManager() = default;
     passManager(LGFContext* c, graph *op) {ctx = c, start = op;}
     void enablePrintAfterPass(){bPrintAfterPass = 1;}
+    void enablePrintBeforePass(){bPrintBeforePass = 1;}
     void run(){
         if(bPrintInitialIR) 
-        {   OSTREAM<<"\n------ Initial "<<name<<" ------\n";
+        {   OSTREAM<<"\n------ Input "<<name<<" ------\n";
             start->assignID(0);
             start->print();
         }
-        if(bPrintBeforePass){
-                OSTREAM<<"------ Init IR ------\n";
+        
+        for(auto pass=passes.begin(); pass!=passes.end(); pass++){
+            if(bPrintBeforePass){
+                OSTREAM<<"------ IR before pass:  "<<(*pass).get()->_pass_name<<" ------\n";
                 start->assignID(0);
                 start->print();
                 OSTREAM<<"\n";
             }
-        for(auto pass=passes.begin(); pass!=passes.end(); pass++){
+
             (*pass)->run();
             //std::cout<<"pass: "<<(*pass)->_pass_name<<" finished."<<std::endl;
             start->graphValidation();

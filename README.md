@@ -56,5 +56,4 @@ The `LinearAlg` lib contains the following ops:
 * Support the binary op: `<=`, `>=`, `==`, etc.
 * Add verification for ops. 
 * design the APIs arch.
-* Change the IR of `accessOp` to show the module name that the accessing object belongs to.
-* add `verify()` function to `operation` to prevent cycle dependency and other issues.
+* Design a way to record the properties for `operation`, it will allows the validation runs and remove redundant ops automatically.

@@ -184,7 +184,7 @@ void operation::replaceInputValue(int n, value* v){
     inputs[n]->disconnectOp(this);
     // update the corresponding valueRef to the new one
     inputs[n]=v;
-    v->addUsesr(this);
+    v->addUser(this);
 }
 //---------------------------------------------------
 

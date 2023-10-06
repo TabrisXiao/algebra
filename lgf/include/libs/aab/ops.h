@@ -250,12 +250,14 @@ class distributeOp : public operation, public normalizer{
         auto op = new distributeOp();
         op->registerInput(input);
         op->createValue(input->getType(), "");
+        op->setNontrivial();
         return op;
     }
     value *input(){ return inputValue(0); }
     value *output(){return outputValue(1); }
     
-    resultCode distribute(painter p, operation* op){
+    resultCode distribute(painter p, value* val, operation* user){
+        auto op = val->getDefiningOp();
         resultCode result;
         operation* newop=nullptr;
         if(auto root = dynamic_cast<multiplyOp*>(op)){
@@ -267,8 +269,8 @@ class distributeOp : public operation, public normalizer{
                 auto addl = p.paint<multiplyOp>(lhs, addop->lhs());
                 auto addr = p.paint<multiplyOp>(lhs, addop->rhs());
                 addop->output()->disconnectOp(root);
-                addop->toughed();
-                newop = p.replaceOp<addOp>(root, addl->output(), addr->output());
+                newop = p.paint<addOp>(addl->output(), addr->output());
+                root->replaceInputValue(val, newop->outputValue(1));
                 result.add(resultCode::success());
                 p.getGraph()->clean();
             }else if(
@@ -279,8 +281,8 @@ class distributeOp : public operation, public normalizer{
                 auto addl = p.paint<multiplyOp>(addop->lhs(), rhs);
                 auto addr = p.paint<multiplyOp>(addop->rhs(), rhs);
                 addop->output()->disconnectOp(root);
-                addop->toughed();
-                newop = p.replaceOp<addOp>(root, addl->output(), addr->output());
+                newop = p.paint<addOp>(addl->output(), addr->output());
+                root->replaceInputValue(val, newop->outputValue(1));
                 result.add(resultCode::success());
             } else {
                 newop = root;
@@ -293,14 +295,14 @@ class distributeOp : public operation, public normalizer{
             newop = dynamic_cast<addOp*>(op);
         }
         if(newop){
-            result.add(distribute(p, newop->inputValue(0)->getDefiningOp()));
-            result.add(distribute(p, newop->inputValue(1)->getDefiningOp()));
+            result.add(distribute(p, newop->inputValue(0), newop));
+            result.add(distribute(p, newop->inputValue(1), newop));
         }
         return result;
     }
     virtual resultCode rewrite(painter p, operation* op){
         auto input = dynamic_cast<distributeOp*>(op)->input();
-        auto res = distribute(p, input->getDefiningOp());
+        auto res = distribute(p, input, op);
         if(!res.isSuccess()){
             op->replaceBy(op->inputValue(0)->getDefiningOp());
             op->erase();

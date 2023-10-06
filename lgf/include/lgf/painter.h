@@ -39,7 +39,7 @@ class painter {
         auto op = sketch<obj>(args...);
         //add to graph
         op->setParentGraph(point.g);
-        if(op->getInputSize() == 0) 
+        if(op->getInputSize() == 0)
             op->appendTo(dynamic_cast<operation*>(&(point.g->getEntry())));
         point.iter = point.g->getNodeList().insert(point.iter, op)+1;
         lastOp = op;
@@ -120,6 +120,7 @@ class painter {
         op1->erase();
         return op2;
     }
+
 
     void erase(operation* op){
         op->dropAllInputs();

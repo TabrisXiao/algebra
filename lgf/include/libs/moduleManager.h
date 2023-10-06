@@ -38,13 +38,17 @@ class moduleManager : public passManager{
         entry->type_reg_f(ctx);
     }
 
-    protected:
-    moduleManager(){
-        name = "LGFModule Init";
+    void loadDefaultTranslationPipeline(){
+        name = "LGFModule Init (Default Pipeline)";
+        addNormalizationPass();
         table.addEntry("Builtin", {&LGFBaseModule::registerTypes, &Builtin::createInterfaceInitPass});
         table.addEntry("LinearAlg", {&LinearAlgModule::registerTypes, &LinearAlg::createInterfaceInitPass});
         table.addEntry("AAB", {&AABModule::registerTypes, &AAB::createInterfaceInitPass});
     }
+
+    protected:
+    moduleManager(){}
+    
     inline static moduleManager *_mtble=nullptr;
     symbolTable<moduleInfo> table;
 };

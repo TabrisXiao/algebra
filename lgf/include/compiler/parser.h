@@ -94,7 +94,8 @@ class parser{
                     record = parseFuncDef();
                     break;
                 case tok_return:
-                    parseError("keyword return is illegal here.");
+                    record = parseReturn(0);
+                    //parseError("keyword return is illegal here.");
                     break;
                 default:
                     parseError("Unknown token: "+lx.convertCurrentToken2String());
@@ -111,7 +112,7 @@ class parser{
         }
         return std::move(module);
     }
-    std::unique_ptr<astBase> parseReturn(){
+    std::unique_ptr<astBase> parseReturn(int allowValue = 1){
         auto ast = std::make_unique<returnAST>(lx.getLoc());
         lx.consume(tok_return);
         std::unique_ptr<astBase> record = nullptr;
@@ -120,6 +121,7 @@ class parser{
             return ast;
         } 
         record = parseExpression();
+        if(!allowValue) parseError("return statement can't have value.");
         if(record) ast->addReturnValue(std::move(record));
         lx.consume(token(';'));
         return ast;
@@ -206,7 +208,7 @@ class parser{
                     record = parseIdentifier();
                     break;
                 case tok_return:
-                    record = parseReturn();
+                    record = parseReturn(1);
                     break;
                 case tok_module:
                     parseError("Can not define module here.");

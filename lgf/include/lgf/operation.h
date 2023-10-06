@@ -13,6 +13,7 @@
 #include "exception.h"
 #include <memory>
 #include <algorithm>
+#include "utils.h"
 
 // logic graph frameworks
 namespace lgf{
@@ -22,6 +23,7 @@ class dependence;
 class value;
 class valueRef;
 class graph;
+class normalizer;
 
 typedef size_t id_t;
 
@@ -56,6 +58,20 @@ obj& get_vec_elem_with_check(size_t n, std::vector<obj>& vec){
     return vec[n];
 }
 
+// this object encodes operation status into 8 bit data
+class opStatus : public byteCode<int8_t> {
+    public:
+    enum status : int8_t {
+        default =0,
+        // this type op can't be removed automatically
+        nontrivial, 
+    };
+    opStatus(): byteCode() {}
+    opStatus(int8_t v) : byteCode(v){}
+    bool isTrivial(){ return !check(nontrivial); }
+    void setNontrivial(){ add(opStatus(nontrivial)); }
+};
+
 class value : public objInfo{
 public:
     value() = default;
@@ -79,7 +95,7 @@ public:
     opType* getDefiningOp() const {return dynamic_cast<opType*>(getDefiningOp());}
     void setDefiningOp(operation *op){defop = op;} 
 
-    void addUsesr(operation *op){
+    void addUser(operation *op){
         if(std::find(users.begin(), users.end(), op)!=users.end()){
             std::cout<<"lgf::value::addUser Runtime Warning: user exists!"<<std::endl;
             return;
@@ -171,9 +187,19 @@ public :
     void replaceBy(operation* new_op);
 
     void replaceInput(int j, value* val){
+        if(j>= getInputSize()) return;
+        //marking the ops involved is modified;
         inputs[j]->removeOp(this);
         inputs[j] = val;
-        val->addUsesr(this);
+        val->addUser(this);
+    }
+    void replaceInputValue(value* val, value* newval){
+        auto iter = std::find(inputs.begin(), inputs.end(), val);
+        if(iter==inputs.end()) return;
+        //marking the ops involved is modified;
+        (*iter)->removeOp(this);
+        (*iter) = newval;
+        newval->addUser(this);
     }
     
     // replace the n-th input by the value v. 
@@ -191,7 +217,7 @@ public :
                 WARNING("Skipped register the input causing cycle dependence!");
                 continue;
             }
-            val->addUsesr(this);
+            val->addUser(this);
             inputs.push_back(val);
         }
     }
@@ -246,6 +272,8 @@ public :
     value* inputValue(int n=0) {return inputs[n];}
     size_t getInputSize() const;
     size_t getOutputSize() const;
+    opStatus getStatus(){ return status; }
+    void setNontrivial(){ status.setNontrivial(); }
 
     // assign trace id to the value created in this operation. 
     // The start of the trace id is specified by the argument n.
@@ -272,8 +300,6 @@ public :
 
     void setExploration(bool a){ bExplored = a; }
     bool isExplored(){ return bExplored; }
-    bool isValid(){ return bValid; }
-    void toughed(){ bValid = 0; }
 
     bool isRemovable(){ return bRemove; }
     void setRemovable(){ 
@@ -283,9 +309,14 @@ public :
     graph* getParentGraph(){return graph_;}
     void setParentGraph(graph* g){ graph_ = g; }
     virtual void redundantCheck(){
+        bool canRemove = 1;
         for(auto & val: outputs ){
-            if(val->getUserSize()==0) setRemovable();
+            if(val->getUserSize()!=0) {
+                canRemove = 0;
+                break;
+            }
         }
+        if(canRemove) setRemovable();
     }
     bool validation() { 
         redundantCheck();
@@ -309,7 +340,7 @@ public :
     //virtual graph* getSubgraph(){ return nullptr;}
     bool bActive = 1;
     bool bExplored = 0;
-    bool bValid = 1;
+    opStatus status;
 
     // this is a member used to remove the operation efficiently. 
     // Should be used solely for removing process in graph.
@@ -408,8 +439,7 @@ class graph : public operation{
             if(auto g = dynamic_cast<graph*>(op)){
                 g->graphValidation();
             }
-            if(op->isValid()) continue;
-            op->validation();
+            if(op->getStatus().isTrivial()) op->validation();
         }
     }
 
