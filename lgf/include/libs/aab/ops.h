@@ -250,7 +250,7 @@ class distributeOp : public operation, public normalizer{
         auto op = new distributeOp();
         op->registerInput(input);
         op->createValue(input->getType(), "");
-        //op->setNontrivial();
+        op->setNontrivial();
         return op;
     }
     value *input(){ return inputValue(0); }
@@ -270,7 +270,7 @@ class distributeOp : public operation, public normalizer{
                 auto addr = p.paint<multiplyOp>(lhs, addop->rhs());
                 addop->output()->disconnectOp(root);
                 newop = p.paint<addOp>(addl->output(), addr->output());
-                user->replaceInputValue(val, newop->outputValue(1));
+                root->replaceInputValue(val, newop->outputValue(1));
                 result.add(resultCode::success());
                 p.getGraph()->clean();
             }else if(
@@ -282,7 +282,7 @@ class distributeOp : public operation, public normalizer{
                 auto addr = p.paint<multiplyOp>(addop->rhs(), rhs);
                 addop->output()->disconnectOp(root);
                 newop = p.paint<addOp>(addl->output(), addr->output());
-                user->replaceInputValue(val, newop->outputValue(1));
+                root->replaceInputValue(val, newop->outputValue(1));
                 result.add(resultCode::success());
                 p.getGraph()->clean();
             } else {

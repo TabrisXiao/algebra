@@ -101,20 +101,6 @@ class passManager{
     passManager(LGFContext* c, graph *op) {ctx = c, start = op;}
     void enablePrintAfterPass(){bPrintAfterPass = 1;}
     void enablePrintBeforePass(){bPrintBeforePass = 1;}
-    void validation(graph* g);
-    
-    void redundantCheck(operation* op){
-        bool canRemove = 1;
-        for(auto & val: op->getOutputs() ){
-            if(val->getUserSize()!=0) {
-                canRemove = 0;
-                break;
-            }
-        }
-        if(canRemove){
-            op->erase();
-        }
-    }
     
     void run(){
         if(bPrintInitialIR) 
