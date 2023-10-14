@@ -95,17 +95,7 @@ public:
     opType* getDefiningOp() const {return dynamic_cast<opType*>(getDefiningOp());}
     void setDefiningOp(operation *op){defop = op;} 
 
-<<<<<<< HEAD
     void addUser(operation *op);
-=======
-    void addUser(operation *op){
-        if(std::find(users.begin(), users.end(), op)!=users.end()){
-            std::cout<<"lgf::value::addUser Runtime Warning: user exists!"<<std::endl;
-            return;
-        }
-        users.push_back(op);
-    }
->>>>>>> 8afdca6 (Added opStatus)
     void disconnectOp(operation *op);
     void disconnectUsers();
     // this function only remove the user from users but not modify the inputs for that user.
@@ -229,10 +219,6 @@ public :
                 WARNING("Skipped register the input causing cycle dependence!");
                 continue;
             }
-<<<<<<< HEAD
-            //std::cout<<"adding user for "<<val->getDefiningOp()->getSID()<<" : "<<this<<std::endl;
-=======
->>>>>>> 8afdca6 (Added opStatus)
             val->addUser(this);
             inputs.push_back(val);
         }
@@ -324,11 +310,7 @@ public :
 
     graph* getParentGraph(){return graph_;}
     void setParentGraph(graph* g){ graph_ = g; }
-<<<<<<< HEAD
 
-    // return 1 if it is invalid
-    virtual bool validation() { 
-=======
     virtual void redundantCheck(){
         bool canRemove = 1;
         for(auto & val: outputs ){
@@ -337,11 +319,11 @@ public :
                 break;
             }
         }
-        if(canRemove) setRemovable();
+        if(canRemove) erase();
     }
+    
     bool validation() { 
         redundantCheck();
->>>>>>> 8afdca6 (Added opStatus)
         return 0; 
     }
 
