@@ -28,8 +28,8 @@ class InterfaceInitRewriter : public rewriter<funcDefineOp>{
                 p.replaceOp<derivativeOp>( user, fc->arg(0), fc->arg(1));
                 ret.add(resultCode::success());
             }else if(op->id=="Factor"){
-                p.replaceOp<factorOp>( user, fc->arg(0), fc->arg(1));
-                ret.add(resultCode::success());
+                // p.replaceOp<factorOp>( user, fc->arg(0), fc->arg(1));
+                // ret.add(resultCode::success());
             }else if(op->id=="Distribute"){
                 p.replaceOp<distributeOp>( user, fc->arg(0));
                 ret.add(resultCode::success());

@@ -7,6 +7,7 @@
 #include "typeTable.h"
 #include <memory>
 #include <vector>
+#include "LGFModule.h"
 //#include "moduleTable.h"
 
 namespace lgf{

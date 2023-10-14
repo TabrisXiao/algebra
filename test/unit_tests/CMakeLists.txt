@@ -10,7 +10,6 @@ create_cpp_binary(
 
     LINK_LIBS
     lgf_lib
-    lgf_codegen_lib
     INCLUDES
     ${PROJECT_SOURCE_DIR}/test/include/
     COPTS /EHsc /W0 /std:c++17

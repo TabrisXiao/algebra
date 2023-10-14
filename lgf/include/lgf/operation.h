@@ -95,13 +95,7 @@ public:
     opType* getDefiningOp() const {return dynamic_cast<opType*>(getDefiningOp());}
     void setDefiningOp(operation *op){defop = op;} 
 
-    void addUser(operation *op){
-        if(std::find(users.begin(), users.end(), op)!=users.end()){
-            std::cout<<"lgf::value::addUser Runtime Warning: user exists!"<<std::endl;
-            return;
-        }
-        users.push_back(op);
-    }
+    void addUser(operation *op);
     void disconnectOp(operation *op);
     void disconnectUsers();
     // this function only remove the user from users but not modify the inputs for that user.
@@ -139,6 +133,15 @@ public:
 
     // switch the user of this value from one Op to an other.
     void switchUser(operation *from, operation* to, int index);
+
+
+    // debug function to print all user address:
+    void printUsers(){
+        std::cout<<"--- users of "<<represent()<<std::endl;
+        for(auto & op : users){
+            std::cout<<"     "<<op<<std::endl;
+        }
+    }
 
     private:
     operation *defop = nullptr;
@@ -211,12 +214,14 @@ public :
     {
         // inputs are suppose to be value type.
         auto values = {args...};
+        
         for (auto val : values)
         {
             if(val->getDefiningOp() == this) {
                 WARNING("Skipped register the input causing cycle dependence!");
                 continue;
             }
+            //std::cout<<"adding user for "<<val->getDefiningOp()->getSID()<<" : "<<this<<std::endl;
             val->addUser(this);
             inputs.push_back(val);
         }
@@ -316,7 +321,7 @@ public :
                 break;
             }
         }
-        if(canRemove) setRemovable();
+        if(canRemove) erase();
     }
     bool validation() { 
         redundantCheck();

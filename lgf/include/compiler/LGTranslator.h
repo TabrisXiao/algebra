@@ -182,11 +182,10 @@ class LGTranslator {
             auto arg = translateAST(ast->arg(i));
             op->registerInput(arg);
         }
-        pnt.addOpAtCurrentPoint(op);
+        pnt.addOpToCurrentGraph(op);
         return op->returnValue();
     }
     value* translateReturnOp(std::unique_ptr<astBase>& op){
-        std::cout<<"translate return op\n";
         auto ast = dynamic_cast<returnAST*>(op.get());
         value *val = nullptr;
         if(ast->hasValue()) {
@@ -196,11 +195,8 @@ class LGTranslator {
         value* ret = nullptr;
         if(val){
             retOp->registerInput(val);
-        } 
-        else{
-            pnt.appendOp(retOp);
         }
-        pnt.addOpAtCurrentPoint(retOp);
+        pnt.addOpToCurrentGraph(retOp);
         
         return ret;
     }
@@ -269,7 +265,7 @@ class LGTranslator {
     ASTContext *astctx=nullptr;
     LGFContext *ctx = nullptr;
     nestedSymbolicTable<moduleInfo>* temp_ptr = astctx;
-    bool printInitIRForEachModule = 1;
+    bool printInitIRForEachModule = 0;
     bool printTranslatedIR = 0;
 };
 

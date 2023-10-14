@@ -12,7 +12,7 @@ class moduleOp : public graph{
     public:
     moduleOp() : graph("module"){}
     ~moduleOp(){}
-    static moduleOp * build(LGFContext *ctx, std::string id = ""){
+    static moduleOp * build(LGFContext *ctx, std::string id){
         auto op = new moduleOp();
         op->setNontrivial();
         op->name = id;
@@ -47,17 +47,6 @@ class declOp : public operation, public normalizer{
         return resultCode::pass();
     }
 };
-
-// class updateOp : public operation {
-//     public:
-//     updateOp() : operation("update"){}
-//     static declOp * build(LGFContext *ctx, type_t type) {
-//         auto op = new declOp();
-//         op->setSID("declOp");
-//         op->createValue(type, "");
-//         return op;
-//     }
-// };
 
 class referenceOp : public operation {
     public:

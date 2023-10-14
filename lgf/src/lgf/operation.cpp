@@ -57,6 +57,14 @@ void value::disconnectUsers(){
 }
 //---------------------------------------------------
 
+void value::addUser(operation *op){
+    if(std::find(users.begin(), users.end(), op)!=users.end()){
+        return;
+    }
+    users.push_back(op);
+}
+//---------------------------------------------------
+
 void value::switchUser(operation *from, operation* to, int index){
     // if the op switch to is already a user, then skip.
     if(users.end() == std::find(users.begin(), users.end(), to)){
@@ -205,6 +213,7 @@ void operation::replaceBy(operation* new_op){
         }
         output->getUsers().clear();
     }
+    erase();
 }
 
 //////////////////////////////////////////////////////

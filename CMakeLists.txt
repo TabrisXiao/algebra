@@ -9,4 +9,4 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 include(builder)
 
 add_subdirectory(lgf)
-#add_subdirectory(test)
+add_subdirectory(test)

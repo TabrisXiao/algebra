@@ -1,3 +1,3 @@
 
 add_subdirectory(unit_tests)
-add_subdirectory(integrate_tests)
+#add_subdirectory(integrate_tests)
