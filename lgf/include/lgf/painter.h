@@ -73,10 +73,13 @@ class painter {
 
     // making an Op depends on the lastOp so that in a dependency walk order, 
     // it will be later than the current lastOp
-    void appendToCurrentGraph(operation* op){
-        op->setParentGraph(point.g);
-        if(point.g->getNodeList().begin() != point.iter) op->dependOn(*(point.iter-1));
-        point.iter = point.g->getNodeList().insert(point.iter, op)+1;
+    void appendToPreviousOp(operation* op){
+        if(auto g = dynamic_cast<graph*>(lastOp)){
+            op->dependOn(&(g->getEntry()));
+        } else{
+            op->dependOn(lastOp);
+        }
+        lastOp = op;
     }
 
     // create a new op to replace the op1's users

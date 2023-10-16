@@ -39,8 +39,8 @@ class normalizationPass : public passBase {
         painter p(getContext());
         addRewriter<groupRewriter<normalizer>>();
         // applyRewriterOnce(p, getGraph());
-        // return applyRewriterOnce(p, getGraph());
-        return applyRewriterGreedy(p, getGraph());
+        return applyRewriterOnce(p, getGraph());
+        //return applyRewriterGreedy(p, getGraph());
     }
 };
 

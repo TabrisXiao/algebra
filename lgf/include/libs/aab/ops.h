@@ -250,7 +250,7 @@ class distributeOp : public operation, public normalizer{
         auto op = new distributeOp();
         op->registerInput(input);
         op->createValue(input->getType(), "");
-        op->setNontrivial();
+        //op->setNontrivial();
         return op;
     }
     value *input(){ return inputValue(0); }
