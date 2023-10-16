@@ -195,6 +195,8 @@ class LGTranslator {
         value* ret = nullptr;
         if(val){
             retOp->registerInput(val);
+        } else {
+            pnt.appendToPreviousOp(retOp);
         }
         pnt.addOpToCurrentGraph(retOp);
         

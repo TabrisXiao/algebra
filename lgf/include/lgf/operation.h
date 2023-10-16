@@ -313,18 +313,9 @@ public :
 
     graph* getParentGraph(){return graph_;}
     void setParentGraph(graph* g){ graph_ = g; }
-    virtual void redundantCheck(){
-        bool canRemove = 1;
-        for(auto & val: outputs ){
-            if(val->getUserSize()!=0) {
-                canRemove = 0;
-                break;
-            }
-        }
-        if(canRemove) erase();
-    }
-    bool validation() { 
-        redundantCheck();
+
+    // return 1 if it is invalid
+    virtual bool validation() { 
         return 0; 
     }
 
@@ -436,17 +427,18 @@ class graph : public operation{
     void assignID(int n=0);
 
     // clean will remove all operations marked as removable;
-    void clean();
+    // return 0 if no ops got removed. Otherwise return 1;
+    bool clean();
     // entrances are the ops have no inputs
     operation&  getEntry(){ return entry; }
-    void graphValidation() { 
-        for(auto& op : nodes){
-            if(auto g = dynamic_cast<graph*>(op)){
-                g->graphValidation();
-            }
-            if(op->getStatus().isTrivial()) op->validation();
-        }
-    }
+    // void graphValidation() { 
+    //     for(auto& op : nodes){
+    //         if(auto g = dynamic_cast<graph*>(op)){
+    //             g->graphValidation();
+    //         }
+    //         if(op->getStatus().isTrivial()) op->validation();
+    //     }
+    // }
 
     // this function sort the nodes in a order that the op depends on
     // others will always behind its inputs.

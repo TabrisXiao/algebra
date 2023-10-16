@@ -266,18 +266,21 @@ void graph::assignID(int n0 ){
 }
 //---------------------------------------------------
 
-void graph::clean()
+bool graph::clean()
 {
+    bool check = 0;
     for(auto iter = nodes.begin(); iter!=nodes.end(); )
     {
         operation* op =(*iter);
         if(op->isRemovable()){
             iter = nodes.erase(iter);
+            check = 1;
             delete op;
         } else if (auto g = dynamic_cast<graph*>(op)){
-            g->clean();
+            check = g->clean();
             iter++;
         } else iter++;
     }
+    return check;
 }
 //---------------------------------------------------

@@ -58,7 +58,7 @@ class painter {
         return op;
     }
 
-    void setPaintPointAt(operation* op){
+    void setPaintPointAfter(operation* op){
         point.g = op->getParentGraph();
         auto & vec = point.g->getNodeList();
         point.iter=std::find(vec.begin(), vec.end(),op);
@@ -73,7 +73,7 @@ class painter {
 
     // making an Op depends on the lastOp so that in a dependency walk order, 
     // it will be later than the current lastOp
-    void appendOp(operation* op){
+    void appendToPreviousOp(operation* op){
         if(auto g = dynamic_cast<graph*>(lastOp)){
             op->dependOn(&(g->getEntry()));
         } else{

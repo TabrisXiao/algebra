@@ -250,7 +250,7 @@ class distributeOp : public operation, public normalizer{
         auto op = new distributeOp();
         op->registerInput(input);
         op->createValue(input->getType(), "");
-        op->setNontrivial();
+        //op->setNontrivial();
         return op;
     }
     value *input(){ return inputValue(0); }
@@ -265,7 +265,7 @@ class distributeOp : public operation, public normalizer{
             auto rhs = root->inputValue(1);
             if(logicResult::success() == rDistributivePattern<multiplyOp,  addOp>(op)){
                 auto addop = rhs->getDefiningOp<addOp>();
-                p.setPaintPointAt(root);
+                p.setPaintPointAfter(root);
                 auto addl = p.paint<multiplyOp>(lhs, addop->lhs());
                 auto addr = p.paint<multiplyOp>(lhs, addop->rhs());
                 addop->output()->disconnectOp(root);
@@ -277,7 +277,7 @@ class distributeOp : public operation, public normalizer{
                 logicResult::success() == lDistributivePattern<multiplyOp,  addOp>(op)
             ){
                 auto addop = lhs->getDefiningOp<addOp>();
-                p.setPaintPointAt(root);
+                p.setPaintPointAfter(root);
                 auto addl = p.paint<multiplyOp>(addop->lhs(), rhs);
                 auto addr = p.paint<multiplyOp>(addop->rhs(), rhs);
                 addop->output()->disconnectOp(root);
@@ -324,7 +324,7 @@ class associateOp : public operation, public normalizer {
     resultCode transformIfEqual(painter p, operation* op, value* target, int hand){
         int other = hand == 1 ? 0 : 1;
         if(op->outputValue(1) == target){
-            p.setPaintPointAt(op);
+            p.setPaintPointAfter(op);
             p.replaceOp<cstDeclOp>(op, 1);
             op->erase();
             return resultCode::success();
