@@ -195,10 +195,10 @@ class LGTranslator {
         value* ret = nullptr;
         if(val){
             retOp->registerInput(val);
+            pnt.addOpToCurrentGraph(retOp);
         } else {
-            pnt.appendToPreviousOp(retOp);
+            pnt.appendToCurrentGraph(retOp);
         }
-        pnt.addOpToCurrentGraph(retOp);
         
         return ret;
     }

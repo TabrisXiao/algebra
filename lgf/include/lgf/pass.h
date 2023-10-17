@@ -112,7 +112,9 @@ class passManager{
                 break;
             }
         }
-        if(canRemove) op->erase();
+        if(canRemove){
+            op->erase();
+        }
     }
     
     void run(){
