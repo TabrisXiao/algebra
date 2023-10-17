@@ -57,6 +57,14 @@ void value::disconnectUsers(){
 }
 //---------------------------------------------------
 
+void value::addUser(operation *op){
+    if(std::find(users.begin(), users.end(), op)!=users.end()){
+        return;
+    }
+    users.push_back(op);
+}
+//---------------------------------------------------
+
 void value::switchUser(operation *from, operation* to, int index){
     // if the op switch to is already a user, then skip.
     if(users.end() == std::find(users.begin(), users.end(), to)){
@@ -80,6 +88,10 @@ std::unique_ptr<value>* value::getPtr(){
         }
     }
     return nullptr;
+}
+
+std::string dependencyValue::represent() {
+    return "";//"dummy from: "+getDefiningOp()->getSID();
 }
 
 //////////////////////////////////////////////////////
@@ -184,7 +196,7 @@ void operation::replaceInputValue(int n, value* v){
     inputs[n]->disconnectOp(this);
     // update the corresponding valueRef to the new one
     inputs[n]=v;
-    v->addUsesr(this);
+    v->addUser(this);
 }
 //---------------------------------------------------
 
@@ -199,12 +211,15 @@ void operation::replaceBy(operation* new_op){
         auto& users = output->getUsers();
         for(auto &user : users){
             for(auto j =0; j<user->getInputSize(); j++){
-                if( user->inputs[j] == output )
+                if( user->inputs[j] == output ){
                     user->inputs[j] = new_op->outputs[i].get();
+                    new_op->outputs[i]->addUser(user);
+                }
             }
         }
         output->getUsers().clear();
     }
+    erase();
 }
 
 //////////////////////////////////////////////////////
@@ -257,18 +272,21 @@ void graph::assignID(int n0 ){
 }
 //---------------------------------------------------
 
-void graph::clean()
+bool graph::clean()
 {
+    bool check = 0;
     for(auto iter = nodes.begin(); iter!=nodes.end(); )
     {
         operation* op =(*iter);
         if(op->isRemovable()){
             iter = nodes.erase(iter);
+            check = 1;
             delete op;
         } else if (auto g = dynamic_cast<graph*>(op)){
-            g->clean();
+            check = g->clean();
             iter++;
         } else iter++;
     }
+    return check;
 }
 //---------------------------------------------------

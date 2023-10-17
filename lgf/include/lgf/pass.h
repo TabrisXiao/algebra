@@ -100,23 +100,40 @@ class passManager{
     passManager() = default;
     passManager(LGFContext* c, graph *op) {ctx = c, start = op;}
     void enablePrintAfterPass(){bPrintAfterPass = 1;}
+    void enablePrintBeforePass(){bPrintBeforePass = 1;}
+    void validation(graph* g);
+    
+    void redundantCheck(operation* op){
+        bool canRemove = 1;
+        for(auto & val: op->getOutputs() ){
+            if(val->getUserSize()!=0) {
+                canRemove = 0;
+                break;
+            }
+        }
+        if(canRemove){
+            op->erase();
+        }
+    }
+    
     void run(){
         if(bPrintInitialIR) 
-        {   OSTREAM<<"\n------ Initial "<<name<<" ------\n";
+        {   OSTREAM<<"\n------ Input "<<name<<" ------\n";
             start->assignID(0);
             start->print();
         }
-        if(bPrintBeforePass){
-                OSTREAM<<"------ Init IR ------\n";
+        
+        for(auto pass=passes.begin(); pass!=passes.end(); pass++){
+            if(bPrintBeforePass){
+                OSTREAM<<"------ IR before pass:  "<<(*pass).get()->_pass_name<<" ------\n";
                 start->assignID(0);
                 start->print();
                 OSTREAM<<"\n";
             }
-        for(auto pass=passes.begin(); pass!=passes.end(); pass++){
+
             (*pass)->run();
             //std::cout<<"pass: "<<(*pass)->_pass_name<<" finished."<<std::endl;
-            start->graphValidation();
-            start->clean();
+            validation(start);
             if(bPrintAfterPass){
                 OSTREAM<<"------ IR after pass: "<<(*pass).get()->_pass_name<<" ------\n";
                 start->assignID(0);

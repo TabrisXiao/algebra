@@ -250,12 +250,14 @@ class distributeOp : public operation, public normalizer{
         auto op = new distributeOp();
         op->registerInput(input);
         op->createValue(input->getType(), "");
+        //op->setNontrivial();
         return op;
     }
     value *input(){ return inputValue(0); }
     value *output(){return outputValue(1); }
     
-    resultCode distribute(painter p, operation* op){
+    resultCode distribute(painter p, value* val, operation* user){
+        auto op = val->getDefiningOp();
         resultCode result;
         operation* newop=nullptr;
         if(auto root = dynamic_cast<multiplyOp*>(op)){
@@ -263,25 +265,26 @@ class distributeOp : public operation, public normalizer{
             auto rhs = root->inputValue(1);
             if(logicResult::success() == rDistributivePattern<multiplyOp,  addOp>(op)){
                 auto addop = rhs->getDefiningOp<addOp>();
-                p.setPaintPointAt(root);
+                p.setPaintPointAfter(root);
                 auto addl = p.paint<multiplyOp>(lhs, addop->lhs());
                 auto addr = p.paint<multiplyOp>(lhs, addop->rhs());
                 addop->output()->disconnectOp(root);
-                addop->toughed();
-                newop = p.replaceOp<addOp>(root, addl->output(), addr->output());
+                newop = p.paint<addOp>(addl->output(), addr->output());
+                user->replaceInputValue(val, newop->outputValue(1));
                 result.add(resultCode::success());
                 p.getGraph()->clean();
             }else if(
                 logicResult::success() == lDistributivePattern<multiplyOp,  addOp>(op)
             ){
                 auto addop = lhs->getDefiningOp<addOp>();
-                p.setPaintPointAt(root);
+                p.setPaintPointAfter(root);
                 auto addl = p.paint<multiplyOp>(addop->lhs(), rhs);
                 auto addr = p.paint<multiplyOp>(addop->rhs(), rhs);
                 addop->output()->disconnectOp(root);
-                addop->toughed();
-                newop = p.replaceOp<addOp>(root, addl->output(), addr->output());
+                newop = p.paint<addOp>(addl->output(), addr->output());
+                user->replaceInputValue(val, newop->outputValue(1));
                 result.add(resultCode::success());
+                p.getGraph()->clean();
             } else {
                 newop = root;
             }
@@ -293,19 +296,17 @@ class distributeOp : public operation, public normalizer{
             newop = dynamic_cast<addOp*>(op);
         }
         if(newop){
-            result.add(distribute(p, newop->inputValue(0)->getDefiningOp()));
-            result.add(distribute(p, newop->inputValue(1)->getDefiningOp()));
+            result.add(distribute(p, newop->inputValue(0), newop));
+            result.add(distribute(p, newop->inputValue(1), newop));
         }
         return result;
     }
     virtual resultCode rewrite(painter p, operation* op){
         auto input = dynamic_cast<distributeOp*>(op)->input();
-        auto res = distribute(p, input->getDefiningOp());
+        auto res = distribute(p, input, op);
         if(!res.isSuccess()){
             op->replaceBy(op->inputValue(0)->getDefiningOp());
-            op->erase();
         }
-        
         return res;
     }
 };
@@ -323,7 +324,7 @@ class associateOp : public operation, public normalizer {
     resultCode transformIfEqual(painter p, operation* op, value* target, int hand){
         int other = hand == 1 ? 0 : 1;
         if(op->outputValue(1) == target){
-            p.setPaintPointAt(op);
+            p.setPaintPointAfter(op);
             p.replaceOp<cstDeclOp>(op, 1);
             op->erase();
             return resultCode::success();
@@ -351,95 +352,95 @@ class associateOp : public operation, public normalizer {
     }
 };
 
-class factorOp : public operation, public normalizer{
-    public:
-    factorOp() : operation("AAB::factor") {}
-    static factorOp* build(lgf::LGFContext* ctx, lgf::value* exp, lgf::value* target){
-        auto op = new factorOp();
-        op->registerInput(exp, target);
-        op->createValue(exp->getType(), "");
-        return op;
-    }
-    lgf::value* exp() { return inputValue(0); }
-    lgf::value* target() { return inputValue(1); }
-    lgf::value* output(){ return outputValue(1); }
+// class factorOp : public operation, public normalizer{
+//     public:
+//     factorOp() : operation("AAB::factor") {}
+//     static factorOp* build(lgf::LGFContext* ctx, lgf::value* exp, lgf::value* target){
+//         auto op = new factorOp();
+//         op->registerInput(exp, target);
+//         op->createValue(exp->getType(), "");
+//         return op;
+//     }
+//     lgf::value* exp() { return inputValue(0); }
+//     lgf::value* target() { return inputValue(1); }
+//     lgf::value* output(){ return outputValue(1); }
 
-    struct factorInfo {
-        int count = 0;
-        lgf::value* ret=nullptr;
-    };
+//     struct factorInfo {
+//         int count = 0;
+//         lgf::value* ret=nullptr;
+//     };
 
-    virtual std::string represent(){
-        printer p;
-        p<<representOutputs()<<" = "<<getSID() <<" : "<<target()->represent()<<" out of "<<exp()->represent();
-        return p.dump();
-    }
+//     virtual std::string represent(){
+//         printer p;
+//         p<<representOutputs()<<" = "<<getSID() <<" : "<<target()->represent()<<" out of "<<exp()->represent();
+//         return p.dump();
+//     }
 
-    factorInfo factorImpl(painter& p, value* nodeValue, value* target){
-        factorInfo info;
-        // check if current value is the target
-        if(target == nodeValue ){
-            return info;
-        }
+//     factorInfo factorImpl(painter& p, value* nodeValue, value* target){
+//         factorInfo info;
+//         // check if current value is the target
+//         if(target == nodeValue ){
+//             return info;
+//         }
         
-        if(auto multiop = nodeValue->getDefiningOp<multiplyOp>()){
-            auto linfo = factorImpl(p, multiop->lhs(), target);
-            auto rinfo = factorImpl(p, multiop->rhs(), target);
-            bool removeOp = 0;
-            info.count = rinfo.count+linfo.count;
-            // check if lhs is the target
-            if(!linfo.ret ){
-                info.count++;
-                info.ret = rinfo.ret;
-                removeOp = 1;
-            }
-            // check if rhs is the target
-            if(!rinfo.ret){
-                info.count++;
-                info.ret = linfo.ret;
-                removeOp = 1;
-            }
+//         if(auto multiop = nodeValue->getDefiningOp<multiplyOp>()){
+//             auto linfo = factorImpl(p, multiop->lhs(), target);
+//             auto rinfo = factorImpl(p, multiop->rhs(), target);
+//             bool removeOp = 0;
+//             info.count = rinfo.count+linfo.count;
+//             // check if lhs is the target
+//             if(!linfo.ret ){
+//                 info.count++;
+//                 info.ret = rinfo.ret;
+//                 removeOp = 1;
+//             }
+//             // check if rhs is the target
+//             if(!rinfo.ret){
+//                 info.count++;
+//                 info.ret = linfo.ret;
+//                 removeOp = 1;
+//             }
             
-            if( info.ret ){
-                multiop->replaceBy(info.ret->getDefiningOp());
-            } else if(removeOp) {
-                multiop->erase();
-            } else {
-                info.ret = multiop->output();
-            }
-            return info;
-        }else if(auto addop = nodeValue->getDefiningOp<addOp>()){
-            auto linfo = factorImpl(p, addop->lhs(), target);
-            auto rinfo = factorImpl(p, addop->rhs(), target);
-            info.count = linfo.count;
-            bool rebuild = 0;
-            value* nlhs, *nrhs;
-            if( info.count > rinfo.count) info.count = rinfo.count;
-            if(linfo.count > info.count) {
-                rebuild = 1;
-            }
-        }
-        info.ret = nodeValue;
-        return info;
-    }
-    virtual resultCode rewrite(painter p, operation* op){
-        auto fop = dynamic_cast<factorOp*>(op);
-        auto exp = fop->exp();                                                                                                  
-        auto target = fop->target();
-        auto info = factorImpl(p, exp, target);
-        p.setPaintPointAt(op);
-        if(info.count==1){
-            p.replaceOp<multiplyOp>(fop, target, info.ret);
-        } else if(info.count>1){
-            auto cst = p.paint<cstDeclOp>(info.count);
-            auto power = p.paint<powerOp>(target, cst->output());
-            p.replaceOp<multiplyOp>(fop, power->output(), info.ret);
-        } else {
-            fop->replaceBy(exp->getDefiningOp());
-        }
-        return 0;
-    }
-};
+//             if( info.ret ){
+//                 multiop->replaceBy(info.ret->getDefiningOp());
+//             } else if(removeOp) {
+//                 multiop->erase();
+//             } else {
+//                 info.ret = multiop->output();
+//             }
+//             return info;
+//         }else if(auto addop = nodeValue->getDefiningOp<addOp>()){
+//             auto linfo = factorImpl(p, addop->lhs(), target);
+//             auto rinfo = factorImpl(p, addop->rhs(), target);
+//             info.count = linfo.count;
+//             bool rebuild = 0;
+//             value* nlhs, *nrhs;
+//             if( info.count > rinfo.count) info.count = rinfo.count;
+//             if(linfo.count > info.count) {
+//                 rebuild = 1;
+//             }
+//         }
+//         info.ret = nodeValue;
+//         return info;
+//     }
+//     virtual resultCode rewrite(painter p, operation* op){
+//         auto fop = dynamic_cast<factorOp*>(op);
+//         auto exp = fop->exp();                                                                                                  
+//         auto target = fop->target();
+//         auto info = factorImpl(p, exp, target);
+//         p.setPaintPointAt(op);
+//         if(info.count==1){
+//             p.replaceOp<multiplyOp>(fop, target, info.ret);
+//         } else if(info.count>1){
+//             auto cst = p.paint<cstDeclOp>(info.count);
+//             auto power = p.paint<powerOp>(target, cst->output());
+//             p.replaceOp<multiplyOp>(fop, power->output(), info.ret);
+//         } else {
+//             fop->replaceBy(exp->getDefiningOp());
+//         }
+//         return 0;
+//     }
+// };
 
 }
 #endif

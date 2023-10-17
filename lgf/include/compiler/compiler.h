@@ -17,7 +17,6 @@ namespace lgf::compiler{
 class compiler {
     public: 
     compiler() {
-        moduleManager::get().loadInternalModule("Builtin", &ctx, nullptr);
     };
     void compileInput(std::string file){
         std::unique_ptr<programAST> ast=std::make_unique<programAST>();
@@ -28,13 +27,17 @@ class compiler {
         pser.lgfctx = &ctx;
         pser.parseMainFile(f, ast.get());
         lgf::streamer sm;
+        
+        translate(ast, sm);
+
+        compileGraph();
+    }
+    void translate(std::unique_ptr<programAST>& ast, lgf::streamer& sm){
         LGTranslator builder(&ctx, &g);
         ast->emitIR(sm);
         builder.ctx = &ctx;
         builder.printTranslatedIR = 1;
         builder.build(ast.get());
-
-        compileGraph();
     }
     void compileGraph(){
         passManager pm(&ctx, &g);

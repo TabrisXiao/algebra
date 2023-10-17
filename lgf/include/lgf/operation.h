@@ -13,6 +13,7 @@
 #include "exception.h"
 #include <memory>
 #include <algorithm>
+#include "utils.h"
 
 // logic graph frameworks
 namespace lgf{
@@ -22,6 +23,7 @@ class dependence;
 class value;
 class valueRef;
 class graph;
+class normalizer;
 
 typedef size_t id_t;
 
@@ -56,6 +58,20 @@ obj& get_vec_elem_with_check(size_t n, std::vector<obj>& vec){
     return vec[n];
 }
 
+// this object encodes operation status into 8 bit data
+class opStatus : public byteCode<int8_t> {
+    public:
+    enum status : int8_t {
+        default =0,
+        // this type op can't be removed automatically
+        nontrivial, 
+    };
+    opStatus(): byteCode() {}
+    opStatus(int8_t v) : byteCode(v){}
+    bool isTrivial(){ return !check(nontrivial); }
+    void setNontrivial(){ add(opStatus(nontrivial)); }
+};
+
 class value : public objInfo{
 public:
     value() = default;
@@ -79,13 +95,7 @@ public:
     opType* getDefiningOp() const {return dynamic_cast<opType*>(getDefiningOp());}
     void setDefiningOp(operation *op){defop = op;} 
 
-    void addUsesr(operation *op){
-        if(std::find(users.begin(), users.end(), op)!=users.end()){
-            std::cout<<"lgf::value::addUser Runtime Warning: user exists!"<<std::endl;
-            return;
-        }
-        users.push_back(op);
-    }
+    void addUser(operation *op);
     void disconnectOp(operation *op);
     void disconnectUsers();
     // this function only remove the user from users but not modify the inputs for that user.
@@ -124,6 +134,15 @@ public:
     // switch the user of this value from one Op to an other.
     void switchUser(operation *from, operation* to, int index);
 
+
+    // debug function to print all user address:
+    void printUsers(){
+        std::cout<<"--- users of "<<represent()<<std::endl;
+        for(auto & op : users){
+            std::cout<<"     "<<op<<std::endl;
+        }
+    }
+
     private:
     operation *defop = nullptr;
     std::vector<operation*> users;
@@ -134,9 +153,7 @@ class dependencyValue : public value {
     public:
     dependencyValue() = default;
     dependencyValue(operation * op) : value(op) { setSID("dummy"); }
-    std::string represent() {
-        return "";
-    }
+    std::string represent();
 };
 
 class operation : public objInfo{
@@ -171,9 +188,19 @@ public :
     void replaceBy(operation* new_op);
 
     void replaceInput(int j, value* val){
+        if(j>= getInputSize()) return;
+        //marking the ops involved is modified;
         inputs[j]->removeOp(this);
         inputs[j] = val;
-        val->addUsesr(this);
+        val->addUser(this);
+    }
+    void replaceInputValue(value* val, value* newval){
+        auto iter = std::find(inputs.begin(), inputs.end(), val);
+        if(iter==inputs.end()) return;
+        //marking the ops involved is modified;
+        (*iter)->removeOp(this);
+        (*iter) = newval;
+        newval->addUser(this);
     }
     
     // replace the n-th input by the value v. 
@@ -185,13 +212,15 @@ public :
     {
         // inputs are suppose to be value type.
         auto values = {args...};
+        
         for (auto val : values)
         {
             if(val->getDefiningOp() == this) {
                 WARNING("Skipped register the input causing cycle dependence!");
                 continue;
             }
-            val->addUsesr(this);
+            //std::cout<<"adding user for "<<val->getDefiningOp()->getSID()<<" : "<<this<<std::endl;
+            val->addUser(this);
             inputs.push_back(val);
         }
     }
@@ -246,6 +275,8 @@ public :
     value* inputValue(int n=0) {return inputs[n];}
     size_t getInputSize() const;
     size_t getOutputSize() const;
+    opStatus getStatus(){ return status; }
+    void setNontrivial(){ status.setNontrivial(); }
 
     // assign trace id to the value created in this operation. 
     // The start of the trace id is specified by the argument n.
@@ -272,8 +303,6 @@ public :
 
     void setExploration(bool a){ bExplored = a; }
     bool isExplored(){ return bExplored; }
-    bool isValid(){ return bValid; }
-    void toughed(){ bValid = 0; }
 
     bool isRemovable(){ return bRemove; }
     void setRemovable(){ 
@@ -282,13 +311,9 @@ public :
 
     graph* getParentGraph(){return graph_;}
     void setParentGraph(graph* g){ graph_ = g; }
-    virtual void redundantCheck(){
-        for(auto & val: outputs ){
-            if(val->getUserSize()==0) setRemovable();
-        }
-    }
-    bool validation() { 
-        redundantCheck();
+
+    // return 1 if it is invalid
+    virtual bool validation() { 
         return 0; 
     }
 
@@ -309,7 +334,7 @@ public :
     //virtual graph* getSubgraph(){ return nullptr;}
     bool bActive = 1;
     bool bExplored = 0;
-    bool bValid = 1;
+    opStatus status;
 
     // this is a member used to remove the operation efficiently. 
     // Should be used solely for removing process in graph.
@@ -400,18 +425,18 @@ class graph : public operation{
     void assignID(int n=0);
 
     // clean will remove all operations marked as removable;
-    void clean();
+    // return 0 if no ops got removed. Otherwise return 1;
+    bool clean();
     // entrances are the ops have no inputs
     operation&  getEntry(){ return entry; }
-    void graphValidation() { 
-        for(auto& op : nodes){
-            if(auto g = dynamic_cast<graph*>(op)){
-                g->graphValidation();
-            }
-            if(op->isValid()) continue;
-            op->validation();
-        }
-    }
+    // void graphValidation() { 
+    //     for(auto& op : nodes){
+    //         if(auto g = dynamic_cast<graph*>(op)){
+    //             g->graphValidation();
+    //         }
+    //         if(op->getStatus().isTrivial()) op->validation();
+    //     }
+    // }
 
     // this function sort the nodes in a order that the op depends on
     // others will always behind its inputs.

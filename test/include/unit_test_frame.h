@@ -5,10 +5,10 @@
 #include <vector>
 #include <chrono>
 
-#define TEST_CHECK_VALUE(var, val, ret, msg)\
+#define TEST_CHECK_VALUE(var, val, msg)\
     if (var!= val) { \
         std::cerr<<"\nTest failure: "<<msg<<"\nError details: " __FILE__ ":"<< std::to_string(__LINE__)<< " : Expecting \"" #var "\" to be "<<val<<", but got "<<var<<".\n\n"; \
-        ret = 1;\
+        isfail = 1;\
     }
 
 class test_wrapper{
@@ -16,6 +16,7 @@ class test_wrapper{
     test_wrapper() = default;
     virtual bool run() = 0;
     std::string test_id;
+    bool isfail = 0;
 };
 
 class unit_test_frame{

@@ -35,11 +35,11 @@ class painter {
     }
     template<typename obj, typename...ARGS>
     obj* paint(ARGS ...args){
-        CHECK_CONDITION(point.g!=nullptr, "No graph associated to the painter!");
+        //CHECK_CONDITION(point.g!=nullptr, "No graph associated to the painter!");
         auto op = sketch<obj>(args...);
         //add to graph
         op->setParentGraph(point.g);
-        if(op->getInputSize() == 0) 
+        if(op->getInputSize() == 0)
             op->appendTo(dynamic_cast<operation*>(&(point.g->getEntry())));
         point.iter = point.g->getNodeList().insert(point.iter, op)+1;
         lastOp = op;
@@ -47,7 +47,7 @@ class painter {
     }
     template<typename obj>
     obj* paint(){
-        CHECK_CONDITION(current_graph!=nullptr, "No graph associated to the painter!");
+        //CHECK_CONDITION(current_graph!=nullptr, "No graph associated to the painter!");
         auto op = sketch<obj>();
         //add to graph
         op->setParentGraph(point.g);
@@ -58,13 +58,13 @@ class painter {
         return op;
     }
 
-    void setPaintPointAt(operation* op){
+    void setPaintPointAfter(operation* op){
         point.g = op->getParentGraph();
         auto & vec = point.g->getNodeList();
         point.iter=std::find(vec.begin(), vec.end(),op);
     }
 
-    void addOpAtCurrentPoint(operation* op){
+    void addOpToCurrentGraph(operation* op){
         op->setParentGraph(point.g);
         if(op->getInputSize() == 0)
             op->appendTo(dynamic_cast<operation*>(&(point.g->getEntry())));
@@ -73,13 +73,10 @@ class painter {
 
     // making an Op depends on the lastOp so that in a dependency walk order, 
     // it will be later than the current lastOp
-    void appendOp(operation* op){
-        if(auto g = dynamic_cast<graph*>(lastOp)){
-            op->dependOn(&(g->getEntry()));
-        } else{
-            op->dependOn(lastOp);
-        }
-        lastOp = op;
+    void appendToCurrentGraph(operation* op){
+        op->setParentGraph(point.g);
+        if(point.g->getNodeList().begin() != point.iter) op->dependOn(*(point.iter-1));
+        point.iter = point.g->getNodeList().insert(point.iter, op)+1;
     }
 
     // create a new op to replace the op1's users
@@ -120,6 +117,7 @@ class painter {
         op1->erase();
         return op2;
     }
+
 
     void erase(operation* op){
         op->dropAllInputs();

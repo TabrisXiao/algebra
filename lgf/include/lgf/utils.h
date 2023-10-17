@@ -52,6 +52,7 @@ class byteCode {
   bool check(byteType val){ 
     return (value & val) == val;
   }
+  void reset(){ value = 0; }
   byte_t value=0;
 };
 }
