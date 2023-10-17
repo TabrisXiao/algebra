@@ -94,7 +94,7 @@ class parser{
                     record = parseFuncDef();
                     break;
                 case tok_return:
-                    record = parseReturn(0);
+                    record = parseReturn(1);
                     //parseError("keyword return is illegal here.");
                     break;
                 default:

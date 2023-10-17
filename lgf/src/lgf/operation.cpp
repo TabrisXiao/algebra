@@ -90,6 +90,10 @@ std::unique_ptr<value>* value::getPtr(){
     return nullptr;
 }
 
+std::string dependencyValue::represent() {
+    return "";//"dummy from: "+getDefiningOp()->getSID();
+}
+
 //////////////////////////////////////////////////////
 
 std::string operation::representInputs(){
@@ -207,8 +211,10 @@ void operation::replaceBy(operation* new_op){
         auto& users = output->getUsers();
         for(auto &user : users){
             for(auto j =0; j<user->getInputSize(); j++){
-                if( user->inputs[j] == output )
+                if( user->inputs[j] == output ){
                     user->inputs[j] = new_op->outputs[i].get();
+                    new_op->outputs[i]->addUser(user);
+                }
             }
         }
         output->getUsers().clear();

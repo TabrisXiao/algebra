@@ -153,9 +153,7 @@ class dependencyValue : public value {
     public:
     dependencyValue() = default;
     dependencyValue(operation * op) : value(op) { setSID("dummy"); }
-    std::string represent() {
-        return "";
-    }
+    std::string represent();
 };
 
 class operation : public objInfo{
