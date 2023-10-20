@@ -113,7 +113,7 @@ class minusOp : public lgf::operation, public normalizer
 };
 
 // ---------- multiplyOp ----------
-class multiplyOp : public lgf::operation
+class multiplyOp : public lgf::operation, public normalizer
 {
     public:
     multiplyOp() : operation("AAB::multiply") {}
@@ -127,13 +127,47 @@ class multiplyOp : public lgf::operation
     lgf::value* rhs(){ return inputValue(1); }
     lgf::value* output(){ return outputValue(1); }
 
-    
     virtual std::string represent(){
         printer p;
         //std::cout<<outputValue(1)<<std::endl;
         p<<representOutputs()<<" = "<<getSID() <<" : "<<inputValue(0)->represent()<<" * "<<inputValue(1)->represent();
         return p.dump();
     }
+
+    virtual resultCode rewrite(painter p, operation* op);
+};
+
+// ---------- productOp ----------
+class productOp : public lgf::operation, public normalizer
+{
+    public:
+    productOp() : operation("AAB::productOp") {}
+    static productOp* build(lgf::LGFContext* ctx, std::vector<value*>& vec){
+        auto op = new productOp();
+        op->registerInputs(vec);
+        op->createValue(vec[0]->getType(), "");
+        return op;
+    }
+    static productOp* build(lgf::LGFContext* ctx){
+        auto op = new productOp();
+        return op;
+    }
+    template<typename ...ARGS>
+    static productOp* build(lgf::LGFContext* ctx, ARGS ... args ){
+        auto op = new productOp();
+        op->registerInput(args...);
+        op->createValue(op->inputValue(0)->getType(), "");
+        return op;
+    }
+    lgf::value* input(int i=0){ return inputValue(i); }
+    lgf::value* output(){ return outputValue(1); }
+    virtual std::string represent(){
+        printer p;
+        p<<representOutputs()<<" = "<<getSID() <<" : "<<representInputs();
+        return p.dump();
+    }
+
+    virtual resultCode rewrite(painter p, operation* op);
 };
 
 // ---------- inverseOp ----------
