@@ -25,7 +25,7 @@ class test_painter : public test_wrapper{
         TEST_CHECK_VALUE(y->output()->getUserSize(), 1, "replaceOp failure");
         TEST_CHECK_VALUE(cst->output()->getUserSize(), 1, "replaceOp failure");
 
-        y1->replaceInputValue(cst->output(), x->output());
+        y1->replaceInputValueBy(cst->output(), x->output());
         TEST_CHECK_VALUE(x->output()->getUserSize(), 1, "replaceOp failure");
         TEST_CHECK_VALUE(cst->output()->getUserSize(), 0, "replaceOp failure");
         c.assignID();

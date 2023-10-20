@@ -75,7 +75,7 @@ class listType : public type_t {
   }
   static type_t parse(liteParser& paser, LGFContext* ctx){
     paser.parseLessThan();
-    int size = paser.parseNumber();
+    int size = int(paser.parseNumber());
     paser.parseComma();
     auto elemID = paser.parseIdentifier();
     auto fc = ctx->getTypeTable().findParser(elemID);

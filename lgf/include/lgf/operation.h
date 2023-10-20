@@ -194,13 +194,16 @@ public :
         inputs[j] = val;
         val->addUser(this);
     }
-    void replaceInputValue(value* val, value* newval){
-        auto iter = std::find(inputs.begin(), inputs.end(), val);
-        if(iter==inputs.end()) return;
+    void replaceInputValueBy(std::vector<value*>::iterator iter, value* val){
         //marking the ops involved is modified;
         (*iter)->removeOp(this);
-        (*iter) = newval;
-        newval->addUser(this);
+        (*iter) = val;
+        val->addUser(this);
+    }
+    void replaceInputValueBy(value* val, value* newval){
+        auto iter = std::find(inputs.begin(), inputs.end(), val);
+        if(iter==inputs.end()) return;
+        replaceInputValueBy(iter, newval);
     }
     
     // replace the n-th input by the value v. 

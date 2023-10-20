@@ -9,9 +9,50 @@
 namespace lgf::AAB{
 
 // ---------- addOp ----------
+class addOp : public lgf::operation, public normalizer
+{
+    public:
+    addOp() : operation("AAB::add") {}
+    static addOp* build(lgf::LGFContext* ctx, lgf::value* lhs, lgf::value* rhs){
+        auto op = new addOp();
+        op->registerInput(lhs, rhs);
+        op->createValue(ctx->getType<lgf::variable>(), "");
+        return op;
+    }
+    lgf::value* lhs(){ return inputValue(0); }
+    lgf::value* rhs(){ return inputValue(1); }
+    lgf::value* output(){ return outputValue(1); }
+    virtual std::string represent(){
+        printer p;
+        p<<representOutputs()<<" = "<<getSID() <<" : "<<inputValue(0)->represent()<<" + "<<inputValue(1)->represent();
+        return p.dump();
+    }
+    virtual resultCode rewrite(painter p, operation* op);
+};
 
-// ---------- minusOp ----------
-class sumOp : public lgf::operation {
+// ---------- negativeOp ----------
+class negativeOp : public lgf::operation
+{
+    public:
+    public:
+    negativeOp() : operation("AAB::negative") {}
+    static negativeOp* build(lgf::LGFContext* ctx, lgf::value* input){
+        auto op = new negativeOp();
+        op->registerInput(input);
+        op->createValue(input->getType(), "");
+        return op;
+    }
+    lgf::value* input(){ return inputValue(0); }
+    lgf::value* output(){ return outputValue(1); }
+    virtual std::string represent(){
+        printer p;
+        p<<representOutputs()<<" = "<<getSID() <<" : "<<input()->represent();
+        return p.dump();
+    }
+};
+
+// ---------- sumOp ----------
+class sumOp : public lgf::operation, public normalizer {
     public:
     sumOp() : operation("AAB::sumOp") {}
     static sumOp* build(lgf::LGFContext* ctx, std::vector<value*>& vec){
@@ -38,49 +79,10 @@ class sumOp : public lgf::operation {
         p<<representOutputs()<<" = "<<getSID() <<" : "<<representInputs();
         return p.dump();
     }
+
+    virtual resultCode rewrite(painter p, operation* op);
 };
 
-class addOp : public lgf::operation
-{
-    public:
-    addOp() : operation("AAB::add") {}
-    static addOp* build(lgf::LGFContext* ctx, lgf::value* lhs, lgf::value* rhs){
-        auto op = new addOp();
-        op->registerInput(lhs, rhs);
-        op->createValue(ctx->getType<lgf::variable>(), "");
-        return op;
-    }
-    lgf::value* lhs(){ return inputValue(0); }
-    lgf::value* rhs(){ return inputValue(1); }
-    lgf::value* output(){ return outputValue(1); }
-    virtual std::string represent(){
-        printer p;
-        p<<representOutputs()<<" = "<<getSID() <<" : "<<inputValue(0)->represent()<<" + "<<inputValue(1)->represent();
-        return p.dump();
-    }
-};
-
-
-// ---------- negativeOp ----------
-class negativeOp : public lgf::operation
-{
-    public:
-    public:
-    negativeOp() : operation("AAB::negative") {}
-    static negativeOp* build(lgf::LGFContext* ctx, lgf::value* input){
-        auto op = new negativeOp();
-        op->registerInput(input);
-        op->createValue(input->getType(), "");
-        return op;
-    }
-    lgf::value* input(){ return inputValue(0); }
-    lgf::value* output(){ return outputValue(1); }
-    virtual std::string represent(){
-        printer p;
-        p<<representOutputs()<<" = "<<getSID() <<" : "<<input()->represent();
-        return p.dump();
-    }
-};
 
 // ---------- minusOp ----------
 class minusOp : public lgf::operation, public normalizer
@@ -102,8 +104,11 @@ class minusOp : public lgf::operation, public normalizer
         return p.dump();
     }
     virtual resultCode rewrite(painter p, operation* op){
-        std::cout<<"---------------find minus renomalizer!"<<std::endl;
-        return resultCode::pass();
+        resultCode ret;
+        p.setPaintPointAfter(op);
+        auto neg = p.paint<negativeOp>(op->inputValue(1));
+        auto add = p.replaceOp<addOp>(op, op->inputValue(0), neg->output());
+        return resultCode::success();
     }
 };
 
@@ -121,6 +126,8 @@ class multiplyOp : public lgf::operation
     lgf::value* lhs(){ return inputValue(0); }
     lgf::value* rhs(){ return inputValue(1); }
     lgf::value* output(){ return outputValue(1); }
+
+    
     virtual std::string represent(){
         printer p;
         //std::cout<<outputValue(1)<<std::endl;
@@ -270,7 +277,7 @@ class distributeOp : public operation, public normalizer{
                 auto addr = p.paint<multiplyOp>(lhs, addop->rhs());
                 addop->output()->disconnectOp(root);
                 newop = p.paint<addOp>(addl->output(), addr->output());
-                user->replaceInputValue(val, newop->outputValue(1));
+                user->replaceInputValueBy(val, newop->outputValue(1));
                 result.add(resultCode::success());
                 p.getGraph()->clean();
             }else if(
@@ -282,7 +289,7 @@ class distributeOp : public operation, public normalizer{
                 auto addr = p.paint<multiplyOp>(addop->rhs(), rhs);
                 addop->output()->disconnectOp(root);
                 newop = p.paint<addOp>(addl->output(), addr->output());
-                user->replaceInputValue(val, newop->outputValue(1));
+                user->replaceInputValueBy(val, newop->outputValue(1));
                 result.add(resultCode::success());
                 p.getGraph()->clean();
             } else {

@@ -11,7 +11,8 @@ class resultCode : public byteCode<int8_t>{
     public: 
     enum result: int8_t {
         default_result,
-        success_result
+        success_result,
+        failed_result
     };
     resultCode(): byteCode() { value = 0; }
     resultCode(int8_t v): byteCode(int8_t(v)){}
@@ -19,7 +20,7 @@ class resultCode : public byteCode<int8_t>{
         return resultCode(int8_t(resultCode::result::success_result));
     }
     static resultCode fail(){
-        return resultCode();
+        return resultCode(int8_t(resultCode::result::failed_result));
     }
 
     static resultCode pass(){
