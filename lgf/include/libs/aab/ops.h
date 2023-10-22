@@ -61,8 +61,9 @@ class sumOp : public lgf::operation, public normalizer {
         op->createValue(vec[0]->getType(), "");
         return op;
     }
-    static sumOp* build(lgf::LGFContext* ctx){
+    static sumOp* build(lgf::LGFContext* ctx, type_t type){
         auto op = new sumOp();
+        op->createValue(type, "");
         return op;
     }
     template<typename ...ARGS>
@@ -148,8 +149,9 @@ class productOp : public lgf::operation, public normalizer
         op->createValue(vec[0]->getType(), "");
         return op;
     }
-    static productOp* build(lgf::LGFContext* ctx){
+    static productOp* build(lgf::LGFContext* ctx, type_t type){
         auto op = new productOp();
+        op->createValue(type, "");
         return op;
     }
     template<typename ...ARGS>
@@ -342,14 +344,18 @@ class distributeOp : public operation, public normalizer{
         }
         return result;
     }
-    virtual resultCode rewrite(painter p, operation* op){
-        auto input = dynamic_cast<distributeOp*>(op)->input();
-        auto res = distribute(p, input, op);
-        if(!res.isSuccess()){
-            op->replaceBy(op->inputValue(0)->getDefiningOp());
-        }
-        return res;
-    }
+
+    resultCode matchCheck(painter p, operation* );
+    void transform(painter p, productOp*, std::vector<value*>::iterator&, sumOp*);
+    virtual resultCode rewrite(painter p, operation* op);
+    // virtual resultCode rewrite(painter p, operation* op){
+    //     auto input = dynamic_cast<distributeOp*>(op)->input();
+    //     auto res = distribute(p, input, op);
+    //     if(!res.isSuccess()){
+    //         op->replaceBy(op->inputValue(0)->getDefiningOp());
+    //     }
+    //     return res;
+    // }
 };
 
 class associateOp : public operation, public normalizer {

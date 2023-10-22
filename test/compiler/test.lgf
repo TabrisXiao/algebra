@@ -6,4 +6,4 @@ import lgf.LinearAlg
 a = x+y;
 c = d-b;
 cb = AAB.Distribute( x*(a+c)*y );
-return;
+return cb;

@@ -57,7 +57,12 @@ class painter {
         lastOp = op;
         return op;
     }
-
+    void setPaintPointBefore(operation* op){
+        point.g = op->getParentGraph();
+        auto & vec = point.g->getNodeList();
+        point.iter=std::find(vec.begin(), vec.end(),op);
+        if(point.iter !=vec.begin()) point.iter--;
+    }
     void setPaintPointAfter(operation* op){
         point.g = op->getParentGraph();
         auto & vec = point.g->getNodeList();

@@ -20,6 +20,8 @@ std::string value::represent() {
     std::string id = getTraceID() > -1 ? std::to_string(getTraceID()):"#";
     p<<id;
     p<<" "<<getTR();
+    //p<<" ("<<getUsers().size()<<")"; 
+    //if(getUsers().size()>0) p<<" first user: "<<getUsers()[0];
     return p.dump();
 }
 //---------------------------------------------------
@@ -171,7 +173,8 @@ size_t operation::getOutputSize() const {
 
 void operation::dropAllInputs(){
     for(auto input: inputs){
-        input->disconnectOp(this);
+        auto& users = input->getUsers();
+        users.erase(std::find(users.begin(), users.end(), this));
     }
     inputs.clear();
 }
@@ -279,6 +282,7 @@ bool graph::clean()
     {
         operation* op =(*iter);
         if(op->isRemovable()){
+            
             iter = nodes.erase(iter);
             check = 1;
             delete op;
