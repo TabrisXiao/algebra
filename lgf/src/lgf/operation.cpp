@@ -172,9 +172,11 @@ size_t operation::getOutputSize() const {
 //---------------------------------------------------
 
 void operation::dropAllInputs(){
-    for(auto input: inputs){
-        auto& users = input->getUsers();
-        users.erase(std::find(users.begin(), users.end(), this));
+    for(auto input=inputs.begin(); input!=inputs.end(); input++){
+        (*input)->removeOp(this);
+        // auto& users = input->getUsers();
+        // auto& iter = std::find(users.begin(), users.end(), this);
+        // auto& next = users.erase(iter);
     }
     inputs.clear();
 }

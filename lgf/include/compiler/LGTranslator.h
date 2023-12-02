@@ -30,6 +30,7 @@ class LGTranslator {
             transplateASTModule(moduleast.get());
         }
         
+        moduleManager::get().bPrintBeforePass = printTranslatedIR;
         moduleManager::get().bPrintFinalIR = printTranslatedIR;
         moduleManager::get().bPrintInitialIR = printTranslatedIR;
         if(printInitIRForEachModule){

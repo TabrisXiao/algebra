@@ -29,7 +29,8 @@ class InterfaceInitPass : public passBase{
     }
     virtual resultCode run() final { 
         module->erase();
-        return resultCode::pass(); }
+        return resultCode::pass(); 
+    }
     moduleOp *module = nullptr;
 };
 

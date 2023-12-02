@@ -31,7 +31,7 @@ class addOp : public lgf::operation, public normalizer
 };
 
 // ---------- negativeOp ----------
-class negativeOp : public lgf::operation
+class negativeOp : public lgf::operation, public normalizer
 {
     public:
     public:
@@ -48,6 +48,14 @@ class negativeOp : public lgf::operation
         printer p;
         p<<representOutputs()<<" = "<<getSID() <<" : "<<input()->represent();
         return p.dump();
+    }
+    virtual resultCode rewrite(painter p, operation* op){
+        if(auto neg = input()->getDefiningOp<negativeOp>()){
+            p.setPaintPointAfter(op);
+            op->replaceBy(neg->input()->getDefiningOp());
+            return resultCode::success();
+        }
+        return resultCode::pass();
     }
 };
 
@@ -223,6 +231,19 @@ class powerOp : public lgf::operation
 
 };
 
+class mappingOp: public lgf::operation{
+    public:
+    mappingOp() : operation("AAB::mapping"){}
+    static mappingOp* build(lgf::LGFContext* ctx, type_t tp, lgf::value* input){
+        auto op = new mappingOp();
+        op->registerInput(input);
+        op->createValue(tp, "");
+        return op;
+    }
+    lgf::value* input(){ return inputValue(0); }
+    lgf::value* output(){ return outputValue(1); }
+};
+
 class function1DOp: public lgf::operation {
     public:
     function1DOp(std::string name) : operation(name){}
@@ -348,14 +369,6 @@ class distributeOp : public operation, public normalizer{
     resultCode matchCheck(painter p, operation* );
     void transform(painter p, productOp*, std::vector<value*>::iterator&, sumOp*);
     virtual resultCode rewrite(painter p, operation* op);
-    // virtual resultCode rewrite(painter p, operation* op){
-    //     auto input = dynamic_cast<distributeOp*>(op)->input();
-    //     auto res = distribute(p, input, op);
-    //     if(!res.isSuccess()){
-    //         op->replaceBy(op->inputValue(0)->getDefiningOp());
-    //     }
-    //     return res;
-    // }
 };
 
 class associateOp : public operation, public normalizer {
