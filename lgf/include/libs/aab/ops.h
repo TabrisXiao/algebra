@@ -9,38 +9,7 @@
 namespace lgf::AAB{
 
 // ---------- addOp ----------
-
-// ---------- minusOp ----------
-class sumOp : public lgf::operation {
-    public:
-    sumOp() : operation("AAB::sumOp") {}
-    static sumOp* build(lgf::LGFContext* ctx, std::vector<value*>& vec){
-        auto op = new sumOp();
-        op->registerInputs(vec);
-        op->createValue(vec[0]->getType(), "");
-        return op;
-    }
-    static sumOp* build(lgf::LGFContext* ctx){
-        auto op = new sumOp();
-        return op;
-    }
-    template<typename ...ARGS>
-    static sumOp* build(lgf::LGFContext* ctx, ARGS ... args ){
-        auto op = new sumOp();
-        op->registerInput(args...);
-        op->createValue(op->inputValue(0)->getType(), "");
-        return op;
-    }
-    lgf::value* input(int i=0){ return inputValue(i); }
-    lgf::value* output(){ return outputValue(1); }
-    virtual std::string represent(){
-        printer p;
-        p<<representOutputs()<<" = "<<getSID() <<" : "<<representInputs();
-        return p.dump();
-    }
-};
-
-class addOp : public lgf::operation
+class addOp : public lgf::operation, public normalizer
 {
     public:
     addOp() : operation("AAB::add") {}
@@ -58,11 +27,11 @@ class addOp : public lgf::operation
         p<<representOutputs()<<" = "<<getSID() <<" : "<<inputValue(0)->represent()<<" + "<<inputValue(1)->represent();
         return p.dump();
     }
+    virtual resultCode rewrite(painter p, operation* op);
 };
 
-
 // ---------- negativeOp ----------
-class negativeOp : public lgf::operation
+class negativeOp : public lgf::operation, public normalizer
 {
     public:
     public:
@@ -80,7 +49,49 @@ class negativeOp : public lgf::operation
         p<<representOutputs()<<" = "<<getSID() <<" : "<<input()->represent();
         return p.dump();
     }
+    virtual resultCode rewrite(painter p, operation* op){
+        if(auto neg = input()->getDefiningOp<negativeOp>()){
+            p.setPaintPointAfter(op);
+            op->replaceBy(neg->input()->getDefiningOp());
+            return resultCode::success();
+        }
+        return resultCode::pass();
+    }
 };
+
+// ---------- sumOp ----------
+class sumOp : public lgf::operation, public normalizer {
+    public:
+    sumOp() : operation("AAB::sumOp") {}
+    static sumOp* build(lgf::LGFContext* ctx, std::vector<value*>& vec){
+        auto op = new sumOp();
+        op->registerInputs(vec);
+        op->createValue(vec[0]->getType(), "");
+        return op;
+    }
+    static sumOp* build(lgf::LGFContext* ctx, type_t type){
+        auto op = new sumOp();
+        op->createValue(type, "");
+        return op;
+    }
+    template<typename ...ARGS>
+    static sumOp* build(lgf::LGFContext* ctx, ARGS ... args ){
+        auto op = new sumOp();
+        op->registerInput(args...);
+        op->createValue(op->inputValue(0)->getType(), "");
+        return op;
+    }
+    lgf::value* input(int i=0){ return inputValue(i); }
+    lgf::value* output(){ return outputValue(1); }
+    virtual std::string represent(){
+        printer p;
+        p<<representOutputs()<<" = "<<getSID() <<" : "<<representInputs();
+        return p.dump();
+    }
+
+    virtual resultCode rewrite(painter p, operation* op);
+};
+
 
 // ---------- minusOp ----------
 class minusOp : public lgf::operation, public normalizer
@@ -102,13 +113,16 @@ class minusOp : public lgf::operation, public normalizer
         return p.dump();
     }
     virtual resultCode rewrite(painter p, operation* op){
-        std::cout<<"---------------find minus renomalizer!"<<std::endl;
-        return resultCode::pass();
+        resultCode ret;
+        p.setPaintPointAfter(op);
+        auto neg = p.paint<negativeOp>(op->inputValue(1));
+        auto add = p.replaceOp<addOp>(op, op->inputValue(0), neg->output());
+        return resultCode::success();
     }
 };
 
 // ---------- multiplyOp ----------
-class multiplyOp : public lgf::operation
+class multiplyOp : public lgf::operation, public normalizer
 {
     public:
     multiplyOp() : operation("AAB::multiply") {}
@@ -121,12 +135,49 @@ class multiplyOp : public lgf::operation
     lgf::value* lhs(){ return inputValue(0); }
     lgf::value* rhs(){ return inputValue(1); }
     lgf::value* output(){ return outputValue(1); }
+
     virtual std::string represent(){
         printer p;
         //std::cout<<outputValue(1)<<std::endl;
         p<<representOutputs()<<" = "<<getSID() <<" : "<<inputValue(0)->represent()<<" * "<<inputValue(1)->represent();
         return p.dump();
     }
+
+    virtual resultCode rewrite(painter p, operation* op);
+};
+
+// ---------- productOp ----------
+class productOp : public lgf::operation, public normalizer
+{
+    public:
+    productOp() : operation("AAB::productOp") {}
+    static productOp* build(lgf::LGFContext* ctx, std::vector<value*>& vec){
+        auto op = new productOp();
+        op->registerInputs(vec);
+        op->createValue(vec[0]->getType(), "");
+        return op;
+    }
+    static productOp* build(lgf::LGFContext* ctx, type_t type){
+        auto op = new productOp();
+        op->createValue(type, "");
+        return op;
+    }
+    template<typename ...ARGS>
+    static productOp* build(lgf::LGFContext* ctx, ARGS ... args ){
+        auto op = new productOp();
+        op->registerInput(args...);
+        op->createValue(op->inputValue(0)->getType(), "");
+        return op;
+    }
+    lgf::value* input(int i=0){ return inputValue(i); }
+    lgf::value* output(){ return outputValue(1); }
+    virtual std::string represent(){
+        printer p;
+        p<<representOutputs()<<" = "<<getSID() <<" : "<<representInputs();
+        return p.dump();
+    }
+
+    virtual resultCode rewrite(painter p, operation* op);
 };
 
 // ---------- inverseOp ----------
@@ -178,6 +229,19 @@ class powerOp : public lgf::operation
     lgf::value* x(){ return inputValue(0); }
     lgf::value* output() { return outputValue(1); }
 
+};
+
+class mappingOp: public lgf::operation{
+    public:
+    mappingOp() : operation("AAB::mapping"){}
+    static mappingOp* build(lgf::LGFContext* ctx, type_t tp, lgf::value* input){
+        auto op = new mappingOp();
+        op->registerInput(input);
+        op->createValue(tp, "");
+        return op;
+    }
+    lgf::value* input(){ return inputValue(0); }
+    lgf::value* output(){ return outputValue(1); }
 };
 
 class function1DOp: public lgf::operation {
@@ -270,7 +334,7 @@ class distributeOp : public operation, public normalizer{
                 auto addr = p.paint<multiplyOp>(lhs, addop->rhs());
                 addop->output()->disconnectOp(root);
                 newop = p.paint<addOp>(addl->output(), addr->output());
-                user->replaceInputValue(val, newop->outputValue(1));
+                user->replaceInputValueBy(val, newop->outputValue(1));
                 result.add(resultCode::success());
                 p.getGraph()->clean();
             }else if(
@@ -282,7 +346,7 @@ class distributeOp : public operation, public normalizer{
                 auto addr = p.paint<multiplyOp>(addop->rhs(), rhs);
                 addop->output()->disconnectOp(root);
                 newop = p.paint<addOp>(addl->output(), addr->output());
-                user->replaceInputValue(val, newop->outputValue(1));
+                user->replaceInputValueBy(val, newop->outputValue(1));
                 result.add(resultCode::success());
                 p.getGraph()->clean();
             } else {
@@ -301,14 +365,10 @@ class distributeOp : public operation, public normalizer{
         }
         return result;
     }
-    virtual resultCode rewrite(painter p, operation* op){
-        auto input = dynamic_cast<distributeOp*>(op)->input();
-        auto res = distribute(p, input, op);
-        if(!res.isSuccess()){
-            op->replaceBy(op->inputValue(0)->getDefiningOp());
-        }
-        return res;
-    }
+
+    resultCode matchCheck(painter p, operation* );
+    void transform(painter p, productOp*, std::vector<value*>::iterator&, sumOp*);
+    virtual resultCode rewrite(painter p, operation* op);
 };
 
 class associateOp : public operation, public normalizer {

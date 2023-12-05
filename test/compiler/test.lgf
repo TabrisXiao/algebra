@@ -2,8 +2,5 @@ import lgf.AAB
 import lgf.LinearAlg
 
 
-//a = AAB.Derivative(x*x, x) + 5*x + 4;
-a = x+y;
-c = d+b;
-cb = AAB.Distribute( a*c*a );
-return;
+d = AAB.Sin(x);
+return d;

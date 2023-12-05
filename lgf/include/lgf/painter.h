@@ -57,7 +57,12 @@ class painter {
         lastOp = op;
         return op;
     }
-
+    void setPaintPointBefore(operation* op){
+        point.g = op->getParentGraph();
+        auto & vec = point.g->getNodeList();
+        point.iter=std::find(vec.begin(), vec.end(),op);
+        if(point.iter !=vec.begin()) point.iter--;
+    }
     void setPaintPointAfter(operation* op){
         point.g = op->getParentGraph();
         auto & vec = point.g->getNodeList();
@@ -143,6 +148,23 @@ class painter {
     void gotoGraph(graph * reg_) {
         point.g = reg_;
         point.iter = reg_->getNodeList().end();
+    }
+
+    std::vector<value*>::iterator insertValuesAsOpInputs(std::vector<value*>::iterator target, std::vector<value*>::iterator begin, std::vector<value*>::iterator end, operation* op){
+        // insert the values between begin and end into the op's inputs at target position
+        auto iter = op->getInputs().insert(target, begin, end)+std::distance(begin, end);
+        for(auto it = begin; it != end; it++){
+            (*it)->addUser(op);
+        }
+        return iter;
+    }
+
+    // replace the op's input pointed by target by the its defining op's inputs (insert values at target position)
+    std::vector<value*>::iterator replaceInputByDefOpInputs(std::vector<value*>::iterator target, operation *op){
+        auto defop = (*target)->getDefiningOp();
+        op->replaceInputValueBy(target, defop->inputValue(0));
+        target++;
+        return insertValuesAsOpInputs(target, defop->getInputs().begin()+1, defop->getInputs().end(), op);
     }
 
     paintPoint getPaintPoint(){ return point; }

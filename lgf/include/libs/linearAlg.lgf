@@ -1,2 +1,3 @@
 
 def UnitMatrix(int a) -> tensor<variable>;
+def Contract(variable x, variable y, int a)->tensor<variable>;

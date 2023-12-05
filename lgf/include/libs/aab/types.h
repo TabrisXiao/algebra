@@ -81,7 +81,7 @@ class infinitesimal : public lgf::variable {
   static std::unique_ptr<lgf::typeImpl> createImpl(type_t elemType){
     return std::move(std::make_unique<infinitesimalImpl>(elemType));
   }
-  type_t getElemType(){ return dynamic_cast<tensorTypeImpl*>(impl)->elemType; }
+  type_t getElemType(){ return dynamic_cast<infinitesimalImpl*>(impl)->elemType; }
 
   static type_t parse(lgf::liteParser& p, lgf::LGFContext* ctx){
     p.parseLessThan();
@@ -89,7 +89,7 @@ class infinitesimal : public lgf::variable {
     auto fc = ctx->getTypeTable().findParser(elemID);
     auto elemType = fc(p, ctx);
     p.parseGreaterThan();
-    return ctx->getType<tensor_t>(elemType);
+    return ctx->getType<infinitesimal>(elemType);
   }
 };
 

@@ -194,13 +194,16 @@ public :
         inputs[j] = val;
         val->addUser(this);
     }
-    void replaceInputValue(value* val, value* newval){
-        auto iter = std::find(inputs.begin(), inputs.end(), val);
-        if(iter==inputs.end()) return;
+    void replaceInputValueBy(std::vector<value*>::iterator iter, value* val){
         //marking the ops involved is modified;
         (*iter)->removeOp(this);
-        (*iter) = newval;
-        newval->addUser(this);
+        (*iter) = val;
+        val->addUser(this);
+    }
+    void replaceInputValueBy(value* val, value* newval){
+        auto iter = std::find(inputs.begin(), inputs.end(), val);
+        if(iter==inputs.end()) return;
+        replaceInputValueBy(iter, newval);
     }
     
     // replace the n-th input by the value v. 
@@ -219,7 +222,6 @@ public :
                 WARNING("Skipped register the input causing cycle dependence!");
                 continue;
             }
-            //std::cout<<"adding user for "<<val->getDefiningOp()->getSID()<<" : "<<this<<std::endl;
             val->addUser(this);
             inputs.push_back(val);
         }
@@ -312,8 +314,21 @@ public :
     graph* getParentGraph(){return graph_;}
     void setParentGraph(graph* g){ graph_ = g; }
 
-    // return 1 if it is invalid
-    virtual bool validation() { 
+    virtual void redundantCheck(){
+        bool canRemove = status.isTrivial();
+        if(canRemove){
+            for(auto & val: inputs ){
+                if(val->getUserSize()!=0) {
+                    canRemove = 0;
+                    break;
+                }
+            }
+            if(canRemove) erase();
+        }
+    }
+    
+    bool validation() { 
+        redundantCheck();
         return 0; 
     }
 
@@ -429,6 +444,7 @@ class graph : public operation{
     bool clean();
     // entrances are the ops have no inputs
     operation&  getEntry(){ return entry; }
+
     // void graphValidation() { 
     //     for(auto& op : nodes){
     //         if(auto g = dynamic_cast<graph*>(op)){

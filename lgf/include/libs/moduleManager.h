@@ -5,8 +5,8 @@
 #include "lgf/exception.h"
 #include <functional>
 #include "Builtin/Builtin.h"
-#include "LinearAlg/LinearAlg.h"
 #include "AAB/aab.h"
+#include "LinearAlg/LinearAlg.h"
 #include "lgf/LGFContext.h"
 
 namespace lgf {

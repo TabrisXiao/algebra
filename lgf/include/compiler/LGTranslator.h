@@ -20,6 +20,7 @@ class LGTranslator {
     void build(programAST* program){
         TRACE_LOG;
         moduleManager::get().start = c;
+        moduleManager::get().ctx = ctx;
         moduleManager::get().loadDefaultTranslationPipeline();
         moduleManager::get().loadInternalModule("Builtin", ctx, nullptr);
         astctx = program->getContext();
@@ -29,6 +30,7 @@ class LGTranslator {
             transplateASTModule(moduleast.get());
         }
         
+        moduleManager::get().bPrintBeforePass = printTranslatedIR;
         moduleManager::get().bPrintFinalIR = printTranslatedIR;
         moduleManager::get().bPrintInitialIR = printTranslatedIR;
         if(printInitIRForEachModule){
@@ -229,7 +231,7 @@ class LGTranslator {
             lgfop = pnt.paint<cstDeclOp>( int(ast->number));
         } else
             lgfop = pnt.paint<cstDeclOp>( ast->number);
-        return lgfop->output();;
+        return lgfop->output();
     }
     value* convertBinaryOp(std::unique_ptr<astBase>& op){
         TRACE_LOG;
