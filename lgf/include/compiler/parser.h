@@ -494,7 +494,7 @@ class parser{
     void scanFuncCall(std::unique_ptr<astBase>& ptr, region* funcRegion){
         auto ast = dynamic_cast<funcCallAST*>(ptr.get());
         auto idif = funcRegion->getData()->ids.find(ast->id);
-        if(!idif) compileErrorAt(ast, "id "+ast->id+" is unknown.");
+        if(!idif) compileErrorAt(ast, "Function \'"+ast->id+"\' not found.");
         if(idif->category!="func") compileErrorAt(ast, "id "+ast->id+" is not a function and is defined at "+idif->loc.string());
         for(auto & arg : ast->args){
             scanAST(arg);

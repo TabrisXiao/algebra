@@ -1,11 +1,23 @@
 
 #ifndef MATH_AAB_OPS_H
 #define MATH_AAB_OPS_H
-#include "lgf/types.h"
 #include "lgf/operation.h"
+#include "lgf/group.h"
 #include "types.h"
 
 namespace lgf::LinearAlg{
+
+// class unitMatrixDeclare : public lgf::operation, public normalizer{
+//     public:
+//     unitMatrixDeclare() = default;
+//     static unitMatrixDeclare* build(lgf::LGFContext* ctx, int n){
+//         auto op = new unitMatrixDeclare();
+//         op->createValue(ctx->getType<tensor_t>(ctx->getType<float_t>(), {n,n}), "");
+//         return op;
+//     }
+
+//     virtual resultCode rewrite(painter p, operation *op)
+// };
 
 class contractOp : public lgf::operation{
     public:

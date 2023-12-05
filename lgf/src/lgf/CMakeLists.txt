@@ -1,9 +1,10 @@
 file(GLOB_RECURSE headers
     "${PROJECT_SOURCE_DIR}/lgf/include/lgf/*.h"
+    "${PROJECT_SOURCE_DIR}/lgf/include/libs/LinearAlg/*.h"
 )
 set(
     sources
-    operation.cpp   
+    operation.cpp
     pass.cpp
     libs/AAB/ops.cpp
 )

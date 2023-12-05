@@ -2,8 +2,5 @@ import lgf.AAB
 import lgf.LinearAlg
 
 
-dd = AAB.Distribute(x*x) + 5*x + 4;
-a = 3+y;
-c = d-b;
-cb = AAB.Distribute( x*(a+c)*y );
-return dd;
+d = LinearAlg.UnitMatrix(3);
+return d;

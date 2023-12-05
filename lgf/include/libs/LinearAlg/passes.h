@@ -1,22 +1,26 @@
 #ifndef LIB_LINEARALG_PASSES_H
 #define LIB_LINEARALG_PASSES_H
-#include "lgf/painter.h"
 #include "libs/Builtin/ops.h"
 #include "ops.h"
 #include "lgf/pass.h"
 
-namespace lgf{
+namespace lgf::LinearAlg{
 
-namespace LinearAlg{
-
-class UnitMatrixInterfaceInit : public rewriter<funcDefineOp>{
+class InterfaceInitRewriter : public rewriter<funcDefineOp>{
     public:
-    UnitMatrixInterfaceInit() = default;
+    InterfaceInitRewriter() = default;
     resultCode rewrite(painter p, funcDefineOp* op){
         auto users = op->getCallee()->getUsers();
-        for(auto & user : users){
-
-        }
+        // resultCode ret;
+        // for(auto & user : users){
+        //     auto tempg = p.getGraph();
+        //     auto fc = dynamic_cast<funcCallOp*>(user);
+        //     p.gotoGraph(user->getParentGraph());
+        //     if(op->id=="UnitMatrix"){
+        //         p.replaceOp<declOp>( user, fc->arg(0));
+        //     }
+        //     p.gotoGraph(tempg);
+        // }
         return resultCode::pass();
     }
 };
@@ -37,7 +41,7 @@ class InterfaceInitPass : public passBase{
 std::unique_ptr<passBase> createInterfaceInitPass(moduleOp *m){
     return std::make_unique<InterfaceInitPass>(m);
 }
-}
-}
+
+}// namespace lgf::LinearAlg
 
 #endif
