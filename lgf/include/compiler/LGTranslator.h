@@ -157,7 +157,8 @@ class LGTranslator {
             auto argid = arg->id;
             auto type = parseType(arg->typeStr);
             funcOp->registerArg(type, "arg");
-            astctx->addSymbolInfoToCurrentScope(argid, {"arg", arg->loc, arg->typeStr, funcOp->argument(i)});
+            // allow the argument is empty, which means the argument is not used in definition.
+            if(!argid.empty()) astctx->addSymbolInfoToCurrentScope(argid, {"arg", arg->loc, arg->typeStr, funcOp->argument(i)});
         }
         if(!ast->returnTypeStr.empty())
             funcOp->returnType = ctx->parseTypeStr(ast->returnTypeStr);

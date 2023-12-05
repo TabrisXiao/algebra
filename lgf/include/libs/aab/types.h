@@ -60,20 +60,26 @@ class irrationalNumber: public lgf::variable {
   }
 };
 
-class infinitesimalImpl : public lgf::typeImpl { 
+class infinitesimalImpl : public lgf::derivedTypeImpl { 
   public: 
   infinitesimalImpl(lgf::type_t elemType_)
-  : typeImpl("infinitesimal")
-  , elemType(elemType_) {}
-
-  virtual std::string represent(){
-    printer p;
-    p<<id<<"<";
-    p<<elemType.represent()<<">";
-    return p.dump();
-  }
-  lgf::type_t elemType;
+  : derivedTypeImpl("infinitesimal", elemType_) {}
 };
+
+// class infinitesimalImpl : public lgf::typeImpl { 
+//   public: 
+//   infinitesimalImpl(lgf::type_t elemType_)
+//   : typeImpl("infinitesimal")
+//   , elemType(elemType_) {}
+
+//   virtual std::string represent(){
+//     printer p;
+//     p<<id<<"<";
+//     p<<elemType.represent()<<">";
+//     return p.dump();
+//   }
+//   lgf::type_t elemType;
+// };
 
 class infinitesimal : public lgf::variable {
   public:
@@ -81,7 +87,7 @@ class infinitesimal : public lgf::variable {
   static std::unique_ptr<lgf::typeImpl> createImpl(type_t elemType){
     return std::move(std::make_unique<infinitesimalImpl>(elemType));
   }
-  type_t getElemType(){ return dynamic_cast<infinitesimalImpl*>(impl)->elemType; }
+  type_t getElemType(){ return dynamic_cast<infinitesimalImpl*>(impl)->getBaseType(); }
 
   static type_t parse(lgf::liteParser& p, lgf::LGFContext* ctx){
     p.parseLessThan();

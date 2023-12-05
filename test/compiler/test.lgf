@@ -2,5 +2,5 @@ import lgf.AAB
 import lgf.LinearAlg
 
 
-d = AAB.Sin(x);
+d = AAB.Sin(x)*AAB.Cos(x);
 return d;

@@ -158,11 +158,13 @@ class parser{
     void parseArgSignatures(std::vector<std::unique_ptr<astBase>>& vec){
         while(lx.getCurToken() == tok_identifier){
             auto type = parseTypeName();
-            auto id = lx.identifierStr;
+            std::string id = ""; 
+            if(lx.getCurToken() == tok_identifier) {
+                id = lx.parseIdentifier();
+            }
             auto loc = lx.getLoc();
             auto ptr = std::make_unique<varDeclAST>(loc, type, id);
             vec.push_back(std::move(ptr));
-            lx.consume(tok_identifier);
             if(lx.getCurToken() == token(',')) lx.consume(token(','));
         }
         return;
