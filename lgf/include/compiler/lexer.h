@@ -99,7 +99,7 @@ class lexer {
     void consume(token tok){
         if( tok != curTok ){
             auto symbol = convertCurrentToken2String();
-            std::cerr<<loc.string()<<": consuming an unexpected token \""<<convertCurrentToken2String()<<"\"."<<std::endl;
+            std::cerr<<loc.string()<<": Expecting token \'"<<std::string(1, static_cast<char>(tok))<<"\', but get "<<convertCurrentToken2String()<<"\"."<<std::endl;
             std::exit(EXIT_FAILURE);
         }
         getNextToken();

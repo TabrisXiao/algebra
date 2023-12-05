@@ -315,14 +315,16 @@ public :
     void setParentGraph(graph* g){ graph_ = g; }
 
     virtual void redundantCheck(){
-        bool canRemove = 1;
-        for(auto & val: outputs ){
-            if(val->getUserSize()!=0) {
-                canRemove = 0;
-                break;
+        bool canRemove = status.isTrivial();
+        if(canRemove){
+            for(auto & val: inputs ){
+                if(val->getUserSize()!=0) {
+                    canRemove = 0;
+                    break;
+                }
             }
+            if(canRemove) erase();
         }
-        if(canRemove) erase();
     }
     
     bool validation() { 
