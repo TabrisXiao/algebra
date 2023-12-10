@@ -148,6 +148,7 @@ class funcDefineOp : public graph {
     value* getCallee(){ return outputValue(1); }
     value* argument(int n) { return getEntry().outputValue(n+1); }
     std::string id;
+    type_t getLReturnType(){ return returnType; }
     virtual std::string represent(){ 
         printer p;
         p<<representOutputs()<<" = func ";
@@ -206,6 +207,9 @@ class funcCallOp : public operation{
     value * getCallee(){ return inputValue(0); }
     value * arg(int n=0 ){ return inputValue(n+1); }
     value * returnValue() { return outputValue(1); }
+    type_t getReturnType(){
+        return returnValue()->getType();
+    }
     virtual std::string represent(){
         printer p;
         auto callee = getCallee()->getDefiningOp<funcDefineOp>();

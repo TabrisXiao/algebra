@@ -62,7 +62,7 @@ class negativeOp : public lgf::operation, public normalizer
 // ---------- sumOp ----------
 class sumOp : public lgf::operation, public normalizer {
     public:
-    sumOp() : operation("AAB::sumOp") {}
+    sumOp() : operation("AAB::sum") {}
     static sumOp* build(lgf::LGFContext* ctx, std::vector<value*>& vec){
         auto op = new sumOp();
         op->registerInputs(vec);
@@ -150,7 +150,7 @@ class multiplyOp : public lgf::operation, public normalizer
 class productOp : public lgf::operation, public normalizer
 {
     public:
-    productOp() : operation("AAB::productOp") {}
+    productOp() : operation("AAB::product") {}
     static productOp* build(lgf::LGFContext* ctx, std::vector<value*>& vec){
         auto op = new productOp();
         op->registerInputs(vec);
@@ -171,6 +171,7 @@ class productOp : public lgf::operation, public normalizer
     }
     lgf::value* input(int i=0){ return inputValue(i); }
     lgf::value* output(){ return outputValue(1); }
+    bool checkInverse(value* lhs, value* rhs);
     virtual std::string represent(){
         printer p;
         p<<representOutputs()<<" = "<<getSID() <<" : "<<representInputs();
@@ -194,7 +195,12 @@ class inverseOp : public lgf::operation, public normalizer
     lgf::value* input(){ return inputValue(0); }
     lgf::value* output(){ return outputValue(1); }
     virtual resultCode rewrite(painter p, operation* op){
-        // needs to make it as inverse(x) = 1/x
+        // reduce the inverse(invers(x)) to x
+        if(auto inv = input()->getDefiningOp<inverseOp>()){
+            p.setPaintPointAfter(op);
+            op->replaceBy(inv->input()->getDefiningOp());
+            return resultCode::success();
+        }
         return resultCode::pass();
     }
 };
@@ -410,6 +416,20 @@ class associateOp : public operation, public normalizer {
     virtual resultCode rewrite(painter p, operation* op){
         return resultCode::pass();
     }
+};
+
+class differentiateOp : public operation {
+    public:
+    differentiateOp() : operation("AAB::differentiate"){}
+    static differentiateOp* build(LGFContext* ctx, value* input, value* target){
+        auto op = new differentiateOp();
+        op->registerInput(input, target);
+        op->createValue(input->getType(), "");
+        return op;
+    }
+    value* input(){ return inputValue(0); }
+    value* target(){ return inputValue(1); }
+    value* output(){ return outputValue(1); }
 };
 
 // class factorOp : public operation, public normalizer{

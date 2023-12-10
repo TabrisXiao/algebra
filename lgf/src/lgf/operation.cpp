@@ -92,6 +92,16 @@ std::unique_ptr<value>* value::getPtr(){
     return nullptr;
 }
 
+int value::getOutputIndex(){
+    // return the order number of this value from definingOp
+    if(defop == nullptr) return -1;
+    auto& outputs = defop->getOutputs();
+    for(auto i =0; i<outputs.size(); i++){
+        if(outputs[i].get() == this) return i;
+    }
+    return -1;
+}
+
 std::string dependencyValue::represent() {
     return "";//"dummy from: "+getDefiningOp()->getSID();
 }
@@ -206,6 +216,7 @@ void operation::replaceInputValue(int n, value* v){
 //---------------------------------------------------
 
 void operation::replaceBy(operation* new_op){
+    if(this == new_op) return;
     auto output_size = getOutputSize();
     CHECK_VALUE(output_size, new_op->getOutputSize(), "New op must have the same number of outputs as the original op.");
     // assume that the inputs are settled down for the new op,

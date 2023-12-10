@@ -1,4 +1,5 @@
 
+def Inverse(variable) -> variable;
 def Mapping(variable )->variable;
 def Sin(variable a) -> variable;
 def Cos(variable a) -> variable;
@@ -6,3 +7,4 @@ def Power(variable , variable ) -> variable;
 def Derivative(variable f) -> variable;
 def Factor(variable x, variable target) -> variable;
 def Distribute(variable x) -> variable;
+def Differentiate(variable, variable) -> variable;

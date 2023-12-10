@@ -30,6 +30,14 @@ resultCode sumOp::rewrite(painter p, operation *op){
     return result;
 }
 
+bool productOp::checkInverse(value* lhs, value* rhs){
+    // check if lhs are inverse of rhs
+    if(auto inv = lhs->getDefiningOp<inverseOp>()){
+        if(inv->inputValue(0) == rhs) return true;
+    }
+    return false;
+}
+
 resultCode productOp::rewrite(painter p, operation *op){
     // check all input values and merge all productOps into one
     resultCode result;
@@ -42,6 +50,15 @@ resultCode productOp::rewrite(painter p, operation *op){
         } else {
             iter++;
         }
+    }
+    // check if adjacent inputs are the inverse of each other, if so, remove them.
+    // if no inputs left, replace the input by declaring a constant 1;
+    iter = op->getInputs().begin();
+    while(iter!=op->getInputs().end()-1){
+        if(checkInverse(*iter, *(iter+1)) || checkInverse(*(iter+1), *iter)){
+            iter = op->getInputs().erase(iter, iter+2);
+            result.add(resultCode::success());
+        }else iter++;
     }
     return result;
 }

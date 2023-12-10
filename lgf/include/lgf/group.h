@@ -40,8 +40,66 @@ class normalizationPass : public passBase {
         addRewriter<groupRewriter<normalizer>>();
         // applyRewriterOnce(p, getGraph());
         // return applyRewriterOnce(p, getGraph());
+        removeIdenticalOps(getGraph());
         return applyRewriterGreedy(p, getGraph());
     }
+
+    operation* checkIfIdenticalExist(operation* op, std::queue<operation*> &list){
+        std::queue<operation*> q=list;
+        while(!q.empty()){
+            auto checkop = q.front();
+            q.pop();
+            if(op->isIdentical(checkop)){
+                return checkop;
+            }
+        }
+        return nullptr;
+    }
+
+    bool removeIdenticalOps(graph* g){
+        // using breadth first walk to remove identical ops
+        bool changed = false;
+        auto list = g->getEntry().getIndirectDependecyValue()->getUsers();
+        std::queue<operation*> queue;
+        for(auto op : list){
+            if(op->isRemovable() || !op->isActive()) continue;
+            
+            // if op is a graph:
+            if(auto subg = dynamic_cast<graph*>(op)){
+                
+                removeIdenticalOps(subg);
+                continue;
+            }
+            std::cout<<"@: "<<op->represent()<<std::endl;
+            queue.push(op);
+            // if( !checkIfIdenticalExist(op, queue) ){
+            //     queue.push(op);
+            // }
+        }
+
+        while(!queue.empty()){
+            auto op = queue.front();
+            queue.pop();
+            for(auto& output: op->getOutputs()){
+                // skip the dependencyValue
+                if(auto dependency = dynamic_cast<dependencyValue*>(output.get())) 
+                    continue;
+                for(auto user : output->getUsers()){
+                    if(user->isRemovable() || !user->isActive()) continue;
+                     if(auto keepop = checkIfIdenticalExist(user, queue)){
+                        user->replaceBy(keepop);
+                        changed = true;
+                    }else{
+                        queue.push(user);
+                    }
+                }
+            }
+        }
+        return changed;
+    }
+
+    
+    
 };
 
 }

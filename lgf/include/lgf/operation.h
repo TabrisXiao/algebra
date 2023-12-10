@@ -143,6 +143,9 @@ public:
         }
     }
 
+    int getOutputIndex();
+    
+
     private:
     operation *defop = nullptr;
     std::vector<operation*> users;
@@ -313,6 +316,23 @@ public :
 
     graph* getParentGraph(){return graph_;}
     void setParentGraph(graph* g){ graph_ = g; }
+
+    std::string getOpRepresent(){
+        // get representation of this operation after the first "="
+        auto code = represent();
+        auto pos = code.find("=");
+        if(pos!= std::string::npos) return code.substr(pos+1);
+        else return code;
+    }
+
+    bool isIdentical(operation* target){
+        if(this == target) return true;
+        if(target == nullptr) return false;
+        auto code1 = this->getOpRepresent();
+        auto code2 = target->getOpRepresent();
+        if(code1!=code2) return false;
+        return true;
+    }
 
     virtual void redundantCheck(){
         bool canRemove = status.isTrivial();

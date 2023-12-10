@@ -33,6 +33,15 @@ class InterfaceInitRewriter : public rewriter<funcDefineOp>{
             }else if(op->id=="Distribute"){
                 p.replaceOp<distributeOp>( user, fc->arg(0));
                 ret.add(resultCode::success());
+            }else if(op->id=="Differentiate"){
+                p.replaceOp<differentiateOp>( user, fc->arg(0), fc->arg(1));
+                ret.add(resultCode::success());
+            }else if(op->id=="Mapping"){
+                p.replaceOp<mappingOp>( user, fc->getReturnType(), fc->arg(0));
+                ret.add(resultCode::success());
+            }else if(op->id=="Inverse"){
+                p.replaceOp<inverseOp>( user, fc->arg(0) );
+                ret.add( resultCode::success() );
             }
             p.gotoGraph(tempg);
         }
