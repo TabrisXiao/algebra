@@ -67,6 +67,62 @@ class InterfaceInitPass : public passBase{
 std::unique_ptr<passBase> createInterfaceInitPass(moduleOp *m){
     return std::make_unique<InterfaceInitPass>(m);
 }
+
+class ChainRuleRewriter: public rewriter<differentiateOp>{
+    public:
+    ChainRuleRewriter() = default;
+    virtual resultCode rewrite(painter p, differentiateOp *op){
+        // this apply the differentiation chain rule to all
+        // differentiateOp in the graph
+        auto result = resultCode::pass();
+        auto targetop = op->inputValue(0)->getDefiningOp();
+        if( auto addop = dynamic_cast<sumOp*>(targetop)){
+            auto iter = addop->getInputs().begin();
+            while(iter!=addop->getInputs().end()){
+                auto input = *iter;
+                auto defop = input->getDefiningOp();
+                p.setPaintPointAfter(defop);
+                auto newop = p.paint<differentiateOp>(input, op->inputValue(1));
+                addop->replaceInputValueBy(iter, newop->output());
+                iter++;
+            }
+            op->replaceBy(addop);
+            result.add(resultCode::success());
+        }else if(auto productop = dynamic_cast<productOp*>(targetop)){
+            p.setPaintPointAfter(productop);
+            auto sumop = p.paintNoAppend<sumOp>(op->inputValue(0)->getType());
+            p.setPaintPointBefore(sumop);
+            auto inputs = productop->getInputs();
+            for(auto i=0; i<inputs.size(); i++){
+                auto newinputs(inputs);
+                auto diffop = p.paint<differentiateOp>(newinputs[i], op->inputValue(1));
+                newinputs[i] = diffop->output();
+                auto prodop = p.paint<productOp>(newinputs);
+                sumop->registerInput(prodop->output());
+            }
+            productop->replaceBy(sumop);
+            op->replaceBy(sumop);
+            result.add(resultCode::success());
+        }
+        return result;
+    }
+};
+
+class CalculusPass : public passBase{
+    public:
+    CalculusPass()
+    : passBase("CalculusPass") {}
+    virtual resultCode run() final{
+        painter p(getContext());
+        addRewriter<ChainRuleRewriter>(); 
+        auto result = applyRewriterGreedy(p, getGraph());
+        return result;
+    }
+};
+
+std::unique_ptr<passBase> createCalculusPass(){
+    return std::make_unique<CalculusPass>();
+}
 }
 
 #endif

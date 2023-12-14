@@ -192,13 +192,13 @@ public :
 
     void replaceInput(int j, value* val){
         if(j>= getInputSize()) return;
-        //marking the ops involved is modified;
+        //marking the ops involved as modified;
         inputs[j]->removeOp(this);
         inputs[j] = val;
         val->addUser(this);
     }
     void replaceInputValueBy(std::vector<value*>::iterator iter, value* val){
-        //marking the ops involved is modified;
+        //marking the ops involved as modified;
         (*iter)->removeOp(this);
         (*iter) = val;
         val->addUser(this);

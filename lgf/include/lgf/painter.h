@@ -57,6 +57,26 @@ class painter {
         lastOp = op;
         return op;
     }
+    template<typename obj, typename...ARGS>
+    obj* paintNoAppend(ARGS ...args){
+        //CHECK_CONDITION(point.g!=nullptr, "No graph associated to the painter!");
+        auto op = sketch<obj>(args...);
+        //add to graph
+        op->setParentGraph(point.g);
+        point.iter = point.g->getNodeList().insert(point.iter, op)+1;
+        lastOp = op;
+        return op;
+    }
+    template<typename obj>
+    obj* paintNoAppend(){
+        //CHECK_CONDITION(current_graph!=nullptr, "No graph associated to the painter!");
+        auto op = sketch<obj>();
+        //add to graph
+        op->setParentGraph(point.g);
+        point.iter = point.g->getNodeList().insert(point.iter, op)+1;
+        lastOp = op;
+        return op;
+    }
     void setPaintPointBefore(operation* op){
         point.g = op->getParentGraph();
         auto & vec = point.g->getNodeList();
@@ -67,6 +87,8 @@ class painter {
         point.g = op->getParentGraph();
         auto & vec = point.g->getNodeList();
         point.iter=std::find(vec.begin(), vec.end(),op);
+        if(point.iter !=vec.end()) point.iter++;
+        else point.iter = point.iter-1;
     }
 
     void addOpToCurrentGraph(operation* op){

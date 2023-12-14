@@ -12,6 +12,8 @@
 #include "libs/moduleManager.h"
 #include "utils.h"
 
+#include "libs/AAB/passes.h"
+
 namespace lgf::compiler{
 
 class compiler {
@@ -43,7 +45,12 @@ class compiler {
         passManager pm(&ctx, &g);
         pm.enablePrintAfterPass();
         pm.addNormalizationPass();
+
+        default_pipeline(pm);
         pm.run();
+    }
+    void default_pipeline(passManager& pm){
+        pm.addPass(AAB::createCalculusPass());
     }
     void setRootPath(std::string p){
         io.internalModulePath = p;
