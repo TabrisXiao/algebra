@@ -38,6 +38,10 @@ bool productOp::checkInverse(value* lhs, value* rhs){
     return false;
 }
 
+bool productOp::checkMutualInverse(value* lhs, value* rhs){
+    return checkInverse(lhs, rhs) || checkInverse(rhs, lhs);
+}
+
 resultCode productOp::rewrite(painter p, operation *op){
     // check all input values and merge all productOps into one
     resultCode result;
@@ -55,7 +59,7 @@ resultCode productOp::rewrite(painter p, operation *op){
     // if no inputs left, replace the input by declaring a constant 1;
     iter = op->getInputs().begin();
     while(iter!=op->getInputs().end()-1){
-        if(checkInverse(*iter, *(iter+1)) || checkInverse(*(iter+1), *iter)){
+        if(checkMutualInverse(*iter, *(iter+1))){
             iter = op->getInputs().erase(iter, iter+2);
             result.add(resultCode::success());
         }else iter++;

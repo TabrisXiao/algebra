@@ -97,9 +97,6 @@ class normalizationPass : public passBase {
         }
         return changed;
     }
-
-    
-    
 };
 
 }

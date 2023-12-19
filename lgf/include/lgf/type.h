@@ -18,6 +18,7 @@ class typeImpl{
     // the module that this type belongs to
     LGFModule* module=nullptr;
     std::string id;
+    
 };
 
 class type_t {

@@ -24,9 +24,6 @@ class InterfaceInitRewriter : public rewriter<funcDefineOp>{
             }else if(op->id=="Cos"){
                 p.replaceOp<funcCosOp>( user, fc->arg(0));
                 ret.add(resultCode::success());
-            }else if(op->id=="Derivative"){
-                p.replaceOp<derivativeOp>( user, fc->arg(0), fc->arg(1));
-                ret.add(resultCode::success());
             }else if(op->id=="Factor"){
                 // p.replaceOp<factorOp>( user, fc->arg(0), fc->arg(1));
                 // ret.add(resultCode::success());
@@ -35,9 +32,6 @@ class InterfaceInitRewriter : public rewriter<funcDefineOp>{
                 ret.add(resultCode::success());
             }else if(op->id=="Differentiate"){
                 p.replaceOp<differentiateOp>( user, fc->arg(0), fc->arg(1));
-                ret.add(resultCode::success());
-            }else if(op->id=="Mapping"){
-                p.replaceOp<mappingOp>( user, fc->getReturnType(), fc->arg(0));
                 ret.add(resultCode::success());
             }else if(op->id=="Inverse"){
                 p.replaceOp<inverseOp>( user, fc->arg(0) );
@@ -75,34 +69,31 @@ class ChainRuleRewriter: public rewriter<differentiateOp>{
         // this apply the differentiation chain rule to all
         // differentiateOp in the graph
         auto result = resultCode::pass();
-        auto targetop = op->inputValue(0)->getDefiningOp();
-        if( auto addop = dynamic_cast<sumOp*>(targetop)){
-            auto iter = addop->getInputs().begin();
-            while(iter!=addop->getInputs().end()){
-                auto input = *iter;
-                auto defop = input->getDefiningOp();
-                p.setPaintPointAfter(defop);
-                auto newop = p.paint<differentiateOp>(input, op->inputValue(1));
-                addop->replaceInputValueBy(iter, newop->output());
-                iter++;
-            }
-            op->replaceBy(addop);
-            result.add(resultCode::success());
-        }else if(auto productop = dynamic_cast<productOp*>(targetop)){
-            p.setPaintPointAfter(productop);
-            auto sumop = p.paintNoAppend<sumOp>(op->inputValue(0)->getType());
-            p.setPaintPointBefore(sumop);
-            auto inputs = productop->getInputs();
-            for(auto i=0; i<inputs.size(); i++){
-                auto newinputs(inputs);
-                auto diffop = p.paint<differentiateOp>(newinputs[i], op->inputValue(1));
-                newinputs[i] = diffop->output();
-                auto prodop = p.paint<productOp>(newinputs);
-                sumop->registerInput(prodop->output());
-            }
-            productop->replaceBy(sumop);
-            op->replaceBy(sumop);
-            result.add(resultCode::success());
+        auto inputop = op->inputValue(0)->getDefiningOp();
+        auto target = op->target();
+        if( op->input() != op->target() ){
+            auto func = op->input()->getDefiningOp<mappingOp>();
+            if(func->getArgNumber()>1){
+                // if the input is a mappingOp with more than one argument
+                // then we need to apply the chain rule to each argument
+                // and sum them up
+                p.setPaintPointAfter(op);
+                auto sumop = p.paintNoAppend<sumOp>(op->inputValue(0)->getType());
+                p.setPaintPointBefore(sumop);
+                auto inputs = func->getArugments();
+                //p.setPaintPointBefore(op);
+                for(size_t i=0; i<inputs.size(); i++){
+                    auto intermediateValue = func->argument(i);
+                    auto diff1op = p.paint<partialDifferentiateOp>(func->output(), intermediateValue);
+                    auto diff2op = p.paint<differentiateOp>(intermediateValue, target);
+                    auto prodop = p.paint<productOp>(diff1op->output(), diff2op->output());
+                    sumop->addArgument(prodop->output());
+                }
+                //func->replaceBy(sumop);
+                op->replaceBy(sumop);
+                result.add(resultCode::success());
+                return result;
+            } 
         }
         return result;
     }

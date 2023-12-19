@@ -36,7 +36,7 @@ class declOp : public operation, public normalizer{
     value * output(){ return outputValue(1); }
     virtual std::string represent(){
         printer p;
-        p<<representOutputs()<<" : Declare";
+        p<<representOutputs()<<" = Declare "<<output()->getType().represent();
         return p.dump();
     }
     virtual resultCode rewrite(painter p, operation* op){

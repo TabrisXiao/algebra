@@ -59,15 +59,15 @@ obj& get_vec_elem_with_check(size_t n, std::vector<obj>& vec){
 }
 
 // this object encodes operation status into 8 bit data
-class opStatus : public byteCode<int8_t> {
+class opStatus : public byteCode<uint8_t> {
     public:
-    enum status : int8_t {
+    enum status : uint8_t {
         default =0,
         // this type op can't be removed automatically
         nontrivial, 
     };
     opStatus(): byteCode() {}
-    opStatus(int8_t v) : byteCode(v){}
+    opStatus(uint8_t v) : byteCode(v){}
     bool isTrivial(){ return !check(nontrivial); }
     void setNontrivial(){ add(opStatus(nontrivial)); }
 };
@@ -276,8 +276,8 @@ public :
     std::vector<std::unique_ptr<value>>& getOutputs() const {
         return const_cast<std::vector<std::unique_ptr<value>>&>(outputs);
     }
-    value* outputValue(int n=0){return outputs[n].get();}
-    value* inputValue(int n=0) {return inputs[n];}
+    value* outputValue(size_t n=0){return outputs[n].get();}
+    value* inputValue(size_t n=0) {return inputs[n];}
     size_t getInputSize() const;
     size_t getOutputSize() const;
     opStatus getStatus(){ return status; }
