@@ -163,7 +163,7 @@ class parser{
                 id = lx.parseIdentifier();
             }
             auto loc = lx.getLoc();
-            auto ptr = std::make_unique<varDeclAST>(loc, type, id);
+            auto ptr = std::make_unique<argDeclAST>(loc, type, id);
             vec.push_back(std::move(ptr));
             if(lx.getCurToken() == token(',')) lx.consume(token(','));
         }
@@ -338,6 +338,9 @@ class parser{
         //     //}
         //     return parseVarDecl(loc, id);
         // }
+        if(lx.getCurToken() == tok_identifier) {
+            return parseVarDecl(loc, id);
+        }
         auto lhs = parseValAST(loc, id);
         if(lx.getCurToken() == token(';')){
             lx.getNextToken();
@@ -349,19 +352,25 @@ class parser{
     }
 
     std::unique_ptr<astBase> parseVarDecl(location loc, std::string tid){
-        parseError("parseVarDecl Not implement yet!");
-        // if(auto ptr = ctx->findSymbolInfoInCurrentModule(tid)){
-        //     if(ptr->category!= "type" || ptr->category!= "class"){
-        //         parseError("The type \'"+tid+"\' is not defined yet!");
-        //     }
-        // }
+        if(auto ptr = ctx->findSymbolInfoInCurrentModule(tid)){
+            if(ptr->category!= "type" || ptr->category!= "class"){
+                parseError("The type \'"+tid+"\' is not defined yet!");
+            }
+        }
         auto id = lx.identifierStr;
         lx.consume(tok_identifier);
         // TODO: support to parse the case:
         //       var a, b, c
         //       var a = 1, b = 2
+        auto declAst = std::make_unique<varDeclAST>(loc, tid);
+        while(lx.getCurToken()!=token(';')){
+            auto varloc = lx.getLoc();
+            auto varid = lx.parseIdentifier();
+            declAst->addVariable(varloc, varid);
+            if(lx.getCurToken()==token(',')) lx.consume(token(','));
+        }
         lx.consume(token(';'));
-        return std::make_unique<varDeclAST>(loc, tid, id);
+        return std::move(declAst);
     }
     void checkIfVarIDExists(std::string id){
         // if(auto info = ctx->findSymbolInfoInCurrentModule(id)){

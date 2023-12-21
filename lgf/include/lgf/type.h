@@ -8,6 +8,22 @@
 namespace lgf{
 class LGFContext;
 class LGFModule;
+
+template<typename storageType>
+class typeMarker : private byteCode<storageType> {
+    public:
+    typeMarker(size_t size): byteCode(), size_max(size) {}
+    bool is(size_t code) { 
+        THROW_WHEN(code > size_max, "typeMarker: code out of range");
+        return (1<<code) & value != 0 ; }
+    void mark(size_t code ) { 
+        THROW_WHEN(code > size_max, "typeMarker: code out of range");
+        value |= 1<<code; 
+    }
+    void combine(storageType& val) { value |= val; }
+    size_t size_max;
+};
+
 class typeImpl{
     public:
     typeImpl(std::string sid) : id(sid){}

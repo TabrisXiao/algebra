@@ -97,15 +97,23 @@ class structAST : public astBase {
     }
 };
 
-class varDeclAST : public astBase {
+class argDeclAST: public astBase {
     public:
-    varDeclAST(location loc, std::string tid, std::string name_) 
+    argDeclAST(location loc, std::string tid, std::string id_) 
     : astBase(loc, kind_varDecl)
     , typeStr(tid)
-    , id(name_) {}
+    , id(id_){}
     std::string typeStr, id;
+    std::unique_ptr<astBase> initValue = nullptr;
+    void addInitValue(std::unique_ptr<astBase>&& ptr){
+        initValue = std::move(ptr);
+    }
     virtual void emitIR(lgf::streamer & out){
         out<<typeStr<<" "<<id;
+        if(initValue){
+            out<<" = ";
+            initValue->emitIR(out);
+        }
     }
 };
 
@@ -122,6 +130,24 @@ class varAST : public astBase {
     }
 };
 
+class varDeclAST : public astBase {
+    public:
+    varDeclAST(location loc, std::string tid) 
+    : astBase(loc, kind_varDecl)
+    , typeStr(tid){}
+    std::string typeStr;
+    void addVariable(location loc, std::string id){
+        contents.push_back(std::make_unique<varAST>(loc, id, 0));
+    }
+    virtual void emitIR(lgf::streamer & out){
+        out<<typeStr<<" ";
+        for(auto & each : contents){
+            out<<each;
+            if(&each != &contents.back()) out<<", ";
+        }
+    }
+    std::vector<std::unique_ptr<astBase>> contents;
+};
 
 class funcDeclAST : public astBase {
     public:
@@ -132,9 +158,9 @@ class funcDeclAST : public astBase {
     std::vector<std::unique_ptr<astBase>> contents;
     virtual void emitIR(lgf::streamer & out){
         out<<"def "<<funcID<<"(";
-        if(args.size()>0) out<<dynamic_cast<varDeclAST*>(args[0].get())->id;
+        if(args.size()>0) out<<dynamic_cast<argDeclAST*>(args[0].get())->id;
         for(auto i=1; i<args.size(); i++){
-            out<<", "<<dynamic_cast<varDeclAST*>(args[i].get())->id;
+            out<<", "<<dynamic_cast<argDeclAST*>(args[i].get())->id;
         }
         out<<")";
         if(!returnTypeStr.empty()){

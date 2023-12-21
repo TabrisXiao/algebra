@@ -153,7 +153,7 @@ class LGTranslator {
         astctx->findSymbolInfoInCurrentModule(ast->funcID)->handle = funcOp->getCallee();
         astctx->createSubmoduleAndEnter(ast->funcID);
         for(auto i=0; i< ast->args.size(); i++){
-            auto arg = dynamic_cast<varDeclAST*>(ast->args[i].get());
+            auto arg = dynamic_cast<argDeclAST*>(ast->args[i].get());
             auto argid = arg->id;
             auto type = parseType(arg->typeStr);
             funcOp->registerArg(type, "arg");
