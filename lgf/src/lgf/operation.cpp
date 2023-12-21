@@ -17,8 +17,6 @@ value::value(operation * op, type_t type, std::string sid_)
 std::string value::represent() {
     printer p;
     p<<"%"<<getSID();
-    std::string id = getTraceID() > -1 ? std::to_string(getTraceID()):"#";
-    p<<id;
     p<<" "<<getTR();
     //p<<" ("<<getUsers().size()<<")"; 
     //if(getUsers().size()>0) p<<" first user: "<<getUsers()[0];
@@ -166,7 +164,7 @@ void operation::assignValueID(int& n){
     for(auto &val : outputs){
         if(dynamic_cast<dependencyValue*>(val.get()))
             continue;
-        val->setTraceID(n++);
+        val->setSIDIfNull(std::to_string(n++));
     }
 }
 //---------------------------------------------------

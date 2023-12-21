@@ -34,18 +34,19 @@ class objInfo {
     public: 
     objInfo() = default;
     objInfo(const objInfo & info) {
-        traceID = info.getTraceID();
+        //traceID = info.getTraceID();
         sid=info.getSID();
     }
     objInfo(std::string id) {sid = id;}
-    void setTraceID(int id_){traceID = id_;}
-    int getTraceID() const {return traceID;}
+    //void setTraceID(int id_){traceID = id_;}
+    //int getTraceID() const {return traceID;}
 
     sid_t getSID() const {return sid;}
     void setSID(sid_t id){sid=id;}
+    void setSIDIfNull(sid_t id){if(sid.empty()) sid=id;}
 
     private:
-    int traceID = -1;
+    //int traceID = -1;
     sid_t sid;
     //type_t type_;
 };

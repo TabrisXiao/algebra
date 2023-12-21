@@ -158,9 +158,11 @@ class funcDeclAST : public astBase {
     std::vector<std::unique_ptr<astBase>> contents;
     virtual void emitIR(lgf::streamer & out){
         out<<"def "<<funcID<<"(";
-        if(args.size()>0) out<<dynamic_cast<argDeclAST*>(args[0].get())->id;
+        if(args.size()>0) 
+        dynamic_cast<argDeclAST*>(args[0].get())->emitIR(out);
         for(auto i=1; i<args.size(); i++){
-            out<<", "<<dynamic_cast<argDeclAST*>(args[i].get())->id;
+            out<<", ";
+            dynamic_cast<argDeclAST*>(args[0].get())->emitIR(out);
         }
         out<<")";
         if(!returnTypeStr.empty()){
