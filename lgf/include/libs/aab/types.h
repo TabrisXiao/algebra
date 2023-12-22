@@ -5,33 +5,39 @@
 
 namespace lgf{
 
-// class algebraFeature: public typeMarker<uint32_t> {
-//     public:
-//     enum trait: uint8_t{
-//       add_commutable = 0,
-//       multiply_commutable = 1,
-//       associative and distributive are for multiply and add operation
-//       associative = 2,
-//       distributive = 3,
-//     };
-//     algebraFeature(): typeMarker<uint32_t>(32){}
-//     void initAsField(){
-//       mark(commutable);
-//       mark(associative);
-//       mark(distributive);
-//     }
-//     void initAsRing(){}
-// };
-
-// class algebraVariableImpl : public typeImpl, public algebraFeature {
-//     public:
-//     algebraVariableImpl(std::string sid): typeImpl(sid){}
-//     void 
-// };
-
-class fieldVariableImpl : public lgf::typeImpl {
+class algebraAxiom: public typeMarker<uint32_t> {
     public:
-    fieldVariableImpl(std::string sid): typeImpl(sid){
+    enum trait: uint8_t{
+      add_commutable = 0,
+      multiply_commutable = 1,
+      //associative and distributive are for multiply and add operation
+      associative = 2,
+      distributive = 3,
+    };
+    algebraAxiom(): typeMarker<uint32_t>(32){}
+    void initAsField(){
+      mark(add_commutable);
+      mark(multiply_commutable);
+      mark(associative);
+      mark(distributive);
+    }
+    void initAsRing(){
+      mark(add_commutable);
+      mark(associative);
+      mark(distributive);
+    }
+};
+
+class algebraVariableImpl : public typeImpl, public algebraAxiom {
+    public:
+    algebraVariableImpl(std::string sid): typeImpl(sid){
+    }
+};
+
+class fieldVariableImpl : public algebraVariableImpl {
+    public:
+    fieldVariableImpl(std::string sid): algebraVariableImpl(sid){
+      initAsField();
     }
 };
 
@@ -115,16 +121,20 @@ class infinitesimalImpl : public lgf::derivedTypeImpl, public fieldVariableImpl 
 //   }
 // };
 
-class unitImpl : public lgf::derivedTypeImpl { 
+class unitImpl : public lgf::derivedTypeImpl, public algebraAxiom { 
   public: 
   unitImpl(lgf::type_t elemType_)
-  : derivedTypeImpl("unit", elemType_) {}
+  : derivedTypeImpl("unit", elemType_) {
+    initAsField();
+  }
 }; 
 
-class zeroImpl : public lgf::derivedTypeImpl { 
+class zeroImpl : public lgf::derivedTypeImpl, public algebraAxiom { 
   public: 
   zeroImpl(lgf::type_t elemType_)
-  : derivedTypeImpl("zero", elemType_) {}
+  : derivedTypeImpl("zero", elemType_) {
+    initAsField();
+  }
 };
 
 class unit_t : public lgf::variable {

@@ -153,7 +153,6 @@ public:
 
     int getOutputIndex();
     
-
     private:
     operation *defop = nullptr;
     std::vector<operation*> users;
