@@ -1,6 +1,7 @@
 import lgf.AAB
 import lgf.LinearAlg
 
-a = AAB.Sin(x);
-
-return a;
+a = AAB.Sin(x)*AAB.Cos(x);
+b= AAB.Differentiate(a, x);
+c = a+b;
+return c;

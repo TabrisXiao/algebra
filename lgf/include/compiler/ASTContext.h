@@ -18,6 +18,7 @@ struct idinfo {
     std::string category;
     location loc;
     std::string type;
+    bool initialized = false;
     value * handle= nullptr;
 };
 

@@ -164,7 +164,7 @@ void operation::assignValueID(int& n){
     for(auto &val : outputs){
         if(dynamic_cast<dependencyValue*>(val.get()))
             continue;
-        val->setSIDIfNull(std::to_string(n++));
+        if(val->setSIDIfNull(std::to_string(n))) n++;
     }
 }
 //---------------------------------------------------

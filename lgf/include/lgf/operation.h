@@ -38,12 +38,24 @@ class objInfo {
     }
     objInfo(std::string id) {sid = id;}
 
-    sid_t getSID() const {return sid;}
+    sid_t getSID() const { 
+        if(sid.empty()) return tid;
+        else return sid;
+    }
     void setSID(sid_t id){sid=id;}
-    void setSIDIfNull(sid_t id){if(sid.empty()) sid=id;}
+    bool setSIDIfNull(sid_t id){
+        if(sid.empty()) {
+            tid=id;
+            return 1;
+        }
+        return 0;
+    }
 
     private:
-    sid_t sid;
+    // sid (symbolic id) is a unique id assigned by users. 
+    // tid (trace id) is a unique id assigned when looping through the graph.
+    // when there's no sid assigned, the tid will be used.
+    sid_t sid, tid;
 };
 
 
