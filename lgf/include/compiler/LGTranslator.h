@@ -210,10 +210,12 @@ class LGTranslator {
     }
     void declareVariables(symbolTable<idinfo>& idtbl){
         for(auto& it : idtbl.table){
+            auto id = it.first;
             auto & entry = it.second;
             if(entry.category == "var" && !entry.handle ){
                 auto type = parseType(entry.type);
                 auto op = pnt.paint<declOp>(type);
+                op->output()->setSID(id);
                 it.second.handle=op->output();
             }
         }
@@ -252,6 +254,7 @@ class LGTranslator {
             if(auto ptr = dynamic_cast<varAST*>(ast->lhs.get())){
                 // auto ret = pnt.paint<updateOp>(ctx, lhs, rhs)->output();
                 astctx->findSymbolInfoInCurrentModule(ptr->id)->handle=rhs;
+                rhs->setSID(ptr->id);
                 // return ret;
                 return rhs;
             }else {
