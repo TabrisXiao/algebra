@@ -228,6 +228,26 @@ class funcCallOp : public operation{
     value* funPtr = nullptr;
 };
 
+class assignOp : public operation{
+    public:
+    assignOp() : operation("assign") {}
+    static assignOp * build(LGFContext *ctx, value* lhs, value* rhs){
+        auto op = new assignOp();
+        op->createValue(rhs->getType(), "");
+        op->registerInput(lhs, rhs);
+        return op;
+    }
+    value * lhs() { return inputValue(0); }
+    value * rhs() { return inputValue(1); }
+    // note the outputValue(0) is the dependecyValue;
+    value * output(){ return outputValue(1); }
+    virtual std::string represent(){
+        printer p;
+        p<<representOutputs()<<" = "<<getSID() <<" : "<<inputValue(0)->represent()<< " from "<<inputValue(1)->represent();
+        return p.dump();
+    }
+};
+
 class returnOp : public operation {
     public:
     returnOp() = default;

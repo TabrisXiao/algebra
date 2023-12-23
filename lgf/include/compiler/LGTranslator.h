@@ -253,10 +253,11 @@ class LGTranslator {
         }else if(bop == "="){
             if(auto ptr = dynamic_cast<varAST*>(ast->lhs.get())){
                 // auto ret = pnt.paint<updateOp>(ctx, lhs, rhs)->output();
-                astctx->findSymbolInfoInCurrentModule(ptr->id)->handle=rhs;
-                rhs->setSID(ptr->id);
+                auto decl = pnt.paint<assignOp>(lhs, rhs);
+                decl->output()->setSID(ptr->id);
+                astctx->findSymbolInfoInCurrentModule(ptr->id)->handle=decl->output();
                 // return ret;
-                return rhs;
+                return decl->output();
             }else {
                 translateError("lhs of assignment has to be a variable.");
             }
