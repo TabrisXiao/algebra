@@ -3,6 +3,7 @@
 #define MATH_AAB_OPS_H
 #include "lgf/operation.h"
 #include "libs/builtin/types.h"
+#include "libs/AAB/types.h"
 #include "lgf/group.h"
 #include "pattern.h"
 

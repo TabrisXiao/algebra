@@ -55,14 +55,33 @@ resultCode productOp::rewrite(painter p, operation *op){
             iter++;
         }
     }
+    // For each value, if they are non commutable, 
     // check if adjacent inputs are the inverse of each other, if so, remove them.
     // if no inputs left, replace the input by declaring a constant 1;
+    // If the input is commutable, search for the inverse for the reset of other inputs
+        
     iter = op->getInputs().begin();
     while(iter!=op->getInputs().end()-1){
-        if(checkMutualInverse(*iter, *(iter+1))){
-            iter = op->getInputs().erase(iter, iter+2);
-            result.add(resultCode::success());
-        }else iter++;
+        auto axiom = (*iter)->getType().getImplAs<algebraAxiom>();
+        if(!axiom ) return result;
+        if( axiom->is(algebraAxiom::multiply_commutable)){
+            auto iter2 = iter+1;
+            while(iter2!=op->getInputs().end()){
+                if(checkMutualInverse(*iter, *iter2)){
+                    //if iter and iter2 are inverse of each other, remove them
+                    op->getInputs().erase(iter2);
+                    op->getInputs().erase(iter);
+                    result.add(resultCode::success());
+                    break;
+                }else iter2++;
+            }
+        }else {
+            if(checkMutualInverse(*iter, *(iter+1))){
+                iter = op->getInputs().erase(iter, iter+2);
+                result.add(resultCode::success());
+            }
+        }
+        iter++;
     }
     return result;
 }

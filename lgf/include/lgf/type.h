@@ -8,7 +8,11 @@
 namespace lgf{
 class LGFContext;
 class LGFModule;
-
+#define THROW_WHEN(condition, msg) \
+    if (condition) { \
+        std::cerr<<"Runtime Error: " __FILE__ ":"<< std::to_string(__LINE__)<< ": "<<msg<<"\n"; \
+        std::exit(EXIT_FAILURE); \
+    }
 template<typename storageType>
 class typeMarker : private byteCode<storageType> {
     public:
@@ -55,6 +59,11 @@ class type_t {
         return this->represent() == other.represent();
     }
     typeImpl* getImpl(){ return impl; }
+
+    template<typename T>
+    T* getImplAs(){
+        return dynamic_cast<T*>(impl);
+    }
 
     typeImpl* impl = nullptr;
 };
