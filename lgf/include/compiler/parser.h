@@ -357,8 +357,8 @@ class parser{
                 parseError("The type \'"+tid+"\' is not defined yet!");
             }
         }
-        auto id = lx.identifierStr;
-        lx.consume(tok_identifier);
+        // auto id = lx.identifierStr;
+        // lx.consume(tok_identifier);
         // TODO: support to parse the case:
         //       var a, b, c
         //       var a = 1, b = 2
@@ -457,8 +457,19 @@ class parser{
             case kind_access:
                 scanAccessAST(ptr, ctx->module);
                 break;
+            case kind_varDecl:
+                scanVarDeclAST(ptr);
             default:
                 break;
+        }
+    }
+
+    void scanVarDeclAST(std::unique_ptr<astBase>& ptr){
+        auto ast = dynamic_cast<varDeclAST*>(ptr.get());
+        for(auto & it : ast->variables){
+            auto var = dynamic_cast<varAST*>(it.get());
+            if(ctx->hasSymbol(var->id)) parseError(ast, "The id: "+var->id+" is redefined!");
+            ctx->addSymbolInfoToCurrentScope(var->id,{"var",var->loc, ast->typeStr});
         }
     }
     

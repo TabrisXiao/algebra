@@ -137,16 +137,17 @@ class varDeclAST : public astBase {
     , typeStr(tid){}
     std::string typeStr;
     void addVariable(location loc, std::string id){
-        contents.push_back(std::make_unique<varAST>(loc, id, 0));
+        variables.push_back(std::make_unique<varAST>(loc, id, 0));
     }
     virtual void emitIR(lgf::streamer & out){
         out<<typeStr<<" ";
-        for(auto & each : contents){
-            out<<each;
-            if(&each != &contents.back()) out<<", ";
+        for(auto & each : variables){
+            auto var = dynamic_cast<varAST*>(each.get());
+            out<<var->id;
+            if(&each != &variables.back()) out<<", ";
         }
     }
-    std::vector<std::unique_ptr<astBase>> contents;
+    std::vector<std::unique_ptr<astBase>> variables;
 };
 
 class funcDeclAST : public astBase {
