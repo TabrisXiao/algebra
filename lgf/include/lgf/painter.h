@@ -116,12 +116,10 @@ class painter {
         }
         
         auto & nodes = op1->getParentGraph()->getNodeList();
-        //std::replace(nodes.begin(), nodes.end(), op1, op2);
-        for(auto & node : nodes) {
-            if(node == op1) {
-                node = op2;
-            }
-        }
+        // find the op1 in nodes and assign it with the op2
+        auto iter = std::find(nodes.begin(), nodes.end(), op1);
+        *iter = op2;
+        
         op2->setParentGraph(op1->getParentGraph());
         op1->erase();
         return op2;
@@ -134,12 +132,10 @@ class painter {
             op1->outputValue(i)->swap(op2->outputValue(i));
         }
         auto & nodes = op1->getParentGraph()->getNodeList();
-        //std::replace(nodes.begin(), nodes.end(), op1, op2);
-        for(auto & node : nodes) {
-            if(node == op1) {
-                node = op2;
-            }
-        }
+        // find the op1 in nodes and assign it with the op2
+        auto iter = std::find(nodes.begin(), nodes.end(), op1);
+        *iter = op2;
+
         op2->setParentGraph(op1->getParentGraph());
         op1->erase();
         return op2;

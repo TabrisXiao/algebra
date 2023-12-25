@@ -69,10 +69,15 @@ class ChainRuleRewriter: public rewriter<differentiateOp>{
         // this apply the differentiation chain rule to all
         // differentiateOp in the graph
         auto result = resultCode::pass();
-        auto inputop = op->inputValue(0)->getDefiningOp();
+        value* funcValue = op->input();
+        operation* funcOp = funcValue->getDefiningOp();
+        if(auto assignop = dynamic_cast<assignOp*>(funcOp)){
+            funcValue = assignop->rhs();
+            funcOp = funcValue->getDefiningOp();
+        }
         auto target = op->target();
-        if( op->input() != op->target() ){
-            auto func = op->input()->getDefiningOp<mappingOp>();
+        if( funcValue != op->target() ){
+            auto func = funcValue->getDefiningOp<mappingOp>();
             if(func->getArgNumber()>1){
                 // if the input is a mappingOp with more than one argument
                 // then we need to apply the chain rule to each argument

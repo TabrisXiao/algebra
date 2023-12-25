@@ -246,6 +246,9 @@ class assignOp : public operation{
         p<<representOutputs()<<" = "<<getSID() <<" : "<<inputValue(0)->represent()<< " from "<<inputValue(1)->represent();
         return p.dump();
     }
+    virtual void inferType(){
+        output()->setType(rhs()->getType());
+    }
 };
 
 class returnOp : public operation {

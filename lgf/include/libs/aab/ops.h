@@ -14,7 +14,7 @@ class mappingOp: public lgf::operation{
     public:
     mappingOp(std::string mapName) : operation(mapName){}
     template <typename... ARGS>
-    mappingOp(std::string mapName) : operation(mapName){
+    mappingOp(std::string mapName, type_t tp, ARGS... args) : operation(mapName){
         createValue(tp, "");
         addArguments(args...);
     }
@@ -241,6 +241,9 @@ class productOp : public mappingOp, public normalizer
         p<<representOutputs()<<" = "<<getSID() <<" : "<<representInputs();
         return p.dump();
     }
+    virtual void inferType() override {
+        output()->setType(input(0)->getType());
+    }
 
     virtual resultCode rewrite(painter p, operation* op);
 };
@@ -254,6 +257,7 @@ class inverseOp : public mappingOp, public normalizer
         auto op = new inverseOp();
         op->addArguments(input);
         op->createValue(input->getType(), "");
+        std::cout<<"-- inverseOp::build"<<input->represent()<<" : "<<op->output()->represent()<<std::endl;
         return op;
     }
     lgf::value* input(){ return inputValue(0); }
@@ -266,6 +270,9 @@ class inverseOp : public mappingOp, public normalizer
             return resultCode::success();
         }
         return resultCode::pass();
+    }
+    virtual void inferType() override {
+        output()->setType(input()->getType());
     }
 };
 

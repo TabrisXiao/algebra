@@ -358,7 +358,9 @@ public :
         redundantCheck();
         return 0; 
     }
-
+    
+    // infer the type of the output value from the input values.
+    virtual void inferType(){}
     
     graph * expandToGraph();
 

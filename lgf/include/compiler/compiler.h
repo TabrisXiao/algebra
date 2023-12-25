@@ -33,6 +33,7 @@ class compiler {
         translate(ast, sm);
 
         compileGraph();
+        std::cout<<"finish compiling\n";
     }
     void translate(std::unique_ptr<programAST>& ast, lgf::streamer& sm){
         LGTranslator builder(&ctx, &g);
@@ -43,6 +44,7 @@ class compiler {
     }
     void compileGraph(){
         passManager pm(&ctx, &g);
+        pm.enablePrintBeforePass();
         pm.enablePrintAfterPass();
         pm.addNormalizationPass();
 

@@ -41,6 +41,7 @@ class normalizationPass : public passBase {
         // applyRewriterOnce(p, getGraph());
         // return applyRewriterOnce(p, getGraph());
         removeIdenticalOps(getGraph());
+        inferTypes(getGraph());
         return applyRewriterGreedy(p, getGraph());
     }
 
@@ -54,6 +55,15 @@ class normalizationPass : public passBase {
             }
         }
         return nullptr;
+    }
+
+    void inferTypes(graph* g){
+        for(auto op : g->getNodeList()){
+            op->inferType();
+            if(auto subg = dynamic_cast<graph*>(op)){
+                inferTypes(subg);
+            }
+        }
     }
 
     bool removeIdenticalOps(graph* g){
@@ -70,7 +80,6 @@ class normalizationPass : public passBase {
                 removeIdenticalOps(subg);
                 continue;
             }
-            std::cout<<"@: "<<op->represent()<<std::endl;
             queue.push(op);
             // if( !checkIfIdenticalExist(op, queue) ){
             //     queue.push(op);

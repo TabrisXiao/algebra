@@ -61,6 +61,7 @@ resultCode productOp::rewrite(painter p, operation *op){
     // If the input is commutable, search for the inverse for the reset of other inputs
         
     iter = op->getInputs().begin();
+    std::cout<<"op: "<<op->getSID()<<std::endl;
     while(iter!=op->getInputs().end()-1){
         auto axiom = (*iter)->getType().getImplAs<algebraAxiom>();
         if(!axiom ) return result;
