@@ -61,29 +61,46 @@ resultCode productOp::rewrite(painter p, operation *op){
     // If the input is commutable, search for the inverse for the reset of other inputs
         
     iter = op->getInputs().begin();
-    std::cout<<"op: "<<op->getSID()<<std::endl;
-    while(iter!=op->getInputs().end()-1){
-        auto axiom = (*iter)->getType().getImplAs<algebraAxiom>();
-        if(!axiom ) return result;
-        if( axiom->is(algebraAxiom::multiply_commutable)){
-            auto iter2 = iter+1;
-            while(iter2!=op->getInputs().end()){
-                if(checkMutualInverse(*iter, *iter2)){
-                    //if iter and iter2 are inverse of each other, remove them
-                    op->getInputs().erase(iter2);
-                    op->getInputs().erase(iter);
-                    result.add(resultCode::success());
-                    break;
-                }else iter2++;
-            }
-        }else {
-            if(checkMutualInverse(*iter, *(iter+1))){
-                iter = op->getInputs().erase(iter, iter+2);
-                result.add(resultCode::success());
-            }
+
+    auto axiom = output()->getType().getImplAs<algebraAxiom>();
+    if(!axiom ) return result;
+    if(axiom->is(algebraAxiom::multiply_commutable)){
+    for(auto iter = op->getInputs().begin(); iter!= op->getInputs().end(); iter++){
+        auto found = std::find_if(op->getInputs().begin(),op->getInputs().end(), [iter,this](value* val){
+            if(*iter == nullptr || val == nullptr) return false;
+            return this->checkMutualInverse(*iter, val);
+        });
+        if (found != op->getInputs().end() && found != iter) {
+            // Mark the inverse pair for removal
+            *iter = nullptr;
+            *found = nullptr;
         }
-        iter++;
     }
+    }
+
+    op->getInputs().erase(std::remove(op->getInputs().begin(), op->getInputs().end(),nullptr), op->getInputs().end());
+    // while(iter!=op->getInputs().end()-1){
+    //     auto axiom = (*iter)->getType().getImplAs<algebraAxiom>();
+    //     if(!axiom ) return result;
+    //     if( axiom->is(algebraAxiom::multiply_commutable)){
+    //         auto iter2 = iter+1;
+    //         while(iter2!=op->getInputs().end()){
+    //             if(checkMutualInverse(*iter, *iter2)){
+    //                 //if iter and iter2 are inverse of each other, remove them
+    //                 op->getInputs().erase(iter2);
+    //                 iter = op->getInputs().erase(iter);
+    //                 result.add(resultCode::success());
+    //                 break;
+    //             }else iter2++;
+    //         }
+    //     }else {
+    //         if(checkMutualInverse(*iter, *(iter+1))){
+    //             iter = op->getInputs().erase(iter, iter+2);
+    //             result.add(resultCode::success());
+    //         }
+    //     }
+    //     iter++;
+    // }
     return result;
 }
 

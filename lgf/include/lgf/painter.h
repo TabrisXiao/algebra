@@ -27,11 +27,15 @@ class painter {
     ~painter(){}
     template<typename obj>
     obj* sketch(){
-        return obj::build(ctx);
+        auto op = obj::build(ctx);
+        op->inferType();
+        return op;
     }
     template<typename obj, typename...ARGS>
     obj* sketch(ARGS ...args){
-        return obj::build(ctx, args...);
+        auto op = obj::build(ctx, args...);
+        op->inferType();
+        return op;
     }
     template<typename obj, typename...ARGS>
     obj* paint(ARGS ...args){

@@ -16,16 +16,17 @@ class LGFModule;
 template<typename storageType>
 class typeMarker : private byteCode<storageType> {
     public:
-    typeMarker(size_t size): byteCode(), size_max(size) {}
-    bool is(size_t code) { 
+    typeMarker(uint8_t size): byteCode(), size_max(size) {}
+    bool is(uint8_t code) { 
         THROW_WHEN(code > size_max, "typeMarker: code out of range");
-        return (1<<code) & value != 0 ; }
-    void mark(size_t code ) { 
+        return ((1<<code) & value) != 0 ; }
+    void mark(uint8_t code ) { 
         THROW_WHEN(code > size_max, "typeMarker: code out of range");
         value |= 1<<code; 
     }
     void combine(storageType& val) { value |= val; }
-    size_t size_max;
+    uint8_t size_max=64;
+    storageType value=0;
 };
 
 class typeImpl{

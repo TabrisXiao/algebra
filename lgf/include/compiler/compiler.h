@@ -49,6 +49,7 @@ class compiler {
         pm.addNormalizationPass();
 
         default_pipeline(pm);
+        pm.addNormalizationPass();
         pm.run();
     }
     void default_pipeline(passManager& pm){

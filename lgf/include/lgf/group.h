@@ -41,8 +41,9 @@ class normalizationPass : public passBase {
         // applyRewriterOnce(p, getGraph());
         // return applyRewriterOnce(p, getGraph());
         removeIdenticalOps(getGraph());
+        resultCode code = applyRewriterGreedy(p, getGraph());
         inferTypes(getGraph());
-        return applyRewriterGreedy(p, getGraph());
+        return code;
     }
 
     operation* checkIfIdenticalExist(operation* op, std::queue<operation*> &list){
