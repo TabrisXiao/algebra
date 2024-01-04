@@ -12,6 +12,8 @@
 #include "libs/moduleManager.h"
 #include "utils.h"
 
+#include "libs/AAB/passes.h"
+
 namespace lgf::compiler{
 
 class compiler {
@@ -31,6 +33,7 @@ class compiler {
         translate(ast, sm);
 
         compileGraph();
+        std::cout<<"finish compiling\n";
     }
     void translate(std::unique_ptr<programAST>& ast, lgf::streamer& sm){
         LGTranslator builder(&ctx, &g);
@@ -41,9 +44,16 @@ class compiler {
     }
     void compileGraph(){
         passManager pm(&ctx, &g);
+        pm.enablePrintBeforePass();
         pm.enablePrintAfterPass();
         pm.addNormalizationPass();
+
+        default_pipeline(pm);
+        pm.addNormalizationPass();
         pm.run();
+    }
+    void default_pipeline(passManager& pm){
+        pm.addPass(AAB::createCalculusPass());
     }
     void setRootPath(std::string p){
         io.internalModulePath = p;

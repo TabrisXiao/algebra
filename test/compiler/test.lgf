@@ -1,6 +1,6 @@
 import lgf.AAB
 import lgf.LinearAlg
 
-
-d = AAB.Sin(x);
-return d;
+realNumber x, y;
+a = AAB.Sin(x)*AAB.Cos(x)*AAB.Inverse(AAB.Sin(x));
+return a;

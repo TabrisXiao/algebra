@@ -17,6 +17,22 @@ class variable : public lgf::type_t {
     }
 };
 
+class derivedTypeImpl : public lgf::typeImpl {
+  public:
+  derivedTypeImpl(std::string id_, type_t baseType_)
+  : lgf::typeImpl(id_)
+  , baseType(baseType_){}
+
+  virtual std::string represent(){
+    return id+"<"+baseType.represent()+">";
+  }
+
+  lgf::type_t getBaseType(){
+    return baseType;
+  }
+  type_t baseType;
+};
+
 class reference_t : public lgf::type_t {
   public:
   reference_t() = default;

@@ -153,11 +153,12 @@ class LGTranslator {
         astctx->findSymbolInfoInCurrentModule(ast->funcID)->handle = funcOp->getCallee();
         astctx->createSubmoduleAndEnter(ast->funcID);
         for(auto i=0; i< ast->args.size(); i++){
-            auto arg = dynamic_cast<varDeclAST*>(ast->args[i].get());
+            auto arg = dynamic_cast<argDeclAST*>(ast->args[i].get());
             auto argid = arg->id;
             auto type = parseType(arg->typeStr);
             funcOp->registerArg(type, "arg");
-            astctx->addSymbolInfoToCurrentScope(argid, {"arg", arg->loc, arg->typeStr, funcOp->argument(i)});
+            // allow the argument is empty, which means the argument is not used in definition.
+            if(!argid.empty()) astctx->addSymbolInfoToCurrentScope(argid, {"arg", arg->loc, arg->typeStr, false, funcOp->argument(i)});
         }
         if(!ast->returnTypeStr.empty())
             funcOp->returnType = ctx->parseTypeStr(ast->returnTypeStr);
@@ -209,10 +210,12 @@ class LGTranslator {
     }
     void declareVariables(symbolTable<idinfo>& idtbl){
         for(auto& it : idtbl.table){
+            auto id = it.first;
             auto & entry = it.second;
             if(entry.category == "var" && !entry.handle ){
                 auto type = parseType(entry.type);
                 auto op = pnt.paint<declOp>(type);
+                op->output()->setSID(id);
                 it.second.handle=op->output();
             }
         }
@@ -250,9 +253,11 @@ class LGTranslator {
         }else if(bop == "="){
             if(auto ptr = dynamic_cast<varAST*>(ast->lhs.get())){
                 // auto ret = pnt.paint<updateOp>(ctx, lhs, rhs)->output();
-                astctx->findSymbolInfoInCurrentModule(ptr->id)->handle=rhs;
+                auto decl = pnt.paint<assignOp>(lhs, rhs);
+                decl->output()->setSID(ptr->id);
+                astctx->findSymbolInfoInCurrentModule(ptr->id)->handle=decl->output();
                 // return ret;
-                return rhs;
+                return decl->output();
             }else {
                 translateError("lhs of assignment has to be a variable.");
             }

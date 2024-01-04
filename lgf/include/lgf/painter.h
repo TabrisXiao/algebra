@@ -27,11 +27,15 @@ class painter {
     ~painter(){}
     template<typename obj>
     obj* sketch(){
-        return obj::build(ctx);
+        auto op = obj::build(ctx);
+        op->inferType();
+        return op;
     }
     template<typename obj, typename...ARGS>
     obj* sketch(ARGS ...args){
-        return obj::build(ctx, args...);
+        auto op = obj::build(ctx, args...);
+        op->inferType();
+        return op;
     }
     template<typename obj, typename...ARGS>
     obj* paint(ARGS ...args){
@@ -57,6 +61,26 @@ class painter {
         lastOp = op;
         return op;
     }
+    template<typename obj, typename...ARGS>
+    obj* paintNoAppend(ARGS ...args){
+        //CHECK_CONDITION(point.g!=nullptr, "No graph associated to the painter!");
+        auto op = sketch<obj>(args...);
+        //add to graph
+        op->setParentGraph(point.g);
+        point.iter = point.g->getNodeList().insert(point.iter, op)+1;
+        lastOp = op;
+        return op;
+    }
+    template<typename obj>
+    obj* paintNoAppend(){
+        //CHECK_CONDITION(current_graph!=nullptr, "No graph associated to the painter!");
+        auto op = sketch<obj>();
+        //add to graph
+        op->setParentGraph(point.g);
+        point.iter = point.g->getNodeList().insert(point.iter, op)+1;
+        lastOp = op;
+        return op;
+    }
     void setPaintPointBefore(operation* op){
         point.g = op->getParentGraph();
         auto & vec = point.g->getNodeList();
@@ -67,6 +91,8 @@ class painter {
         point.g = op->getParentGraph();
         auto & vec = point.g->getNodeList();
         point.iter=std::find(vec.begin(), vec.end(),op);
+        if(point.iter !=vec.end()) point.iter++;
+        else point.iter = point.iter-1;
     }
 
     void addOpToCurrentGraph(operation* op){
@@ -94,12 +120,10 @@ class painter {
         }
         
         auto & nodes = op1->getParentGraph()->getNodeList();
-        //std::replace(nodes.begin(), nodes.end(), op1, op2);
-        for(auto & node : nodes) {
-            if(node == op1) {
-                node = op2;
-            }
-        }
+        // find the op1 in nodes and assign it with the op2
+        auto iter = std::find(nodes.begin(), nodes.end(), op1);
+        *iter = op2;
+        
         op2->setParentGraph(op1->getParentGraph());
         op1->erase();
         return op2;
@@ -112,12 +136,10 @@ class painter {
             op1->outputValue(i)->swap(op2->outputValue(i));
         }
         auto & nodes = op1->getParentGraph()->getNodeList();
-        //std::replace(nodes.begin(), nodes.end(), op1, op2);
-        for(auto & node : nodes) {
-            if(node == op1) {
-                node = op2;
-            }
-        }
+        // find the op1 in nodes and assign it with the op2
+        auto iter = std::find(nodes.begin(), nodes.end(), op1);
+        *iter = op2;
+
         op2->setParentGraph(op1->getParentGraph());
         op1->erase();
         return op2;

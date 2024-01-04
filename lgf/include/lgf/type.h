@@ -8,6 +8,27 @@
 namespace lgf{
 class LGFContext;
 class LGFModule;
+#define THROW_WHEN(condition, msg) \
+    if (condition) { \
+        std::cerr<<"Runtime Error: " __FILE__ ":"<< std::to_string(__LINE__)<< ": "<<msg<<"\n"; \
+        std::exit(EXIT_FAILURE); \
+    }
+template<typename storageType>
+class typeMarker : private byteCode<storageType> {
+    public:
+    typeMarker(uint8_t size): byteCode(), size_max(size) {}
+    bool is(uint8_t code) { 
+        THROW_WHEN(code > size_max, "typeMarker: code out of range");
+        return ((1<<code) & value) != 0 ; }
+    void mark(uint8_t code ) { 
+        THROW_WHEN(code > size_max, "typeMarker: code out of range");
+        value |= 1<<code; 
+    }
+    void combine(storageType& val) { value |= val; }
+    uint8_t size_max=64;
+    storageType value=0;
+};
+
 class typeImpl{
     public:
     typeImpl(std::string sid) : id(sid){}
@@ -18,6 +39,7 @@ class typeImpl{
     // the module that this type belongs to
     LGFModule* module=nullptr;
     std::string id;
+    
 };
 
 class type_t {
@@ -38,6 +60,11 @@ class type_t {
         return this->represent() == other.represent();
     }
     typeImpl* getImpl(){ return impl; }
+
+    template<typename T>
+    T* getImplAs(){
+        return dynamic_cast<T*>(impl);
+    }
 
     typeImpl* impl = nullptr;
 };

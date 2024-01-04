@@ -34,20 +34,28 @@ class objInfo {
     public: 
     objInfo() = default;
     objInfo(const objInfo & info) {
-        traceID = info.getTraceID();
         sid=info.getSID();
     }
     objInfo(std::string id) {sid = id;}
-    void setTraceID(int id_){traceID = id_;}
-    int getTraceID() const {return traceID;}
 
-    sid_t getSID() const {return sid;}
+    sid_t getSID() const { 
+        if(sid.empty()) return tid;
+        else return sid;
+    }
     void setSID(sid_t id){sid=id;}
+    bool setSIDIfNull(sid_t id){
+        if(sid.empty()) {
+            tid=id;
+            return 1;
+        }
+        return 0;
+    }
 
     private:
-    int traceID = -1;
-    sid_t sid;
-    //type_t type_;
+    // sid (symbolic id) is a unique id assigned by users. 
+    // tid (trace id) is a unique id assigned when looping through the graph.
+    // when there's no sid assigned, the tid will be used.
+    sid_t sid, tid;
 };
 
 
@@ -59,15 +67,15 @@ obj& get_vec_elem_with_check(size_t n, std::vector<obj>& vec){
 }
 
 // this object encodes operation status into 8 bit data
-class opStatus : public byteCode<int8_t> {
+class opStatus : public byteCode<uint8_t> {
     public:
-    enum status : int8_t {
+    enum status : uint8_t {
         default =0,
         // this type op can't be removed automatically
         nontrivial, 
     };
     opStatus(): byteCode() {}
-    opStatus(int8_t v) : byteCode(v){}
+    opStatus(uint8_t v) : byteCode(v){}
     bool isTrivial(){ return !check(nontrivial); }
     void setNontrivial(){ add(opStatus(nontrivial)); }
 };
@@ -143,6 +151,8 @@ public:
         }
     }
 
+    int getOutputIndex();
+    
     private:
     operation *defop = nullptr;
     std::vector<operation*> users;
@@ -189,13 +199,13 @@ public :
 
     void replaceInput(int j, value* val){
         if(j>= getInputSize()) return;
-        //marking the ops involved is modified;
+        //marking the ops involved as modified;
         inputs[j]->removeOp(this);
         inputs[j] = val;
         val->addUser(this);
     }
     void replaceInputValueBy(std::vector<value*>::iterator iter, value* val){
-        //marking the ops involved is modified;
+        //marking the ops involved as modified;
         (*iter)->removeOp(this);
         (*iter) = val;
         val->addUser(this);
@@ -273,8 +283,8 @@ public :
     std::vector<std::unique_ptr<value>>& getOutputs() const {
         return const_cast<std::vector<std::unique_ptr<value>>&>(outputs);
     }
-    value* outputValue(int n=0){return outputs[n].get();}
-    value* inputValue(int n=0) {return inputs[n];}
+    value* outputValue(size_t n=0){return outputs[n].get();}
+    value* inputValue(size_t n=0) {return inputs[n];}
     size_t getInputSize() const;
     size_t getOutputSize() const;
     opStatus getStatus(){ return status; }
@@ -314,6 +324,23 @@ public :
     graph* getParentGraph(){return graph_;}
     void setParentGraph(graph* g){ graph_ = g; }
 
+    std::string getOpRepresent(){
+        // get representation of this operation after the first "="
+        auto code = represent();
+        auto pos = code.find("=");
+        if(pos!= std::string::npos) return code.substr(pos+1);
+        else return code;
+    }
+
+    bool isIdentical(operation* target){
+        if(this == target) return true;
+        if(target == nullptr) return false;
+        auto code1 = this->getOpRepresent();
+        auto code2 = target->getOpRepresent();
+        if(code1!=code2) return false;
+        return true;
+    }
+
     virtual void redundantCheck(){
         bool canRemove = status.isTrivial();
         if(canRemove){
@@ -331,7 +358,9 @@ public :
         redundantCheck();
         return 0; 
     }
-
+    
+    // infer the type of the output value from the input values.
+    virtual void inferType(){}
     
     graph * expandToGraph();
 

@@ -17,8 +17,6 @@ value::value(operation * op, type_t type, std::string sid_)
 std::string value::represent() {
     printer p;
     p<<"%"<<getSID();
-    std::string id = getTraceID() > -1 ? std::to_string(getTraceID()):"#";
-    p<<id;
     p<<" "<<getTR();
     //p<<" ("<<getUsers().size()<<")"; 
     //if(getUsers().size()>0) p<<" first user: "<<getUsers()[0];
@@ -92,6 +90,16 @@ std::unique_ptr<value>* value::getPtr(){
     return nullptr;
 }
 
+int value::getOutputIndex(){
+    // return the order number of this value from definingOp
+    if(defop == nullptr) return -1;
+    auto& outputs = defop->getOutputs();
+    for(auto i =0; i<outputs.size(); i++){
+        if(outputs[i].get() == this) return i;
+    }
+    return -1;
+}
+
 std::string dependencyValue::represent() {
     return "";//"dummy from: "+getDefiningOp()->getSID();
 }
@@ -145,6 +153,8 @@ value* operation::createValue(){
     outputs.push_back(std::move(val));
     return outputs.back().get();
 }
+
+
 value* operation::createValue(type_t& type, std::string sid){
     auto val = std::make_unique<value>(this, type, sid);
     outputs.push_back(std::move(val));
@@ -156,7 +166,7 @@ void operation::assignValueID(int& n){
     for(auto &val : outputs){
         if(dynamic_cast<dependencyValue*>(val.get()))
             continue;
-        val->setTraceID(n++);
+        if(val->setSIDIfNull(std::to_string(n))) n++;
     }
 }
 //---------------------------------------------------
@@ -206,6 +216,7 @@ void operation::replaceInputValue(int n, value* v){
 //---------------------------------------------------
 
 void operation::replaceBy(operation* new_op){
+    if(this == new_op) return;
     auto output_size = getOutputSize();
     CHECK_VALUE(output_size, new_op->getOutputSize(), "New op must have the same number of outputs as the original op.");
     // assume that the inputs are settled down for the new op,
@@ -265,15 +276,6 @@ void graph::assignID(int n0 ){
             g->assignID(gn);
         }
     }
-    // walk([&](operation* op){
-    //     op->assignValueID(n);
-    //     if(auto g = dynamic_cast<graph*>(op)){
-    //         int gn = 0;
-    //         int entryn = 0;
-    //         g->getEntry().assignValueID(entryn);
-    //         g->assignID(gn);
-    //     }
-    // }, 1);
 }
 //---------------------------------------------------
 

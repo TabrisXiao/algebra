@@ -36,7 +36,7 @@ class declOp : public operation, public normalizer{
     value * output(){ return outputValue(1); }
     virtual std::string represent(){
         printer p;
-        p<<representOutputs()<<" : Declare";
+        p<<representOutputs()<<" = Declare "<<output()->getType().represent();
         return p.dump();
     }
     virtual resultCode rewrite(painter p, operation* op){
@@ -148,6 +148,7 @@ class funcDefineOp : public graph {
     value* getCallee(){ return outputValue(1); }
     value* argument(int n) { return getEntry().outputValue(n+1); }
     std::string id;
+    type_t getLReturnType(){ return returnType; }
     virtual std::string represent(){ 
         printer p;
         p<<representOutputs()<<" = func ";
@@ -206,6 +207,9 @@ class funcCallOp : public operation{
     value * getCallee(){ return inputValue(0); }
     value * arg(int n=0 ){ return inputValue(n+1); }
     value * returnValue() { return outputValue(1); }
+    type_t getReturnType(){
+        return returnValue()->getType();
+    }
     virtual std::string represent(){
         printer p;
         auto callee = getCallee()->getDefiningOp<funcDefineOp>();
@@ -222,6 +226,29 @@ class funcCallOp : public operation{
     }
     bool hasReturn = 0;
     value* funPtr = nullptr;
+};
+
+class assignOp : public operation{
+    public:
+    assignOp() : operation("assign") {}
+    static assignOp * build(LGFContext *ctx, value* lhs, value* rhs){
+        auto op = new assignOp();
+        op->createValue(rhs->getType(), "");
+        op->registerInput(lhs, rhs);
+        return op;
+    }
+    value * lhs() { return inputValue(0); }
+    value * rhs() { return inputValue(1); }
+    // note the outputValue(0) is the dependecyValue;
+    value * output(){ return outputValue(1); }
+    virtual std::string represent(){
+        printer p;
+        p<<representOutputs()<<" = "<<getSID() <<" : "<<inputValue(0)->represent()<< " from "<<inputValue(1)->represent();
+        return p.dump();
+    }
+    virtual void inferType(){
+        output()->setType(rhs()->getType());
+    }
 };
 
 class returnOp : public operation {

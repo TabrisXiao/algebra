@@ -158,11 +158,13 @@ class parser{
     void parseArgSignatures(std::vector<std::unique_ptr<astBase>>& vec){
         while(lx.getCurToken() == tok_identifier){
             auto type = parseTypeName();
-            auto id = lx.identifierStr;
+            std::string id = ""; 
+            if(lx.getCurToken() == tok_identifier) {
+                id = lx.parseIdentifier();
+            }
             auto loc = lx.getLoc();
-            auto ptr = std::make_unique<varDeclAST>(loc, type, id);
+            auto ptr = std::make_unique<argDeclAST>(loc, type, id);
             vec.push_back(std::move(ptr));
-            lx.consume(tok_identifier);
             if(lx.getCurToken() == token(',')) lx.consume(token(','));
         }
         return;
@@ -336,6 +338,9 @@ class parser{
         //     //}
         //     return parseVarDecl(loc, id);
         // }
+        if(lx.getCurToken() == tok_identifier) {
+            return parseVarDecl(loc, id);
+        }
         auto lhs = parseValAST(loc, id);
         if(lx.getCurToken() == token(';')){
             lx.getNextToken();
@@ -347,19 +352,25 @@ class parser{
     }
 
     std::unique_ptr<astBase> parseVarDecl(location loc, std::string tid){
-        parseError("parseVarDecl Not implement yet!");
-        // if(auto ptr = ctx->findSymbolInfoInCurrentModule(tid)){
-        //     if(ptr->category!= "type" || ptr->category!= "class"){
-        //         parseError("The type \'"+tid+"\' is not defined yet!");
-        //     }
-        // }
-        auto id = lx.identifierStr;
-        lx.consume(tok_identifier);
+        if(auto ptr = ctx->findSymbolInfoInCurrentModule(tid)){
+            if(ptr->category!= "type" || ptr->category!= "class"){
+                parseError("The type \'"+tid+"\' is not defined yet!");
+            }
+        }
+        // auto id = lx.identifierStr;
+        // lx.consume(tok_identifier);
         // TODO: support to parse the case:
         //       var a, b, c
         //       var a = 1, b = 2
+        auto declAst = std::make_unique<varDeclAST>(loc, tid);
+        while(lx.getCurToken()!=token(';')){
+            auto varloc = lx.getLoc();
+            auto varid = lx.parseIdentifier();
+            declAst->addVariable(varloc, varid);
+            if(lx.getCurToken()==token(',')) lx.consume(token(','));
+        }
         lx.consume(token(';'));
-        return std::make_unique<varDeclAST>(loc, tid, id);
+        return std::move(declAst);
     }
     void checkIfVarIDExists(std::string id){
         // if(auto info = ctx->findSymbolInfoInCurrentModule(id)){
@@ -446,8 +457,19 @@ class parser{
             case kind_access:
                 scanAccessAST(ptr, ctx->module);
                 break;
+            case kind_varDecl:
+                scanVarDeclAST(ptr);
             default:
                 break;
+        }
+    }
+
+    void scanVarDeclAST(std::unique_ptr<astBase>& ptr){
+        auto ast = dynamic_cast<varDeclAST*>(ptr.get());
+        for(auto & it : ast->variables){
+            auto var = dynamic_cast<varAST*>(it.get());
+            if(ctx->hasSymbol(var->id)) parseError(ast, "The id: "+var->id+" is redefined!");
+            ctx->addSymbolInfoToCurrentScope(var->id,{"var",var->loc, ast->typeStr});
         }
     }
     

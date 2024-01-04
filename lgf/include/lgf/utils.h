@@ -47,7 +47,7 @@ class byteCode {
   byteCode(byteType& val) { value = val; }
   byteCode(byteCode& code ){ value = code.value;}
   
-  byteCode shift(byteType& val) { value |= 1<<val; return *this; }
+  byteCode shift(size_t val) { value |= 1<<val; return *this; }
   byteCode add(byteCode& val) { value |= val.value; return *this; }
   bool check(byteType val){ 
     return (value & val) == val;

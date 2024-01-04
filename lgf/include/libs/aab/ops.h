@@ -3,19 +3,82 @@
 #define MATH_AAB_OPS_H
 #include "lgf/operation.h"
 #include "libs/builtin/types.h"
+#include "libs/AAB/types.h"
 #include "lgf/group.h"
 #include "pattern.h"
 
 namespace lgf::AAB{
 
+// ---------- mappingOp ----------
+class mappingOp: public lgf::operation{
+    public:
+    mappingOp(std::string mapName) : operation(mapName){}
+    template <typename... ARGS>
+    mappingOp(std::string mapName, type_t tp, ARGS... args) : operation(mapName){
+        createValue(tp, "");
+        addArguments(args...);
+    }
+    template <typename... ARGS>
+    void addArguments(ARGS ...args){
+        auto values = {args...};
+        for(auto & val : values){
+            addArgument(val);
+        }
+    }
+    void addArguments(std::vector<value*>& values){
+        for(auto & val : values){
+            addArgument(val);
+        }
+    }
+    void addArgument(value* input){
+        registerInput(input);
+        narg++;
+    }
+    std::vector<value*> getArugments(){
+        std::vector<value*> ret(narg);
+        for(size_t i=0; i<narg; i++){
+            ret[i] = argument(i);
+        }
+        return ret;
+    }
+    // template <typename... ARGS>
+    // static mappingOp* build(lgf::LGFContext* ctx, std::string mapName, type_t tp, ARGS ...args){
+    //     auto op = new mappingOp(mapName, args...);
+    //     return op;
+    // }
+    size_t narg=0;
+    size_t getArgNumber(){ return narg; }
+    lgf::value* argument(size_t n){ return inputValue(n); }
+    lgf::value* output(){ return outputValue(1); }
+};
+
+// ---------- abstractMappingOp ----------
+class abstractMappingOp : public mappingOp{
+    public:
+    abstractMappingOp(): mappingOp("AAB::AbstractMapping"){}
+    template <typename... ARGS>
+    abstractMappingOp(ARGS ...args): mappingOp("AAB::AbstractMapping", args...){}
+    template <typename... ARGS>
+    static abstractMappingOp* build(lgf::LGFContext* ctx, type_t tp, ARGS ...args){
+        auto op = new abstractMappingOp(args...);
+        op->createValue(tp, "");
+        return op;
+    }
+    static abstractMappingOp* build(lgf::LGFContext* ctx, type_t tp){
+        auto op = new abstractMappingOp();
+        op->createValue(tp, "");
+        return op;
+    }
+};
+
 // ---------- addOp ----------
-class addOp : public lgf::operation, public normalizer
+class addOp : public mappingOp, public normalizer
 {
     public:
-    addOp() : operation("AAB::add") {}
+    addOp() : mappingOp("AAB::add") {}
     static addOp* build(lgf::LGFContext* ctx, lgf::value* lhs, lgf::value* rhs){
         auto op = new addOp();
-        op->registerInput(lhs, rhs);
+        op->addArguments(lhs, rhs);
         op->createValue(ctx->getType<lgf::variable>(), "");
         return op;
     }
@@ -31,14 +94,14 @@ class addOp : public lgf::operation, public normalizer
 };
 
 // ---------- negativeOp ----------
-class negativeOp : public lgf::operation, public normalizer
+class negativeOp : public mappingOp, public normalizer
 {
     public:
     public:
-    negativeOp() : operation("AAB::negative") {}
+    negativeOp() : mappingOp("AAB::negative") {}
     static negativeOp* build(lgf::LGFContext* ctx, lgf::value* input){
         auto op = new negativeOp();
-        op->registerInput(input);
+        op->addArguments(input);
         op->createValue(input->getType(), "");
         return op;
     }
@@ -60,12 +123,12 @@ class negativeOp : public lgf::operation, public normalizer
 };
 
 // ---------- sumOp ----------
-class sumOp : public lgf::operation, public normalizer {
+class sumOp : public mappingOp, public normalizer {
     public:
-    sumOp() : operation("AAB::sumOp") {}
+    sumOp() : mappingOp("AAB::sum") {}
     static sumOp* build(lgf::LGFContext* ctx, std::vector<value*>& vec){
         auto op = new sumOp();
-        op->registerInputs(vec);
+        op->addArguments(vec);
         op->createValue(vec[0]->getType(), "");
         return op;
     }
@@ -77,7 +140,7 @@ class sumOp : public lgf::operation, public normalizer {
     template<typename ...ARGS>
     static sumOp* build(lgf::LGFContext* ctx, ARGS ... args ){
         auto op = new sumOp();
-        op->registerInput(args...);
+        op->addArguments(args...);
         op->createValue(op->inputValue(0)->getType(), "");
         return op;
     }
@@ -94,13 +157,13 @@ class sumOp : public lgf::operation, public normalizer {
 
 
 // ---------- minusOp ----------
-class minusOp : public lgf::operation, public normalizer
+class minusOp : public mappingOp, public normalizer
 {
     public:
-    minusOp() : operation("AAB::minus") {}
+    minusOp() : mappingOp("AAB::minus") {}
     static minusOp* build(lgf::LGFContext* ctx, lgf::value* lhs, lgf::value* rhs){
         auto op = new minusOp();
-        op->registerInput(lhs, rhs);
+        op->addArguments(lhs, rhs);
         op->createValue(ctx->getType<lgf::variable>(), "");
         return op;
     }
@@ -122,13 +185,13 @@ class minusOp : public lgf::operation, public normalizer
 };
 
 // ---------- multiplyOp ----------
-class multiplyOp : public lgf::operation, public normalizer
+class multiplyOp : public mappingOp, public normalizer
 {
     public:
-    multiplyOp() : operation("AAB::multiply") {}
+    multiplyOp() : mappingOp("AAB::multiply") {}
     static multiplyOp* build(lgf::LGFContext* ctx, lgf::value* lhs, lgf::value* rhs){
         auto op = new multiplyOp();
-        op->registerInput(lhs, rhs);
+        op->addArguments(lhs, rhs);
         op->createValue(ctx->getType<lgf::variable>(), "");
         return op;
     }
@@ -147,13 +210,13 @@ class multiplyOp : public lgf::operation, public normalizer
 };
 
 // ---------- productOp ----------
-class productOp : public lgf::operation, public normalizer
+class productOp : public mappingOp, public normalizer
 {
     public:
-    productOp() : operation("AAB::productOp") {}
+    productOp() : mappingOp("AAB::product") {}
     static productOp* build(lgf::LGFContext* ctx, std::vector<value*>& vec){
         auto op = new productOp();
-        op->registerInputs(vec);
+        op->addArguments(vec);
         op->createValue(vec[0]->getType(), "");
         return op;
     }
@@ -165,7 +228,7 @@ class productOp : public lgf::operation, public normalizer
     template<typename ...ARGS>
     static productOp* build(lgf::LGFContext* ctx, ARGS ... args ){
         auto op = new productOp();
-        op->registerInput(args...);
+        op->addArguments(args...);
         op->createValue(op->inputValue(0)->getType(), "");
         return op;
     }
@@ -176,37 +239,84 @@ class productOp : public lgf::operation, public normalizer
         p<<representOutputs()<<" = "<<getSID() <<" : "<<representInputs();
         return p.dump();
     }
+    virtual void inferType() override {
+        output()->setType(input(0)->getType());
+    }
+
+    virtual resultCode rewrite(painter p, operation* op);
+};
+
+class commutableProductOp: public mappingOp, public normalizer{
+    public:
+    commutableProductOp() : mappingOp("AAB::commutableProduct") {}
+    static commutableProductOp* build(lgf::LGFContext* ctx, std::vector<value*>& vec){
+        auto op = new commutableProductOp();
+        op->addArguments(vec);
+        op->createValue(vec[0]->getType(), "");
+        return op;
+    }
+    static commutableProductOp* build(lgf::LGFContext* ctx, type_t type){
+        auto op = new commutableProductOp();
+        op->createValue(type, "");
+        return op;
+    }
+    template<typename ...ARGS>
+    static commutableProductOp* build(lgf::LGFContext* ctx, ARGS ... args ){
+        auto op = new commutableProductOp();
+        op->addArguments(args...);
+        op->createValue(op->inputValue(0)->getType(), "");
+        return op;
+    }
+    lgf::value* input(int i=0){ return inputValue(i); }
+    lgf::value* output(){ return outputValue(1); }
+    virtual std::string represent(){
+        printer p;
+        p<<representOutputs()<<" = "<<getSID() <<" : "<<representInputs();
+        return p.dump();
+    }
+    virtual void inferType() override {
+        output()->setType(input(0)->getType());
+    }
 
     virtual resultCode rewrite(painter p, operation* op);
 };
 
 // ---------- inverseOp ----------
-class inverseOp : public lgf::operation, public normalizer
+class inverseOp : public mappingOp, public normalizer
 {
     public:
-    inverseOp() : operation("AAB::inverse") {}
+    inverseOp() : mappingOp("AAB::inverse") {}
     static inverseOp* build(lgf::LGFContext* ctx, lgf::value* input){
         auto op = new inverseOp();
-        op->registerInput(input);
+        op->addArguments(input);
         op->createValue(input->getType(), "");
+        std::cout<<"-- inverseOp::build"<<input->represent()<<" : "<<op->output()->represent()<<std::endl;
         return op;
     }
     lgf::value* input(){ return inputValue(0); }
     lgf::value* output(){ return outputValue(1); }
     virtual resultCode rewrite(painter p, operation* op){
-        // needs to make it as inverse(x) = 1/x
+        // reduce the inverse(invers(x)) to x
+        if(auto inv = input()->getDefiningOp<inverseOp>()){
+            p.setPaintPointAfter(op);
+            op->replaceBy(inv->input()->getDefiningOp());
+            return resultCode::success();
+        }
         return resultCode::pass();
+    }
+    virtual void inferType() override {
+        output()->setType(input()->getType());
     }
 };
 
 // ---------- quotientOp ----------
-class quotientOp : public lgf::operation
+class quotientOp : public mappingOp
 {
     public:
-    quotientOp() : operation("AAB::quotient"){}
+    quotientOp() : mappingOp("AAB::quotient"){}
     static quotientOp* build(lgf::LGFContext *ctx, lgf::value* x, lgf::value* y){
         auto op = new quotientOp();
-        op->registerInput(x, y);
+        op->addArguments(x, y);
         op->createValue(x->getType(), "");
         return op;
     }
@@ -215,13 +325,13 @@ class quotientOp : public lgf::operation
     lgf::value* output(){ return outputValue(1); }
 };
 
-class powerOp : public lgf::operation
+class powerOp : public mappingOp
 {
     public:
-    powerOp() : operation("AAB::power"){}
+    powerOp() : mappingOp("AAB::power"){}
     static powerOp* build(lgf::LGFContext* ctx, lgf::value* x, lgf::value *y){
         auto op = new powerOp();
-        op->registerInput(x, y);
+        op->addArguments(x, y);
         op->createValue(x->getType(), "");
         return op;
     }
@@ -231,55 +341,30 @@ class powerOp : public lgf::operation
 
 };
 
-class mappingOp: public lgf::operation{
-    public:
-    mappingOp() : operation("AAB::mapping"){}
-    static mappingOp* build(lgf::LGFContext* ctx, type_t tp, lgf::value* input){
-        auto op = new mappingOp();
-        op->registerInput(input);
-        op->createValue(tp, "");
-        return op;
-    }
-    lgf::value* input(){ return inputValue(0); }
-    lgf::value* output(){ return outputValue(1); }
-};
 
-class function1DOp: public lgf::operation {
+class funcSineOp : public mappingOp{
     public:
-    function1DOp(std::string name) : operation(name){}
-    static function1DOp* build(lgf::LGFContext* ctx, lgf::value* x){
-        auto op = new function1DOp("AAB::function1DOp");
-        op->registerInput(x);
-        op->createValue(x->getType(), "");
-        return op;
-    }
-    lgf::value* x(){ return inputValue(0); }
-    lgf::value* output(){ return outputValue(1); }
-};
-
-class funcSineOp : public function1DOp{
-    public:
-    funcSineOp() :  function1DOp("AAB::sine"){}
+    funcSineOp() :  mappingOp("AAB::sine"){}
     static funcSineOp* build (lgf::LGFContext* ctx, lgf::value* x){
         auto op = new funcSineOp();
-        op->registerInput(x);
+        op->addArguments(x);
         op->createValue(x->getType(), "");
         return op;
     }
 };
 
-class funcCosOp : public function1DOp{
+class funcCosOp : public mappingOp{
     public:
-    funcCosOp(): function1DOp("AAB::cos"){}
+    funcCosOp(): mappingOp("AAB::cos"){}
     static funcCosOp* build (lgf::LGFContext* ctx, lgf::value* x){
         auto op = new funcCosOp();
-        op->registerInput(x);
+        op->addArguments(x);
         op->createValue(x->getType(), "");
         return op;
     }
 };
 
-class permuteOp : public operation {
+class permuteOp : public lgf::operation {
     public:
     permuteOp() : operation("AAB::permuteOp"){}
     static permuteOp* build(lgf::LGFContext* ctx, type_t type, value* input, value* from_, value* to_){
@@ -292,19 +377,6 @@ class permuteOp : public operation {
     value* from() {return inputValue(1);}
     value* to() { return inputValue(2); }
     value* output(){ return outputValue(1); }
-};
-
-class derivativeOp : public operation {
-    public:
-    derivativeOp() : operation("derivative"){}
-    static derivativeOp* build(lgf::LGFContext* ctx, lgf::value* func, value* var){
-        auto op = new derivativeOp();
-        op->registerInput(func, var);
-        op->createValue(func->getType(), "");
-        return op;
-    }
-    lgf::value* func(){ return inputValue(0); }
-    lgf::value* output(){ return outputValue(1); }
 };
 
 class distributeOp : public operation, public normalizer{
@@ -410,6 +482,34 @@ class associateOp : public operation, public normalizer {
     virtual resultCode rewrite(painter p, operation* op){
         return resultCode::pass();
     }
+};
+
+class partialDifferentiateOp : public mappingOp {
+    public:
+    partialDifferentiateOp() : mappingOp("AAB::PartialDifferentiate"){}
+    static partialDifferentiateOp* build(LGFContext* ctx, value* func, value* var){
+        auto op = new partialDifferentiateOp();
+        op->addArguments(func, var);
+        op->createValue(func->getType(), "");
+        return op;
+    }
+    value* func(){ return inputValue(0); }
+    value* var(){ return inputValue(1); }
+    value* output(){ return outputValue(1); }
+};
+
+class differentiateOp : public mappingOp {
+    public:
+    differentiateOp() : mappingOp("AAB::differentiate"){}
+    static differentiateOp* build(LGFContext* ctx, value* input, value* target){
+        auto op = new differentiateOp();
+        op->addArguments(input, target);
+        op->createValue(input->getType(), "");
+        return op;
+    }
+    value* input(){ return inputValue(0); }
+    value* target(){ return inputValue(1); }
+    value* output(){ return outputValue(1); }
 };
 
 // class factorOp : public operation, public normalizer{

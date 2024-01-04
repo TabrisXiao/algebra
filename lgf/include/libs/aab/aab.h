@@ -16,7 +16,7 @@ class AABModule : public LGFModule {
         ctx->registerType<realNumber>("realNumber");
         ctx->registerType<rationalNumber>("rationalNumber");
         ctx->registerType<irrationalNumber>("irrationalNumber");
-        ctx->registerType<infinitesimal>("infinitesimal");
+        //ctx->registerType<infinitesimal>("infinitesimal");
     }
 };
 }

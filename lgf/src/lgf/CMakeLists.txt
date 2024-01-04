@@ -7,6 +7,7 @@ set(
     operation.cpp
     pass.cpp
     libs/AAB/ops.cpp
+    libs/AAB/passes.cpp
 )
 
 create_cpp_library(
