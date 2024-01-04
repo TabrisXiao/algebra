@@ -1,6 +1,7 @@
 
 #include "libs/Builtin/ops.h"
 #include "libs/AAB/ops.h"
+#include "libs/AAB/utils.h"
 
 namespace lgf::AAB{
 
@@ -30,18 +31,6 @@ resultCode sumOp::rewrite(painter p, operation *op){
     return result;
 }
 
-bool productOp::checkInverse(value* lhs, value* rhs){
-    // check if lhs are inverse of rhs
-    if(auto inv = lhs->getDefiningOp<inverseOp>()){
-        if(inv->inputValue(0) == rhs) return true;
-    }
-    return false;
-}
-
-bool productOp::checkMutualInverse(value* lhs, value* rhs){
-    return checkInverse(lhs, rhs) || checkInverse(rhs, lhs);
-}
-
 resultCode productOp::rewrite(painter p, operation *op){
     // check all input values and merge all productOps into one
     resultCode result;
@@ -65,17 +54,17 @@ resultCode productOp::rewrite(painter p, operation *op){
     auto axiom = output()->getType().getImplAs<algebraAxiom>();
     if(!axiom ) return result;
     if(axiom->is(algebraAxiom::multiply_commutable)){
-    for(auto iter = op->getInputs().begin(); iter!= op->getInputs().end(); iter++){
-        auto found = std::find_if(op->getInputs().begin(),op->getInputs().end(), [iter,this](value* val){
-            if(*iter == nullptr || val == nullptr) return false;
-            return this->checkMutualInverse(*iter, val);
-        });
-        if (found != op->getInputs().end() && found != iter) {
-            // Mark the inverse pair for removal
-            *iter = nullptr;
-            *found = nullptr;
+        for(auto iter = op->getInputs().begin(); iter!= op->getInputs().end();  iter++){
+            auto found = std::find_if(op->getInputs().begin(),op->getInputs().end   (), [iter,this](value* val){
+                if(*iter == nullptr || val == nullptr) return false;
+                return checkMutualInverse(*iter, val);
+            });
+            if (found != op->getInputs().end() && found != iter) {
+                // Mark the inverse pair for removal
+                *iter = nullptr;
+                *found = nullptr;
+            }
         }
-    }
     }
 
     op->getInputs().erase(std::remove(op->getInputs().begin(), op->getInputs().end(),nullptr), op->getInputs().end());
@@ -101,6 +90,36 @@ resultCode productOp::rewrite(painter p, operation *op){
     //     }
     //     iter++;
     // }
+    return result;
+}
+
+resultCode commutableProductOp::rewrite(painter p, operation *op){
+    // check all input values and merge all productOps into one
+    resultCode result;
+    auto iter = op->getInputs().begin();
+    while(iter!=op->getInputs().end()){
+        auto input = *iter;
+        if(auto product = input->getDefiningOp<commutableProductOp>()){
+            iter = p.replaceInputByDefOpInputs(iter, op);
+            result.add(resultCode::success());
+        } else {
+            iter++;
+        }
+    }
+
+    iter = op->getInputs().begin();
+
+    for(auto iter = op->getInputs().begin(); iter!= op->getInputs().end();  iter++){
+        auto found = std::find_if(op->getInputs().begin(),op->getInputs().end   (), [iter,this](value* val){
+            if(*iter == nullptr || val == nullptr) return false;
+            return checkMutualInverse(*iter, val);
+        });
+        if (found != op->getInputs().end() && found != iter) {
+            // Mark the inverse pair for removal
+            *iter = nullptr;
+            *found = nullptr;
+        }
+    }
     return result;
 }
 

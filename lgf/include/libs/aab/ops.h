@@ -234,8 +234,41 @@ class productOp : public mappingOp, public normalizer
     }
     lgf::value* input(int i=0){ return inputValue(i); }
     lgf::value* output(){ return outputValue(1); }
-    bool checkInverse(value* lhs, value* rhs);
-    bool checkMutualInverse(value* lhs, value* rhs);
+    virtual std::string represent(){
+        printer p;
+        p<<representOutputs()<<" = "<<getSID() <<" : "<<representInputs();
+        return p.dump();
+    }
+    virtual void inferType() override {
+        output()->setType(input(0)->getType());
+    }
+
+    virtual resultCode rewrite(painter p, operation* op);
+};
+
+class commutableProductOp: public mappingOp, public normalizer{
+    public:
+    commutableProductOp() : mappingOp("AAB::commutableProduct") {}
+    static commutableProductOp* build(lgf::LGFContext* ctx, std::vector<value*>& vec){
+        auto op = new commutableProductOp();
+        op->addArguments(vec);
+        op->createValue(vec[0]->getType(), "");
+        return op;
+    }
+    static commutableProductOp* build(lgf::LGFContext* ctx, type_t type){
+        auto op = new commutableProductOp();
+        op->createValue(type, "");
+        return op;
+    }
+    template<typename ...ARGS>
+    static commutableProductOp* build(lgf::LGFContext* ctx, ARGS ... args ){
+        auto op = new commutableProductOp();
+        op->addArguments(args...);
+        op->createValue(op->inputValue(0)->getType(), "");
+        return op;
+    }
+    lgf::value* input(int i=0){ return inputValue(i); }
+    lgf::value* output(){ return outputValue(1); }
     virtual std::string represent(){
         printer p;
         p<<representOutputs()<<" = "<<getSID() <<" : "<<representInputs();

@@ -103,24 +103,6 @@ class infinitesimalImpl : public lgf::derivedTypeImpl, public fieldVariableImpl 
   fieldVariableImpl("infinitesimal") {}
 };
 
-// class infinitesimal : public lgf::variable {
-//   public:
-//   infinitesimal() = default;
-//   static std::unique_ptr<lgf::typeImpl> createImpl(type_t elemType){
-//     return std::move(std::make_unique<infinitesimalImpl>(elemType));
-//   }
-//   type_t getElemType(){ return dynamic_cast<infinitesimalImpl*>(impl)->getBaseType(); }
-
-//   static type_t parse(lgf::liteParser& p, lgf::LGFContext* ctx){
-//     p.parseLessThan();
-//     auto elemID = p.parseIdentifier();
-//     auto fc = ctx->getTypeTable().findParser(elemID);
-//     auto elemType = fc(p, ctx);
-//     p.parseGreaterThan();
-//     return ctx->getType<infinitesimal>(elemType);
-//   }
-// };
-
 class unitImpl : public lgf::derivedTypeImpl, public algebraAxiom { 
   public: 
   unitImpl(lgf::type_t elemType_)
