@@ -256,7 +256,6 @@ public :
     void dependOn(operation* op){
         this->registerInput(op->outputValue(0));
     }
-    value* createValue();
     value* createValue(type_t& type, std::string sid);
 
     // drop all inputs to this operation, and remove all connects

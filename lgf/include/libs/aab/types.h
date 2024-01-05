@@ -41,28 +41,6 @@ class fieldVariableImpl : public algebraVariableImpl {
     }
 };
 
-class integer: public lgf::variable {
-    public:
-    integer() {};
-    static std::unique_ptr<lgf::typeImpl> createImpl(){
-      return std::move(std::make_unique<lgf::fieldVariableImpl>("integer"));
-    }
-    static type_t parse(lgf::liteParser& paser, lgf::LGFContext* ctx){
-      return ctx->getType<integer>();
-    }
-};
-
-class natureNumber: public lgf::variable {
-    public:
-    natureNumber() = default;
-    static std::unique_ptr<lgf::typeImpl> createImpl(){
-      return std::move(std::make_unique<lgf::fieldVariableImpl>("natureNumber"));
-    }
-    static type_t parse(lgf::liteParser& paser, lgf::LGFContext* ctx){
-      return ctx->getType<natureNumber>();
-    }
-};
-
 class realNumber: public lgf::variable {
     public:
     realNumber() = default;
@@ -74,34 +52,56 @@ class realNumber: public lgf::variable {
     }
 };
 
-class rationalNumber: public lgf::variable {
-    public:
-    rationalNumber() = default;
-    static std::unique_ptr<lgf::typeImpl> createImpl(){
-      return std::move(std::make_unique<lgf::fieldVariableImpl>("rationalNumber"));
-    }
-    static type_t parse(lgf::liteParser& paser, lgf::LGFContext* ctx){
-      return ctx->getType<rationalNumber>();
-    }
-};
+// class integer: public lgf::variable {
+//     public:
+//     integer() {};
+//     static std::unique_ptr<lgf::typeImpl> createImpl(){
+//       return std::move(std::make_unique<lgf::fieldVariableImpl>("integer"));
+//     }
+//     static type_t parse(lgf::liteParser& paser, lgf::LGFContext* ctx){
+//       return ctx->getType<integer>();
+//     }
+// };
 
-class irrationalNumber: public lgf::variable {
-  public:
-  irrationalNumber() = default;
-  static std::unique_ptr<lgf::typeImpl> createImpl(){
-    return std::move(std::make_unique<lgf::fieldVariableImpl>("irrationalNumber"));
-  }
-  static type_t parse(lgf::liteParser& paser, lgf::LGFContext* ctx){
-    return ctx->getType<irrationalNumber>();
-  }
-};
+// class natureNumber: public lgf::variable {
+//     public:
+//     natureNumber() = default;
+//     static std::unique_ptr<lgf::typeImpl> createImpl(){
+//       return std::move(std::make_unique<lgf::fieldVariableImpl>("natureNumber"));
+//     }
+//     static type_t parse(lgf::liteParser& paser, lgf::LGFContext* ctx){
+//       return ctx->getType<natureNumber>();
+//     }
+// };
 
-class infinitesimalImpl : public lgf::derivedTypeImpl, public fieldVariableImpl { 
-  public: 
-  infinitesimalImpl(lgf::type_t elemType_)
-  : derivedTypeImpl("infinitesimal", elemType_), 
-  fieldVariableImpl("infinitesimal") {}
-};
+// class rationalNumber: public lgf::variable {
+//     public:
+//     rationalNumber() = default;
+//     static std::unique_ptr<lgf::typeImpl> createImpl(){
+//       return std::move(std::make_unique<lgf::fieldVariableImpl>("rationalNumber"));
+//     }
+//     static type_t parse(lgf::liteParser& paser, lgf::LGFContext* ctx){
+//       return ctx->getType<rationalNumber>();
+//     }
+// };
+
+// class irrationalNumber: public lgf::variable {
+//   public:
+//   irrationalNumber() = default;
+//   static std::unique_ptr<lgf::typeImpl> createImpl(){
+//     return std::move(std::make_unique<lgf::fieldVariableImpl>("irrationalNumber"));
+//   }
+//   static type_t parse(lgf::liteParser& paser, lgf::LGFContext* ctx){
+//     return ctx->getType<irrationalNumber>();
+//   }
+// };
+
+// class infinitesimalImpl : public lgf::derivedTypeImpl, public fieldVariableImpl { 
+//   public: 
+//   infinitesimalImpl(lgf::type_t elemType_)
+//   : derivedTypeImpl("infinitesimal", elemType_), 
+//   fieldVariableImpl("infinitesimal") {}
+// };
 
 class unitImpl : public lgf::derivedTypeImpl, public algebraAxiom { 
   public: 
