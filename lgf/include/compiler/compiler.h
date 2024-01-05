@@ -53,6 +53,7 @@ class compiler {
         pm.run();
     }
     void default_pipeline(passManager& pm){
+        pm.addPass(AAB::createAAProcess());
         pm.addPass(AAB::createCalculusPass());
     }
     void setRootPath(std::string p){

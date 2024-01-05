@@ -81,8 +81,10 @@ resultCode commutableProductOp::rewrite(painter p, operation *op){
             // Mark the inverse pair for removal
             *iter = nullptr;
             *found = nullptr;
+            result.add(resultCode::success());
         }
     }
+    op->getInputs().erase(std::remove(op->getInputs().begin(), op->getInputs().end(),nullptr), op->getInputs().end());
     return result;
 }
 

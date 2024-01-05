@@ -2,6 +2,7 @@
 #define LIB_AAB_PASSES_H
 #include "libs/Builtin/ops.h"
 #include "ops.h"
+#include "libs/AAB/types.h"
 #include "lgf/pass.h"
 
 namespace lgf::AAB{
@@ -62,6 +63,47 @@ std::unique_ptr<passBase> createInterfaceInitPass(moduleOp *m){
     return std::make_unique<InterfaceInitPass>(m);
 }
 
+class commutableProductRewriter: public rewriter<productOp>{
+    public:
+    commutableProductRewriter() = default;
+    virtual resultCode rewrite(painter p, productOp *op){
+        // this rewriter rewrites a commutableProductOp into a productOp
+        // with the same inputs but with the inputs sorted by their
+        // hash value
+        auto result = resultCode::pass();
+        bool isCommutative = true;
+        auto inputs = op->getInputs();
+        std::sort(inputs.begin(), inputs.end(), [](value* a, value* b){
+            return a < b;
+            //return a->getHashValue() < b->getHashValue();
+        });
+        for(auto it = inputs.begin(); it!= inputs.end(); it++){
+            if( auto axiom = (*it)->getType().getImplAs<algebraAxiom>() ){
+                if(!axiom->is(algebraAxiom::multiply_commutable)){
+                    isCommutative = false;
+                    break;
+                }
+            }
+        }
+        if(!isCommutative) return result;
+        auto newop = p.replaceOp<commutableProductOp>(op, inputs);
+        result.add(resultCode::success());
+        return result;
+    }
+};
+
+class AAProcess: public passBase{
+    public:
+    AAProcess()
+    : passBase("AAProcess") {}
+    virtual resultCode run() final{
+        painter p(getContext());
+        addRewriter<commutableProductRewriter>(); 
+        auto result = applyRewriterGreedy(p, getGraph());
+        return result;
+    }
+};
+
 class ChainRuleRewriter: public rewriter<differentiateOp>{
     public:
     ChainRuleRewriter() = default;
@@ -115,6 +157,10 @@ class CalculusPass : public passBase{
         return result;
     }
 };
+
+std::unique_ptr<passBase> createAAProcess(){
+    return std::make_unique<AAProcess>();
+}
 
 std::unique_ptr<passBase> createCalculusPass(){
     return std::make_unique<CalculusPass>();
