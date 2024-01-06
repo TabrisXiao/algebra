@@ -343,7 +343,7 @@ public :
     virtual void redundantCheck(){
         bool canRemove = status.isTrivial();
         if(canRemove){
-            for(auto & val: inputs ){
+            for(auto & val: outputs ){
                 if(val->getUserSize()!=0) {
                     canRemove = 0;
                     break;

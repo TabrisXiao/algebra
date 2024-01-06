@@ -79,6 +79,8 @@ resultCode commutableProductOp::rewrite(painter p, operation *op){
         });
         if (found != op->getInputs().end() && found != iter) {
             // Mark the inverse pair for removal
+            (*iter)->removeOp(op);
+            (*found)->removeOp(op);
             *iter = nullptr;
             *found = nullptr;
             result.add(resultCode::success());
