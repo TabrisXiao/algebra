@@ -510,6 +510,25 @@ class differentiateOp : public mappingOp {
     value* output(){ return outputValue(1); }
 };
 
+class exponentialOp : public mappingOp {
+    public:
+    exponentialOp() : mappingOp("AAB::exponential"){}
+    static exponentialOp* build(LGFContext* ctx, value* input, value* power){
+        auto op = new exponentialOp();
+        op->addArgument(input, power);
+        op->createValue(input->getType(), "");
+        return op;
+    }
+    value* input(){
+        return inputValue(0);
+    }
+    void inferType() override{
+        // using the input type as output type
+        output()->setType(input()->getType()); 
+    }
+};
+
+
 // class factorOp : public operation, public normalizer{
 //     public:
 //     factorOp() : operation("AAB::factor") {}
