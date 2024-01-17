@@ -13,6 +13,7 @@
 #include "utils.h"
 
 #include "libs/AAB/passes.h"
+#include "libs/transform/convertToSIO.h"
 
 namespace lgf::compiler{
 
@@ -49,12 +50,13 @@ class compiler {
         pm.addNormalizationPass();
 
         default_pipeline(pm);
-        pm.addNormalizationPass();
         pm.run();
     }
     void default_pipeline(passManager& pm){
         pm.addPass(AAB::createAAProcess());
         pm.addPass(AAB::createCalculusPass());
+        pm.addNormalizationPass();
+        pm.addPass(transform::createConvertToSIOPass());
     }
     void setRootPath(std::string p){
         io.internalModulePath = p;

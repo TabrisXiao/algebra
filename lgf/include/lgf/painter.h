@@ -81,6 +81,31 @@ class painter {
         lastOp = op;
         return op;
     }
+
+    template<typename origOp, typename targetOp>
+    targetOp* isomorphicRewrite(origOp* op){
+        auto newop = new targetOp();
+        newop->setParentGraph(point.g);
+        if(op->getInputSize() !=0 ) 
+            newop->registerInputs(op->getInputs());
+        else {
+            op->appendTo(dynamic_cast<operation*>(&(point.g->getEntry())));
+        }
+
+        if(op->getOutputSize() > 1){
+            auto value = op->outputValue(1);
+            newop->createValue(value->getType(), value->getSID());
+        }
+
+        auto & nodes = op->getParentGraph()->getNodeList();
+        auto iter = std::find(nodes.begin(), nodes.end(), op);
+        *iter = newop;
+
+        lastOp = newop;
+        op->replaceBy(newop);
+        return newop;
+    }
+
     void setPaintPointBefore(operation* op){
         point.g = op->getParentGraph();
         auto & vec = point.g->getNodeList();
