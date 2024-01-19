@@ -20,6 +20,24 @@ class representOp : public operation{
     }
 };
 
+class symbolOp: public representOp{
+    public:
+    symbolOp() : representOp("sio::symbol") {}
+    static symbolOp* build(lgf::LGFContext, type_t type, std::string sid){
+        symbolOp *op = new symbolOp();
+        op->addOutput(type, sid);
+        return op;
+    }
+    std::string getSymbol(){
+        return outputValue(1)->getSID();
+    }
+    virtual std::string represent() override{
+        printer p;
+        p<<representOutputs()<<" = "<<getSID();
+        return p.dump();
+    }
+};
+
 class sumOp : public representOp{
     public:
     sumOp() : representOp("sio::sum") {}
@@ -77,9 +95,10 @@ class funcOp : public representOp{
     }
     virtual std::string represent(){
         printer p;
-        p<<representOutputs()<<" = "<<" func "<<funcName<<"( "<<representInputs()<<" )";
+        p<<representOutputs()<<" = "<<" sio::func "<<funcName<<"( "<<representInputs()<<" )";
         return p.dump();
     }
+    std::string getFuncName(){ return funcName; }
     std::string funcName;
 };
 

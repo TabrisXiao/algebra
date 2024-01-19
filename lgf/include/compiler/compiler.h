@@ -14,6 +14,7 @@
 
 #include "libs/AAB/passes.h"
 #include "libs/transform/convertToSIO.h"
+#include "libs/SIO/exporter.h"
 
 namespace lgf::compiler{
 
@@ -34,7 +35,11 @@ class compiler {
         translate(ast, sm);
 
         compileGraph();
-        std::cout<<"finish compiling\n";
+
+        SIO::export2Txt exporter(&g);
+        exporter.run();
+        
+        std::cout<<"\n--- compilation done!\n";
     }
     void translate(std::unique_ptr<programAST>& ast, lgf::streamer& sm){
         LGTranslator builder(&ctx, &g);
