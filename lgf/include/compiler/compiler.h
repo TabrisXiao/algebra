@@ -13,6 +13,8 @@
 #include "utils.h"
 
 #include "libs/AAB/passes.h"
+#include "libs/transform/convertToSIO.h"
+#include "libs/SIO/exporter.h"
 
 namespace lgf::compiler{
 
@@ -33,7 +35,11 @@ class compiler {
         translate(ast, sm);
 
         compileGraph();
-        std::cout<<"finish compiling\n";
+
+        SIO::export2Txt exporter(&g);
+        exporter.run();
+        
+        std::cout<<"\n--- compilation done!\n";
     }
     void translate(std::unique_ptr<programAST>& ast, lgf::streamer& sm){
         LGTranslator builder(&ctx, &g);
@@ -49,11 +55,13 @@ class compiler {
         pm.addNormalizationPass();
 
         default_pipeline(pm);
-        pm.addNormalizationPass();
         pm.run();
     }
     void default_pipeline(passManager& pm){
+        pm.addPass(AAB::createAAProcess());
         pm.addPass(AAB::createCalculusPass());
+        pm.addNormalizationPass();
+        pm.addPass(transform::createConvertToSIOPass());
     }
     void setRootPath(std::string p){
         io.internalModulePath = p;

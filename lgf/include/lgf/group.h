@@ -43,6 +43,7 @@ class normalizationPass : public passBase {
         removeIdenticalOps(getGraph());
         resultCode code = applyRewriterGreedy(p, getGraph());
         inferTypes(getGraph());
+        //removeUnusedOps(getGraph());
         return code;
     }
 
@@ -63,6 +64,22 @@ class normalizationPass : public passBase {
             op->inferType();
             if(auto subg = dynamic_cast<graph*>(op)){
                 inferTypes(subg);
+            }
+        }
+    }
+
+    void removeUnusedOps(graph* g){
+        for(auto op : g->getNodeList()){
+            bool canRemove = op->getStatus().isTrivial();
+            for(auto & val : op->getOutputs()){
+                if(val->getUserSize() !=0 ){
+                    canRemove = false;
+                    break;
+                }
+            }
+            if(canRemove) op->erase();
+            else if(auto subg = dynamic_cast<graph*>(op)){
+                removeUnusedOps(subg);
             }
         }
     }

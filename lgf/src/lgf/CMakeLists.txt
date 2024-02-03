@@ -1,6 +1,6 @@
 file(GLOB_RECURSE headers
     "${PROJECT_SOURCE_DIR}/lgf/include/lgf/*.h"
-    "${PROJECT_SOURCE_DIR}/lgf/include/libs/LinearAlg/*.h"
+    #"${PROJECT_SOURCE_DIR}/lgf/include/libs/LinearAlg/*.h"
 )
 set(
     sources
@@ -8,6 +8,7 @@ set(
     pass.cpp
     libs/AAB/ops.cpp
     libs/AAB/passes.cpp
+    libs/SIO/exporter.cpp
 )
 
 create_cpp_library(

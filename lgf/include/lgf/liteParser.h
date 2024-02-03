@@ -79,6 +79,7 @@ class liteParser {
         consume(tok_identifier);
         return num;
     }
+    int64_t parseInteger(){ consume(tok_number); return int64_t(number); }
     void parseColon(){ consume(int(':')); }
     void parseLeftSqaureBracket() { consume(int('['));}
     void parseRightSqaureBracket() { consume(int(']'));}

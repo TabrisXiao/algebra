@@ -32,8 +32,13 @@ resultCode sumOp::rewrite(painter p, operation *op){
 }
 
 resultCode productOp::rewrite(painter p, operation *op){
-    // check all input values and merge all productOps into one
     resultCode result;
+    // check if op has only one input, if so, replace op by its input
+    if(op->getInputs().size()==1){
+        op->replaceBy(op->inputValue(0)->getDefiningOp());
+        return resultCode::success();
+    }
+    // check all input values and merge all productOps into one
     auto iter = op->getInputs().begin();
     while(iter!=op->getInputs().end()){
         auto input = *iter;
@@ -44,58 +49,17 @@ resultCode productOp::rewrite(painter p, operation *op){
             iter++;
         }
     }
-    // For each value, if they are non commutable, 
-    // check if adjacent inputs are the inverse of each other, if so, remove them.
-    // if no inputs left, replace the input by declaring a constant 1;
-    // If the input is commutable, search for the inverse for the reset of other inputs
-        
-    iter = op->getInputs().begin();
-
-    auto axiom = output()->getType().getImplAs<algebraAxiom>();
-    if(!axiom ) return result;
-    if(axiom->is(algebraAxiom::multiply_commutable)){
-        for(auto iter = op->getInputs().begin(); iter!= op->getInputs().end();  iter++){
-            auto found = std::find_if(op->getInputs().begin(),op->getInputs().end   (), [iter,this](value* val){
-                if(*iter == nullptr || val == nullptr) return false;
-                return checkMutualInverse(*iter, val);
-            });
-            if (found != op->getInputs().end() && found != iter) {
-                // Mark the inverse pair for removal
-                *iter = nullptr;
-                *found = nullptr;
-            }
-        }
-    }
-
-    op->getInputs().erase(std::remove(op->getInputs().begin(), op->getInputs().end(),nullptr), op->getInputs().end());
-    // while(iter!=op->getInputs().end()-1){
-    //     auto axiom = (*iter)->getType().getImplAs<algebraAxiom>();
-    //     if(!axiom ) return result;
-    //     if( axiom->is(algebraAxiom::multiply_commutable)){
-    //         auto iter2 = iter+1;
-    //         while(iter2!=op->getInputs().end()){
-    //             if(checkMutualInverse(*iter, *iter2)){
-    //                 //if iter and iter2 are inverse of each other, remove them
-    //                 op->getInputs().erase(iter2);
-    //                 iter = op->getInputs().erase(iter);
-    //                 result.add(resultCode::success());
-    //                 break;
-    //             }else iter2++;
-    //         }
-    //     }else {
-    //         if(checkMutualInverse(*iter, *(iter+1))){
-    //             iter = op->getInputs().erase(iter, iter+2);
-    //             result.add(resultCode::success());
-    //         }
-    //     }
-    //     iter++;
-    // }
     return result;
 }
 
 resultCode commutableProductOp::rewrite(painter p, operation *op){
-    // check all input values and merge all productOps into one
     resultCode result;
+    // check if op has only one input, if so, replace op by its input
+    if(op->getInputs().size()==1){
+        op->replaceBy(op->inputValue(0)->getDefiningOp());
+        return resultCode::success();
+    }
+    // check all input values and merge all productOps into one
     auto iter = op->getInputs().begin();
     while(iter!=op->getInputs().end()){
         auto input = *iter;
@@ -108,7 +72,6 @@ resultCode commutableProductOp::rewrite(painter p, operation *op){
     }
 
     iter = op->getInputs().begin();
-
     for(auto iter = op->getInputs().begin(); iter!= op->getInputs().end();  iter++){
         auto found = std::find_if(op->getInputs().begin(),op->getInputs().end   (), [iter,this](value* val){
             if(*iter == nullptr || val == nullptr) return false;
@@ -116,10 +79,14 @@ resultCode commutableProductOp::rewrite(painter p, operation *op){
         });
         if (found != op->getInputs().end() && found != iter) {
             // Mark the inverse pair for removal
+            (*iter)->removeOp(op);
+            (*found)->removeOp(op);
             *iter = nullptr;
             *found = nullptr;
+            result.add(resultCode::success());
         }
     }
+    op->getInputs().erase(std::remove(op->getInputs().begin(), op->getInputs().end(),nullptr), op->getInputs().end());
     return result;
 }
 

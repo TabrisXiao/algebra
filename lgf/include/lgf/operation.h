@@ -256,7 +256,6 @@ public :
     void dependOn(operation* op){
         this->registerInput(op->outputValue(0));
     }
-    value* createValue();
     value* createValue(type_t& type, std::string sid);
 
     // drop all inputs to this operation, and remove all connects
@@ -344,7 +343,7 @@ public :
     virtual void redundantCheck(){
         bool canRemove = status.isTrivial();
         if(canRemove){
-            for(auto & val: inputs ){
+            for(auto & val: outputs ){
                 if(val->getUserSize()!=0) {
                     canRemove = 0;
                     break;
