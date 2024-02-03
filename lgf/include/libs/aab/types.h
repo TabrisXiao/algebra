@@ -5,6 +5,8 @@
 
 namespace lgf{
 
+using dim_t = uint32_t;
+
 class algebraAxiom: public typeMarker<uint32_t> {
     public:
     enum trait: uint8_t{
@@ -51,6 +53,86 @@ class realNumber: public lgf::variable {
       return ctx->getType<realNumber>();
     }
 };
+
+class vectorImpl : public lgf::typeImpl, public algebraAxiom {
+  public:
+  vectorImpl(type_t elemType_, uint32_t dim_)
+  : lgf::typeImpl("vector")
+  , elemType(elemType_)
+  , dim(dim_){
+    initAsRing();
+  }
+  virtual std::string represent(){
+    return id+"<"+elemType.represent()+","+std::to_string(dim)+">";
+  }
+  lgf::type_t elemType;
+  dim_t dim;
+};
+
+class tensorImpl : public lgf::typeImpl, public algebraAxiom{
+  public:
+  tensorImpl(type_t elem_t, std::vector<dim_t> rank_)
+  : lgf::typeImpl("tensor")
+  , elemType(elem_t) {
+    dims.swap(rank_);
+    initAsRing();
+  }
+  virtual std::string represent(){
+    return id+"<"+elemType.represent()+","+dimRepresent()+">";
+  }
+  std::string dimRepresent(){
+    std::string ret;
+    for(auto& d : dims){
+      ret += std::to_string(d)+"x";
+    }
+    ret.pop_back();
+    return ret;
+  }
+  std::vector<dim_t> dims;
+  lgf::type_t elemType;
+};
+
+class vectorType : public lgf::variable {
+  public:
+  vectorType() = default;
+  static std::unique_ptr<lgf::typeImpl> createImpl(type_t elemType, dim_t dim){
+    return std::move(std::make_unique<vectorImpl>(elemType, dim));
+  }
+  type_t getElemType(){ return dynamic_cast<vectorImpl*>(impl)->elemType; }
+  dim_t getDim(){ return dynamic_cast<vectorImpl*>(impl)->dim; }
+
+  static type_t parse(lgf::liteParser& p, lgf::LGFContext* ctx){
+    p.parseLessThan();
+    auto elemID = p.parseIdentifier();
+    auto fc = ctx->getTypeTable().findParser(elemID);
+    auto elemType = fc(p, ctx);
+    p.parseComma();
+    auto dim = p.parseInteger();
+    p.parseGreaterThan();
+    return ctx->getType<vectorType>(elemType, uint32_t(dim));
+  }
+};
+
+// class tensorType : public lgf::variable {
+//   public:
+//   tensorType() = default;
+//   static std::unique_ptr<lgf::typeImpl> createImpl(type_t vecType, uint32_t rank){
+//     return std::move(std::make_unique<tensorImpl>(vecType, rank));
+//   }
+//   type_t getElementType(){ return dynamic_cast<tensorImpl*>(impl)->elemType; }
+//   uint32_t getRank(){ return dynamic_cast<tensorImpl*>(impl)->dims.size(); }
+
+//   static type_t parse(lgf::liteParser& p, lgf::LGFContext* ctx){
+//     p.parseLessThan();
+//     auto vecID = p.parseIdentifier();
+//     auto fc = ctx->getTypeTable().findParser(vecID);
+//     auto vecType = fc(p, ctx);
+//     p.parseComma();
+//     auto rank = p.parseInteger();
+//     p.parseGreaterThan();
+//     return ctx->getType<tensorType>(vecType, dim_t(rank));
+//   }
+// };
 
 // class integer: public lgf::variable {
 //     public:
