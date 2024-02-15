@@ -2,7 +2,7 @@
 #ifndef COMPILER_LGFTRANSLATOR_H
 #define COMPILER_LGFTRANSLATOR_H
 #include "libs/Builtin/Builtin.h"
-#include "libs/aab/ops.h"
+#include "libs/aab/aab.h"
 #include "compiler/ast.h"
 #include "ASTContext.h"
 #include "lgf/typeTable.h"

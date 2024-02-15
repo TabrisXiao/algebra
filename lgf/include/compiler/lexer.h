@@ -25,6 +25,7 @@ enum token : int {
     tok_def  =  -106, // def
     tok_member = -107, // mdef
     tok_arrow = -108, // ->
+    tok_decl = -109
 };
 class lexer {
     public: 

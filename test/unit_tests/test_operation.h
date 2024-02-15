@@ -83,7 +83,6 @@ class returnop : public operation{
 };
 
 class test_operation : public test_wrapper{
-    
     public:
     test_operation() {test_id = "operation test";};
     bool run() {

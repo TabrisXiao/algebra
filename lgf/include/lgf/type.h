@@ -36,6 +36,7 @@ class typeImpl{
         return id;
     }
     LGFModule* getModule(){ return module; }
+    std::string getSID(){ return id;}
     // the module that this type belongs to
     LGFModule* module=nullptr;
     std::string id;

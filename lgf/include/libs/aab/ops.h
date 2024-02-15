@@ -279,6 +279,18 @@ class commutableProductOp: public mappingOp, public normalizer{
     virtual resultCode rewrite(painter p, operation* op);
 };
 
+class directProduct: public mappingOp {
+    public:
+    directProduct(): mappingOp("AAB::directProduct"){}
+    template<typename ...ARGS>
+    static productOp* build(lgf::LGFContext* ctx, ARGS ... args ){
+        auto op = new productOp();
+        op->addArgument(args...);
+        op->createValue(op->inputValue(0)->getType(), "");
+        return op;
+    }
+};
+
 // ---------- inverseOp ----------
 class inverseOp : public mappingOp, public normalizer
 {
