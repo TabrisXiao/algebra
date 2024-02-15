@@ -39,6 +39,7 @@ lgf::compiler::token lgf::compiler::lexer::getToken(){
         while (isalnum((lastChar = token(getNextChar()))) || lastChar == '_')
             identifierStr += lastChar;
 
+        if(identifierStr == "decl") return tok_decl;
         if(identifierStr == "module") return tok_module;
         if(identifierStr == "class") return tok_struct;
         if(identifierStr == "def") return tok_def;

@@ -41,6 +41,7 @@ class LGFContext {
     
     typeImpl* findTypeImpl(typeImpl *ptr){
         for(auto & tp : types){
+            if( ptr->getSID() != tp->getSID() ) continue;
             if( ptr->represent() == tp->represent() ) return tp.get();
         }
         return nullptr;

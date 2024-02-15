@@ -53,7 +53,6 @@ class realNumber: public lgf::variable {
       return ctx->getType<realNumber>();
     }
 };
-
 class vectorImpl : public lgf::typeImpl, public algebraAxiom {
   public:
   vectorImpl(type_t elemType_, uint32_t dim_)
@@ -91,6 +90,7 @@ class tensorImpl : public lgf::typeImpl, public algebraAxiom{
   std::vector<dim_t> dims;
   lgf::type_t elemType;
 };
+
 
 class vectorType : public lgf::variable {
   public:
