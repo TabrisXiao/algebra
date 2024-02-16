@@ -8,19 +8,17 @@ namespace lgf{
 
 class variable : public lgf::type_t {
     public:
+    using desc_t = lgf::descriptor;
     variable() = default;
-    static std::unique_ptr<typeImpl> createImpl(){
-      return std::move(std::make_unique<typeImpl>("Variable"));
-    }
     static type_t parse(liteParser& paser, LGFContext* ctx){
       return ctx->getType<variable>();
     }
 };
 
-class derivedTypeImpl : public lgf::typeImpl {
+class derivedTypeDesc : public lgf::descriptor {
   public:
-  derivedTypeImpl(std::string id_, type_t baseType_)
-  : lgf::typeImpl(id_)
+  derivedTypeDesc(std::string id_, type_t baseType_)
+  : lgf::descriptor(id_)
   , baseType(baseType_){}
 
   virtual std::string represent(){
@@ -35,10 +33,8 @@ class derivedTypeImpl : public lgf::typeImpl {
 
 class reference_t : public lgf::type_t {
   public:
+  using desc_t = lgf::descriptor;
   reference_t() = default;
-  static std::unique_ptr<typeImpl> createImpl(){
-    return std::move(std::make_unique<typeImpl>("ref"));
-  }
   static type_t parse(liteParser& paser, LGFContext* ctx){
     return ctx->getType<reference_t>();
   }
@@ -47,9 +43,6 @@ class reference_t : public lgf::type_t {
 class intType: public variable {
     public:
     intType() = default;
-    static std::unique_ptr<typeImpl> createImpl(){
-      return std::move(std::make_unique<typeImpl>("int"));
-    }
     static type_t parse(liteParser& paser, LGFContext* ctx){
       return ctx->getType<intType>();
     }
@@ -59,18 +52,15 @@ class intType: public variable {
 class doubleType: public intType {
     public:
     doubleType() = default;
-    static std::unique_ptr<typeImpl> createImpl(){
-      return std::move(std::make_unique<typeImpl>("double"));
-    }
     static type_t parse(liteParser& paser, LGFContext* ctx){
       return ctx->getType<doubleType>();
     }
 };
 
-class listTypeImpl : public typeImpl {
+class listDesc : public descriptor {
   public: 
-  listTypeImpl(type_t elemType_, int dim) 
-  : typeImpl("list")
+  listDesc(type_t elemType_, int dim) 
+  : descriptor("list")
   , elemType(elemType_)
   , size(dim) {}
   virtual std::string represent(){
@@ -82,12 +72,10 @@ class listTypeImpl : public typeImpl {
 
 class listType : public type_t {
   public:
+  using desc_t = listDesc;
   listType() = default;
-  static std::unique_ptr<typeImpl> createImpl(type_t elemType, int size){
-    return std::move(std::make_unique<listTypeImpl>(elemType, size));
-  }
   int size(){
-    return dynamic_cast<listTypeImpl*>(impl)->size;
+    return dynamic_cast<listDesc*>(desc)->size;
   }
   static type_t parse(liteParser& paser, LGFContext* ctx){
     paser.parseLessThan();

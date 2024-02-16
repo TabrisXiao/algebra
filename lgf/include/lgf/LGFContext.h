@@ -18,29 +18,29 @@ class LGFContext {
     using regionTable = nestedSymbolicTable<mTable>;
     LGFContext() = default;
     template<typename tp>
-    tp getOrCreateType(std::unique_ptr<typeImpl>&& imp){
-        auto ret = tp();
-        if(auto ptr = findTypeImpl(imp.get())){
-            ret.impl = ptr;
-            return ret;
+    tp getOrCreateDesc(std::unique_ptr<descriptor>&& imp){
+        tp t;
+        t.desc = imp.get();
+        if(auto ptr = findTypeDesc(imp.get())){
+            t.desc = ptr;
+            return t;
         }
-        types.push_back(std::move(imp));
-        ret.impl = types.back().get();
-        return ret;
+        descs.push_back(std::move(imp));
+        return t;
     }
     template<typename tp, typename ...ARGS>
-    type_t getType(ARGS ...args){
-        auto imp = tp::createImpl(args...);
-        return getOrCreateType<tp>(std::move(imp));
+    tp getType(ARGS ...args){
+        auto ptr = std::make_unique<tp::desc_t>(args...);  
+        return getOrCreateDesc<tp>(std::move(ptr));
     }
     template<typename tp>
-    type_t getType(){
-        auto imp = tp::createImpl();
-        return getOrCreateType<tp>(std::move(imp));
+    tp getType(){
+        auto ptr = std::make_unique<tp::desc_t>();
+        return getOrCreateDesc<tp>(std::move(ptr));
     }
     
-    typeImpl* findTypeImpl(typeImpl *ptr){
-        for(auto & tp : types){
+    descriptor* findTypeDesc(descriptor *ptr){
+        for(auto & tp : descs){
             if( ptr->getSID() != tp->getSID() ) continue;
             if( ptr->represent() == tp->represent() ) return tp.get();
         }
@@ -72,7 +72,7 @@ class LGFContext {
     }
     
 
-    std::vector<std::unique_ptr<typeImpl>> types;
+    std::vector<std::unique_ptr<descriptor>> descs;
     regionTable root_region;
     typeTable tptable;
 };

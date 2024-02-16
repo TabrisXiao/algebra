@@ -90,8 +90,8 @@ public:
     virtual std::string represent(); 
     void print();
     void setType(type_t tp) {vtp = tp;}
-    void setTypeID(const char * _id){vtp.setID(_id);}
-    void setTypeID(std::string& _id){vtp.setID(_id);}
+    void setTypeID(const char * _id){vtp.setSID(_id);}
+    void setTypeID(std::string& _id){vtp.setSID(_id);}
     type_t getType(){return vtp;}
     template<typename t>
     t& getType(){ return dynamic_cast<t>(vtp); }

@@ -29,46 +29,44 @@ class typeMarker : private byteCode<storageType> {
     storageType value=0;
 };
 
-class typeImpl{
+class descriptor {
     public:
-    typeImpl(std::string sid) : id(sid){}
-    virtual std::string represent(){
+    descriptor() = default;
+    descriptor(std::string id_): id(id_){}
+    std::string getSID(){ return id; }
+    void setSID(std::string id_){ id = id_; }
+    virtual std::string represent() const {
         return id;
     }
-    LGFModule* getModule(){ return module; }
-    std::string getSID(){ return id;}
-    // the module that this type belongs to
-    LGFModule* module=nullptr;
     std::string id;
-    
 };
 
 class type_t {
     public:
     type_t () = default;
-    type_t (typeImpl* ptr){ impl=ptr; }
+    type_t (type_t& tp){ desc = tp.desc; }
+    type_t (descriptor* desc_): desc(desc_){}
     ~type_t() = default;
-    // for a new type_t, it need to have a static function build like
-    // static std::unque_ptr<typeImpl> createImpl(args...)
-    void setID(std::string id_){ impl->id= id_;}
-    std::string getSID() {return impl->id;}
+    
+    void setSID(std::string id_){ desc->id= id_;}
+    std::string getSID() {return desc->id;}
     virtual std::string represent() const {
-        if(impl) return impl->represent();
-        return "Null";
+        if(desc) return desc->represent();
+        return "";
     }
-
     bool operator==(const type_t& other){
         return this->represent() == other.represent();
     }
-    typeImpl* getImpl(){ return impl; }
+    descriptor* getDesc(){ return desc; }
 
     template<typename T>
-    T* getImplAs(){
-        return dynamic_cast<T*>(impl);
+    T* getDesc(){
+        return dynamic_cast<T*>(desc);
     }
 
-    typeImpl* impl = nullptr;
+    descriptor* desc = nullptr;
 };
+
 
 }
 

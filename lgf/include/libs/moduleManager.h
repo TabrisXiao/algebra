@@ -6,7 +6,6 @@
 #include <functional>
 #include "Builtin/Builtin.h"
 #include "AAB/aab.h"
-#include "LinearAlg/LinearAlg.h"
 #include "lgf/LGFContext.h"
 
 namespace lgf {
@@ -42,7 +41,6 @@ class moduleManager : public passManager{
         name = "LGFModule Init (Default Pipeline)";
         addNormalizationPass();
         table.addEntry("Builtin", {&LGFBaseModule::registerTypes, &Builtin::createInterfaceInitPass});
-        table.addEntry("LinearAlg", {&LinearAlgModule::registerTypes, &LinearAlg::createInterfaceInitPass});
         table.addEntry("AAB", {&AABModule::registerTypes, &AAB::createInterfaceInitPass});
     }
 

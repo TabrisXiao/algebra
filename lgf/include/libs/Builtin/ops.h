@@ -156,7 +156,7 @@ class funcDefineOp : public graph {
         else p<<"Def";
         p<<" : "<<id<<" (";
         p<<getEntry().representOutputs()<<")";
-        if(returnType.getImpl()) p<<" -> "<<returnType.represent(); 
+        if(returnType.getDesc()) p<<" -> "<<returnType.represent(); 
         return p.dump();
     }
     bool isAbstract = 1;
@@ -184,7 +184,7 @@ class funcCallOp : public operation{
         //op->funPtr = callee;
         op->registerInput(callee);
         auto& ret = callee->getDefiningOp<funcDefineOp>()->returnType;
-        if(ret.getImpl()){
+        if(ret.getDesc()){
             op->hasReturn = 1;
             op->createValue(ret, "");
         }

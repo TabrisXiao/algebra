@@ -1,5 +1,4 @@
 import lgf.AAB
-import lgf.LinearAlg
 
 //vector<realNumber, 4> x, y;
 realNumber x , y ;
