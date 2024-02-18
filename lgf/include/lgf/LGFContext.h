@@ -30,12 +30,12 @@ class LGFContext {
     }
     template<typename tp, typename ...ARGS>
     tp getType(ARGS ...args){
-        auto ptr = std::make_unique<tp::desc_t>(args...);  
+        auto ptr = std::make_unique<tp::desc_t>(tp::sid, args...);  
         return getOrCreateDesc<tp>(std::move(ptr));
     }
     template<typename tp>
     tp getType(){
-        auto ptr = std::make_unique<tp::desc_t>();
+        auto ptr = std::make_unique<tp::desc_t>(tp::sid);
         return getOrCreateDesc<tp>(std::move(ptr));
     }
     

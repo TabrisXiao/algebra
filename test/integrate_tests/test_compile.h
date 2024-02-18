@@ -14,15 +14,19 @@ class test_compile : public test_wrapper{
     bool run() {
         LGFContext ctx;
         moduleOp g;
+        g.setContext(&ctx);
         painter pnt(&ctx);
         pnt.gotoGraph(&g);
 
         auto varType = ctx.getType<variable>();
         auto vecType = ctx.getType<vectorType>(varType, 4);
         auto x = pnt.paint<declOp>(vecType);
-        auto ret = pnt.paint<returnOp>(x->output());
+        auto y = pnt.paint<declOp>(vecType);
+        auto z = pnt.paint<declOp>(vecType);
+        auto a = pnt.paint<AAB::directProductOp>(x->output(), y->output());
+        auto res = pnt.paint<AAB::directProductOp>(a->output(), z->output());
+        auto ret = pnt.paint<returnOp>(res->output());
         compile(&ctx, &g);
-
 
         return 0;
     }

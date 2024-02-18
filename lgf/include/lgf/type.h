@@ -13,6 +13,7 @@ class LGFModule;
         std::cerr<<"Runtime Error: " __FILE__ ":"<< std::to_string(__LINE__)<< ": "<<msg<<"\n"; \
         std::exit(EXIT_FAILURE); \
     }
+    
 template<typename storageType>
 class typeMarker : private byteCode<storageType> {
     public:
@@ -32,23 +33,21 @@ class typeMarker : private byteCode<storageType> {
 class descriptor {
     public:
     descriptor() = default;
-    descriptor(std::string id_): id(id_){}
+    descriptor(const std::string id_): id(id_){}
     std::string getSID(){ return id; }
-    void setSID(std::string id_){ id = id_; }
     virtual std::string represent() const {
         return id;
     }
-    std::string id;
+    const std::string id;
 };
 
 class type_t {
     public:
     type_t () = default;
-    type_t (type_t& tp){ desc = tp.desc; }
+    type_t (const type_t& tp){ desc = tp.desc; }
     type_t (descriptor* desc_): desc(desc_){}
-    ~type_t() = default;
+    virtual ~type_t() = default;
     
-    void setSID(std::string id_){ desc->id= id_;}
     std::string getSID() {return desc->id;}
     virtual std::string represent() const {
         if(desc) return desc->represent();

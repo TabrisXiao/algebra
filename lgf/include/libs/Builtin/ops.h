@@ -19,7 +19,6 @@ class moduleOp : public graph{
         op->createValue(ctx->getType<reference_t>(),"");
         return op;
     }
-    value* output(){ return outputValue(1);}
     std::string name="";
     virtual std::string represent() {return getSID()+" "+name;}
 };
@@ -33,7 +32,6 @@ class declOp : public operation, public normalizer{
         op->createValue(type, "");
         return op;
     }
-    value * output(){ return outputValue(1); }
     virtual std::string represent(){
         printer p;
         p<<representOutputs()<<" = Declare "<<output()->getType().represent();
@@ -65,7 +63,6 @@ class referenceOp : public operation {
         return refValue;
     }
     value* getValue() { return refValue; }
-    value* output(){ return outputValue(1);}
     value* refValue = nullptr;
     virtual std::string represent(){
         return representOutputs()+" = @"+refValue->represent();
@@ -85,7 +82,6 @@ class updateOp : public operation{
     value * lhs() { return inputValue(0); }
     value * rhs() { return inputValue(1); }
     // note the outputValue(0) is the dependecyValue;
-    value * output(){ return outputValue(1); }
     virtual std::string represent(){
         printer p;
         p<<representOutputs()<<" = "<<getSID() <<" : "<<inputValue(0)->represent()<< " = "<<inputValue(1)->represent();
@@ -118,7 +114,6 @@ class cstDeclOp : public lgf::operation {
         p<<v;
         return p.dump();
     }
-    value* output(){ return outputValue(1); }
     bool isInt = 0;
     int intValue;
     double doubleValue;
@@ -239,8 +234,6 @@ class assignOp : public operation{
     }
     value * lhs() { return inputValue(0); }
     value * rhs() { return inputValue(1); }
-    // note the outputValue(0) is the dependecyValue;
-    value * output(){ return outputValue(1); }
     virtual std::string represent(){
         printer p;
         p<<representOutputs()<<" = "<<getSID() <<" : "<<inputValue(0)->represent()<< " from "<<inputValue(1)->represent();

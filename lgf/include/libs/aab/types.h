@@ -50,15 +50,52 @@ class realNumber: public lgf::variable {
       return ctx->getType<realNumber>();
     }
 };
+
+class sequenceDesc : public lgf::descriptor {
+  public:
+  sequenceDesc(const sid_t sid)
+  : lgf::descriptor(sid){}
+  sequenceDesc(const sid_t sid, std::vector<lgf::type_t>& types_)
+  : lgf::descriptor(sid)
+  , types(types_){}
+  template<typename ...ARGS>
+  sequenceDesc(const sid_t sid, ARGS ...args)
+  : lgf::descriptor(sid)
+  , types({args...}){}
+  virtual std::string represent()const override{
+    std::string str= id+", size="+std::to_string(types.size())+"{";
+    for(auto & t: types){
+      str += t.represent()+",";
+    }
+    str.pop_back();
+    str+="}";
+    return str;
+  }
+  const std::vector<lgf::type_t>& getTypes() const { return types; } 
+  private:
+  std::vector<lgf::type_t> types;
+  dim_t dim;
+};
+
+class sequenceType: public lgf::variable {
+  public:
+  using desc_t = sequenceDesc;
+  sequenceType() = default;
+  static type_t parse(lgf::liteParser& p, lgf::LGFContext* ctx){
+    THROW("sequenceType::parse not implemented")
+    return ctx->getType<sequenceType>();
+  }
+};
+
 class vectorDesc : public lgf::descriptor, public algebraAxiom {
   public:
-  vectorDesc(type_t elemType_, uint32_t dim_)
-  : lgf::descriptor("vector")
+  vectorDesc(const sid_t sid, type_t elemType_, uint32_t dim_)
+  : lgf::descriptor(sid)
   , elemType(elemType_)
   , dim(dim_){
     initAsRing();
   }
-  virtual std::string represent(){
+  virtual std::string represent() const override {
     return id+"<"+elemType.represent()+","+std::to_string(dim)+">";
   }
   lgf::type_t elemType;
@@ -67,8 +104,8 @@ class vectorDesc : public lgf::descriptor, public algebraAxiom {
 
 class tensorDesc : public lgf::descriptor, public algebraAxiom{
   public:
-  tensorDesc(type_t elem_t, std::vector<dim_t> rank_)
-  : lgf::descriptor("tensor")
+  tensorDesc(const sid_t sid, type_t elem_t, std::vector<dim_t> rank_)
+  : lgf::descriptor(sid)
   , elemType(elem_t) {
     dims.swap(rank_);
     initAsRing();
@@ -92,6 +129,7 @@ class tensorDesc : public lgf::descriptor, public algebraAxiom{
 class vectorType : public lgf::variable {
   public:
   using desc_t = vectorDesc;
+  static inline const sid_t sid = "vector";
   vectorType() = default;
   type_t getElemType(){ return dynamic_cast<vectorDesc*>(desc)->elemType; }
   dim_t getDim(){ return dynamic_cast<vectorDesc*>(desc)->dim; }
@@ -182,16 +220,16 @@ class vectorType : public lgf::variable {
 
 class unitDesc : public lgf::derivedTypeDesc, public algebraAxiom { 
   public: 
-  unitDesc(lgf::type_t elemType_)
-  : derivedTypeDesc("unit", elemType_) {
+  unitDesc(const sid_t sid, lgf::type_t elemType_)
+  : derivedTypeDesc(sid, elemType_) {
     initAsField();
   }
 }; 
 
 class zeroDesc : public lgf::derivedTypeDesc, public algebraAxiom { 
   public: 
-  zeroDesc(lgf::type_t elemType_)
-  : derivedTypeDesc("zero", elemType_) {
+  zeroDesc(const sid_t sid, lgf::type_t elemType_)
+  : derivedTypeDesc(sid, elemType_) {
     initAsField();
   }
 };

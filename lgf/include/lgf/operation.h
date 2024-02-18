@@ -24,6 +24,7 @@ class value;
 class valueRef;
 class graph;
 class normalizer;
+class LGFContext;
 
 typedef size_t id_t;
 
@@ -90,8 +91,6 @@ public:
     virtual std::string represent(); 
     void print();
     void setType(type_t tp) {vtp = tp;}
-    void setTypeID(const char * _id){vtp.setSID(_id);}
-    void setTypeID(std::string& _id){vtp.setSID(_id);}
     type_t getType(){return vtp;}
     template<typename t>
     t& getType(){ return dynamic_cast<t>(vtp); }
@@ -257,6 +256,7 @@ public :
         this->registerInput(op->outputValue(0));
     }
     value* createValue(type_t& type, std::string sid);
+    value* createValue();
 
     // drop all inputs to this operation, and remove all connects
     // associated to the op.
@@ -288,6 +288,12 @@ public :
     size_t getOutputSize() const;
     opStatus getStatus(){ return status; }
     void setNontrivial(){ status.setNontrivial(); }
+
+    // ideally an operation should have only one output value
+    // multiple outputs can be equivalently represented by multiple
+    // one operations appended by multiply operations.
+    // note the outputValue(0) is the dependecyValue;
+    value* output(){ return outputValue(1); }
 
     // assign trace id to the value created in this operation. 
     // The start of the trace id is specified by the argument n.
@@ -359,7 +365,7 @@ public :
     }
     
     // infer the type of the output value from the input values.
-    virtual void inferType(){}
+    virtual void inferType(LGFContext* ctx ){}
     
     graph * expandToGraph();
 
@@ -462,6 +468,8 @@ class graph : public operation{
     }
 
     graph* getGraph() {return dynamic_cast<graph*>(this);}
+    LGFContext* getContext() { return ctx; }
+    void setContext(LGFContext* c) { ctx = c; }
 
     virtual void printGraph();
 
@@ -492,6 +500,7 @@ class graph : public operation{
     private:
     std::vector<operation*> nodes;
     graphEntry entry;
+    LGFContext* ctx;
     // how many operations contained in this graph
 };
 
