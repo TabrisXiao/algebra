@@ -17,7 +17,6 @@ class LGFBaseModule : public LGFModule {
         ctx->getTypeTable().registerType<variable>("variable");
         ctx->getTypeTable().registerType<intType>("int");
         ctx->getTypeTable().registerType<doubleType>("double");
-        ctx->getTypeTable().registerType<listType>("listType");
     }
     virtual void pipeline(passManager& pm){}
 };

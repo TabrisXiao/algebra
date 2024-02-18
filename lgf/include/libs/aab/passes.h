@@ -78,7 +78,7 @@ class commutableProductRewriter: public rewriter<productOp>{
             //return a->getHashValue() < b->getHashValue();
         });
         for(auto it = inputs.begin(); it!= inputs.end(); it++){
-            if( auto axiom = (*it)->getType().getImplAs<algebraAxiom>() ){
+            if( auto axiom = (*it)->getType().getDesc<algebraAxiom>() ){
                 if(!axiom->is(algebraAxiom::multiply_commutable)){
                     isCommutative = false;
                     break;

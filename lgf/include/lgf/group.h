@@ -60,8 +60,9 @@ class normalizationPass : public passBase {
     }
 
     void inferTypes(graph* g){
+        auto ctx = g->getContext();
         for(auto op : g->getNodeList()){
-            op->inferType();
+            op->inferType( ctx );
             if(auto subg = dynamic_cast<graph*>(op)){
                 inferTypes(subg);
             }

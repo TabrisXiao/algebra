@@ -148,6 +148,13 @@ void operation::registerInputAt( value* val, int pos){
 }
 //---------------------------------------------------
 
+value* operation::createValue(){
+    auto val = std::make_unique<value>(this);
+    outputs.push_back(std::move(val));
+    return outputs.back().get();
+}
+//---------------------------------------------------
+
 value* operation::createValue(type_t& type, std::string sid){
     auto val = std::make_unique<value>(this, type, sid);
     outputs.push_back(std::move(val));

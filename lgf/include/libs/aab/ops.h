@@ -47,7 +47,6 @@ class mappingOp: public lgf::operation{
     size_t narg=0;
     size_t getArgNumber(){ return narg; }
     lgf::value* argument(size_t n){ return inputValue(n); }
-    lgf::value* output(){ return outputValue(1); }
 };
 
 // ---------- abstractMappingOp ----------
@@ -82,7 +81,6 @@ class addOp : public mappingOp, public normalizer
     }
     lgf::value* lhs(){ return inputValue(0); }
     lgf::value* rhs(){ return inputValue(1); }
-    lgf::value* output(){ return outputValue(1); }
     virtual std::string represent(){
         printer p;
         p<<representOutputs()<<" = "<<getSID() <<" : "<<inputValue(0)->represent()<<" + "<<inputValue(1)->represent();
@@ -104,7 +102,6 @@ class negativeOp : public mappingOp, public normalizer
         return op;
     }
     lgf::value* input(){ return inputValue(0); }
-    lgf::value* output(){ return outputValue(1); }
     virtual std::string represent(){
         printer p;
         p<<representOutputs()<<" = "<<getSID() <<" : "<<input()->represent();
@@ -143,7 +140,6 @@ class sumOp : public mappingOp, public normalizer {
         return op;
     }
     lgf::value* input(int i=0){ return inputValue(i); }
-    lgf::value* output(){ return outputValue(1); }
     virtual std::string represent(){
         printer p;
         p<<representOutputs()<<" = "<<getSID() <<" : "<<representInputs();
@@ -167,7 +163,6 @@ class minusOp : public mappingOp, public normalizer
     }
     lgf::value* lhs(){ return inputValue(0); }
     lgf::value* rhs(){ return inputValue(1); }
-    lgf::value* output(){ return outputValue(1); }
     virtual std::string represent(){
         printer p;
         p<<representOutputs()<<" = "<<getSID() <<" : "<<lhs()->represent()<<" - "<<rhs()->represent();
@@ -195,7 +190,6 @@ class multiplyOp : public mappingOp, public normalizer
     }
     lgf::value* lhs(){ return inputValue(0); }
     lgf::value* rhs(){ return inputValue(1); }
-    lgf::value* output(){ return outputValue(1); }
 
     virtual std::string represent(){
         printer p;
@@ -205,6 +199,33 @@ class multiplyOp : public mappingOp, public normalizer
     }
 
     virtual resultCode rewrite(painter p, operation* op);
+};
+
+class directProductOp: public mappingOp {
+    public:
+    directProductOp(): mappingOp("AAB::directProduct"){};
+    template<typename ...ARGS>
+    static directProductOp* build(lgf::LGFContext* ctx, ARGS ... args ){
+        auto op = new directProductOp();
+        op->addArgument(args...);
+        op->createValue();
+        op->inferType(ctx);
+        return op;
+    }
+    virtual void inferType(LGFContext* ctx) override {
+        std::vector<type_t> types;
+        for(auto &input : getInputs()){
+            auto& type = input->getType();
+            if(type.getSID() == sequenceType::sid){
+                auto data = type.getDesc<sequenceDesc>()->getTypes();
+                types.insert(types.end(), data.begin(), data.end());
+            }else {
+                types.push_back(type);
+            }
+        }
+        auto seq = ctx->getType<sequenceType>(types);
+        output()->setType(seq);
+    }
 };
 
 // ---------- productOp ----------
@@ -231,13 +252,12 @@ class productOp : public mappingOp, public normalizer
         return op;
     }
     lgf::value* input(int i=0){ return inputValue(i); }
-    lgf::value* output(){ return outputValue(1); }
     virtual std::string represent(){
         printer p;
         p<<representOutputs()<<" = "<<getSID() <<" : "<<representInputs();
         return p.dump();
     }
-    virtual void inferType() override {
+    virtual void inferType(LGFContext* ctx) override {
         output()->setType(input(0)->getType());
     }
 
@@ -266,13 +286,12 @@ class commutableProductOp: public mappingOp, public normalizer{
         return op;
     }
     lgf::value* input(int i=0){ return inputValue(i); }
-    lgf::value* output(){ return outputValue(1); }
     virtual std::string represent(){
         printer p;
         p<<representOutputs()<<" = "<<getSID() <<" : "<<representInputs();
         return p.dump();
     }
-    virtual void inferType() override {
+    virtual void inferType(LGFContext* ctx) override {
         output()->setType(input(0)->getType());
     }
 
@@ -314,7 +333,7 @@ class inverseOp : public mappingOp, public normalizer
         }
         return resultCode::pass();
     }
-    virtual void inferType() override {
+    virtual void inferType(LGFContext* ctx) override {
         output()->setType(input()->getType());
     }
 };
@@ -332,7 +351,6 @@ class quotientOp : public mappingOp
     }
     lgf::value* numerator(){ return inputValue(0); }
     lgf::value* denominator(){ return inputValue(1); }
-    lgf::value* output(){ return outputValue(1); }
 };
 
 class powerOp : public mappingOp
@@ -347,7 +365,6 @@ class powerOp : public mappingOp
     }
     lgf::value* power(){ return inputValue(1); }
     lgf::value* x(){ return inputValue(0); }
-    lgf::value* output() { return outputValue(1); }
 
 };
 
@@ -386,7 +403,6 @@ class permuteOp : public lgf::operation {
     value* input() {return inputValue(0);}
     value* from() {return inputValue(1);}
     value* to() { return inputValue(2); }
-    value* output(){ return outputValue(1); }
 };
 
 class distributeOp : public operation, public normalizer{
@@ -400,7 +416,6 @@ class distributeOp : public operation, public normalizer{
         return op;
     }
     value *input(){ return inputValue(0); }
-    value *output(){return outputValue(1); }
     
     resultCode distribute(painter p, value* val, operation* user){
         auto op = val->getDefiningOp();
@@ -505,7 +520,6 @@ class partialDifferentiateOp : public mappingOp {
     }
     value* func(){ return inputValue(0); }
     value* var(){ return inputValue(1); }
-    value* output(){ return outputValue(1); }
 };
 
 class differentiateOp : public mappingOp {
@@ -519,7 +533,6 @@ class differentiateOp : public mappingOp {
     }
     value* input(){ return inputValue(0); }
     value* target(){ return inputValue(1); }
-    value* output(){ return outputValue(1); }
 };
 
 class exponentialOp : public mappingOp {
@@ -534,7 +547,7 @@ class exponentialOp : public mappingOp {
     value* input(){
         return inputValue(0);
     }
-    void inferType() override{
+    void inferType(LGFContext* ctx) override{
         // using the input type as output type
         output()->setType(input()->getType()); 
     }

@@ -30,9 +30,9 @@ class algebraAxiom: public typeMarker<uint32_t> {
     }
 };
 
-class algebraVariableImpl : public typeImpl, public algebraAxiom {
+class algebraVariableImpl : public descriptor, public algebraAxiom {
     public:
-    algebraVariableImpl(std::string sid): typeImpl(sid){
+    algebraVariableImpl(std::string sid): descriptor(sid){
     }
 };
 
@@ -46,32 +46,66 @@ class fieldVariableImpl : public algebraVariableImpl {
 class realNumber: public lgf::variable {
     public:
     realNumber() = default;
-    static std::unique_ptr<lgf::typeImpl> createImpl(){
-      return std::move(std::make_unique<lgf::fieldVariableImpl>("realNumber"));
-    }
     static type_t parse(lgf::liteParser& paser, lgf::LGFContext* ctx){
       return ctx->getType<realNumber>();
     }
 };
-class vectorImpl : public lgf::typeImpl, public algebraAxiom {
+
+class sequenceDesc : public lgf::descriptor {
   public:
-  vectorImpl(type_t elemType_, uint32_t dim_)
-  : lgf::typeImpl("vector")
+  sequenceDesc(const sid_t sid)
+  : lgf::descriptor(sid){}
+  sequenceDesc(const sid_t sid, std::vector<lgf::type_t>& types_)
+  : lgf::descriptor(sid)
+  , types(types_){}
+  template<typename ...ARGS>
+  sequenceDesc(const sid_t sid, ARGS ...args)
+  : lgf::descriptor(sid)
+  , types({args...}){}
+  virtual std::string represent()const override{
+    std::string str= id+", size="+std::to_string(types.size())+"{";
+    for(auto & t: types){
+      str += t.represent()+",";
+    }
+    str.pop_back();
+    str+="}";
+    return str;
+  }
+  const std::vector<lgf::type_t>& getTypes() const { return types; } 
+  private:
+  std::vector<lgf::type_t> types;
+  dim_t dim;
+};
+
+class sequenceType: public lgf::variable {
+  public:
+  using desc_t = sequenceDesc;
+  sequenceType() = default;
+  static type_t parse(lgf::liteParser& p, lgf::LGFContext* ctx){
+    THROW("sequenceType::parse not implemented")
+    return ctx->getType<sequenceType>();
+  }
+};
+
+class vectorDesc : public lgf::descriptor, public algebraAxiom {
+  public:
+  vectorDesc(const sid_t sid, type_t elemType_, uint32_t dim_)
+  : lgf::descriptor(sid)
   , elemType(elemType_)
   , dim(dim_){
     initAsRing();
   }
-  virtual std::string represent(){
+  virtual std::string represent() const override {
     return id+"<"+elemType.represent()+","+std::to_string(dim)+">";
   }
   lgf::type_t elemType;
   dim_t dim;
 };
 
-class tensorImpl : public lgf::typeImpl, public algebraAxiom{
+class tensorDesc : public lgf::descriptor, public algebraAxiom{
   public:
-  tensorImpl(type_t elem_t, std::vector<dim_t> rank_)
-  : lgf::typeImpl("tensor")
+  tensorDesc(const sid_t sid, type_t elem_t, std::vector<dim_t> rank_)
+  : lgf::descriptor(sid)
   , elemType(elem_t) {
     dims.swap(rank_);
     initAsRing();
@@ -94,12 +128,11 @@ class tensorImpl : public lgf::typeImpl, public algebraAxiom{
 
 class vectorType : public lgf::variable {
   public:
+  using desc_t = vectorDesc;
+  static inline const sid_t sid = "vector";
   vectorType() = default;
-  static std::unique_ptr<lgf::typeImpl> createImpl(type_t elemType, dim_t dim){
-    return std::move(std::make_unique<vectorImpl>(elemType, dim));
-  }
-  type_t getElemType(){ return dynamic_cast<vectorImpl*>(impl)->elemType; }
-  dim_t getDim(){ return dynamic_cast<vectorImpl*>(impl)->dim; }
+  type_t getElemType(){ return dynamic_cast<vectorDesc*>(desc)->elemType; }
+  dim_t getDim(){ return dynamic_cast<vectorDesc*>(desc)->dim; }
 
   static type_t parse(lgf::liteParser& p, lgf::LGFContext* ctx){
     p.parseLessThan();
@@ -185,29 +218,27 @@ class vectorType : public lgf::variable {
 //   fieldVariableImpl("infinitesimal") {}
 // };
 
-class unitImpl : public lgf::derivedTypeImpl, public algebraAxiom { 
+class unitDesc : public lgf::derivedTypeDesc, public algebraAxiom { 
   public: 
-  unitImpl(lgf::type_t elemType_)
-  : derivedTypeImpl("unit", elemType_) {
+  unitDesc(const sid_t sid, lgf::type_t elemType_)
+  : derivedTypeDesc(sid, elemType_) {
     initAsField();
   }
 }; 
 
-class zeroImpl : public lgf::derivedTypeImpl, public algebraAxiom { 
+class zeroDesc : public lgf::derivedTypeDesc, public algebraAxiom { 
   public: 
-  zeroImpl(lgf::type_t elemType_)
-  : derivedTypeImpl("zero", elemType_) {
+  zeroDesc(const sid_t sid, lgf::type_t elemType_)
+  : derivedTypeDesc(sid, elemType_) {
     initAsField();
   }
 };
 
 class unit_t : public lgf::variable {
   public:
+  using desc_t = unitDesc;
   unit_t() = default;
-  static std::unique_ptr<lgf::typeImpl> createImpl(type_t elemType){
-    return std::move(std::make_unique<unitImpl>(elemType));
-  }
-  type_t getElemType(){ return dynamic_cast<unitImpl*>(impl)->getBaseType(); }
+  type_t getElemType(){ return dynamic_cast<unitDesc*>(desc)->getBaseType(); }
 
   static type_t parse(lgf::liteParser& p, lgf::LGFContext* ctx){
     p.parseLessThan();
@@ -221,11 +252,10 @@ class unit_t : public lgf::variable {
 
 class zero_t : public lgf::variable {
   public:
+  using desc_t = zeroDesc;
   zero_t() = default;
-  static std::unique_ptr<lgf::typeImpl> createImpl(type_t elemType){
-    return std::move(std::make_unique<zeroImpl>(elemType));
-  }
-  type_t getElemType(){ return dynamic_cast<zeroImpl*>(impl)->getBaseType(); }
+
+  type_t getElemType(){ return dynamic_cast<zeroDesc*>(desc)->getBaseType(); }
 
   static type_t parse(lgf::liteParser& p, lgf::LGFContext* ctx){
     p.parseLessThan();
