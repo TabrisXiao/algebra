@@ -56,6 +56,9 @@ class type_t {
     bool operator==(const type_t& other){
         return this->represent() == other.represent();
     }
+    bool operator!=(const type_t& other){
+        return this->represent() != other.represent();
+    }
     descriptor* getDesc(){ return desc; }
 
     template<typename T>

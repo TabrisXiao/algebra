@@ -93,7 +93,14 @@ public:
     void setType(type_t tp) {vtp = tp;}
     type_t getType(){return vtp;}
     template<typename t>
-    t& getType(){ return dynamic_cast<t>(vtp); }
+    t getType(){ 
+        if( vtp.getSID() != t::sid ) {
+            THROW("getType error: Type mismatch!");
+        }
+        t res;
+        res.desc = vtp.getDesc();
+        return res;
+    }
     // get type representation;
     std::string getTR() const { 
         return vtp.represent(); }

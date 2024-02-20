@@ -216,7 +216,7 @@ class directProductOp: public mappingOp {
         std::vector<type_t> types;
         for(auto &input : getInputs()){
             auto& type = input->getType();
-            if(type.getSID() == sequenceType::sid){
+            if(type.getSID() == sequenceType::sid){ 
                 auto data = type.getDesc<sequenceDesc>()->getTypes();
                 types.insert(types.end(), data.begin(), data.end());
             }else {
@@ -309,6 +309,93 @@ class directProduct: public mappingOp {
         return op;
     }
 };
+
+class tensorProductOp : public mappingOp{
+    public:
+    tensorProductOp() : mappingOp("AAB::tensorProduct"){}
+    static tensorProductOp* build(lgf::LGFContext* ctx, value* lhs, value* rhs){
+        auto op = new tensorProductOp();
+        op->addArgument(lhs, rhs);
+        op->createValue();
+        op->inferType(ctx);
+        return op;
+    }
+    virtual void inferType(LGFContext* ctx) override {
+        tensorType lhs_tp = inputValue(0)->getType<tensorType>();
+        tensorType rhs_tp = inputValue(1)->getType<tensorType>();
+        if(lhs_tp.getElemType() != lhs_tp.getElemType()){
+            throw std::runtime_error("tensorType: type mismatch");
+        }
+        std::vector<dim_t> dims(lhs_tp.getDims());
+        std::vector<dim_t> rhs_dims(rhs_tp.getDims());
+        dims.insert(dims.end(), rhs_dims.begin(), rhs_dims.end());
+        auto tp = ctx->getType<tensorType>(lhs_tp.getElemType(), dims);
+        output()->setType(tp);
+     }
+};
+
+class contractionOp : public mappingOp {
+     public:
+     contractionOp() : mappingOp("AAB::contraction"){}
+     static contractionOp* build(lgf::LGFContext* ctx, value* lhs, value* rhs, int index_lhs, int index_rhs){
+        // in this case, it is like a tensor product + contraction
+        auto op = new contractionOp();
+        op->addArgument(lhs, rhs);
+        op->idx_lhs = index_lhs;
+        op->idx_rhs = index_rhs;
+        op->createValue();
+        op->inferType(ctx);
+        return op;
+     }
+     static contractionOp* build(lgf::LGFContext* ctx, value* input, int index_lhs, int index_rhs){
+        auto op = new contractionOp();
+        op->addArgument(input);
+        op->idx_lhs = index_lhs;
+        op->idx_rhs = index_rhs;
+        op->createValue();
+        op->inferType(ctx);
+     }
+     void inferType1(LGFContext* ctx) {
+        auto type = inputValue(0)->getType<tensorType>();
+        std::vector<dim_t> dims(type.getDims());
+        if( dims[idx_lhs] != dims[idx_rhs]){
+            THROW("contractionOp: dimension mismatch");
+        }
+        dims.erase(dims.begin()+idx_lhs);
+        dims.erase(dims.begin()+idx_rhs);
+        auto tp = ctx->getType<tensorType>(type.getElemType(), dims);
+        output()->setType(tp);
+     }
+     void inferType2(LGFContext* ctx) {
+        // infer the type when two inputs are provided
+        tensorType lhs_tp = inputValue(0)->getType<tensorType>();
+        tensorType rhs_tp = inputValue(1)->getType<tensorType>();
+        if(lhs_tp.getElemType() != lhs_tp.getElemType()){
+            THROW("contractionOp: element type mismatch");
+        }
+        std::vector<dim_t> dims(lhs_tp.getDims());
+        if( dims[idx_lhs] != rhs_tp.getDims()[idx_rhs]){
+            THROW("contractionOp: dimension mismatch");
+        }
+        dims.erase(dims.begin()+idx_lhs);
+        std::vector<dim_t> rhs_dims(rhs_tp.getDims());
+        rhs_dims.erase(rhs_dims.begin()+idx_rhs);
+        dims.insert(dims.end(), rhs_dims.begin(), rhs_dims.end());
+        auto tp = ctx->getType<tensorType>(lhs_tp.getElemType(), dims);
+        output()->setType(tp);
+     }
+     virtual void inferType(LGFContext* ctx) override {
+        if(getArgNumber() == 1){
+            inferType1(ctx);
+        }
+        else 
+        {
+            inferType2(ctx);
+        }
+        return;
+     }
+     int idx_lhs, idx_rhs;
+ };
 
 // ---------- inverseOp ----------
 class inverseOp : public mappingOp, public normalizer

@@ -89,7 +89,7 @@ class sequenceType: public lgf::variable {
 
 class vectorDesc : public lgf::descriptor, public algebraAxiom {
   public:
-  vectorDesc(const sid_t sid, type_t elemType_, uint32_t dim_)
+  vectorDesc(const sid_t sid, type_t elemType_, dim_t dim_)
   : lgf::descriptor(sid)
   , elemType(elemType_)
   , dim(dim_){
@@ -101,30 +101,6 @@ class vectorDesc : public lgf::descriptor, public algebraAxiom {
   lgf::type_t elemType;
   dim_t dim;
 };
-
-class tensorDesc : public lgf::descriptor, public algebraAxiom{
-  public:
-  tensorDesc(const sid_t sid, type_t elem_t, std::vector<dim_t> rank_)
-  : lgf::descriptor(sid)
-  , elemType(elem_t) {
-    dims.swap(rank_);
-    initAsRing();
-  }
-  virtual std::string represent(){
-    return id+"<"+elemType.represent()+","+dimRepresent()+">";
-  }
-  std::string dimRepresent(){
-    std::string ret;
-    for(auto& d : dims){
-      ret += std::to_string(d)+"x";
-    }
-    ret.pop_back();
-    return ret;
-  }
-  std::vector<dim_t> dims;
-  lgf::type_t elemType;
-};
-
 
 class vectorType : public lgf::variable {
   public:
@@ -146,77 +122,55 @@ class vectorType : public lgf::variable {
   }
 };
 
-// class tensorType : public lgf::variable {
-//   public:
-//   tensorType() = default;
-//   static std::unique_ptr<lgf::typeImpl> createImpl(type_t vecType, uint32_t rank){
-//     return std::move(std::make_unique<tensorImpl>(vecType, rank));
-//   }
-//   type_t getElementType(){ return dynamic_cast<tensorImpl*>(impl)->elemType; }
-//   uint32_t getRank(){ return dynamic_cast<tensorImpl*>(impl)->dims.size(); }
+class tensorDesc : public lgf::descriptor, public algebraAxiom{
+  public:
+  tensorDesc(const sid_t sid, type_t elem_t, std::vector<dim_t> rank_)
+  : lgf::descriptor(sid)
+  , elemType(elem_t)
+  , dims(rank_){
+    initAsRing();
+  }
+  virtual std::string represent() const override {
+    return id+"<"+elemType.represent()+","+dimRepresent()+">";
+  }
+  std::string dimRepresent() const {
+    std::string ret;
+    for(auto& d : dims){
+      ret += std::to_string(d)+"x";
+    }
+    ret.pop_back();
+    return ret;
+  }
+  std::vector<dim_t> dims;
+  lgf::type_t elemType;
+};
 
-//   static type_t parse(lgf::liteParser& p, lgf::LGFContext* ctx){
-//     p.parseLessThan();
-//     auto vecID = p.parseIdentifier();
-//     auto fc = ctx->getTypeTable().findParser(vecID);
-//     auto vecType = fc(p, ctx);
-//     p.parseComma();
-//     auto rank = p.parseInteger();
-//     p.parseGreaterThan();
-//     return ctx->getType<tensorType>(vecType, dim_t(rank));
-//   }
-// };
+class tensorType : public lgf::variable {
+  public:
+  using desc_t = tensorDesc;
+  static inline const sid_t sid = "tensor";
+  tensorType() = default;
+  type_t getElemType(){ return dynamic_cast<tensorDesc*>(desc)->elemType; }
+  std::vector<dim_t>& getDims() const { return dynamic_cast<tensorDesc*>(desc)->dims; }
 
-// class integer: public lgf::variable {
-//     public:
-//     integer() {};
-//     static std::unique_ptr<lgf::typeImpl> createImpl(){
-//       return std::move(std::make_unique<lgf::fieldVariableImpl>("integer"));
-//     }
-//     static type_t parse(lgf::liteParser& paser, lgf::LGFContext* ctx){
-//       return ctx->getType<integer>();
-//     }
-// };
-
-// class natureNumber: public lgf::variable {
-//     public:
-//     natureNumber() = default;
-//     static std::unique_ptr<lgf::typeImpl> createImpl(){
-//       return std::move(std::make_unique<lgf::fieldVariableImpl>("natureNumber"));
-//     }
-//     static type_t parse(lgf::liteParser& paser, lgf::LGFContext* ctx){
-//       return ctx->getType<natureNumber>();
-//     }
-// };
-
-// class rationalNumber: public lgf::variable {
-//     public:
-//     rationalNumber() = default;
-//     static std::unique_ptr<lgf::typeImpl> createImpl(){
-//       return std::move(std::make_unique<lgf::fieldVariableImpl>("rationalNumber"));
-//     }
-//     static type_t parse(lgf::liteParser& paser, lgf::LGFContext* ctx){
-//       return ctx->getType<rationalNumber>();
-//     }
-// };
-
-// class irrationalNumber: public lgf::variable {
-//   public:
-//   irrationalNumber() = default;
-//   static std::unique_ptr<lgf::typeImpl> createImpl(){
-//     return std::move(std::make_unique<lgf::fieldVariableImpl>("irrationalNumber"));
-//   }
-//   static type_t parse(lgf::liteParser& paser, lgf::LGFContext* ctx){
-//     return ctx->getType<irrationalNumber>();
-//   }
-// };
-
-// class infinitesimalImpl : public lgf::derivedTypeImpl, public fieldVariableImpl { 
-//   public: 
-//   infinitesimalImpl(lgf::type_t elemType_)
-//   : derivedTypeImpl("infinitesimal", elemType_), 
-//   fieldVariableImpl("infinitesimal") {}
-// };
+  static type_t parse(lgf::liteParser& p, lgf::LGFContext* ctx){
+    p.parseLessThan();
+    auto elemID = p.parseIdentifier();
+    auto fc = ctx->getTypeTable().findParser(elemID);
+    auto elemType = fc(p, ctx);
+    p.parseComma();
+    std::vector<dim_t> dims;
+    p.parseLessThan();
+    while(p.getCurToken() != liteParser::token('>')){
+      dims.push_back(p.parseNumber<uint32_t>());
+      if(p.getCurToken() == liteParser::token(',')){
+        p.parseComma();
+      }
+    }
+    p.parseGreaterThan();
+    return ctx->getType<tensorType>(elemType, dims);
+  }
+};
 
 class unitDesc : public lgf::derivedTypeDesc, public algebraAxiom { 
   public: 

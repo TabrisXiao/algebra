@@ -80,6 +80,11 @@ class liteParser {
         return num;
     }
     int64_t parseInteger(){ consume(tok_number); return int64_t(number); }
+    template<typename T>
+    T parseNumber(){
+        consume(tok_number);
+        return T(number);
+    }
     void parseColon(){ consume(int(':')); }
     void parseLeftSqaureBracket() { consume(int('['));}
     void parseRightSqaureBracket() { consume(int(']'));}

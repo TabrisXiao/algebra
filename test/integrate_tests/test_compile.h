@@ -20,12 +20,19 @@ class test_compile : public test_wrapper{
 
         auto varType = ctx.getType<variable>();
         auto vecType = ctx.getType<vectorType>(varType, 4);
+        
         auto x = pnt.paint<declOp>(vecType);
         auto y = pnt.paint<declOp>(vecType);
         auto z = pnt.paint<declOp>(vecType);
         auto a = pnt.paint<AAB::directProductOp>(x->output(), y->output());
         auto res = pnt.paint<AAB::directProductOp>(a->output(), z->output());
         auto ret = pnt.paint<returnOp>(res->output());
+
+        auto ttype = ctx.getType<tensorType>(varType, std::vector<dim_t>{4});
+        auto gtype = ctx.getType<tensorType>(varType, std::vector<dim_t>{5, 4});
+        auto gg = pnt.paint<declOp>(gtype);
+        auto v = pnt.paint<declOp>(ttype);
+        auto m = pnt.paint<AAB::contractionOp>(gg->output(), v->output(), 1, 0);
         compile(&ctx, &g);
 
         return 0;
