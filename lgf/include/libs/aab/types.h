@@ -62,8 +62,8 @@ class sequenceDesc : public lgf::descriptor {
   sequenceDesc(const sid_t sid, ARGS ...args)
   : lgf::descriptor(sid)
   , types({args...}){}
-  virtual std::string represent()const override{
-    std::string str= id+", size="+std::to_string(types.size())+"{";
+  virtual std::string representType()const override{
+    std::string str= id+", size="+std::to_string(types.size())+" {";
     for(auto & t: types){
       str += t.represent()+",";
     }
@@ -95,7 +95,7 @@ class vectorDesc : public lgf::descriptor, public algebraAxiom {
   , dim(dim_){
     initAsRing();
   }
-  virtual std::string represent() const override {
+  virtual std::string representType() const override {
     return id+"<"+elemType.represent()+","+std::to_string(dim)+">";
   }
   lgf::type_t elemType;
@@ -130,8 +130,8 @@ class tensorDesc : public lgf::descriptor, public algebraAxiom{
   , dims(rank_){
     initAsRing();
   }
-  virtual std::string represent() const override {
-    return id+"<"+elemType.represent()+","+dimRepresent()+">";
+  virtual std::string representType() const override {
+    return id+"<"+elemType.representType()+","+dimRepresent()+">";
   }
   std::string dimRepresent() const {
     std::string ret;

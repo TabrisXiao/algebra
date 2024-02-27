@@ -22,8 +22,8 @@ class derivedTypeDesc : public lgf::descriptor {
   : lgf::descriptor(id_)
   , baseType(baseType_){}
 
-  virtual std::string represent(){
-    return id+"<"+baseType.represent()+">";
+  virtual std::string representType() const{
+    return id+"<"+baseType.representType()+">";
   }
 
   lgf::type_t getBaseType(){

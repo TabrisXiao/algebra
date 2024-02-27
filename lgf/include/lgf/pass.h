@@ -7,15 +7,15 @@
 
 namespace lgf{
 
-class resultCode : public byteCode<int8_t>{
+class resultCode : public bitCode<int8_t>{
     public: 
     enum result: int8_t {
         default_result,
         success_result,
         failed_result
     };
-    resultCode(): byteCode() { value = 0; }
-    resultCode(int8_t v): byteCode(int8_t(v)){}
+    resultCode(): bitCode() { value = 0; }
+    resultCode(int8_t v): bitCode(int8_t(v)){}
     static resultCode success(){
         return resultCode(int8_t(resultCode::result::success_result));
     }

@@ -68,15 +68,15 @@ obj& get_vec_elem_with_check(size_t n, std::vector<obj>& vec){
 }
 
 // this object encodes operation status into 8 bit data
-class opStatus : public byteCode<uint8_t> {
+class opStatus : public bitCode<uint8_t> {
     public:
     enum status : uint8_t {
         default =0,
         // this type op can't be removed automatically
         nontrivial, 
     };
-    opStatus(): byteCode() {}
-    opStatus(uint8_t v) : byteCode(v){}
+    opStatus(): bitCode() {}
+    opStatus(uint8_t v) : bitCode(v){}
     bool isTrivial(){ return !check(nontrivial); }
     void setNontrivial(){ add(opStatus(nontrivial)); }
 };
@@ -407,7 +407,7 @@ class graph : public operation{
         virtual void print() override {}
     };
     graph() = default;
-    graph(std::string id, graph* pg = nullptr)
+    graph( std::string id, graph* pg = nullptr )
     : operation(id, pg)
     , entry(pg) {}
     virtual void print() override;
