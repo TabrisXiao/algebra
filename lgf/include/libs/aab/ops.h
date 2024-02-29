@@ -216,6 +216,7 @@ class directProductOp: public mappingOp {
         std::vector<type_t> types;
         for(auto &input : getInputs()){
             auto& type = input->getType();
+            std::cout<<type.represent()<<std::endl;
             if(type.getSID() == sequenceType::sid){ 
                 auto data = type.getDesc<sequenceDesc>()->getTypes();
                 types.insert(types.end(), data.begin(), data.end());

@@ -47,7 +47,8 @@ class descriptor {
     public:
     descriptor() = default;
     descriptor(const std::string id_): id(id_){}
-    std::string getSID(){ return id; }
+    void setSID(std::string sid_){ id = sid_; }
+    std::string getSID() const { return id; }
     virtual std::string representType() const { return id; }
     std::string represent() const {
         return representType()+representTraits();
@@ -77,18 +78,21 @@ class descriptor {
         if(it != traits.end()) return it->second.get();
         return nullptr;
     }
-    const std::string id;
     std::map<std::string, std::unique_ptr<trait>> traits;
+    private:
+    std::string id;
 };
 
 class type_t {
     public:
+    using desc_t = descriptor;
+    static inline const std::string id;
     type_t () = default;
-    type_t (const type_t& tp){ desc = tp.desc; }
+    type_t (const type_t& tp) { desc = tp.desc; }
     type_t (descriptor* desc_): desc(desc_){}
     virtual ~type_t() = default;
     
-    std::string getSID() {return desc->id;}
+    std::string getSID() const {return desc->getSID();}
     std::string represent() const {
         if(desc) return desc->represent();
         return "";

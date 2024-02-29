@@ -30,9 +30,9 @@ class algebraAxiom: public typeMarker<uint32_t> {
     }
 };
 
-class algebraVariableImpl : public descriptor, public algebraAxiom {
+class algebraVariableImpl : public algebraAxiom {
     public:
-    algebraVariableImpl(std::string sid): descriptor(sid){
+    algebraVariableImpl(std::string sid){
     }
 };
 
@@ -53,17 +53,14 @@ class realNumber: public lgf::variable {
 
 class sequenceDesc : public lgf::descriptor {
   public:
-  sequenceDesc(const sid_t sid)
-  : lgf::descriptor(sid){}
-  sequenceDesc(const sid_t sid, std::vector<lgf::type_t>& types_)
-  : lgf::descriptor(sid)
-  , types(types_){}
+  sequenceDesc() = default;
+  sequenceDesc(std::vector<lgf::type_t>& types_)
+  : types(types_){}
   template<typename ...ARGS>
-  sequenceDesc(const sid_t sid, ARGS ...args)
-  : lgf::descriptor(sid)
-  , types({args...}){}
+  sequenceDesc(ARGS ...args)
+  : types({args...}){}
   virtual std::string representType()const override{
-    std::string str= id+", size="+std::to_string(types.size())+" {";
+    std::string str= getSID()+", size="+std::to_string(types.size())+" {";
     for(auto & t: types){
       str += t.represent()+",";
     }
@@ -80,6 +77,7 @@ class sequenceDesc : public lgf::descriptor {
 class sequenceType: public lgf::variable {
   public:
   using desc_t = sequenceDesc;
+  static inline const std::string sid= "sequence";
   sequenceType() = default;
   static type_t parse(lgf::liteParser& p, lgf::LGFContext* ctx){
     THROW("sequenceType::parse not implemented")
@@ -89,24 +87,24 @@ class sequenceType: public lgf::variable {
 
 class vectorDesc : public lgf::descriptor, public algebraAxiom {
   public:
-  vectorDesc(const sid_t sid, type_t elemType_, dim_t dim_)
-  : lgf::descriptor(sid)
-  , elemType(elemType_)
+  vectorDesc(type_t elemType_, dim_t dim_)
+  : elemType(elemType_)
   , dim(dim_){
     initAsRing();
   }
   virtual std::string representType() const override {
-    return id+"<"+elemType.represent()+","+std::to_string(dim)+">";
+    return getSID()+"<"+elemType.represent()+","+std::to_string(dim)+">";
   }
   lgf::type_t elemType;
   dim_t dim;
 };
 
+
 class vectorType : public lgf::variable {
   public:
   using desc_t = vectorDesc;
-  static inline const sid_t sid = "vector";
-  vectorType() = default;
+  static inline const std::string sid= "vector";
+  vectorType() {};
   type_t getElemType(){ return dynamic_cast<vectorDesc*>(desc)->elemType; }
   dim_t getDim(){ return dynamic_cast<vectorDesc*>(desc)->dim; }
 
@@ -124,14 +122,13 @@ class vectorType : public lgf::variable {
 
 class tensorDesc : public lgf::descriptor, public algebraAxiom{
   public:
-  tensorDesc(const sid_t sid, type_t elem_t, std::vector<dim_t> rank_)
-  : lgf::descriptor(sid)
-  , elemType(elem_t)
-  , dims(rank_){
+  tensorDesc(type_t elem_t, std::vector<dim_t> rank_){
+    elemType = elem_t;
+    dims = rank_;
     initAsRing();
   }
   virtual std::string representType() const override {
-    return id+"<"+elemType.representType()+","+dimRepresent()+">";
+    return getSID()+"<"+elemType.representType()+","+dimRepresent()+">";
   }
   std::string dimRepresent() const {
     std::string ret;
@@ -172,54 +169,54 @@ class tensorType : public lgf::variable {
   }
 };
 
-class unitDesc : public lgf::derivedTypeDesc, public algebraAxiom { 
-  public: 
-  unitDesc(const sid_t sid, lgf::type_t elemType_)
-  : derivedTypeDesc(sid, elemType_) {
-    initAsField();
-  }
-}; 
+// class unitDesc : public lgf::derivedTypeDesc, public algebraAxiom { 
+//   public: 
+//   unitDesc(const sid_t sid, lgf::type_t elemType_)
+//   : derivedTypeDesc(sid, elemType_) {
+//     initAsField();
+//   }
+// }; 
 
-class zeroDesc : public lgf::derivedTypeDesc, public algebraAxiom { 
-  public: 
-  zeroDesc(const sid_t sid, lgf::type_t elemType_)
-  : derivedTypeDesc(sid, elemType_) {
-    initAsField();
-  }
-};
+// class zeroDesc : public lgf::derivedTypeDesc, public algebraAxiom { 
+//   public: 
+//   zeroDesc(const sid_t sid, lgf::type_t elemType_)
+//   : derivedTypeDesc(sid, elemType_) {
+//     initAsField();
+//   }
+// };
 
-class unit_t : public lgf::variable {
-  public:
-  using desc_t = unitDesc;
-  unit_t() = default;
-  type_t getElemType(){ return dynamic_cast<unitDesc*>(desc)->getBaseType(); }
+// class unit_t : public lgf::variable {
+//   public:
+//   using desc_t = unitDesc;
+//   unit_t() = default;
+//   type_t getElemType(){ return dynamic_cast<unitDesc*>(desc)->getBaseType(); }
 
-  static type_t parse(lgf::liteParser& p, lgf::LGFContext* ctx){
-    p.parseLessThan();
-    auto elemID = p.parseIdentifier();
-    auto fc = ctx->getTypeTable().findParser(elemID);
-    auto elemType = fc(p, ctx);
-    p.parseGreaterThan();
-    return ctx->getType<unit_t>(elemType);
-  }
-};
+//   static type_t parse(lgf::liteParser& p, lgf::LGFContext* ctx){
+//     p.parseLessThan();
+//     auto elemID = p.parseIdentifier();
+//     auto fc = ctx->getTypeTable().findParser(elemID);
+//     auto elemType = fc(p, ctx);
+//     p.parseGreaterThan();
+//     return ctx->getType<unit_t>(elemType);
+//   }
+// };
 
-class zero_t : public lgf::variable {
-  public:
-  using desc_t = zeroDesc;
-  zero_t() = default;
+// class zero_t : public lgf::variable {
+//   public:
+//   using desc_t = zeroDesc;
+//   zero_t() = default;
 
-  type_t getElemType(){ return dynamic_cast<zeroDesc*>(desc)->getBaseType(); }
+//   type_t getElemType(){ return dynamic_cast<zeroDesc*>(desc)->getBaseType(); }
 
-  static type_t parse(lgf::liteParser& p, lgf::LGFContext* ctx){
-    p.parseLessThan();
-    auto elemID = p.parseIdentifier();
-    auto fc = ctx->getTypeTable().findParser(elemID);
-    auto elemType = fc(p, ctx);
-    p.parseGreaterThan();
-    return ctx->getType<zero_t>(elemType);
-  }
-};
+//   static type_t parse(lgf::liteParser& p, lgf::LGFContext* ctx){
+//     p.parseLessThan();
+//     auto elemID = p.parseIdentifier();
+//     auto fc = ctx->getTypeTable().findParser(elemID);
+//     auto elemType = fc(p, ctx);
+//     p.parseGreaterThan();
+//     return ctx->getType<zero_t>(elemType);
+//   }
+// };
 
 }
 #endif

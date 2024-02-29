@@ -9,28 +9,28 @@ namespace lgf{
 class variable : public lgf::type_t {
     public:
     using desc_t = descriptor;
-    static inline const sid_t sid = "var";
-    variable()  = default;
+    static inline const sid_t sid= "var";
+    variable(){};
     static type_t parse(liteParser& paser, LGFContext* ctx){
       return ctx->getType<variable>();
     }
 };
 
-class derivedTypeDesc : public lgf::descriptor {
-  public:
-  derivedTypeDesc(std::string id_, type_t baseType_)
-  : lgf::descriptor(id_)
-  , baseType(baseType_){}
+// class derivedTypeDesc : public lgf::descriptor {
+//   public:
+//   derivedTypeDesc(type_t baseType_)
+//   : lgf::descriptor(id_)
+//   , baseType(baseType_){}
 
-  virtual std::string representType() const{
-    return id+"<"+baseType.representType()+">";
-  }
+//   virtual std::string representType() const{
+//     return id+"<"+baseType.representType()+">";
+//   }
 
-  lgf::type_t getBaseType(){
-    return baseType;
-  }
-  type_t baseType;
-};
+//   lgf::type_t getBaseType(){
+//     return baseType;
+//   }
+//   type_t baseType;
+// };
 
 class reference_t : public lgf::type_t {
   public:

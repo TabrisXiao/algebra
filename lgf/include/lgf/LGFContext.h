@@ -21,6 +21,7 @@ class LGFContext {
     tp getOrCreateDesc(std::unique_ptr<descriptor>&& imp){
         tp t;
         t.desc = imp.get();
+        imp->setSID(tp::sid);
         if(auto ptr = findTypeDesc(imp.get())){
             t.desc = ptr;
             return t;
@@ -30,12 +31,12 @@ class LGFContext {
     }
     template<typename tp, typename ...ARGS>
     tp getType(ARGS ...args){
-        auto ptr = std::make_unique<tp::desc_t>(tp::sid, args...);  
+        auto ptr = std::make_unique<tp::desc_t>(args...);  
         return getOrCreateDesc<tp>(std::move(ptr));
     }
     template<typename tp>
     tp getType(){
-        auto ptr = std::make_unique<tp::desc_t>(tp::sid);
+        auto ptr = std::make_unique<tp::desc_t>();
         return getOrCreateDesc<tp>(std::move(ptr));
     }
     
