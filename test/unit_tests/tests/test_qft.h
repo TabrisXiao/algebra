@@ -1,17 +1,15 @@
-#include "unit_test_frame.h"
 
+#include "unit_test_frame.h"
 #include "libs/Builtin/Builtin.h"
-#include "libs/aab/aab.h"
-#include "libs/transform/convertToSIO.h"
-#include "libs/SIO/exporter.h"
+#include "libs/qft/types.h"
+#include "libs/compiler.h"
 
 using namespace lgf;
 namespace test_body{
-class test_compile : public test_wrapper{
-    
+class test_qft: public test_wrapper {
     public:
-    test_compile() {test_id = "pass compile";};
-    bool run() {
+    test_qft() {test_id = "qft test";};
+    bool test1(){
         LGFContext ctx;
         moduleOp g;
         g.setContext(&ctx);
@@ -34,24 +32,13 @@ class test_compile : public test_wrapper{
         auto v = pnt.paint<declOp>(ttype);
         auto m = pnt.paint<AAB::contractionOp>(gg->output(), v->output(), 1, 0);
         auto ret = pnt.paint<returnOp>(m->output());
-        compile(&ctx, &g);
-
+        core.compile(&ctx, &g);
+        g.print();
         return 0;
     }
-    void compile(LGFContext* ctx, graph* g){
-        passManager pm(ctx, g);
-        pm.enablePrintBeforePass();
-        pm.addNormalizationPass();
-
-        default_pipeline(pm);
-        pm.run();
+    bool run(){
+        return test1();
     }
-
-    void default_pipeline(passManager& pm){
-        pm.addPass(AAB::createAAProcess());
-        pm.addPass(AAB::createCalculusPass());
-        pm.addNormalizationPass();
-        pm.addPass(transform::createConvertToSIOPass());
-    }
+    AABCompiler core;
 };
-}// namespace test_body
+} // namespace test_qft

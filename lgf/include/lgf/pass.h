@@ -102,7 +102,7 @@ class passManager{
     passManager(LGFContext* c, graph *op) {ctx = c, start = op;}
     void enablePrintAfterPass(){bPrintAfterPass = 1;}
     void enablePrintBeforePass(){bPrintBeforePass = 1;}
-
+    void init(LGFContext* c, graph *op) {ctx = c, start = op;}
     void validation(graph* g);
     
     void redundantCheck(operation* op){

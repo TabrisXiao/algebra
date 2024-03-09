@@ -216,7 +216,6 @@ class directProductOp: public mappingOp {
         std::vector<type_t> types;
         for(auto &input : getInputs()){
             auto& type = input->getType();
-            std::cout<<type.represent()<<std::endl;
             if(type.getSID() == sequenceType::sid){ 
                 auto data = type.getDesc<sequenceDesc>()->getTypes();
                 types.insert(types.end(), data.begin(), data.end());
@@ -327,10 +326,10 @@ class tensorProductOp : public mappingOp{
         if(lhs_tp.getElemType() != lhs_tp.getElemType()){
             throw std::runtime_error("tensorType: type mismatch");
         }
-        std::vector<dim_t> dims(lhs_tp.getDims());
-        std::vector<dim_t> rhs_dims(rhs_tp.getDims());
-        dims.insert(dims.end(), rhs_dims.begin(), rhs_dims.end());
-        auto tp = ctx->getType<tensorType>(lhs_tp.getElemType(), dims);
+        std::vector<bool> idx(lhs_tp.getRSType());
+        std::vector<bool> rhs_idx(rhs_tp.getRSType());
+        idx.insert(idx.end(), rhs_idx.begin(), rhs_idx.end());
+        auto tp = ctx->getType<tensorType>(lhs_tp.getElemType(),lhs_tp.getDimension(), idx);
         output()->setType(tp);
      }
 };
@@ -353,18 +352,24 @@ class contractionOp : public mappingOp {
         op->addArgument(input);
         op->idx_lhs = index_lhs;
         op->idx_rhs = index_rhs;
+        if(index_lhs > index_rhs){
+            std::swap(op->idx_lhs, op->idx_rhs);
+        }
         op->createValue();
         op->inferType(ctx);
      }
      void inferType1(LGFContext* ctx) {
         auto type = inputValue(0)->getType<tensorType>();
-        std::vector<dim_t> dims(type.getDims());
-        if( dims[idx_lhs] != dims[idx_rhs]){
-            THROW("contractionOp: dimension mismatch");
+        std::vector<bool> indices(type.getRSType());
+        int id1 = indices[idx_lhs] ? 1 : -1;
+        int id2 = indices[idx_rhs] ? 1 : -1;
+        if(id1 * id2 > 0){
+            THROW("contractionOp: one index has to be covriant and the other contravariant");
         }
-        dims.erase(dims.begin()+idx_lhs);
-        dims.erase(dims.begin()+idx_rhs);
-        auto tp = ctx->getType<tensorType>(type.getElemType(), dims);
+        indices.erase(indices.begin()+idx_lhs);
+        indices.erase(indices.begin()+idx_rhs-1);
+        dim_t dims = type.getDimension();
+        auto tp = ctx->getType<tensorType>(type.getElemType(), dims, indices);
         output()->setType(tp);
      }
      void inferType2(LGFContext* ctx) {
@@ -374,15 +379,20 @@ class contractionOp : public mappingOp {
         if(lhs_tp.getElemType() != lhs_tp.getElemType()){
             THROW("contractionOp: element type mismatch");
         }
-        std::vector<dim_t> dims(lhs_tp.getDims());
-        if( dims[idx_lhs] != rhs_tp.getDims()[idx_rhs]){
+        if(lhs_tp.getDimension() != rhs_tp.getDimension()){
             THROW("contractionOp: dimension mismatch");
         }
-        dims.erase(dims.begin()+idx_lhs);
-        std::vector<dim_t> rhs_dims(rhs_tp.getDims());
-        rhs_dims.erase(rhs_dims.begin()+idx_rhs);
-        dims.insert(dims.end(), rhs_dims.begin(), rhs_dims.end());
-        auto tp = ctx->getType<tensorType>(lhs_tp.getElemType(), dims);
+        std::vector<bool> lhs_idx(lhs_tp.getRSType());
+        std::vector<bool> rhs_idx(rhs_tp.getRSType());
+        int id1 = lhs_idx[idx_lhs] ? 1 : -1;
+        int id2 = rhs_idx[idx_rhs] ? 1 : -1;
+        if(id1 * id2 > 0){
+            THROW("contractionOp: one index has to be covriant and the other contravariant");
+        }
+        lhs_idx.erase(lhs_idx.begin()+idx_lhs);
+        rhs_idx.erase(rhs_idx.begin()+idx_rhs);
+        lhs_idx.insert(lhs_idx.end(), rhs_idx.begin(), rhs_idx.end());
+        auto tp = ctx->getType<tensorType>(lhs_tp.getElemType(), lhs_tp.getDimension(), lhs_idx);
         output()->setType(tp);
      }
      virtual void inferType(LGFContext* ctx) override {

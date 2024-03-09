@@ -86,7 +86,7 @@ class descriptor {
 class type_t {
     public:
     using desc_t = descriptor;
-    static inline const std::string id;
+    static inline const std::string sid;
     type_t () = default;
     type_t (const type_t& tp) { desc = tp.desc; }
     type_t (descriptor* desc_): desc(desc_){}

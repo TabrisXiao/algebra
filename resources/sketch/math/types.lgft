@@ -17,7 +17,7 @@ type rationalNumber : variable {
 }
 
 type irrationalNumber : variable {
-    # those numbers can not expressed as fraction of two integer
+    # those n can not expressed as fraction of two integer
 }
 
 type realNumber : variable {

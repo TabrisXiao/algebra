@@ -60,7 +60,7 @@ class sequenceDesc : public lgf::descriptor {
   sequenceDesc(ARGS ...args)
   : types({args...}){}
   virtual std::string representType()const override{
-    std::string str= getSID()+", size="+std::to_string(types.size())+" {";
+    std::string str= getSID()+": size="+std::to_string(types.size())+" {";
     for(auto & t: types){
       str += t.represent()+",";
     }
@@ -99,7 +99,6 @@ class vectorDesc : public lgf::descriptor, public algebraAxiom {
   dim_t dim;
 };
 
-
 class vectorType : public lgf::variable {
   public:
   using desc_t = vectorDesc;
@@ -120,25 +119,30 @@ class vectorType : public lgf::variable {
   }
 };
 
+
 class tensorDesc : public lgf::descriptor, public algebraAxiom{
   public:
-  tensorDesc(type_t elem_t, std::vector<dim_t> rank_){
-    elemType = elem_t;
-    dims = rank_;
+  // 0 stands for covariant, 1 stands for contravariant
+  tensorDesc(type_t elem_t, dim_t dim_, std::vector<bool> rstype_):
+  elemType(elem_t),
+  dimension(dim_),
+  rstype(rstype_){
     initAsRing();
   }
   virtual std::string representType() const override {
     return getSID()+"<"+elemType.representType()+","+dimRepresent()+">";
   }
   std::string dimRepresent() const {
-    std::string ret;
-    for(auto& d : dims){
-      ret += std::to_string(d)+"x";
+    std::string ret = "size="+std::to_string(dimension)+",(";
+    for(auto d : rstype){
+      ret += std::to_string(d)+",";
     }
     ret.pop_back();
+    ret+=")";
     return ret;
   }
-  std::vector<dim_t> dims;
+  dim_t dimension=0;
+  std::vector<bool> rstype;
   lgf::type_t elemType;
 };
 
@@ -148,24 +152,11 @@ class tensorType : public lgf::variable {
   static inline const sid_t sid = "tensor";
   tensorType() = default;
   type_t getElemType(){ return dynamic_cast<tensorDesc*>(desc)->elemType; }
-  std::vector<dim_t>& getDims() const { return dynamic_cast<tensorDesc*>(desc)->dims; }
-
+  dim_t getDimension() const { return dynamic_cast<tensorDesc*>(desc)->dimension; }
+  std::vector<bool> getRSType() const { return dynamic_cast<tensorDesc*>(desc)->rstype; }
   static type_t parse(lgf::liteParser& p, lgf::LGFContext* ctx){
-    p.parseLessThan();
-    auto elemID = p.parseIdentifier();
-    auto fc = ctx->getTypeTable().findParser(elemID);
-    auto elemType = fc(p, ctx);
-    p.parseComma();
-    std::vector<dim_t> dims;
-    p.parseLessThan();
-    while(p.getCurToken() != liteParser::token('>')){
-      dims.push_back(p.parseNumber<uint32_t>());
-      if(p.getCurToken() == liteParser::token(',')){
-        p.parseComma();
-      }
-    }
-    p.parseGreaterThan();
-    return ctx->getType<tensorType>(elemType, dims);
+    THROW("tensorType::parse not implemented");
+    return ctx->getType<lgf::variable>();
   }
 };
 
