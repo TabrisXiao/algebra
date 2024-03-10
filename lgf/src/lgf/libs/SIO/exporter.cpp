@@ -28,6 +28,8 @@ std::string export2Txt::process(value* val ){
         res += op->getSymbol();
     }else if(auto op = val->getDefiningOp<lgf::assignOp>()){
         res = process(op->lhs()) +" = "+ process(op->rhs());
+    }else if(auto op = val->getDefiningOp<partialD>()){
+        res = "d("+process(op->inputValue(0))+")/d("+process(op->inputValue(1))+")";
     }else {
         auto rep = "\n"+val->getDefiningOp()->represent();
         THROW("The following Op is not supported in export2Txt: "+rep+"\n");
@@ -37,6 +39,12 @@ std::string export2Txt::process(value* val ){
 
 void export2Txt::run(graph* entry){
     auto list = entry->getNodeList();
+    bool mainFound = false;
+    auto module = dynamic_cast<moduleOp*>(entry);
+    if(module && module->name == "main"){
+        mainFound = true;
+    }
+    if( mainFound ) os<<"--- export main to text: ---\n\n";
     for(auto & node : list ){
         if(auto op = dynamic_cast<returnOp*>(node)){
             if(op->getInputSize() == 1){
@@ -44,16 +52,13 @@ void export2Txt::run(graph* entry){
                 os<<process(val);
             }
         }else if(auto module = dynamic_cast<moduleOp*>(node)){
-            if(module->name == "main"){
-                os<<"--- export main to text: ---\n\n";
-                for(auto & input : module->getInputs()){
-                    run(module);
-                    os<<"\n";
-                }
-                os<<"\n--- end ---\n";
+            for(auto & input : module->getInputs()){
+                run(module);
+                
             }
         }
     }
+    if( mainFound ) os<<"\n\n--- end ---\n";
 }
 
 }// namespace lgf::SIO

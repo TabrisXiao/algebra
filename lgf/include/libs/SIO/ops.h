@@ -102,6 +102,17 @@ class funcOp : public representOp{
     std::string funcName;
 };
 
+class partialD : public representOp{
+    public:
+    partialD() : representOp("sio::partialD") {}
+    static partialD* build(lgf::LGFContext, value* func, value* var){
+        partialD *op = new partialD();
+        op->registerInput(func, var);
+        op->addOutput(func->getType(), func->getSID());
+        return op;
+    }
+};
+
 }
 
 #endif

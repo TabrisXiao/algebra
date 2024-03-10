@@ -5,6 +5,7 @@
 
 #include "libs/Builtin/ops.h"
 #include "libs/aab/ops.h"
+#include "libs/fa/ops.h"
 #include "libs/SIO/ops.h"
 #include "lgf/pass.h"
 
@@ -33,8 +34,11 @@ class convertToSIOPass : public passBase {
         painter p(getContext());
         addRewriter<convertToSIORewriter<declOp, SIO::symbolOp>>();
         addRewriter<convertToSIORewriter<AAB::sumOp, SIO::sumOp>>();
+        addRewriter<convertToSIORewriter<AAB::productOp, SIO::scalarProductOp>>();
         addRewriter<convertToSIORewriter<AAB::commutableProductOp, SIO::scalarProductOp>>();
-        addRewriter<convertToSIORewriter<AAB::funcCosOp, SIO::funcOp>>("cos");
+        addRewriter<convertToSIORewriter<funcCosOp, SIO::funcOp>>("cos");
+        addRewriter<convertToSIORewriter<funcSineOp, SIO::funcOp>>("sin");
+        addRewriter<convertToSIORewriter<partialDifferentiateOp, SIO::partialD>>();
         return applyRewriterGreedy(p, getGraph());
     }
 };

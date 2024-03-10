@@ -1,14 +1,13 @@
 
 #include "unit_test_frame.h"
 #include "libs/Builtin/Builtin.h"
-#include "libs/qft/types.h"
 #include "libs/compiler.h"
 
 using namespace lgf;
 namespace test_body{
-class test_qft: public test_wrapper {
+class test_clean_pass: public test_wrapper {
     public:
-    test_qft() {test_id = "qft test";};
+    test_clean_pass() {test_id = "clean pass test";};
     bool test1(){
         LGFContext ctx;
         moduleOp g;

@@ -105,7 +105,9 @@ class painter {
         op->replaceBy(newop);
         return newop;
     }
-
+    void setPaintPointToTop(){
+        point.iter = point.g->getNodeList().begin();
+    }
     void setPaintPointBefore(operation* op){
         point.g = op->getParentGraph();
         auto & vec = point.g->getNodeList();

@@ -101,6 +101,10 @@ class type_t {
         if(desc) return desc->representType();
         return "";
     }
+    template<typename t>
+    bool is(){
+        return dynamic_cast<t::desc_t*>(desc) != nullptr;
+    }
     bool operator==(const type_t& other){
         return this->representType() == other.representType();
     }

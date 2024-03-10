@@ -43,13 +43,6 @@ class fieldVariableImpl : public algebraVariableImpl {
     }
 };
 
-class realNumber: public lgf::variable {
-    public:
-    realNumber() = default;
-    static type_t parse(lgf::liteParser& paser, lgf::LGFContext* ctx){
-      return ctx->getType<realNumber>();
-    }
-};
 
 class sequenceDesc : public lgf::descriptor {
   public:
@@ -119,7 +112,6 @@ class vectorType : public lgf::variable {
   }
 };
 
-
 class tensorDesc : public lgf::descriptor, public algebraAxiom{
   public:
   // 0 stands for covariant, 1 stands for contravariant
@@ -160,54 +152,39 @@ class tensorType : public lgf::variable {
   }
 };
 
-// class unitDesc : public lgf::derivedTypeDesc, public algebraAxiom { 
-//   public: 
-//   unitDesc(const sid_t sid, lgf::type_t elemType_)
-//   : derivedTypeDesc(sid, elemType_) {
-//     initAsField();
-//   }
-// }; 
+class unitDesc : public lgf::descriptor, public algebraAxiom { 
+  public: 
+  unitDesc(lgf::type_t baseT): base(baseT) {}
+  virtual std::string representType() const override {
+    return getSID()+"<"+base.representType()+">";
+  }
+  type_t base;
+}; 
 
-// class zeroDesc : public lgf::derivedTypeDesc, public algebraAxiom { 
-//   public: 
-//   zeroDesc(const sid_t sid, lgf::type_t elemType_)
-//   : derivedTypeDesc(sid, elemType_) {
-//     initAsField();
-//   }
-// };
+class unitType: public lgf::variable {
+  public:
+  using desc_t = unitDesc;
+  static inline const sid_t sid = "unit";
+  unitType() = default;
+  type_t getBaseType(){ return dynamic_cast<unitDesc*>(desc)->base; }
+};
 
-// class unit_t : public lgf::variable {
-//   public:
-//   using desc_t = unitDesc;
-//   unit_t() = default;
-//   type_t getElemType(){ return dynamic_cast<unitDesc*>(desc)->getBaseType(); }
+class zeroDesc : public lgf::descriptor, public algebraAxiom { 
+  public: 
+  zeroDesc(lgf::type_t base_) : base(base_) {}
+  virtual std::string representType() const override {
+    return getSID()+"<"+base.representType()+">";
+  }
+  type_t base;
+};
 
-//   static type_t parse(lgf::liteParser& p, lgf::LGFContext* ctx){
-//     p.parseLessThan();
-//     auto elemID = p.parseIdentifier();
-//     auto fc = ctx->getTypeTable().findParser(elemID);
-//     auto elemType = fc(p, ctx);
-//     p.parseGreaterThan();
-//     return ctx->getType<unit_t>(elemType);
-//   }
-// };
-
-// class zero_t : public lgf::variable {
-//   public:
-//   using desc_t = zeroDesc;
-//   zero_t() = default;
-
-//   type_t getElemType(){ return dynamic_cast<zeroDesc*>(desc)->getBaseType(); }
-
-//   static type_t parse(lgf::liteParser& p, lgf::LGFContext* ctx){
-//     p.parseLessThan();
-//     auto elemID = p.parseIdentifier();
-//     auto fc = ctx->getTypeTable().findParser(elemID);
-//     auto elemType = fc(p, ctx);
-//     p.parseGreaterThan();
-//     return ctx->getType<zero_t>(elemType);
-//   }
-// };
+class zeroType: public lgf::variable {
+  public:
+  using desc_t = zeroDesc;
+  static inline const sid_t sid = "zero";
+  zeroType() = default;
+  type_t getBaseType(){ return dynamic_cast<desc_t*>(desc)->base; }
+};
 
 }
 #endif

@@ -43,8 +43,8 @@ class normalizationPass : public passBase {
         removeIdenticalOps(getGraph());
         resultCode code = applyRewriterGreedy(p, getGraph());
         inferTypes(getGraph());
-        //removeUnusedOps(getGraph());
-        //getGraph()->clean();
+        removeUnusedOps(getGraph());
+        getGraph()->clean();
         return code;
     }
 
@@ -88,6 +88,8 @@ class normalizationPass : public passBase {
 
     bool removeIdenticalOps(graph* g){
         // using breadth first walk to remove identical ops
+        // assignID is necessary for the checkIfIdenticalExist function as the id is used to check if two ops are identical
+        g->assignID();
         bool changed = false;
         if(g == nullptr) {
             THROW("Remove identical ops failed: graph is invalid.");

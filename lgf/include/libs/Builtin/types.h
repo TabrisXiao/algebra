@@ -16,22 +16,6 @@ class variable : public lgf::type_t {
     }
 };
 
-// class derivedTypeDesc : public lgf::descriptor {
-//   public:
-//   derivedTypeDesc(type_t baseType_)
-//   : lgf::descriptor(id_)
-//   , baseType(baseType_){}
-
-//   virtual std::string representType() const{
-//     return id+"<"+baseType.representType()+">";
-//   }
-
-//   lgf::type_t getBaseType(){
-//     return baseType;
-//   }
-//   type_t baseType;
-// };
-
 class reference_t : public lgf::type_t {
   public:
   using desc_t = lgf::descriptor;

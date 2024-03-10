@@ -270,10 +270,19 @@ public :
     void dropAllInputs();
 
     // drop the input value
+    void dropInputValue(int i ){
+        if(i>=getInputSize()) return;
+        inputs[i]->removeOp(this);
+        inputs.erase(inputs.begin()+i);
+    }
+    std::vector<value*>::iterator dropInputValue(std::vector<value*>::iterator iter){
+        if(iter == inputs.end()) return inputs.end();
+        (*iter)->removeOp(this);
+        return inputs.erase(iter);
+    }
     void dropInputValue(value* v){
         auto iter = std::find(inputs.begin(), inputs.end(), v);
-        if(iter == inputs.end()) return;
-        inputs.erase(iter);
+        dropInputValue(iter);
     }
 
     void erase(){

@@ -5,6 +5,7 @@
 
 #include "lgf/LGFCompiler.h"
 #include "libs/aab/AAB.h"
+#include "libs/fa/passes.h"
 #include "libs/transform/convertToSIO.h"
 
 namespace lgf {
@@ -14,8 +15,9 @@ public:
     void build_pipeline() override {
         pm.addNormalizationPass();
         pm.addPass(AAB::createAAProcess());
+        pm.addPass(createCalculusPass());
         pm.addNormalizationPass();
-        //pm.addPass(transform::createConvertToSIOPass());
+        pm.addPass(transform::createConvertToSIOPass());
     }
 };
 }

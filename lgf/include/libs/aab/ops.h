@@ -451,44 +451,6 @@ class quotientOp : public mappingOp
     lgf::value* denominator(){ return inputValue(1); }
 };
 
-class powerOp : public mappingOp
-{
-    public:
-    powerOp() : mappingOp("AAB::power"){}
-    static powerOp* build(lgf::LGFContext* ctx, lgf::value* x, lgf::value *y){
-        auto op = new powerOp();
-        op->addArgument(x, y);
-        op->createValue(x->getType(), "");
-        return op;
-    }
-    lgf::value* power(){ return inputValue(1); }
-    lgf::value* x(){ return inputValue(0); }
-
-};
-
-
-class funcSineOp : public mappingOp{
-    public:
-    funcSineOp() :  mappingOp("AAB::sine"){}
-    static funcSineOp* build (lgf::LGFContext* ctx, lgf::value* x){
-        auto op = new funcSineOp();
-        op->addArgument(x);
-        op->createValue(x->getType(), "");
-        return op;
-    }
-};
-
-class funcCosOp : public mappingOp{
-    public:
-    funcCosOp(): mappingOp("AAB::cos"){}
-    static funcCosOp* build (lgf::LGFContext* ctx, lgf::value* x){
-        auto op = new funcCosOp();
-        op->addArgument(x);
-        op->createValue(x->getType(), "");
-        return op;
-    }
-};
-
 class permuteOp : public lgf::operation {
     public:
     permuteOp() : operation("AAB::permuteOp"){}
@@ -606,52 +568,6 @@ class associateOp : public operation, public normalizer {
         return resultCode::pass();
     }
 };
-
-class partialDifferentiateOp : public mappingOp {
-    public:
-    partialDifferentiateOp() : mappingOp("AAB::PartialDifferentiate"){}
-    static partialDifferentiateOp* build(LGFContext* ctx, value* func, value* var){
-        auto op = new partialDifferentiateOp();
-        op->addArgument(func, var);
-        op->createValue(func->getType(), "");
-        return op;
-    }
-    value* func(){ return inputValue(0); }
-    value* var(){ return inputValue(1); }
-};
-
-class differentiateOp : public mappingOp {
-    public:
-    differentiateOp() : mappingOp("AAB::differentiate"){}
-    static differentiateOp* build(LGFContext* ctx, value* input, value* target){
-        auto op = new differentiateOp();
-        op->addArgument(input, target);
-        op->createValue(input->getType(), "");
-        return op;
-    }
-    value* input(){ return inputValue(0); }
-    value* target(){ return inputValue(1); }
-};
-
-class exponentialOp : public mappingOp {
-    public:
-    exponentialOp() : mappingOp("AAB::exponential"){}
-    static exponentialOp* build(LGFContext* ctx, value* input, value* power){
-        auto op = new exponentialOp();
-        op->addArgument(input, power);
-        op->createValue(input->getType(), "");
-        return op;
-    }
-    value* input(){
-        return inputValue(0);
-    }
-    void inferType(LGFContext* ctx) override{
-        // using the input type as output type
-        output()->setType(input()->getType()); 
-    }
-};
-
-
 // class factorOp : public operation, public normalizer{
 //     public:
 //     factorOp() : operation("AAB::factor") {}
