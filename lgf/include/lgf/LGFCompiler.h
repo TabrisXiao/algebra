@@ -11,6 +11,7 @@ class compilerPrototype{
     passManager* getManager(){ return &pm;}
     void compile(LGFContext* ctx, graph* g){
         pm.init(ctx, g);
+        build_pipeline();
         pm.run();
     }
     virtual void build_pipeline() = 0;

@@ -62,7 +62,6 @@ public :
 
     // the return value is not defined yet.
     virtual resultCode run() = 0;
-
     graph * getGraph(){ return g; }
     void gotoGraph(graph *reg){ g = reg;}
     LGFContext * getContext(){ return ctx; }

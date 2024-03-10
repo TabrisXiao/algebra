@@ -37,6 +37,7 @@ class test_qft: public test_wrapper {
         return 0;
     }
     bool run(){
+        //core.getManager()->enablePrintBeforePass();
         return test1();
     }
     AABCompiler core;

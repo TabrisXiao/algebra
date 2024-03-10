@@ -10,12 +10,12 @@
 namespace lgf {
 class AABCompiler : public compilerPrototype {
 public: 
-    AABCompiler() = default;
+    AABCompiler() {};
     void build_pipeline() override {
         pm.addNormalizationPass();
         pm.addPass(AAB::createAAProcess());
         pm.addNormalizationPass();
-        pm.addPass(transform::createConvertToSIOPass());
+        //pm.addPass(transform::createConvertToSIOPass());
     }
 };
 }

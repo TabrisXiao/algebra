@@ -402,14 +402,14 @@ class graph : public operation{
     public : 
     class graphEntry : public operation {
         public:
-        graphEntry(graph* g) : operation("", g){}
+        graphEntry(graph* g) : operation("", g){ getStatus().setNontrivial(); }
         virtual std::string represent() { return ""; }
         virtual void print() override {}
     };
     graph() = default;
     graph( std::string id, graph* pg = nullptr )
     : operation(id, pg)
-    , entry(pg) {}
+    , entry(this) {}
     virtual void print() override;
     virtual std::string represent() = 0;
     // A breadth-first walk function that is graph modification safe.
@@ -456,7 +456,6 @@ class graph : public operation{
                 }
             }
             fn(v);
-            
         }
         // all the ops haven't been explored come from a disconnected graph
         // need to mark them as removable if we don't need them.

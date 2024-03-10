@@ -34,7 +34,7 @@ class normalizer : public group {
 
 class normalizationPass : public passBase {
     public: 
-    normalizationPass() : passBase("normalization"){}
+    normalizationPass() : passBase("normalization"){ }
     virtual resultCode run(){
         painter p(getContext());
         addRewriter<groupRewriter<normalizer>>();
@@ -44,6 +44,7 @@ class normalizationPass : public passBase {
         resultCode code = applyRewriterGreedy(p, getGraph());
         inferTypes(getGraph());
         //removeUnusedOps(getGraph());
+        //getGraph()->clean();
         return code;
     }
 
@@ -88,6 +89,9 @@ class normalizationPass : public passBase {
     bool removeIdenticalOps(graph* g){
         // using breadth first walk to remove identical ops
         bool changed = false;
+        if(g == nullptr) {
+            THROW("Remove identical ops failed: graph is invalid.");
+        }
         auto list = g->getEntry().getIndirectDependecyValue()->getUsers();
         std::queue<operation*> queue;
         for(auto op : list){
