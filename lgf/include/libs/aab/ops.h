@@ -39,6 +39,7 @@ class mappingOp: public lgf::operation{
         }
         return ret;
     }
+
     // template <typename... ARGS>
     // static mappingOp* build(lgf::LGFContext* ctx, std::string mapName, type_t tp, ARGS ...args){
     //     auto op = new mappingOp(mapName, args...);

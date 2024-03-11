@@ -13,10 +13,12 @@ std::string export2Txt::process(value* val ){
         }
         res.pop_back();
     }else if(auto op = val->getDefiningOp<sumOp>()){
+        res+="(";
         for(auto & input : op->getInputs()){
             res += process(input) + "+";
         }
         res.pop_back();
+        res+=")";
     }else if(auto op = val->getDefiningOp<funcOp>()){
         res += op->getFuncName() + "(";
         for(auto & input : op->getInputs()){
@@ -30,6 +32,8 @@ std::string export2Txt::process(value* val ){
         res = process(op->lhs()) +" = "+ process(op->rhs());
     }else if(auto op = val->getDefiningOp<partialD>()){
         res = "d("+process(op->inputValue(0))+")/d("+process(op->inputValue(1))+")";
+    }else if(auto op = val->getDefiningOp<negativeOp>()){
+        res = "-"+process(op->inputValue(0));
     }else {
         auto rep = "\n"+val->getDefiningOp()->represent();
         THROW("The following Op is not supported in export2Txt: "+rep+"\n");

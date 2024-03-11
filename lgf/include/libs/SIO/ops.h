@@ -81,6 +81,17 @@ class assignOp : public representOp{
     }
 };
 
+class negativeOp : public representOp{
+    public:
+    negativeOp() : representOp("sio::negative") {}
+    static negativeOp* build(lgf::LGFContext, value* input){
+        negativeOp *op = new negativeOp();
+        op->registerInput(input);
+        op->addOutput(input->getType(), input->getSID());
+        return op;
+    }
+};
+
 class funcOp : public representOp{
     public:
     funcOp() : representOp("sio::func") {}

@@ -6,8 +6,6 @@
 #include "lgf/global.h"
 #include "lgf/operation.h"
 
-
-
 namespace lgf::SIO{
 class export2Txt {
     public:
