@@ -216,7 +216,7 @@ class directProductOp: public mappingOp {
         std::vector<type_t> types;
         for(auto &input : getInputs()){
             auto& type = input->getType();
-            if(type.getSID() == sequenceType::sid){
+            if(type.getSID() == sequenceType::sid){ 
                 auto data = type.getDesc<sequenceDesc>()->getTypes();
                 types.insert(types.end(), data.begin(), data.end());
             }else {
@@ -310,6 +310,104 @@ class directProduct: public mappingOp {
     }
 };
 
+class tensorProductOp : public mappingOp{
+    public:
+    tensorProductOp() : mappingOp("AAB::tensorProduct"){}
+    static tensorProductOp* build(lgf::LGFContext* ctx, value* lhs, value* rhs){
+        auto op = new tensorProductOp();
+        op->addArgument(lhs, rhs);
+        op->createValue();
+        op->inferType(ctx);
+        return op;
+    }
+    virtual void inferType(LGFContext* ctx) override {
+        tensorType lhs_tp = inputValue(0)->getType<tensorType>();
+        tensorType rhs_tp = inputValue(1)->getType<tensorType>();
+        if(lhs_tp.getElemType() != lhs_tp.getElemType()){
+            throw std::runtime_error("tensorType: type mismatch");
+        }
+        std::vector<bool> idx(lhs_tp.getRSType());
+        std::vector<bool> rhs_idx(rhs_tp.getRSType());
+        idx.insert(idx.end(), rhs_idx.begin(), rhs_idx.end());
+        auto tp = ctx->getType<tensorType>(lhs_tp.getElemType(),lhs_tp.getDimension(), idx);
+        output()->setType(tp);
+     }
+};
+
+class contractionOp : public mappingOp {
+     public:
+     contractionOp() : mappingOp("AAB::contraction"){}
+     static contractionOp* build(lgf::LGFContext* ctx, value* lhs, value* rhs, int index_lhs, int index_rhs){
+        // in this case, it is like a tensor product + contraction
+        auto op = new contractionOp();
+        op->addArgument(lhs, rhs);
+        op->idx_lhs = index_lhs;
+        op->idx_rhs = index_rhs;
+        op->createValue();
+        op->inferType(ctx);
+        return op;
+     }
+     static contractionOp* build(lgf::LGFContext* ctx, value* input, int index_lhs, int index_rhs){
+        auto op = new contractionOp();
+        op->addArgument(input);
+        op->idx_lhs = index_lhs;
+        op->idx_rhs = index_rhs;
+        if(index_lhs > index_rhs){
+            std::swap(op->idx_lhs, op->idx_rhs);
+        }
+        op->createValue();
+        op->inferType(ctx);
+     }
+     void inferType1(LGFContext* ctx) {
+        auto type = inputValue(0)->getType<tensorType>();
+        std::vector<bool> indices(type.getRSType());
+        int id1 = indices[idx_lhs] ? 1 : -1;
+        int id2 = indices[idx_rhs] ? 1 : -1;
+        if(id1 * id2 > 0){
+            THROW("contractionOp: one index has to be covriant and the other contravariant");
+        }
+        indices.erase(indices.begin()+idx_lhs);
+        indices.erase(indices.begin()+idx_rhs-1);
+        dim_t dims = type.getDimension();
+        auto tp = ctx->getType<tensorType>(type.getElemType(), dims, indices);
+        output()->setType(tp);
+     }
+     void inferType2(LGFContext* ctx) {
+        // infer the type when two inputs are provided
+        tensorType lhs_tp = inputValue(0)->getType<tensorType>();
+        tensorType rhs_tp = inputValue(1)->getType<tensorType>();
+        if(lhs_tp.getElemType() != lhs_tp.getElemType()){
+            THROW("contractionOp: element type mismatch");
+        }
+        if(lhs_tp.getDimension() != rhs_tp.getDimension()){
+            THROW("contractionOp: dimension mismatch");
+        }
+        std::vector<bool> lhs_idx(lhs_tp.getRSType());
+        std::vector<bool> rhs_idx(rhs_tp.getRSType());
+        int id1 = lhs_idx[idx_lhs] ? 1 : -1;
+        int id2 = rhs_idx[idx_rhs] ? 1 : -1;
+        if(id1 * id2 > 0){
+            THROW("contractionOp: one index has to be covriant and the other contravariant");
+        }
+        lhs_idx.erase(lhs_idx.begin()+idx_lhs);
+        rhs_idx.erase(rhs_idx.begin()+idx_rhs);
+        lhs_idx.insert(lhs_idx.end(), rhs_idx.begin(), rhs_idx.end());
+        auto tp = ctx->getType<tensorType>(lhs_tp.getElemType(), lhs_tp.getDimension(), lhs_idx);
+        output()->setType(tp);
+     }
+     virtual void inferType(LGFContext* ctx) override {
+        if(getArgNumber() == 1){
+            inferType1(ctx);
+        }
+        else 
+        {
+            inferType2(ctx);
+        }
+        return;
+     }
+     int idx_lhs, idx_rhs;
+ };
+
 // ---------- inverseOp ----------
 class inverseOp : public mappingOp, public normalizer
 {
@@ -351,44 +449,6 @@ class quotientOp : public mappingOp
     }
     lgf::value* numerator(){ return inputValue(0); }
     lgf::value* denominator(){ return inputValue(1); }
-};
-
-class powerOp : public mappingOp
-{
-    public:
-    powerOp() : mappingOp("AAB::power"){}
-    static powerOp* build(lgf::LGFContext* ctx, lgf::value* x, lgf::value *y){
-        auto op = new powerOp();
-        op->addArgument(x, y);
-        op->createValue(x->getType(), "");
-        return op;
-    }
-    lgf::value* power(){ return inputValue(1); }
-    lgf::value* x(){ return inputValue(0); }
-
-};
-
-
-class funcSineOp : public mappingOp{
-    public:
-    funcSineOp() :  mappingOp("AAB::sine"){}
-    static funcSineOp* build (lgf::LGFContext* ctx, lgf::value* x){
-        auto op = new funcSineOp();
-        op->addArgument(x);
-        op->createValue(x->getType(), "");
-        return op;
-    }
-};
-
-class funcCosOp : public mappingOp{
-    public:
-    funcCosOp(): mappingOp("AAB::cos"){}
-    static funcCosOp* build (lgf::LGFContext* ctx, lgf::value* x){
-        auto op = new funcCosOp();
-        op->addArgument(x);
-        op->createValue(x->getType(), "");
-        return op;
-    }
 };
 
 class permuteOp : public lgf::operation {
@@ -508,52 +568,6 @@ class associateOp : public operation, public normalizer {
         return resultCode::pass();
     }
 };
-
-class partialDifferentiateOp : public mappingOp {
-    public:
-    partialDifferentiateOp() : mappingOp("AAB::PartialDifferentiate"){}
-    static partialDifferentiateOp* build(LGFContext* ctx, value* func, value* var){
-        auto op = new partialDifferentiateOp();
-        op->addArgument(func, var);
-        op->createValue(func->getType(), "");
-        return op;
-    }
-    value* func(){ return inputValue(0); }
-    value* var(){ return inputValue(1); }
-};
-
-class differentiateOp : public mappingOp {
-    public:
-    differentiateOp() : mappingOp("AAB::differentiate"){}
-    static differentiateOp* build(LGFContext* ctx, value* input, value* target){
-        auto op = new differentiateOp();
-        op->addArgument(input, target);
-        op->createValue(input->getType(), "");
-        return op;
-    }
-    value* input(){ return inputValue(0); }
-    value* target(){ return inputValue(1); }
-};
-
-class exponentialOp : public mappingOp {
-    public:
-    exponentialOp() : mappingOp("AAB::exponential"){}
-    static exponentialOp* build(LGFContext* ctx, value* input, value* power){
-        auto op = new exponentialOp();
-        op->addArgument(input, power);
-        op->createValue(input->getType(), "");
-        return op;
-    }
-    value* input(){
-        return inputValue(0);
-    }
-    void inferType(LGFContext* ctx) override{
-        // using the input type as output type
-        output()->setType(input()->getType()); 
-    }
-};
-
-
 // class factorOp : public operation, public normalizer{
 //     public:
 //     factorOp() : operation("AAB::factor") {}

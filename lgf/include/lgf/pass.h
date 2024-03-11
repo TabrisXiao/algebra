@@ -7,15 +7,15 @@
 
 namespace lgf{
 
-class resultCode : public byteCode<int8_t>{
+class resultCode : public bitCode<int8_t>{
     public: 
     enum result: int8_t {
         default_result,
         success_result,
         failed_result
     };
-    resultCode(): byteCode() { value = 0; }
-    resultCode(int8_t v): byteCode(int8_t(v)){}
+    resultCode(): bitCode() { value = 0; }
+    resultCode(int8_t v): bitCode(int8_t(v)){}
     static resultCode success(){
         return resultCode(int8_t(resultCode::result::success_result));
     }
@@ -62,7 +62,6 @@ public :
 
     // the return value is not defined yet.
     virtual resultCode run() = 0;
-
     graph * getGraph(){ return g; }
     void gotoGraph(graph *reg){ g = reg;}
     LGFContext * getContext(){ return ctx; }
@@ -102,7 +101,7 @@ class passManager{
     passManager(LGFContext* c, graph *op) {ctx = c, start = op;}
     void enablePrintAfterPass(){bPrintAfterPass = 1;}
     void enablePrintBeforePass(){bPrintBeforePass = 1;}
-
+    void init(LGFContext* c, graph *op) {ctx = c, start = op;}
     void validation(graph* g);
     
     void redundantCheck(operation* op){

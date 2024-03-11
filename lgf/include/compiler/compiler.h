@@ -59,7 +59,7 @@ class compiler {
     }
     void default_pipeline(passManager& pm){
         pm.addPass(AAB::createAAProcess());
-        pm.addPass(AAB::createCalculusPass());
+        //pm.addPass(AAB::createCalculusPass());
         pm.addNormalizationPass();
         pm.addPass(transform::createConvertToSIOPass());
     }

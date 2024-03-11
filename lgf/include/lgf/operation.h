@@ -68,15 +68,15 @@ obj& get_vec_elem_with_check(size_t n, std::vector<obj>& vec){
 }
 
 // this object encodes operation status into 8 bit data
-class opStatus : public byteCode<uint8_t> {
+class opStatus : public bitCode<uint8_t> {
     public:
     enum status : uint8_t {
         default =0,
         // this type op can't be removed automatically
         nontrivial, 
     };
-    opStatus(): byteCode() {}
-    opStatus(uint8_t v) : byteCode(v){}
+    opStatus(): bitCode() {}
+    opStatus(uint8_t v) : bitCode(v){}
     bool isTrivial(){ return !check(nontrivial); }
     void setNontrivial(){ add(opStatus(nontrivial)); }
 };
@@ -93,7 +93,14 @@ public:
     void setType(type_t tp) {vtp = tp;}
     type_t getType(){return vtp;}
     template<typename t>
-    t& getType(){ return dynamic_cast<t>(vtp); }
+    t getType(){ 
+        if( vtp.getSID() != t::sid ) {
+            THROW("getType error: Type mismatch!");
+        }
+        t res;
+        res.desc = vtp.getDesc();
+        return res;
+    }
     // get type representation;
     std::string getTR() const { 
         return vtp.represent(); }
@@ -263,10 +270,19 @@ public :
     void dropAllInputs();
 
     // drop the input value
+    void dropInputValue(int i ){
+        if(i>=getInputSize()) return;
+        inputs[i]->removeOp(this);
+        inputs.erase(inputs.begin()+i);
+    }
+    std::vector<value*>::iterator dropInputValue(std::vector<value*>::iterator iter){
+        if(iter == inputs.end()) return inputs.end();
+        (*iter)->removeOp(this);
+        return inputs.erase(iter);
+    }
     void dropInputValue(value* v){
         auto iter = std::find(inputs.begin(), inputs.end(), v);
-        if(iter == inputs.end()) return;
-        inputs.erase(iter);
+        dropInputValue(iter);
     }
 
     void erase(){
@@ -395,14 +411,14 @@ class graph : public operation{
     public : 
     class graphEntry : public operation {
         public:
-        graphEntry(graph* g) : operation("", g){}
+        graphEntry(graph* g) : operation("", g){ getStatus().setNontrivial(); }
         virtual std::string represent() { return ""; }
         virtual void print() override {}
     };
     graph() = default;
-    graph(std::string id, graph* pg = nullptr)
+    graph( std::string id, graph* pg = nullptr )
     : operation(id, pg)
-    , entry(pg) {}
+    , entry(this) {}
     virtual void print() override;
     virtual std::string represent() = 0;
     // A breadth-first walk function that is graph modification safe.
@@ -449,7 +465,6 @@ class graph : public operation{
                 }
             }
             fn(v);
-            
         }
         // all the ops haven't been explored come from a disconnected graph
         // need to mark them as removable if we don't need them.

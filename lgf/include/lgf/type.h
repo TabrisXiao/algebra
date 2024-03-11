@@ -4,6 +4,8 @@
 #include "liteParser.h"
 #include <iostream>
 #include <string>
+#include <vector>
+#include <map>
 
 namespace lgf{
 class LGFContext;
@@ -15,9 +17,9 @@ class LGFModule;
     }
     
 template<typename storageType>
-class typeMarker : private byteCode<storageType> {
+class typeMarker : private bitCode<storageType> {
     public:
-    typeMarker(uint8_t size): byteCode(), size_max(size) {}
+    typeMarker(uint8_t size): bitCode(), size_max(size) {}
     bool is(uint8_t code) { 
         THROW_WHEN(code > size_max, "typeMarker: code out of range");
         return ((1<<code) & value) != 0 ; }
@@ -30,31 +32,84 @@ class typeMarker : private byteCode<storageType> {
     storageType value=0;
 };
 
-class descriptor {
+class trait {
     public:
-    descriptor() = default;
-    descriptor(const std::string id_): id(id_){}
-    std::string getSID(){ return id; }
+    trait() = default;
+    trait(const std::string id_): id(id_){}
+    std::string getSID() const { return id; }
     virtual std::string represent() const {
         return id;
     }
     const std::string id;
 };
 
+class descriptor {
+    public:
+    descriptor() = default;
+    descriptor(const std::string id_): id(id_){}
+    void setSID(std::string sid_){ id = sid_; }
+    std::string getSID() const { return id; }
+    virtual std::string representType() const { return id; }
+    std::string represent() const {
+        return representType()+representTraits();
+    }
+    std::string representTraits() const {
+        std::string result = "";
+        if(traits.empty()) return result;
+        result = " traits = {";
+        for(auto& trait: traits){
+            result += trait.second->represent() + ", ";
+        }
+        result.pop_back();
+        result.pop_back();
+        result += "}";
+        return result;
+    }
+    template<typename trait_t, typename ...ARGS>
+    bool addTrait(ARGS ...args){
+        auto it = traits.find(trait_t().id);
+        if(it != traits.end()) return 1;
+        traits[trait_t().id] = std::make_unique<trait_t>(args...);
+        return 0;
+    }
+    template<typename trait_t>
+    trait* getTrait(){
+        auto it = traits.find(trait_t().id);
+        if(it != traits.end()) return it->second.get();
+        return nullptr;
+    }
+    std::map<std::string, std::unique_ptr<trait>> traits;
+    private:
+    std::string id;
+};
+
 class type_t {
     public:
+    using desc_t = descriptor;
+    static inline const std::string sid;
     type_t () = default;
-    type_t (const type_t& tp){ desc = tp.desc; }
+    type_t (const type_t& tp) { desc = tp.desc; }
     type_t (descriptor* desc_): desc(desc_){}
     virtual ~type_t() = default;
     
-    std::string getSID() {return desc->id;}
-    virtual std::string represent() const {
+    std::string getSID() const {return desc->getSID();}
+    std::string represent() const {
         if(desc) return desc->represent();
         return "";
     }
+    std::string representType() const {
+        if(desc) return desc->representType();
+        return "";
+    }
+    template<typename t>
+    bool is(){
+        return dynamic_cast<t::desc_t*>(desc) != nullptr;
+    }
     bool operator==(const type_t& other){
-        return this->represent() == other.represent();
+        return this->representType() == other.representType();
+    }
+    bool operator!=(const type_t& other){
+        return this->representType() != other.representType();
     }
     descriptor* getDesc(){ return desc; }
 
@@ -65,7 +120,6 @@ class type_t {
 
     descriptor* desc = nullptr;
 };
-
 
 }
 

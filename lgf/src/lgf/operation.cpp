@@ -241,6 +241,7 @@ void operation::replaceBy(operation* new_op){
 //////////////////////////////////////////////////////
 
 void graph::print() {
+    assignID(0);
     global::stream::getInstance().printIndent();
     std::string code = represent();
     // add space if the represent is not empty

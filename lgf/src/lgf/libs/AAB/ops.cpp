@@ -16,11 +16,22 @@ resultCode multiplyOp::rewrite(painter p, operation *op){
 }
 
 resultCode sumOp::rewrite(painter p, operation *op){
+    // check if op has only one input, if so, replace op by its input
+    if(op->getInputs().size()==1){
+        op->replaceBy(op->inputValue(0)->getDefiningOp());
+        return resultCode::success();
+    }
     // check all input values and merge all sumOps into one
     resultCode result;
     auto iter = op->getInputs().begin();
     while(iter!=op->getInputs().end()){
         auto input = *iter;
+        if(input->getType().is<zeroType>()){
+            auto nextIter = std::next(iter);
+            iter = op->dropInputValue(iter);
+            result.add(resultCode::success());
+            continue;
+        }
         if(auto sum = input->getDefiningOp<sumOp>()){
             iter = p.replaceInputByDefOpInputs(iter, op);
             result.add(resultCode::success());
@@ -38,6 +49,22 @@ resultCode productOp::rewrite(painter p, operation *op){
         op->replaceBy(op->inputValue(0)->getDefiningOp());
         return resultCode::success();
     }
+    //merge the unit value in product
+    for(auto i=0; i<op->getInputs().size(); i++){
+        if(op->inputValue(i)->getType().is<unitType>()){
+            if(mergeUnit(i, op)){
+                result.add(resultCode::success());
+                continue;
+            }
+        }
+        if(op->inputValue(i)->getType().is<zeroType>()){
+            if(mergeZero(i, op)){
+                result.add(resultCode::success());
+                continue;
+            }
+        }
+    }
+
     // check all input values and merge all productOps into one
     auto iter = op->getInputs().begin();
     while(iter!=op->getInputs().end()){
