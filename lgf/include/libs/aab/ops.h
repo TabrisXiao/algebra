@@ -418,7 +418,6 @@ class inverseOp : public mappingOp, public normalizer
         auto op = new inverseOp();
         op->addArgument(input);
         op->createValue(input->getType(), "");
-        std::cout<<"-- inverseOp::build"<<input->represent()<<" : "<<op->output()->represent()<<std::endl;
         return op;
     }
     lgf::value* input(){ return inputValue(0); }

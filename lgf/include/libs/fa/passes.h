@@ -122,6 +122,18 @@ class analyticFuncDerivativeRewriter : public rewriter<partialDifferentiateOp>{
             op->replaceBy(neg);
             result.add(resultCode::success());
             return result;
+        }else if(auto powerf = dynamic_cast<powerOp*>(func)){
+            p.setPaintPointAfter(op);
+            auto x = powerf->x();
+            if(x == target){
+                auto power = p.paint<powerOp>(x, powerf->power()-1);
+                op->replaceBy(power);
+            }else{
+                auto zero = p.paint<declOp>(ctx->getType<zeroType>(target->getType()));
+                op->replaceBy(zero);
+            }
+            result.add(resultCode::success());
+            return result;
         }
         return result;
     }

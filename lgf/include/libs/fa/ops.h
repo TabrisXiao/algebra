@@ -8,7 +8,7 @@ namespace lgf{
 
 class funcSineOp : public AAB::mappingOp{
     public:
-    funcSineOp() :  mappingOp("sine"){}
+    funcSineOp() :  mappingOp("functional::sine"){}
     static funcSineOp* build (lgf::LGFContext* ctx, lgf::value* x){
         auto op = new funcSineOp();
         op->addArgument(x);
@@ -19,7 +19,7 @@ class funcSineOp : public AAB::mappingOp{
 
 class funcCosOp : public AAB::mappingOp{
     public:
-    funcCosOp(): mappingOp("cos"){}
+    funcCosOp(): mappingOp("functional::cos"){}
     static funcCosOp* build (lgf::LGFContext* ctx, lgf::value* x){
         auto op = new funcCosOp();
         op->addArgument(x);
@@ -31,20 +31,23 @@ class funcCosOp : public AAB::mappingOp{
 class powerOp : public AAB::mappingOp
 {
     public:
-    powerOp() : mappingOp("power"){}
-    static powerOp* build(lgf::LGFContext* ctx, lgf::value* x, lgf::value *y){
+    powerOp() : mappingOp("functional::power"){}
+    static powerOp* build(lgf::LGFContext* ctx, lgf::value* x, double n){
         auto op = new powerOp();
-        op->addArgument(x, y);
+        op->addArgument(x);
+        op->setPower(n);
         op->createValue(x->getType(), "");
         return op;
     }
-    lgf::value* power(){ return inputValue(1); }
+    void setPower(double n){ p = n; }
+    double power(){ return p; }
     lgf::value* x(){ return inputValue(0); }
+    double p=1;
 };
 
 class exponentialOp : public AAB::mappingOp {
     public:
-    exponentialOp() : mappingOp("AAB::exponential"){}
+    exponentialOp() : mappingOp("functional::exponential"){}
     static exponentialOp* build(LGFContext* ctx, value* input, value* power){
         auto op = new exponentialOp();
         op->addArgument(input, power);
@@ -62,7 +65,7 @@ class exponentialOp : public AAB::mappingOp {
 
 class partialDifferentiateOp : public AAB::mappingOp {
     public:
-    partialDifferentiateOp() : mappingOp("AAB::PartialDifferentiate"){}
+    partialDifferentiateOp() : mappingOp("functional::PartialDifferentiate"){}
     static partialDifferentiateOp* build(LGFContext* ctx, value* func, value* var){
         auto op = new partialDifferentiateOp();
         op->addArgument(func, var);
@@ -75,7 +78,7 @@ class partialDifferentiateOp : public AAB::mappingOp {
 
 class differentiateOp : public AAB::mappingOp {
     public:
-    differentiateOp() : mappingOp("AAB::differentiate"){}
+    differentiateOp() : mappingOp("functional::differentiate"){}
     static differentiateOp* build(LGFContext* ctx, value* input, value* target){
         auto op = new differentiateOp();
         op->addArgument(input, target);

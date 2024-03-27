@@ -59,7 +59,7 @@ class test_fa : public test_wrapper{
         g.print();
         core.compile(&ctx, &g);
         g.print();
-        SIO::export2Txt exporter(&g);
+        SIO::export2latex exporter(&g);
         exporter.run();
         return 0;
     }
