@@ -45,11 +45,11 @@ class powerOp : public AAB::mappingOp
     double p=1;
 };
 
-class exponentialOp : public AAB::mappingOp {
+class expOp : public AAB::mappingOp {
     public:
-    exponentialOp() : mappingOp("functional::exponential"){}
-    static exponentialOp* build(LGFContext* ctx, value* input, value* power){
-        auto op = new exponentialOp();
+    expOp() : mappingOp("functional::exp"){}
+    static expOp* build(LGFContext* ctx, value* input, value* power){
+        auto op = new expOp();
         op->addArgument(input, power);
         op->createValue(input->getType(), "");
         return op;
@@ -87,6 +87,30 @@ class differentiateOp : public AAB::mappingOp {
     }
     value* input(){ return inputValue(0); }
     value* target(){ return inputValue(1); }
+};
+
+class unionOp: public operation{
+    public:
+    unionOp() : operation("functional::union"){}
+    template<typename ...ARGS>
+    static unionOp* build(LGFContext* ctx, ARGS ...args){
+        auto op = new unionOp();
+        op->registerInput(args...);
+        op->createValue(op->inputValue()->getType());
+        return op;
+    }
+};
+
+class intersectOp : public operation{
+    public:
+    intersectOp() : operation("functional::intersect"){}
+    template<typename ...ARGS>
+    static intersectOp* build(LGFContext* ctx, ARGS ...args){
+        auto op = new intersectOp();
+        op->registerInput(args...);
+        op->createValue(op->inputValue()->getType());
+        return op;
+    }
 };
 
 } // namespace lgf

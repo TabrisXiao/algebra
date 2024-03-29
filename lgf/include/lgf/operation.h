@@ -262,7 +262,7 @@ public :
     void dependOn(operation* op){
         this->registerInput(op->outputValue(0));
     }
-    value* createValue(type_t& type, std::string sid);
+    value* createValue(type_t& type, std::string sid="");
     value* createValue();
 
     // drop all inputs to this operation, and remove all connects

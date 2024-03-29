@@ -22,7 +22,7 @@ class test_fa : public test_wrapper{
         g.setContext(&ctx);
         painter pnt(&ctx);
         pnt.gotoGraph(&g);
-        auto real = ctx.getType<realNumber>();
+        auto real = ctx.getType<real_t>();
         auto x = pnt.paint<declOp>(real);
         auto y = pnt.paint<declOp>(real);
         auto sum = pnt.paint<productOp>(x->output(), y->output());
@@ -47,7 +47,7 @@ class test_fa : public test_wrapper{
         g.setContext(&ctx);
         painter pnt(&ctx);
         pnt.gotoGraph(&g);
-        auto real = ctx.getType<realNumber>();
+        auto real = ctx.getType<real_t>();
         auto x = pnt.paint<declOp>(real);
         auto sin = pnt.paint<funcSineOp>(x->output());
         auto cos = pnt.paint<funcCosOp>(x->output());

@@ -10,27 +10,40 @@
 
 namespace lgi::function{
 
-class realNumber {
+class variable {
     public:
-    realNumber(){
+    variable(){
         auto& ctx = canvas::get().getContext();
-        v = canvas::get().getPainter().paint<lgf::declOp>(ctx.getType<lgf::realNumber>())->output();
+        v = canvas::get().getPainter().paint<lgf::declOp>(ctx.getType<lgf::variable>())->output();
     }
-    void operator = (const realNumber& other){
+    void operator = (const variable& other){
         v = other.v;
     }
-    lgf::value* operator+(const realNumber& other){
+    lgf::value* operator+(const variable& other){
         auto& ctx = canvas::get().getContext();
         auto res = canvas::get().getPainter().paint<lgf::AAB::sumOp>(v, other.v)->output();
         return res;
     } 
-    lgf::value* operator*(const realNumber& other){
+    lgf::value* operator*(const variable& other){
         auto& ctx = canvas::get().getContext();
         auto res = canvas::get().getPainter().paint<lgf::AAB::productOp>(v, other.v)->output();
         return res;
     }
     lgf::value *v = nullptr;
 };
+
+class set {
+    public:
+    set(){
+        auto& ctx = canvas::get().getContext();
+        v = canvas::get().getPainter().paint<lgf::declOp>(ctx.getType<lgf::set_t>())->output();
+    }
+    void operator = (const variable& other){
+        v = other.v;
+    }
+    lgf::value *v = nullptr;
+};
+
 
 } // namespace  lgi::function
 

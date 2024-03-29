@@ -3,6 +3,7 @@
 
 #include "unit_test_frame.h"
 #include "libs/interface/function.h"
+#include "libs/interface/stat.h"
 
 using namespace lgi;
 
@@ -12,10 +13,11 @@ class test_interface : public test_wrapper{
     public:
     test_interface() {test_id = "interface test";};
     bool run(){
-        function::realNumber x;
+        function::variable x;
         auto y = x;
         auto z = x + y;
         auto w = x * y;
+        lgi::stat::normalVariable s;
         canvas::get().print();
         return 0;
     }
