@@ -2,6 +2,7 @@
 #pragma once
 
 #include "unit_test_frame.h"
+#include "libs/interface/variable.h"
 #include "libs/interface/function.h"
 #include "libs/interface/stat.h"
 
@@ -13,7 +14,7 @@ class test_interface : public test_wrapper{
     public:
     test_interface() {test_id = "interface test";};
     bool run(){
-        function::variable x;
+        var x;
         auto y = x;
         auto z = x + y;
         auto w = x * y;

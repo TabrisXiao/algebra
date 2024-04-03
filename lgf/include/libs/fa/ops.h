@@ -48,18 +48,18 @@ class powerOp : public AAB::mappingOp
 class expOp : public AAB::mappingOp {
     public:
     expOp() : mappingOp("functional::exp"){}
-    static expOp* build(LGFContext* ctx, value* input, value* power){
+    static expOp* build(LGFContext* ctx, value* power){
         auto op = new expOp();
-        op->addArgument(input, power);
-        op->createValue(input->getType(), "");
+        op->addArgument(power);
+        op->createValue(power->getType(), "");
         return op;
     }
-    value* input(){
+    value* power(){
         return inputValue(0);
     }
     void inferType(LGFContext* ctx) override{
         // using the input type as output type
-        output()->setType(input()->getType()); 
+        output()->setType(power()->getType()); 
     }
 };
 

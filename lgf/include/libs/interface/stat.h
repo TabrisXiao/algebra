@@ -4,12 +4,14 @@
 
 #include "function.h"
 #include "libs/stat/types.h"
+#include "variable.h"
 
 namespace lgi::stat{
-
-class randomVariable : public function::variable{
+using namespace lgi;
+class randomVariable : public var{
     public:
-    randomVariable(){
+    randomVariable(bool init = 1): var(false) {
+        if(!init) return;
         auto& ctx = canvas::get().getContext();
         v = canvas::get().getPainter().paint<lgf::declOp>(ctx.getType<lgf::randomVariable>())->output();
     }
@@ -17,7 +19,8 @@ class randomVariable : public function::variable{
 
 class normalVariable : public randomVariable{
     public:
-    normalVariable(double mean = 0, double variance = 1){
+    normalVariable(double mean = 0, double variance = 1):
+    randomVariable(false) {
         auto& ctx = canvas::get().getContext();
         v = canvas::get().getPainter().paint<lgf::declOp>(ctx.getType<lgf::normalVariable>(mean, variance))->output();
     }
