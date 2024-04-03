@@ -59,7 +59,7 @@ class commutableProductRewriter: public rewriter<productOp>{
         // with the same inputs but with the inputs sorted by their
         // hash value
         auto result = resultCode::pass();
-        bool isCommutative = true;
+        bool isCommutative = false;
         auto inputs = op->getInputs();
         std::sort(inputs.begin(), inputs.end(), [](value* a, value* b){
             return a < b;
@@ -86,7 +86,7 @@ class AAProcess: public passBase{
     : passBase("AAProcess") {}
     virtual resultCode run() final{
         painter p(getContext());
-        addRewriter<commutableProductRewriter>(); 
+        //addRewriter<commutableProductRewriter>(); 
         auto result = applyRewriterGreedy(p, getGraph());
         return result;
     }

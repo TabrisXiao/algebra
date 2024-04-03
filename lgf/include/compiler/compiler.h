@@ -20,8 +20,7 @@ namespace lgf::compiler{
 
 class compiler {
     public: 
-    compiler() {
-    };
+    compiler(): g("base") { };
     void compileInput(std::string file){
         std::unique_ptr<programAST> ast=std::make_unique<programAST>();
         auto f = io.getFile(file);
@@ -69,7 +68,7 @@ class compiler {
 
     fileIO io;
     LGFContext ctx;
-    canvas g;
+    graph g;
 };
 
 }

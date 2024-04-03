@@ -1,7 +1,7 @@
 
 #ifndef LGF_UTILS_H
 #define LGF_UTILS_H
-
+#include <string>
 namespace lgf::utils{
 
 constexpr bool isalpha(unsigned ch) { return (ch | 32) - 'a' < 26; }
@@ -16,6 +16,12 @@ constexpr bool isspace(unsigned ch) {
     return ch == ' ' || (ch - '\t') < 5;
 }
 
+inline std::string to_string(double x){
+  std::string str = std::to_string(x);
+  while(str.back() == '0') str.pop_back();
+  if(str.back() == '.') str+='0';
+  return str;
+}
 }
 
 namespace lgf{

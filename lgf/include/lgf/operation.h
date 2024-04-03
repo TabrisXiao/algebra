@@ -262,7 +262,7 @@ public :
     void dependOn(operation* op){
         this->registerInput(op->outputValue(0));
     }
-    value* createValue(type_t& type, std::string sid);
+    value* createValue(type_t& type, std::string sid="");
     value* createValue();
 
     // drop all inputs to this operation, and remove all connects
@@ -420,7 +420,7 @@ class graph : public operation{
     : operation(id, pg)
     , entry(this) {}
     virtual void print() override;
-    virtual std::string represent() = 0;
+    virtual std::string represent(){ return "";} 
     // A breadth-first walk function that is graph modification safe.
     // Call the callable at the begining of visiting each vertex.
     // The callable should return void.
@@ -485,7 +485,6 @@ class graph : public operation{
     graph* getGraph() {return dynamic_cast<graph*>(this);}
     LGFContext* getContext() { return ctx; }
     void setContext(LGFContext* c) { ctx = c; }
-
     virtual void printGraph();
 
     void assignID(int n=0);
@@ -519,11 +518,6 @@ class graph : public operation{
     // how many operations contained in this graph
 };
 
-class canvas : public graph{
-    public : 
-    canvas() : graph("canvas"){}
-    virtual std::string represent(){ return "";} 
-};
 //----------------------------------------
 
 }

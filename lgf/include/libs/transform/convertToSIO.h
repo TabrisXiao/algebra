@@ -34,6 +34,7 @@ class convertToSIOPass : public passBase {
         painter p(getContext());
         addRewriter<convertToSIORewriter<declOp, SIO::symbolOp>>();
         addRewriter<convertToSIORewriter<AAB::sumOp, SIO::sumOp>>();
+        addRewriter<convertToSIORewriter<AAB::negativeOp, SIO::negativeOp>>();
         addRewriter<convertToSIORewriter<AAB::productOp, SIO::scalarProductOp>>();
         addRewriter<convertToSIORewriter<AAB::commutableProductOp, SIO::scalarProductOp>>();
         addRewriter<convertToSIORewriter<funcCosOp, SIO::funcOp>>("cos");

@@ -39,6 +39,7 @@ class mappingOp: public lgf::operation{
         }
         return ret;
     }
+
     // template <typename... ARGS>
     // static mappingOp* build(lgf::LGFContext* ctx, std::string mapName, type_t tp, ARGS ...args){
     //     auto op = new mappingOp(mapName, args...);
@@ -417,7 +418,6 @@ class inverseOp : public mappingOp, public normalizer
         auto op = new inverseOp();
         op->addArgument(input);
         op->createValue(input->getType(), "");
-        std::cout<<"-- inverseOp::build"<<input->represent()<<" : "<<op->output()->represent()<<std::endl;
         return op;
     }
     lgf::value* input(){ return inputValue(0); }

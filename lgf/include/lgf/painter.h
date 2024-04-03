@@ -20,11 +20,15 @@ class painter {
         graph* g=nullptr;
         std::vector<operation*>::iterator iter;
     };
+    painter() = default;
     painter(LGFContext * ctx_) : ctx(ctx_) {}
     painter(painter &p)
     : point(p.getPaintPoint())
     , ctx(p.getContext()){}
     ~painter(){}
+    void setContext(LGFContext * ctx_){
+        ctx = ctx_;
+    } 
     template<typename obj>
     obj* sketch(){
         auto op = obj::build(ctx);

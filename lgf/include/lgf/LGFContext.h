@@ -17,6 +17,8 @@ class LGFContext {
     using mTable = symbolTable<std::unique_ptr<LGFModule>>;
     using regionTable = nestedSymbolicTable<mTable>;
     LGFContext() = default;
+    ~LGFContext() = default;
+    LGFContext(LGFContext &) = delete;
     template<typename tp>
     tp getOrCreateDesc(std::unique_ptr<descriptor>&& imp){
         tp t;

@@ -89,7 +89,7 @@ class normalizationPass : public passBase {
     bool removeIdenticalOps(graph* g){
         // using breadth first walk to remove identical ops
         // assignID is necessary for the checkIfIdenticalExist function as the id is used to check if two ops are identical
-        g->assignID();
+        g->assignID(0);
         bool changed = false;
         if(g == nullptr) {
             THROW("Remove identical ops failed: graph is invalid.");

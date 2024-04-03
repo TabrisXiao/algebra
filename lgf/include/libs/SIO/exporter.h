@@ -6,12 +6,23 @@
 #include "lgf/global.h"
 #include "lgf/operation.h"
 
-
-
 namespace lgf::SIO{
 class export2Txt {
     public:
     export2Txt(graph* g_) : g(g_) {}
+
+    std::string process(value* val );
+
+    void run(graph* entry);
+    void run(){run(g);}
+    
+    global::stream& os = global::stream::getInstance();
+    graph *g = nullptr;
+};
+
+class export2latex {
+    public:
+    export2latex(graph* g_) : g(g_) {}
 
     std::string process(value* val );
 

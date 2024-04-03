@@ -13,7 +13,7 @@ namespace lgf::compiler {
 
 class LGTranslator {
     public: 
-    LGTranslator(LGFContext* c_, canvas* can)
+    LGTranslator(LGFContext* c_, graph* can)
     : ctx(c_)
     , pnt(c_)
     , c(can) { }
@@ -270,7 +270,7 @@ class LGTranslator {
     
     std::unique_ptr<moduleAST> main;
     painter pnt;
-    canvas* c;
+    graph* c;
     ASTContext *astctx=nullptr;
     LGFContext *ctx = nullptr;
     nestedSymbolicTable<moduleInfo>* temp_ptr = astctx;
