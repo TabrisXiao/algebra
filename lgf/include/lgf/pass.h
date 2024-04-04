@@ -1,7 +1,7 @@
 
 #ifndef LGF_PASS_H_
 #define LGF_PASS_H_
-#include "operation.h"
+#include "node.h"
 #include "painter.h"
 #include "utils.h"
 
@@ -37,8 +37,8 @@ class rewriterBase {
     public:
     rewriterBase() = default;
     virtual ~rewriterBase() = default;
-    virtual resultCode execute( painter, operation * op) = 0;
-    LGFContext* getContext(){ return ctx; }
+    virtual resultCode execute( painter, node * op) = 0;
+    LGFContext* get_context(){ return ctx; }
     LGFContext *ctx = nullptr;
 };
 
@@ -46,7 +46,7 @@ template<typename concreteOp>
 class rewriter : public rewriterBase{
     public : rewriter() = default;
     virtual resultCode rewrite( painter, concreteOp *op) = 0;
-    virtual resultCode execute( painter rewriter,operation* op) override final{
+    virtual resultCode execute( painter rewriter,node* op) override final{
         if(auto cop = dynamic_cast<concreteOp*>(op))
         {
             auto sig = rewrite(rewriter, cop);
@@ -62,21 +62,21 @@ public :
 
     // the return value is not defined yet.
     virtual resultCode run() = 0;
-    graph * getGraph(){ return g; }
-    void gotoGraph(graph *reg){ g = reg;}
-    LGFContext * getContext(){ return ctx; }
+    graph * get_graph(){ return g; }
+    void goto_graph(graph *reg){ g = reg;}
+    LGFContext * get_context(){ return ctx; }
     // addRewriter will create a rewriter using the arguments;
     template<typename T, typename ...ARGS>
-    void addRewriter(ARGS...arg){ 
+    void add_rewriter(ARGS...arg){ 
         auto ptr = std::make_unique<T>(arg...);
         ptr->ctx = ctx;
         rewriters.push_back(std::move(ptr));
     }
 
-    resultCode applyRewriterOnce(painter &p, graph* g);
-    resultCode applyRewriterGreedy(painter &p, graph* g);
+    resultCode apply_rewriter_once(painter &p, graph* g);
+    resultCode apply_rewriter_greedy(painter &p, graph* g);
 
-    resultCode walkApplyRewriterOnce(painter &p, graph* g,bool deepwalk = 0);
+    resultCode walk_apply_rewriter_once(painter &p, graph* g,bool deepwalk = 0);
 
     // Translation is a special method to apply rewriters,
     // It walk only once through a graph in the dependency order
@@ -104,57 +104,43 @@ class passManager{
     void init(LGFContext* c, graph *op) {ctx = c, start = op;}
     void validation(graph* g);
     
-    void redundantCheck(operation* op){
-        bool canRemove = 1;
-        for(auto & val: op->getOutputs() ){
-            if(val->getUserSize()!=0) {
-                canRemove = 0;
-                break;
-            }
-        }
-        if(canRemove){
-            op->erase();
-        }
-    }
-    
     void run(){
         if(bPrintInitialIR) 
         {   OSTREAM<<"\n------ Input "<<name<<" ------\n";
-            start->assignID(0);
+            start->assign_id(0);
             start->print();
         }
         
         for(auto pass=passes.begin(); pass!=passes.end(); pass++){
             if(bPrintBeforePass){
                 OSTREAM<<"------ IR before pass:  "<<(*pass).get()->_pass_name<<" ------\n";
-                start->assignID(0);
+                start->assign_id(0);
                 start->print();
                 OSTREAM<<"\n";
             }
 
             (*pass)->run();
-            //std::cout<<"pass: "<<(*pass)->_pass_name<<" finished."<<std::endl;
             validation(start);
             if(bPrintAfterPass){
                 OSTREAM<<"------ IR after pass: "<<(*pass).get()->_pass_name<<" ------\n";
-                start->assignID(0);
+                start->assign_id(0);
                 start->print();
                 OSTREAM<<"\n";
             }
         }
         if(bPrintFinalIR) 
         {   OSTREAM<<"\n------ IR after "<<name<<" ------\n";
-            start->assignID(0);
+            start->assign_id(0);
             start->print();
         }
     }
 
-    void addPass(std::unique_ptr<passBase> ps){
-        ps->gotoGraph(dynamic_cast<graph*>(start));
+    void add_pass(std::unique_ptr<passBase> ps){
+        ps->goto_graph(dynamic_cast<graph*>(start));
         ps->ctx = ctx;
         passes.push_back(std::move(ps));
     }
-    void addNormalizationPass();
+    void add_normalization_pass();
     std::vector<std::unique_ptr<passBase>> passes;
 
     bool bPrintAfterPass = 0;

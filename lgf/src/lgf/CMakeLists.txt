@@ -4,7 +4,7 @@ file(GLOB_RECURSE headers
 )
 set(
     sources
-    operation.cpp
+    node.cpp
     pass.cpp
     libs/AAB/ops.cpp
     libs/AAB/passes.cpp

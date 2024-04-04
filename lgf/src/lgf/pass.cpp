@@ -4,17 +4,17 @@
 //#include "utility.h"
 using namespace lgf;
 
-resultCode passBase::applyRewriterOnce(painter &p, graph* g){
+resultCode passBase::apply_rewriter_once(painter &p, graph* g){
     resultCode result;
-    p.gotoGraph(g);
+    p.goto_graph(g);
     for(auto ptr=rewriters.begin(); ptr!=rewriters.end(); ptr++)
     {
-        auto nodes = g->getNodeList(); 
+        auto nodes = g->get_nodes(); 
         for(auto & node : nodes){
-            if(node->isRemovable() || !node->isActive()) continue;
+            if(node->is_removable() || !node->is_active()) continue;
             result.add((*ptr).get()->execute(p, node));
             if(auto subg = dynamic_cast<graph*>(node)){
-                result.add(applyRewriterOnce(p, subg));
+                result.add(apply_rewriter_once(p, subg));
             }
         }
     }
@@ -22,15 +22,15 @@ resultCode passBase::applyRewriterOnce(painter &p, graph* g){
 }
 //---------------------------------------------------
 
-resultCode passBase::applyRewriterGreedy(painter &p, graph* g){
-    p.gotoGraph(g);
-    auto result = applyRewriterOnce(p, g);
+resultCode passBase::apply_rewriter_greedy(painter &p, graph* g){
+    p.goto_graph(g);
+    auto result = apply_rewriter_once(p, g);
     g->clean();
     int counts = 1;
     auto final_result = result;
     while(result.isSuccess()){
         counts++;
-        result = applyRewriterOnce(p, g);
+        result = apply_rewriter_once(p, g);
         final_result.add(result);
         g->clean();
     }
@@ -38,39 +38,37 @@ resultCode passBase::applyRewriterGreedy(painter &p, graph* g){
 }
 //---------------------------------------------------
 
-resultCode passBase::walkApplyRewriterOnce(painter &p, graph* g, bool deepWalk){
-    p.gotoGraph(g);
+resultCode passBase::walk_apply_rewriter_once(painter &p, graph* g, bool deepWalk){
+    p.goto_graph(g);
     resultCode result;
-    g->walk([&](operation* op){
-        if(op->isRemovable() || !op->isActive()) return;
+    g->walk([&](node* op){
+        if(op->is_removable() || !op->is_active()) return;
         for(auto ptr=rewriters.begin(); ptr!=rewriters.end(); ptr++){
             result.add((*ptr).get()->execute(p, op));
         }
-    }, 1, 1, 1, deepWalk);
+    }, deepWalk);
     return result;
 }
 //---------------------------------------------------
 
 bool passBase::translation(painter &p, graph* g){
-    g->walk([&](operation* op){
-        if(op->isRemovable() || !op->isActive()) return;
+    g->walk([&](node* op){
+        if(op->is_removable() || !op->is_active()) return;
         for(auto ptr=rewriters.begin(); ptr!=rewriters.end(); ptr++){
             (*ptr).get()->execute(p, op);
         }
-    }, 1, 1, 1, 0);
+    }, 0);
     return 0;
 }
 //---------------------------------------------------
 
 void passManager::validation(graph* g){
-    auto nodes = g->getNodeList();
+    auto nodes = g->get_nodes();
     for(auto & node : nodes){
-        if(node->isRemovable() || !node->isActive()) continue;
+        if(node->is_removable() || !node->is_active()) continue;
         if(auto subg = dynamic_cast<graph*>(node)){
             validation(subg);
         } 
-        node->validation();
-        if(node->getStatus().isTrivial()) redundantCheck(node);
     }
     if(g->clean()){
         validation(g);
@@ -78,7 +76,7 @@ void passManager::validation(graph* g){
 }
 //---------------------------------------------------
 
-void passManager::addNormalizationPass(){
-    addPass(std::make_unique<normalizationPass>());
+void passManager::add_normalization_pass(){
+    add_pass(std::make_unique<normalizationPass>());
 }
 //---------------------------------------------------

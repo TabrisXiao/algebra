@@ -43,18 +43,18 @@ class logicResult {
   bool value = 0;
 };
 
-// bitCode is a template object to encode type tag into binary type:
+// bit_code is a template object to encode type tag into binary type:
 // 
 template<typename digitType>
-class bitCode {
+class bit_code {
   public:
   using digit_t = digitType;
-  bitCode(){}
-  bitCode(digitType& val) { value = val; }
-  bitCode(bitCode& code ){ value = code.value;}
+  bit_code(){}
+  bit_code(digitType& val) { value = val; }
+  bit_code(bit_code& code ){ value = code.value;}
   
-  bitCode shift(size_t val) { value |= 1<<val; return *this; }
-  bitCode add(bitCode& val) { value |= val.value; return *this; }
+  bit_code shift(size_t val) { value |= 1<<val; return *this; }
+  bit_code add(bit_code& val) { value |= val.value; return *this; }
   bool check(digitType val){ 
     return (value & val) == val;
   }
