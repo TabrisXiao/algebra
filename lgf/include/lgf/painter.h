@@ -7,12 +7,13 @@
 #include <algorithm>
 #include "global.h"
 #include "node.h"
-
 // abstract node graph
 
 namespace lgf{
 
 class rewriterBase;
+
+class LGFContext;
 
 class painter {
     public : 

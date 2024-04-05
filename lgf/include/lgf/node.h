@@ -1,7 +1,8 @@
 
 #ifndef node_H_
 #define node_H_
-#include "type.h"
+#include "object.h"
+#include "value.h"
 #include <unordered_set>
 #include <queue>
 #include <map>
@@ -17,42 +18,12 @@
 // logic graph frameworks
 namespace lgf{
 class context;
-class node;
 class dependence;
-class value;
 class valueRef;
 class graph;
 class normalizer;
-class LGFContext;
 
 typedef size_t id_t;
-
-
-//symbolic id;
-using sid_t = std::string;
-
-class graph_object {
-    public:
-    graph_object() = default;
-    graph_object(sid_t id) : sid(id) {}
-    std::string get_sid() const { return sid; }
-    void set_sid(sid_t id) { sid = id; }
-    std::string get_trace_id() const { return std::to_string(nid); }
-    bool set_sid_if_null(sid_t id){
-        if(sid.empty()) {
-            sid=id;
-            return 1;
-        }
-        return 0;
-    }
-    void set_trace_id(int id){
-        nid = id;
-    }
-    virtual std::string represent() = 0;
-    protected:
-    std::string sid="";
-    int64_t nid = -1;
-};
 
 template<typename obj>
 obj& get_vec_elem_with_check(size_t n, std::vector<obj>& vec){
@@ -61,82 +32,22 @@ obj& get_vec_elem_with_check(size_t n, std::vector<obj>& vec){
     return vec[n];
 }
 
-class value_impl_base {
-    public:
-    value_impl_base() = default;
-};
-
-class value : public graph_object{
-public:
-    value() = default;
-    value(node * op);
-    value(node *op, std::string sid);
-
-    virtual ~value();
-    virtual std::string represent(); 
-    void print();
-    void link_node(node* n){ users.push_back(n); }
-    void dlink_node(node* n){
-        auto iter = std::find(users.begin(), users.end(), n);
-        if(iter!=users.end()) users.erase(iter);
-    }
-    void swap_node(node* from, node* to){
-        auto iter = std::find(users.begin(), users.end(), from);
-        if(iter!=users.end()) *iter = to;
-    }
-    void deprecate();
-
-    std::vector<node*>& get_users(){ return users; }
-    value_impl_base* get_impl() const { return impl; }
-    void set_impl(value_impl_base* i){ impl = i; }
-    void set_defining_op(node* op){ defop = op; }
-    node* get_defining_op() const { return defop; }
-    template<typename T>
-    T* get_defining_op(){
-        return dynamic_cast<T*>(defop);
-    }
-
-    void swap(value& v){
-        // Note that this function doesn't swap impl!
-        // swap the users
-        std::swap(users, v.get_users());
-        // swap the defining op
-        auto buffer_op = defop;
-        defop = v.get_defining_op();
-        v.set_defining_op(buffer_op);
-    }
-    
-    void remove_user(node* n);
-    size_t get_user_size() const { return users.size(); }
-
-    private:
-    node* defop = nullptr;
-    std::vector<node*> users;
-    value_impl_base* impl = nullptr;
-};
-
-class dependencyValue : public value {
-    public:
-    dependencyValue() = default;
-    dependencyValue(node * op) : value(op) { set_sid("dummy"); }
-    std::string represent();
-};
-
-class node : public graph_object{
+class node : public graphObject{
 public : 
     // the first output value is dependency value used to store 
     // the dependency inform that don't have value connections
     node(std::string id="op", graph * g=nullptr) : 
-    graph_object(id){ 
+    graphObject(id){ 
+        _v_ = std::make_unique<value>(this);
         graph_ = g;
     };
     virtual ~node() = default;
     virtual std::string represent() {
         printer p;
-        p<<_v_.get()->represent()<<" = "<<get_sid() <<" : "<<represent_inputs();
+        p<<_v_->get_sid()<<" = "<<get_sid() <<" : "<<inputs_sid();
         return p.dump();
     }
-    virtual std::string represent_inputs();
+    virtual std::string inputs_sid();
     virtual void print();
 
     void dlink_value(value* v){
@@ -170,6 +81,16 @@ public :
         }
     }
 
+    template <typename... ARGS>
+    void accept(ARGS ...args)
+    {
+        auto ops = {args...};
+        for (auto op : ops)
+        {
+            register_input(op->output());
+        }
+    }
+
     void register_input(std::vector<value*> &args){
         for(auto ptr : args){
             register_input(ptr);
@@ -194,17 +115,23 @@ public :
         replace_input(iter, new_val);
     }
 
+    void replace_input(std::vector<value*>::iterator iter, node* new_n){
+        replace_input(iter, new_n->output());
+    }
+
+    void replace_input(node* old, node* new_val){
+        replace_input(old->output(), new_val->output());
+    }
+
+    void replace_input(size_t j, node* new_val){
+        replace_input(j, new_val->output());
+    }
+
     void replace_by(node* new_op);
 
     // register the input at the given position. Other inputs after 
     // that index will be push back by 1 pos.
     void register_input_at( value* val, size_t pos);
-
-    template<typename...ARG>
-    value* create_value(ARG...args){
-        _v_ = std::make_unique<value>(args...);
-        return _v_.get();
-    }
 
     // drop all inputs to this node, and remove all connects
     // associated to the op.
@@ -223,6 +150,7 @@ public :
     value* input(size_t n=0) {return inputs[n];}
     size_t get_input_size() const;
     void set_nontrivial(){ bTrivial = 0; }
+    bool is_trivial(){ return bTrivial; }
 
     void assign_value_id(int& n);
 
@@ -236,11 +164,6 @@ public :
     //     /                              |
     //    v4                        v4
     //node* detach();
-
-    //void setTraceIDToOutput(context *ctx);
-    int valueTraceIDStart = -1;
-
-    bool isDependencyFullfilled();
 
     void set_activation(bool a ){ bActive = a; }
     bool is_active(){return bActive; }
@@ -313,7 +236,10 @@ class graph : public node{
         std::queue<node *> _vq;
         std::vector<node *> vertice_buffer;
         vertice_buffer.reserve(get_node_size());
-        _vq.push(&entry);
+        for(auto node : nodes){
+            if(node->get_input_size() != 0) continue;
+            _vq.push(node);
+        }
         while (_vq.size())
         {
             auto v = _vq.front();
@@ -326,7 +252,7 @@ class graph : public node{
             
             vertice_buffer.push_back(v);
             auto val = v->output();
-            for(auto vn : val->getUsers()){
+            for(auto vn : val->get_users()){
                 if (vn->is_explored() || vn->is_removable()) continue;
                 _vq.push(vn);
             }
@@ -347,8 +273,6 @@ class graph : public node{
     }
 
     graph* get_graph() {return dynamic_cast<graph*>(this);}
-    LGFContext* get_context() { return ctx; }
-    void set_context(LGFContext* c) { ctx = c; }
     virtual void print_graph();
 
     void assign_id(int n=0);
@@ -365,7 +289,6 @@ class graph : public node{
     std::vector<node*> & get_nodes(){return nodes;}
     private:
     std::vector<node*> nodes;
-    LGFContext* ctx;
     // how many nodes contained in this graph
 };
 

@@ -14,9 +14,9 @@ class group {
 };
 
 template<typename groupType>
-class group_rewriter : public rewriter_base{
+class groupRewriter : public rewriterBase{
     public: 
-    group_rewriter() = default;
+    groupRewriter() = default;
     virtual resultCode execute( painter rewriter,node* op) override final{
         if(auto g = dynamic_cast<groupType*>(op))
         {
@@ -37,18 +37,17 @@ class normalizationPass : public passBase {
     normalizationPass() : passBase("normalization"){ }
     virtual resultCode run(){
         painter p(get_context());
-        add_rewriter<group_rewriter<normalizer>>();
+        add_rewriter<groupRewriter<normalizer>>();
         // applyRewriterOnce(p, getGraph());
         // return applyRewriterOnce(p, getGraph());
-        removeIdenticalOps(get_graph());
+        remove_identical_ops(get_graph());
         resultCode code = apply_rewriter_greedy(p, get_graph());
-        inferTypes(get_graph());
-        removeUnusedOps(get_graph());
+        remove_unused_ops(get_graph());
         get_graph()->clean();
         return code;
     }
 
-    node* checkIfIdenticalExist(node* op, std::queue<node*> &list){
+    node* check_if_identical_exist(node* op, std::queue<node*> &list){
         std::queue<node*> q=list;
         while(!q.empty()){
             auto checkop = q.front();
@@ -60,32 +59,22 @@ class normalizationPass : public passBase {
         return nullptr;
     }
 
-    void inferTypes(graph* g){
-        auto ctx = g->get_context();
+    void remove_unused_ops(graph* g){
         for(auto op : g->get_nodes()){
-            if(auto subg = dynamic_cast<graph*>(op)){
-                inferTypes(subg);
-            }
-        }
-    }
-
-    void removeUnusedOps(graph* g){
-        for(auto op : g->get_nodes()){
-            bool canRemove = op->isTrivial();
-            for(auto & val : op->getOutputs()){
-                if(val->getUserSize() !=0 ){
-                    canRemove = false;
-                    break;
-                }
+            bool canRemove = op->is_trivial();
+            auto val = op->output();
+            if(val->get_user_size() !=0 ){
+                canRemove = false;
+                break;
             }
             if(canRemove) op->erase();
             else if(auto subg = dynamic_cast<graph*>(op)){
-                removeUnusedOps(subg);
+                remove_unused_ops(subg);
             }
         }
     }
 
-    bool removeIdenticalOps(graph* g){
+    bool remove_identical_ops(graph* g){
         // using breadth first walk to remove identical ops
         // assignID is necessary for the checkIfIdenticalExist function as the id is used to check if two ops are identical
         g->assign_id(0);
@@ -93,15 +82,15 @@ class normalizationPass : public passBase {
         if(g == nullptr) {
             THROW("Remove identical ops failed: graph is invalid.");
         }
-        auto list = g->getEntry().getIndirectDependecyValue()->getUsers();
+        auto list = g->get_nodes();
         std::queue<node*> queue;
         for(auto op : list){
-            if(op->isRemovable() || !op->isActive()) continue;
+            if(op->is_removable() || !op->is_active()) continue;
             
             // if op is a graph:
             if(auto subg = dynamic_cast<graph*>(op)){
                 
-                removeIdenticalOps(subg);
+                remove_identical_ops(subg);
                 continue;
             }
             queue.push(op);
@@ -113,18 +102,14 @@ class normalizationPass : public passBase {
         while(!queue.empty()){
             auto op = queue.front();
             queue.pop();
-            for(auto& output: op->getOutputs()){
-                // skip the dependencyValue
-                if(auto dependency = dynamic_cast<dependencyValue*>(output.get())) 
-                    continue;
-                for(auto user : output->getUsers()){
-                    if(user->isRemovable() || !user->isActive()) continue;
-                     if(auto keepop = checkIfIdenticalExist(user, queue)){
-                        user->replaceBy(keepop);
-                        changed = true;
-                    }else{
-                        queue.push(user);
-                    }
+            auto output = op->output();
+            for(auto user : output->get_users()){
+                if(user->is_removable() || !user->is_active()) continue;
+                 if(auto keepop = check_if_identical_exist(user, queue)){
+                    user->replace_by(keepop);
+                    changed = true;
+                }else{
+                    queue.push(user);
                 }
             }
         }

@@ -32,7 +32,6 @@ class resultCode : public bitCode<int8_t>{
     }
 };
 
-
 class rewriterBase {
     public:
     rewriterBase() = default;

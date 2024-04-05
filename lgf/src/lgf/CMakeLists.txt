@@ -4,11 +4,9 @@ file(GLOB_RECURSE headers
 )
 set(
     sources
+    value.cpp
     node.cpp
     pass.cpp
-    libs/AAB/ops.cpp
-    libs/AAB/passes.cpp
-    libs/SIO/exporter.cpp
 )
 
 create_cpp_library(

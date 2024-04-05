@@ -4,58 +4,18 @@
 #include "lgf/node.h"
 using namespace lgf;
 
-value::value(node * op) : defop(op) {
-}
-//---------------------------------------------------
-
-value::value(node * op, std::string sid_) 
-: defop(op){
-    set_sid(sid_);
-}
-//---------------------------------------------------
-
-value::~value() {
-    deprecate();
-}
-//---------------------------------------------------
-
-void value::deprecate(){
-    for(auto user : users){
-        user->dlink_value(this);
-    }
-    users.clear();
-}
-//---------------------------------------------------
-
-void value::remove_user(node* user){
-    auto iter = std::find(users.begin(), users.end(), user);
-    (*iter)->dlink_value(this);
-    if(iter!=users.end()) users.erase(iter);
-}
-//---------------------------------------------------
-
-std::string value::represent() {
-    printer p;
-    p<<"%"<<get_sid();
-    p<<" "<<get_trace_id();
-    //p<<" ("<<getUsers().size()<<")"; 
-    //if(getUsers().size()>0) p<<" first user: "<<getUsers()[0];
-    return p.dump();
-}
-//---------------------------------------------------
-
 void value::print() { global::stream::getInstance()<<represent()<<"\n"; };
 //---------------------------------------------------
 
 //////////////////////////////////////////////////////
 
-std::string node::represent_inputs(){
+std::string node::inputs_sid(){
     if(get_input_size() == 0) return "";
     printer p;
     auto ins = get_inputs();
-    p<<ins[0]->represent();
+    p<<ins[0]->get_sid();
     for(auto iter = ins.begin()+1; iter != ins.end(); iter++){
-        p<<", "<<(*iter)->represent();
+        p<<", "<<(*iter)->get_sid();
     }
     return p.dump();
 }
@@ -78,7 +38,7 @@ void node::register_input_at( value* val, size_t pos){
 //---------------------------------------------------
 
 void node::assign_value_id(int& n){
-    _v_.get()->set_trace_id(n);
+    _v_.get()->set_sid("%"+std::to_string(n));
     n++;
 }
 //---------------------------------------------------
