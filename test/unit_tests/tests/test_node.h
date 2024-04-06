@@ -20,14 +20,14 @@ class defop : public node {
     defop (std::string name){
         set_sid("def");
     }
-    static defop* build(LGFContext *ctx, valueDesc* desc, std::string name){
+    static defop* build( valueDesc* desc, std::string name){
         auto op = new defop(name);
         op->output()->set_desc(desc);
         return op;
     }
     virtual sid_t represent() override{
         printer p;
-        p<<output()->represent();
+        p<<represent_output();
         p<< " = "<<get_sid()<<" : "<<output()->get_desc()->represent();
         return p.dump();
     }
@@ -35,7 +35,7 @@ class defop : public node {
 class addop : public node {
     public:
     addop () = default;
-    static addop* build(LGFContext *ctx, node* lhs, node* rhs){
+    static addop* build( node* lhs, node* rhs){
         auto op = new addop();
         op->accept(lhs, rhs);
         op->output()->set_desc(lhs->output()->get_desc());
@@ -45,7 +45,7 @@ class addop : public node {
     value* rhs() {return input(1);}
     virtual sid_t represent() override{
         printer p;
-        p<<output()->represent();
+        p<<represent_output();
         p<<" = "<<get_sid()<<" : "<<lhs()->get_sid() << " + "<<rhs()->get_sid();
         return p.dump();
     }
@@ -54,7 +54,7 @@ class addop : public node {
 class multiplyop : public node {
     public:
     multiplyop () = default;
-    static multiplyop* build(LGFContext *ctx, node * lhs, node * rhs){
+    static multiplyop* build( node * lhs, node * rhs){
         auto op = new multiplyop();
         op->accept(lhs, rhs);
         op->output()->set_desc(lhs->output()->get_desc());
@@ -65,7 +65,7 @@ class multiplyop : public node {
     value* rhs() {return input(1);}
     virtual sid_t represent() override{
         printer p;
-        p<<output()->represent();
+        p<<represent_output();
         p<<" = "<<get_sid()<<" : "<<lhs()->get_sid() << " * "<<rhs()->get_sid();
         return p.dump();
     }
@@ -74,7 +74,7 @@ class multiplyop : public node {
 class returnop : public node{
     public: 
     returnop () = default;
-    static returnop * build(LGFContext *ctx, node * inputValue){
+    static returnop * build( node * inputValue){
         auto op = new returnop();
         op->accept(inputValue);
         op->set_sid("return");

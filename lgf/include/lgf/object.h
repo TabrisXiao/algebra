@@ -7,7 +7,7 @@
 namespace lgf{
 
 //symbolic id;
-using sid_t = std::string;
+typedef std::string sid_t;
 
 class graphObject {
     public:

@@ -149,6 +149,18 @@ public :
 
     value* input(size_t n=0) {return inputs[n];}
 
+    void set_value_desc(valueDesc* desc){
+        output()->set_desc(desc);
+    }
+
+    sid_t output_sid(){
+        return output()->get_sid();
+    }
+
+    sid_t represent_output(){
+        return output()->represent();
+    }
+
     size_t get_input_size() const;
 
     void set_nontrivial(){ bTrivial = 0; }

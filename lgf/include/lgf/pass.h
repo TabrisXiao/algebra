@@ -62,18 +62,16 @@ public :
     // the return value is not defined yet.
     virtual resultCode run() = 0;
     graph * get_graph(){ return g; }
-    void goto_graph(graph *reg){ g = reg;}
-    LGFContext * get_context(){ return ctx; }
+    void set_work_graph(graph *op){g = op;}
     // addRewriter will create a rewriter using the arguments;
     template<typename T, typename ...ARGS>
     void add_rewriter(ARGS...arg){ 
         auto ptr = std::make_unique<T>(arg...);
-        ptr->ctx = ctx;
         rewriters.push_back(std::move(ptr));
     }
 
-    resultCode apply_rewriter_once( graph* g );
-    resultCode apply_rewriter_greedy( graph* g );
+    resultCode apply_rewriter_once( painter &p, graph* g );
+    resultCode apply_rewriter_greedy( painter &p, graph* g );
 
     resultCode walk_apply_rewriter_once(painter &p, graph* g,bool deepwalk = 0);
 
@@ -89,8 +87,6 @@ public :
     std::vector<std::unique_ptr<rewriterBase>> rewriters;
     std::string _pass_name;
     bool rewriteHappen = 0;
-    LGFContext* ctx = nullptr;
-    painter p;
     graph * g=nullptr;
 };
 
@@ -98,46 +94,47 @@ public :
 class passManager{
     public : 
     passManager() = default;
-    passManager(LGFContext* c, graph *op) {ctx = c, start = op;}
-    void enablePrintAfterPass(){bPrintAfterPass = 1;}
-    void enablePrintBeforePass(){bPrintBeforePass = 1;}
-    void init(LGFContext* c, graph *op) {ctx = c, start = op;}
+    passManager( graph *op) { reg = op;}
+    void set_work_region(graph *op){reg = op;}
+    void enable_print_after_pass(){bPrintAfterPass = 1;}
+    void enable_print_before_pass(){bPrintBeforePass = 1;}
+    void init( graph *op) { reg = op;}
     void validation(graph* g);
     
     void run(){
         if(bPrintInitialIR) 
         {   OSTREAM<<"\n------ Input "<<name<<" ------\n";
-            start->assign_id(0);
-            start->print();
+            reg->assign_id(0);
+            reg->print();
         }
         
         for(auto pass=passes.begin(); pass!=passes.end(); pass++){
             if(bPrintBeforePass){
                 OSTREAM<<"------ IR before pass:  "<<(*pass).get()->_pass_name<<" ------\n";
-                start->assign_id(0);
-                start->print();
+                reg->assign_id(0);
+                reg->print();
                 OSTREAM<<"\n";
             }
 
             (*pass)->run();
-            validation(start);
+            validation(reg);
             if(bPrintAfterPass){
                 OSTREAM<<"------ IR after pass: "<<(*pass).get()->_pass_name<<" ------\n";
-                start->assign_id(0);
-                start->print();
+                reg->assign_id(0);
+                reg->print();
                 OSTREAM<<"\n";
             }
         }
         if(bPrintFinalIR) 
         {   OSTREAM<<"\n------ IR after "<<name<<" ------\n";
-            start->assign_id(0);
-            start->print();
+            reg->assign_id(0);
+            reg->print();
         }
     }
 
-    void add_pass(std::unique_ptr<passBase> ps){
-        ps->goto_graph(dynamic_cast<graph*>(start));
-        ps->ctx = ctx;
+    void add_pass(std::unique_ptr<passBase> ps, graph* g = nullptr){
+        if(!g) g = reg;
+        ps->set_work_graph(dynamic_cast<graph*>(g));
         passes.push_back(std::move(ps));
     }
     void add_normalization_pass();
@@ -147,8 +144,7 @@ class passManager{
     bool bPrintBeforePass = 0;
     bool bPrintInitialIR = 0;
     bool bPrintFinalIR = 0;
-    graph * start = nullptr;
-    LGFContext* ctx = nullptr;
+    graph * reg = nullptr;
     std::string name = "";
 };
 

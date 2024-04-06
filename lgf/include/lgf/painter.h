@@ -34,18 +34,18 @@ class painter {
     : point(p.getpaintPoint())
     , ctx(p.get_context()){}
     ~painter(){}
-    void setContext(LGFContext * ctx_){
+    void set_context(LGFContext * ctx_){
         ctx = ctx_;
     } 
     template<typename obj>
     obj* sketch(){
-        auto op = obj::build(ctx);
+        auto op = obj::build();
         //op->inferType(ctx);
         return op;
     }
     template<typename obj, typename...ARGS>
     obj* sketch(ARGS ...args){
-        auto op = obj::build(ctx, args...);
+        auto op = obj::build(args...);
         //op->inferType(ctx);
         return op;
     }
@@ -169,20 +169,22 @@ class painter {
     paintPoint getpaintPoint(){ return point; }
     
     graph* getGraph(){ return point.g;}
+    
     void gotoParentGraph(){
         if(!point.g) return;
         goto_graph(point.g->get_parent_graph());
     }
+
     graph* get_parent_graph(){ 
         if(!point.g) return nullptr;
-        return point.g->get_parent_graph(); }
+        return point.g->get_parent_graph(); 
+    }
+
     LGFContext * get_context(){ return ctx; }
     paintPoint point;
     node * lastOp = nullptr;
     LGFContext* ctx = nullptr;
 };
-
-
 
 }
 

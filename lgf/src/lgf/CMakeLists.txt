@@ -11,8 +11,8 @@ set(
 
 create_cpp_library(
     NAME lgf_lib
-    #HDRS
-    #${headers}
+    HDRS
+    ${headers}
     SRCS
     ${sources}
     INCLUDES

@@ -7,9 +7,10 @@
 namespace lgf{
 
 class node;
-class valueDesc {
+class valueDesc : public graphObject{
     public:
     valueDesc() = default;
+    valueDesc(sid_t id) : graphObject(id) {}
     virtual sid_t represent(){ return ""; }
 };
 
