@@ -36,12 +36,11 @@ class normalizationPass : public passBase {
     public: 
     normalizationPass() : passBase("normalization"){ }
     virtual resultCode run(){
-        painter p(get_context());
         add_rewriter<groupRewriter<normalizer>>();
         // applyRewriterOnce(p, getGraph());
         // return applyRewriterOnce(p, getGraph());
         remove_identical_ops(get_graph());
-        resultCode code = apply_rewriter_greedy(p, get_graph());
+        resultCode code = apply_rewriter_greedy(get_graph());
         remove_unused_ops(get_graph());
         get_graph()->clean();
         return code;

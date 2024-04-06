@@ -3,6 +3,7 @@
 #define node_H_
 #include "object.h"
 #include "value.h"
+#include "context.h"
 #include <unordered_set>
 #include <queue>
 #include <map>
@@ -17,8 +18,6 @@
 
 // logic graph frameworks
 namespace lgf{
-class context;
-class dependence;
 class valueRef;
 class graph;
 class normalizer;
@@ -147,36 +146,32 @@ public :
     std::vector<value*>& get_inputs(){ return inputs;}
 
     value* output(){return _v_.get();}
+
     value* input(size_t n=0) {return inputs[n];}
+
     size_t get_input_size() const;
+
     void set_nontrivial(){ bTrivial = 0; }
+
     bool is_trivial(){ return bTrivial; }
 
     void assign_value_id(int& n);
 
-    // detach the input edges from this node and disconnect
-    // the outputs from their users, this node still connecting to
-    // the output edges.
-    // for example, detach v3 will leads to 
-    //    v1                       v1
-    //   / \                      /
-    //  v2  v3    detach v3:     v2      v3
-    //     /                              |
-    //    v4                        v4
-    //node* detach();
-
     void set_activation(bool a ){ bActive = a; }
+
     bool is_active(){return bActive; }
 
     void set_exploration(bool a){ bExplored = a; }
+
     bool is_explored(){ return bExplored; }
 
     bool is_removable(){ return bRemove; }
+    
     void set_removable(){ 
         bRemove = 1; }
-    //void erase(){ detach(); bRemove = 1;}
 
     graph* get_parent_graph(){return graph_;}
+
     void set_parent_graph(graph* g){ graph_ = g; }
 
     std::string get_op_represent(){
@@ -213,15 +208,26 @@ public :
     graph* graph_ = nullptr;
 };
 
-class graph : public node{
+class graph : public node{ 
     public : 
     graph() = default;
+    
     graph( std::string id, graph* pg = nullptr )
     : node(id, pg) {}
+
     virtual void print() override;
+
     virtual std::string represent(){ return "";} 
+
     // return how many nodes graph contained
     size_t get_node_size(){ return nodes.size(); }
+
+    LGFContext& get_context(){ return ctx; }
+
+    // note that this function will not take care of the inputs and users
+    // replacement. It only replace the node in the nodes container.
+    void replace_node(node* old, node* new_op);
+
     // A breadth-first walk function that is graph modification safe.
     // Call the callable at the begining of visiting each vertex.
     // The callable should return void.
@@ -273,6 +279,7 @@ class graph : public node{
     }
 
     graph* get_graph() {return dynamic_cast<graph*>(this);}
+    
     virtual void print_graph();
 
     void assign_id(int n=0);
@@ -281,18 +288,13 @@ class graph : public node{
     // return 0 if no ops got removed. Otherwise return 1;
     bool clean();
 
-    // this function sort the nodes in a order that the op depends on
-    // others will always behind its inputs.
-    //void sortByDepdency();
-
-    
     std::vector<node*> & get_nodes(){return nodes;}
+
     private:
     std::vector<node*> nodes;
+    LGFContext ctx;
     // how many nodes contained in this graph
 };
-
-//----------------------------------------
 
 }
 

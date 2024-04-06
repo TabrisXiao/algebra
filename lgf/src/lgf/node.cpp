@@ -59,9 +59,19 @@ void node::drop_all_inputs(){
 void node::replace_by(node* new_op){
     if(this == new_op) return;
     _v_.get()->swap(*(new_op->output()));
+    if(graph_){
+        graph_->replace_node(this, new_op);
+        new_op->set_parent_graph(graph_);
+    }
 }
 
 //////////////////////////////////////////////////////
+
+void graph::replace_node(node* old, node* new_op){
+    auto iter = std::find(nodes.begin(), nodes.end(), old);
+    if(iter == nodes.end()) return;
+    *iter = new_op;
+}
 
 void graph::print() {
     assign_id(0);

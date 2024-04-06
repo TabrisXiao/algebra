@@ -4,7 +4,7 @@
 //#include "utility.h"
 using namespace lgf;
 
-resultCode passBase::apply_rewriter_once(painter &p, graph* g){
+resultCode passBase::apply_rewriter_once( graph* g ){
     resultCode result;
     p.goto_graph(g);
     for(auto ptr=rewriters.begin(); ptr!=rewriters.end(); ptr++)
@@ -14,7 +14,7 @@ resultCode passBase::apply_rewriter_once(painter &p, graph* g){
             if(node->is_removable() || !node->is_active()) continue;
             result.add((*ptr).get()->execute(p, node));
             if(auto subg = dynamic_cast<graph*>(node)){
-                result.add(apply_rewriter_once(p, subg));
+                result.add(apply_rewriter_once(subg));
             }
         }
     }
@@ -22,15 +22,15 @@ resultCode passBase::apply_rewriter_once(painter &p, graph* g){
 }
 //---------------------------------------------------
 
-resultCode passBase::apply_rewriter_greedy(painter &p, graph* g){
+resultCode passBase::apply_rewriter_greedy( graph* g ){
     p.goto_graph(g);
-    auto result = apply_rewriter_once(p, g);
+    auto result = apply_rewriter_once(g);
     g->clean();
     int counts = 1;
     auto final_result = result;
     while(result.isSuccess()){
         counts++;
-        result = apply_rewriter_once(p, g);
+        result = apply_rewriter_once(g);
         final_result.add(result);
         g->clean();
     }

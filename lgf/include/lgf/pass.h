@@ -72,8 +72,8 @@ public :
         rewriters.push_back(std::move(ptr));
     }
 
-    resultCode apply_rewriter_once(painter &p, graph* g);
-    resultCode apply_rewriter_greedy(painter &p, graph* g);
+    resultCode apply_rewriter_once( graph* g );
+    resultCode apply_rewriter_greedy( graph* g );
 
     resultCode walk_apply_rewriter_once(painter &p, graph* g,bool deepwalk = 0);
 
@@ -90,6 +90,7 @@ public :
     std::string _pass_name;
     bool rewriteHappen = 0;
     LGFContext* ctx = nullptr;
+    painter p;
     graph * g=nullptr;
 };
 

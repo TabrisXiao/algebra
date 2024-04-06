@@ -22,6 +22,10 @@ class value : public graphObject{
 
     virtual ~value();
     virtual sid_t represent(); 
+    sid_t desc_represent(){
+        if(desc) return desc->represent();
+        return "";
+    }
     void print();
     void link_node(node* n){ users.push_back(n); }
     void dlink_node(node* n){

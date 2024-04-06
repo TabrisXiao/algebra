@@ -17,14 +17,21 @@ class LGFContext;
 
 class painter {
     public : 
-    struct paint_point{
+    struct paintPoint{
         graph* g=nullptr;
-        std::vector<node*>::iterator iter;
+        std::vector<node*>* nodes = nullptr;
+        std::vector<node*>::iterator iter = std::vector<node*>::iterator();
+
+        bool is_invalid(){
+            if( g==nullptr || nodes==nullptr || iter < nodes->begin() || iter > nodes->end())
+                return true;
+            return false;
+        }
     };
     painter() = default;
-    painter(LGFContext * ctx_) : ctx(ctx_) {}
+    painter(graph * g) : point({g, &(g->get_nodes()), g->get_nodes().end()}), ctx(&(g->get_context())){}
     painter(painter &p)
-    : point(p.getpaint_point())
+    : point(p.getpaintPoint())
     , ctx(p.get_context()){}
     ~painter(){}
     void setContext(LGFContext * ctx_){
@@ -44,21 +51,22 @@ class painter {
     }
     template<typename obj, typename...ARGS>
     obj* paint(ARGS ...args){
+        THROW_WHEN(point.is_invalid(), "paint point is invalid!")
         //CHECK_CONDITION(point.g!=nullptr, "No graph associated to the painter!");
         auto op = sketch<obj>(args...);
         //add to graph
         op->set_parent_graph(point.g);
-        point.iter = point.g->get_nodes().insert(point.iter, op)+1;
+        point.iter = point.nodes->insert(point.iter, op)+1;
         lastOp = op;
         return op;
     }
     template<typename obj>
     obj* paint(){
-        //CHECK_CONDITION(current_graph!=nullptr, "No graph associated to the painter!");
+        THROW_WHEN(point.is_invalid(), "paint point is invalid!")
         auto op = sketch<obj>();
         //add to graph
         op->set_parent_graph(point.g);
-        point.iter = point.g->get_nodes().insert(point.iter, op)+1;
+        point.iter = point.nodes->insert(point.iter, op)+1;
         lastOp = op;
         return op;
     }
@@ -77,16 +85,16 @@ class painter {
         op->replaceBy(newop);
         return newop;
     }
-    void set_paint_point_to_top(){
+    void set_paintPoint_to_top(){
         point.iter = point.g->get_nodes().begin();
     }
-    void set_paint_point_before(node* op){
+    void set_paintPoint_before(node* op){
         point.g = op->get_parent_graph();
         auto & vec = point.g->get_nodes();
         point.iter=std::find(vec.begin(), vec.end(),op);
         if(point.iter !=vec.begin()) point.iter--;
     }
-    void set_paint_point_after(node* op){
+    void set_paintPoint_after(node* op){
         point.g = op->get_parent_graph();
         auto & vec = point.g->get_nodes();
         point.iter=std::find(vec.begin(), vec.end(),op);
@@ -99,7 +107,7 @@ class painter {
         point.iter = point.g->get_nodes().insert(point.iter, op)+1;
     }
 
-    // making an Op depends on the lastOp so that in a dependency walk order, 
+    // making an Op depends on the lastOp so that in a dependency walk order,
     // it will be later than the current lastOp
     void appendToCurrentGraph(node* op){
         op->set_parent_graph(point.g);
@@ -111,11 +119,6 @@ class painter {
     obj* replace_op(node *op1){
         auto op2 = sketch<obj>();
         op1->replace_by(op2);
-        auto & nodes = op1->get_parent_graph()->get_nodes();
-        // find the op1 in nodes and assign it with the op2
-        auto iter = std::find(nodes.begin(), nodes.end(), op1);
-        *iter = op2;
-        op2->set_parent_graph(op1->get_parent_graph());
         op1->erase();
         return op2;
     }
@@ -124,12 +127,6 @@ class painter {
     obj* replace_op(node *op1, ARGS ...args){
         auto op2 = sketch<obj>(args...);
         op1->replace_by(op2);
-        auto & nodes = op1->get_parent_graph()->get_nodes();
-        // find the op1 in nodes and assign it with the op2
-        auto iter = std::find(nodes.begin(), nodes.end(), op1);
-        *iter = op2;
-
-        op2->set_parent_graph(op1->get_parent_graph());
         op1->erase();
         return op2;
     }
@@ -148,7 +145,8 @@ class painter {
     
     void goto_graph(graph * reg_) {
         point.g = reg_;
-        point.iter = reg_->get_nodes().end();
+        point.nodes = &(reg_->get_nodes());
+        point.iter = point.nodes->end();
     }
 
     std::vector<value*>::iterator insert_inputs(std::vector<value*>::iterator target, std::vector<value*>::iterator begin, std::vector<value*>::iterator end, node* op){
@@ -168,7 +166,7 @@ class painter {
         return insert_inputs(target, defop->get_inputs().begin()+1, defop->get_inputs().end(), op);
     }
 
-    paint_point getpaint_point(){ return point; }
+    paintPoint getpaintPoint(){ return point; }
     
     graph* getGraph(){ return point.g;}
     void gotoParentGraph(){
@@ -179,9 +177,9 @@ class painter {
         if(!point.g) return nullptr;
         return point.g->get_parent_graph(); }
     LGFContext * get_context(){ return ctx; }
-    paint_point point;
+    paintPoint point;
     node * lastOp = nullptr;
-    LGFContext *ctx = nullptr;
+    LGFContext* ctx = nullptr;
 };
 
 
