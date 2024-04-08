@@ -23,7 +23,8 @@ class painter {
         std::vector<node*>::iterator iter = std::vector<node*>::iterator();
 
         bool is_invalid(){
-            if( g==nullptr || nodes==nullptr || iter < nodes->begin() || iter > nodes->end())
+            if( g==nullptr || nodes==nullptr) return true;
+            if( iter < nodes->begin() || iter > nodes->end())
                 return true;
             return false;
         }
@@ -114,20 +115,28 @@ class painter {
         point.iter = point.g->get_nodes().insert(point.iter, op)+1;
     }
 
+    void replace_by(node *old, node *new_op){
+        if(old->replace_by(new_op)){
+            point.iter = point.nodes->end();
+        }
+        // don't remove the node is it is used by the new_op
+        if(!old->is_user(new_op)){
+            old->erase();
+        }
+    }
+
     // create a new op to replace the op1's users
     template<typename obj>
     obj* replace_op(node *op1){
         auto op2 = sketch<obj>();
-        op1->replace_by(op2);
-        op1->erase();
+        replace_by(op1, op2);
         return op2;
     }
 
     template<typename obj, typename...ARGS>
     obj* replace_op(node *op1, ARGS ...args){
         auto op2 = sketch<obj>(args...);
-        op1->replace_by(op2);
-        op1->erase();
+        replace_by(op1, op2);
         return op2;
     }
     

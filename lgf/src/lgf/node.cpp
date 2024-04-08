@@ -56,13 +56,42 @@ void node::drop_all_inputs(){
 }
 //---------------------------------------------------
 
-void node::replace_by(node* new_op){
-    if(this == new_op) return;
+int node::replace_by(node* new_op){
+    if(this == new_op) return 0;
     _v_.get()->swap(*(new_op->output()));
-    if(graph_){
-        graph_->replace_node(this, new_op);
-        new_op->set_parent_graph(graph_);
+
+    // special case that if this op is a input of the new op
+    bool cycleUse= 0 ;
+    auto & users = new_op->output()->get_users();
+
+    size_t i = 0, target = 0;
+    for(auto user: users){
+        if(user == new_op){
+            cycleUse = 1;
+            target = i;
+        }
+        else
+        {
+            user->replace_input(this, new_op);
+        }
+        i++;
     }
+
+    if(cycleUse){
+        users.erase(users.begin()+target);
+        output()->link_node(new_op);
+    }
+
+    if(graph_){
+        new_op->set_parent_graph(graph_);
+        if(cycleUse){
+            graph_->insert_after(this, new_op);
+            return 1;
+        } else {
+            graph_->replace_node(new_op, this);
+        }
+    }
+    return 0;
 }
 
 //////////////////////////////////////////////////////

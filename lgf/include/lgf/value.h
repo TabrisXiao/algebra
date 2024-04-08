@@ -4,74 +4,57 @@
 #include <string>
 #include <vector>
 
-namespace lgf{
+namespace lgf
+{
 
-class node;
-class valueDesc : public graphObject{
+    class node;
+    class valueDesc : public graphObject
+    {
     public:
-    valueDesc() = default;
-    valueDesc(sid_t id) : graphObject(id) {}
-    virtual sid_t represent(){ return ""; }
-};
+        valueDesc() = default;
+        valueDesc(sid_t id) : graphObject(id) {}
+        virtual sid_t represent() { return ""; }
+    };
 
-class value : public graphObject{
+    class value : public graphObject
+    {
     public:
-    value() = default;
-    value(node *op, std::string sid = "") : graphObject(sid), defop(op) {
-    }
-    value(valueDesc& d, node *op, std::string sid = "" ) : graphObject(sid), defop(op), desc(&d) {}
+        value() = default;
+        value(std::string sid = "") : graphObject(sid) {}
 
-    virtual ~value();
-    virtual sid_t represent(); 
-    sid_t desc_represent(){
-        if(desc) return desc->represent();
-        return "";
-    }
-    void print();
-    void link_node(node* n){ users.push_back(n); }
-    void dlink_node(node* n){
-        auto iter = std::find(users.begin(), users.end(), n);
-        if(iter!=users.end()) users.erase(iter);
-    }
-    void swap_node(node* from, node* to){
-        auto iter = std::find(users.begin(), users.end(), from);
-        if(iter!=users.end()) *iter = to;
-    }
-    void deprecate();
+        value(valueDesc &d, std::string sid = "") : graphObject(sid), desc(&d) {}
 
-    std::vector<node*>& get_users(){ return users; }
-    valueDesc* get_desc() const { return desc; }
-    void set_desc(valueDesc* i){ 
-        desc = i; 
-    }
-    void consume(value& val){ 
-        
-    }
-    void set_defining_op(node* op){ defop = op; }
-    node* get_defining_op() const { return defop; }
-    template<typename T>
-    T* get_defining_op(){
-        return dynamic_cast<T*>(defop);
-    }
+        virtual ~value() = default;
+        virtual sid_t represent();
+        sid_t desc_represent()
+        {
+            if (desc)
+                return desc->represent();
+            return "";
+        }
 
-    void swap(value& v){
-        // Note that this function doesn't swap desc!
-        // swap the users
-        std::swap(users, v.get_users());
-        // swap the defining op
-        auto buffer_op = defop;
-        defop = v.get_defining_op();
-        v.set_defining_op(buffer_op);
-    }
-    
-    void remove_user(node* n);
-    size_t get_user_size() const { return users.size(); }
+        void print();
+
+        valueDesc *get_desc() const { return desc; }
+        void set_desc(valueDesc *i)
+        {
+            desc = i;
+        }
 
     private:
-    node* defop = nullptr;
-    std::vector<node*> users;
-    valueDesc* desc = nullptr;
-};
+        valueDesc *desc = nullptr;
+    };
+
+    // simple value is the value that can be identified by a single sid.
+    class simpleValue : public valueDesc
+    {
+    public:
+        simpleValue(sid_t id) : valueDesc(id) {}
+        virtual sid_t represent() override
+        {
+            return get_sid();
+        }
+    };
 } // namespace lgf
 
 #endif
