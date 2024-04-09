@@ -12,15 +12,14 @@ void value::print() { global::stream::getInstance()<<represent()<<"\n"; };
 std::string node::inputs_sid(){
     if(get_input_size() == 0) return "";
     printer p;
-    auto ins = get_inputs();
-    p<<ins[0]->get_sid();
-    for(auto iter = ins.begin()+1; iter != ins.end(); iter++){
-        p<<", "<<(*iter)->get_sid();
+    p<<inputs[0]->get_dual_node()->get_value().get_sid();
+    for(auto iter = inputs.begin()+1; iter != inputs.end(); iter++){
+        p<<", "<<(*iter)->get_dual_node()->get_value().get_sid();
     }
     return p.dump();
 }
-//---------------------------------------------------
 
+//---------------------------------------------------
 void node::print(){
     global::stream::getInstance().printIndent();
     //printOutputs();
@@ -30,69 +29,18 @@ void node::print(){
     //    g->print();
     //} else global::stream::getInstance() <<"\n";
 }
-//---------------------------------------------------
 
-void node::register_input_at( value* val, size_t pos){
-    inputs.insert(inputs.begin()+pos, val);
-}
 //---------------------------------------------------
-
 void node::assign_value_id(int& n){
     _v_.get()->set_sid("%"+std::to_string(n));
     n++;
 }
-//---------------------------------------------------
 
+//---------------------------------------------------
 size_t node::get_input_size() const {
     return inputs.size();
 }
-//---------------------------------------------------
 
-void node::drop_all_inputs(){
-    for(auto input=inputs.begin(); input!=inputs.end(); input++){
-        (*input)->dlink_node(this);
-    }
-    inputs.clear();
-}
-//---------------------------------------------------
-
-int node::replace_by(node* new_op){
-    if(this == new_op) return 0;
-    _v_.get()->swap(*(new_op->output()));
-
-    // special case that if this op is a input of the new op
-    bool cycleUse= 0 ;
-    auto & users = new_op->output()->get_users();
-
-    size_t i = 0, target = 0;
-    for(auto user: users){
-        if(user == new_op){
-            cycleUse = 1;
-            target = i;
-        }
-        else
-        {
-            user->replace_input(this, new_op);
-        }
-        i++;
-    }
-
-    if(cycleUse){
-        users.erase(users.begin()+target);
-        output()->link_node(new_op);
-    }
-
-    if(graph_){
-        new_op->set_parent_graph(graph_);
-        if(cycleUse){
-            graph_->insert_after(this, new_op);
-            return 1;
-        } else {
-            graph_->replace_node(new_op, this);
-        }
-    }
-    return 0;
-}
 
 //////////////////////////////////////////////////////
 
@@ -119,10 +67,9 @@ void graph::print() {
 void graph::print_graph() {
     global::stream::getInstance()<<"{\n";
     global::stream::getInstance().incrIndentLevel();
-    for(auto & op : nodes){
-        if(op->is_removable() || !op->is_active()) continue;
+    walk([this](node* op){
         op->print();
-    }
+    }, 1);
     global::stream::getInstance().decrIndentLevel();
     global::stream::getInstance().printIndent();
     global::stream::getInstance()<<"}\n";
@@ -147,7 +94,7 @@ bool graph::clean()
     for(auto iter = nodes.begin(); iter!=nodes.end(); )
     {
         node* op =(*iter);
-        if(op->is_removable()){
+        if(op->is_deprecate()){
             
             iter = nodes.erase(iter);
             check = 1;

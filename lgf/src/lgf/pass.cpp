@@ -11,7 +11,7 @@ resultCode passBase::apply_rewriter_once(painter &p, graph* g ){
     {
         auto nodes = g->get_nodes(); 
         for(auto & node : nodes){
-            if(node->is_removable() || !node->is_active()) continue;
+            if(node->is_deprecate()) continue;
             result.add((*ptr).get()->execute(p, node));
             if(auto subg = dynamic_cast<graph*>(node)){
                 result.add(apply_rewriter_once(p, subg));
@@ -42,7 +42,7 @@ resultCode passBase::walk_apply_rewriter_once(painter &p, graph* g, bool deepWal
     p.goto_graph(g);
     resultCode result;
     g->walk([&](node* op){
-        if(op->is_removable() || !op->is_active()) return;
+        if(op->is_deprecate()) return;
         for(auto ptr=rewriters.begin(); ptr!=rewriters.end(); ptr++){
             result.add((*ptr).get()->execute(p, op));
         }
@@ -53,7 +53,7 @@ resultCode passBase::walk_apply_rewriter_once(painter &p, graph* g, bool deepWal
 
 bool passBase::translation(painter &p, graph* g){
     g->walk([&](node* op){
-        if(op->is_removable() || !op->is_active()) return;
+        if(op->is_deprecate()) return;
         for(auto ptr=rewriters.begin(); ptr!=rewriters.end(); ptr++){
             (*ptr).get()->execute(p, op);
         }
@@ -65,7 +65,7 @@ bool passBase::translation(painter &p, graph* g){
 void passManager::validation(graph* g){
     auto nodes = g->get_nodes();
     for(auto & node : nodes){
-        if(node->is_removable() || !node->is_active()) continue;
+        if(node->is_deprecate()) continue;
         if(auto subg = dynamic_cast<graph*>(node)){
             validation(subg);
         } 

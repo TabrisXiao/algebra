@@ -24,7 +24,7 @@ namespace lgf
     class normalizer;
 
     typedef size_t id_t;
-
+    typedef std::unique_ptr<edge> edgeHandle;
     class node : public graphObject
     {
     public:
@@ -32,7 +32,7 @@ namespace lgf
         // the dependency inform that don't have value connections
         node(std::string id = "op", graph *g = nullptr) : graphObject(id)
         {
-            _v_ = std::make_unique<value>(this);
+            _v_ = std::make_unique<value>();
             graph_ = g;
         };
         virtual ~node() = default;
@@ -43,49 +43,73 @@ namespace lgf
             return p.dump();
         }
 
+        valueDesc *get_value_desc() { return _v_->get_desc(); }
+
+        value &get_value() { return *_v_; }
+
+        void set_value_desc(valueDesc *desc)
+        {
+            _v_->set_desc(desc);
+        }
+
+        sid_t get_value_sid()
+        {
+            return _v_->get_sid();
+        }
+
+        sid_t value_rep()
+        {
+            return _v_->represent();
+        }
+
+        sid_t value_desc_rep()
+        {
+            return _v_->desc_represent();
+        }
+
         void erase_input(node *n)
         {
-            auto it = std::find_if(inputs.begin(), inputs.end(), [n](edge e)
-                                   { return e.get_dual_node() == n; });
+            auto it = std::find_if(inputs.begin(), inputs.end(), [n](edgeHandle &e)
+                                   { if(!e) return false;
+                                    return e->get_dual_node() == n; });
             if (it == inputs.end())
                 return;
-            (*it).decouple();
             inputs.erase(it);
         }
 
-        void add_input_edge(edge e)
+        void add_input_edge(edgeHandle &e)
         {
-            inputs.push_back(e);
+            inputs.push_back(std::move(e));
         }
 
-        void add_output_edge(edge e)
+        void add_output_edge(edgeHandle &e)
         {
-            users.push_back(e);
+            users.push_back(std::move(e));
         }
 
-        void link_to(edge *e)
+        void link_to(edgeHandle &e)
         {
-            edge se(this);
-            se.couple(e);
-            users.push_back(se);
+            users.push_back(std::make_unique<edge>(this));
+            users.back()->couple(e.get());
         }
 
-        std::vector<edge> &get_users()
+        std::vector<edgeHandle> &get_user_handles()
         {
             return users;
         }
 
-        std::vector<edge> &get_inputs()
+        std::vector<edgeHandle> &get_input_handles()
         {
             return inputs;
         }
 
-        void register_input(node *n)
+        void add_input(node *n)
         {
             if (n == this)
                 return;
-            edge se(this), de(n);
-            se.couple(&de);
+            edgeHandle se = std::make_unique<edge>(this);
+            edgeHandle de = std::make_unique<edge>(n);
+            se->couple(de.get());
             inputs.push_back(std::move(se));
             n->add_output_edge(std::move(de));
         }
@@ -96,7 +120,7 @@ namespace lgf
             auto nodes = {args...};
             for (auto n : nodes)
             {
-                register_input(n);
+                add_input(n);
             }
         }
 
@@ -110,12 +134,13 @@ namespace lgf
 
         void replace_input_by(node *on, node *nn)
         {
-            auto it = std::find_if(inputs.begin(), inputs.end(), [on](edge e)
-                                   { return e.get_dual_node() == on; });
+            auto it = std::find_if(inputs.begin(), inputs.end(), [on](edgeHandle &e)
+                                   { if(!e) return false;
+                                    return e->get_dual_node() == on; });
             if (it == inputs.end())
                 return;
-            (*it).decouple();
-            nn->link_to(&(*it));
+            (*it)->decouple();
+            nn->link_to(*it);
         }
 
         // this function regardless if the case that if there was any
@@ -127,23 +152,21 @@ namespace lgf
                 return;
             for (auto &e : users)
             {
-                e.update_node(n);
+                if(e && e->is_coupled())
+                {
+                    e->update_node(n);
+                }
             }
             users.swap(n->users);
         }
 
-        value &get_value()
-        {
-            return *_v_;
-        }
-
-        node *input(size_t i)
+        node *input(size_t i=0)
         {
             if (i >= inputs.size())
                 throw std::runtime_error("calling input index out of range");
 
-            if (inputs[i].is_coupled())
-                return inputs[i].get_dual_node();
+            if (inputs[i]->is_coupled())
+                return inputs[i]->get_dual_node();
 
             // if the edge is not coupled, it means that this input is
             // no longer valid and need to be removed.
@@ -155,8 +178,8 @@ namespace lgf
         {
             if (i >= users.size())
                 throw std::runtime_error("calling user index out of range");
-            if (users[i].is_coupled())
-                return users[i].get_dual_node();
+            if (users[i]->is_coupled())
+                return users[i]->get_dual_node();
             // if the edge is not coupled, it means that this user is
             // no longer valid and need to be removed.
             users.erase(users.begin() + i);
@@ -191,22 +214,7 @@ namespace lgf
         {
             inputs.clear();
             users.clear();
-            set_removable();
-        }
-
-        void set_value_desc(valueDesc *desc)
-        {
-            _v_->set_desc(desc);
-        }
-
-        sid_t get_value_sid()
-        {
-            return _v_->get_sid();
-        }
-
-        sid_t represent_output()
-        {
-            return _v_->represent();
+            deprecate();
         }
 
         void set_nontrivial() { bTrivial = 0; }
@@ -215,43 +223,21 @@ namespace lgf
 
         void assign_value_id(int &n);
 
-        void set_activation(bool a) { bActive = a; }
-
-        bool is_active() { return bActive; }
-
         void set_exploration(bool a) { bExplored = a; }
 
         bool is_explored() { return bExplored; }
 
-        bool is_removable() { return bRemove; }
+        bool is_deprecate() { return bDeprecate; }
 
-        void set_removable()
+        void deprecate()
         {
-            bRemove = 1;
+            bDeprecate = 1;
         }
-        //--------------------------refactor mark---------------------------
-
-        virtual std::string inputs_sid();
 
         virtual void print();
 
-        // register the input at the given position. Other inputs after
-        // that index will be push back by 1 pos.
-        void register_input_at(value *val, size_t pos);
-
-        bool is_user(node *n)
-        {
-            return std::find(inputs.begin(), inputs.end(), n->output()) != inputs.end();
-        }
-
-
         size_t get_input_size() const;
-
-        
-
-        graph *get_parent_graph() { return graph_; }
-
-        void set_parent_graph(graph *g) { graph_ = g; }
+        size_t get_user_size() const { return users.size(); }
 
         std::string get_op_represent()
         {
@@ -277,21 +263,44 @@ namespace lgf
             return true;
         }
 
+        graph *get_parent_graph() { return graph_; }
+
+        void set_parent_graph(graph *g) { graph_ = g; }
+
+        virtual std::string inputs_sid();
+
+        bool is_dependency_fullfilled()
+        {
+            for (auto &e : inputs)
+            {
+                if (!e->is_coupled())
+                    continue;
+                if (e->get_dual_node()->is_explored())
+                    continue;
+                return false;
+            }
+            return true;
+        }
+
+        void reset_walk_status()
+        {
+            bExplored = 0;
+        }
+
     private:
         std::unique_ptr<value> _v_;
         // this function is used to determine if this node contained
         // a region. If an op contained a region, it should override
         // this function.
         // virtual graph* getSubgraph(){ return nullptr;}
-        bool bActive = 1;
         bool bExplored = 0;
         bool bTrivial = 1;
 
         // this is a member used to remove the node efficiently.
         // Should be used solely for removing process in graph.
-        bool bRemove = 0;
-        std::vector<edge> inputs;
-        std::vector<edge> users;
+        bool bDeprecate = 0;
+        std::vector<std::unique_ptr<edge>> inputs;
+        std::vector<std::unique_ptr<edge>> users;
         graph *graph_ = nullptr;
     };
 
@@ -341,19 +350,20 @@ namespace lgf
             {
                 auto v = _vq.front();
                 _vq.pop();
-                if (!(v->is_active()))
-                {
-                    continue;
-                }
-                if (v->is_removable() || v->is_explored())
+                if (v->is_deprecate() || v->is_explored())
                     continue;
                 v->set_exploration(true);
 
                 vertice_buffer.push_back(v);
-                auto val = v->output();
-                for (auto vn : val->get_users())
+                for (auto &h : v->get_user_handles())
                 {
-                    if (vn->is_explored() || vn->is_removable())
+                    // need to skip invalid edgeHandles
+                    if(!h || !(h->is_coupled()))
+                    {
+                        continue;
+                    }
+                    auto vn = h->get_dual_node();
+                    if (vn->is_explored() || vn->is_deprecate() || !(vn->is_dependency_fullfilled()))
                         continue;
                     _vq.push(vn);
                 }
@@ -369,7 +379,7 @@ namespace lgf
             }
             for (auto v : vertice_buffer)
             {
-                v->set_exploration(false);
+                v->reset_walk_status();
             }
             clean();
             return;
@@ -394,7 +404,7 @@ namespace lgf
             }
         }
 
-        // clean will remove all nodes marked as removable;
+        // clean will remove all nodes marked as is_deprecate;
         // return 0 if no ops got removed. Otherwise return 1;
         bool clean();
 

@@ -22,13 +22,13 @@ class defop : public node {
     }
     static defop* build( valueDesc* desc, std::string name){
         auto op = new defop(name);
-        op->output()->set_desc(desc);
+        op->set_value_desc(desc);
         return op;
     }
     virtual sid_t represent() override{
         printer p;
-        p<<represent_output();
-        p<< " = "<<get_sid()<<" : "<<output()->get_desc()->represent();
+        p<<value_rep();
+        p<< " = "<<get_sid()<<" : "<<get_value_desc()->represent();
         return p.dump();
     }
 };
@@ -37,16 +37,16 @@ class addop : public node {
     addop () = default;
     static addop* build( node* lhs, node* rhs){
         auto op = new addop();
-        op->accept(lhs, rhs);
-        op->output()->set_desc(lhs->output()->get_desc());
+        op->register_input(lhs, rhs);
+        op->set_value_desc(lhs->get_value_desc());
         return op;
     }
-    value* lhs() {return input(0);}
-    value* rhs() {return input(1);}
+    node* lhs() {return input(0);}
+    node* rhs() {return input(1);}
     virtual sid_t represent() override{
         printer p;
-        p<<represent_output();
-        p<<" = "<<get_sid()<<" : "<<lhs()->get_sid() << " + "<<rhs()->get_sid();
+        p<<value_rep();
+        p<<" = "<<get_sid()<<" : "<<lhs()->get_value_sid() << " + "<<rhs()->get_value_sid();
         return p.dump();
     }
 };
@@ -56,17 +56,17 @@ class multiplyop : public node {
     multiplyop () = default;
     static multiplyop* build( node * lhs, node * rhs){
         auto op = new multiplyop();
-        op->accept(lhs, rhs);
-        op->output()->set_desc(lhs->output()->get_desc());
+        op->register_input(lhs, rhs);
+        op->set_value_desc(lhs->get_value_desc());
         op->set_sid("multiply");
         return op;
     }
-    value* lhs() {return input(0);}
-    value* rhs() {return input(1);}
+    node* lhs() {return input(0);}
+    node* rhs() {return input(1);}
     virtual sid_t represent() override{
         printer p;
-        p<<represent_output();
-        p<<" = "<<get_sid()<<" : "<<lhs()->get_sid() << " * "<<rhs()->get_sid();
+        p<<value_rep();
+        p<<" = "<<get_sid()<<" : "<<lhs()->get_value_sid() << " * "<<rhs()->get_value_sid();
         return p.dump();
     }
 };
@@ -76,13 +76,13 @@ class returnop : public node{
     returnop () = default;
     static returnop * build( node * inputValue){
         auto op = new returnop();
-        op->accept(inputValue);
+        op->register_input(inputValue);
         op->set_sid("return");
         return op;
     }
     virtual sid_t represent() override{
         printer p;
-        p<<get_sid()<<" "<<input()->represent();
+        p<<get_sid()<<" "<<input()->value_rep();
         return p.dump();
     }
 };
@@ -103,8 +103,10 @@ class test_node : public test_wrapper{
         auto ret = pntr.paint<returnop>(xy);
         reg.print();
         auto xy2 = pntr.replace_op<multiplyop>(xy, x,y);
+
+        // special case: the op replaced is input of new one
+        auto xy3 = pntr.replace_op<multiplyop>(xy2, xy2,y);
         reg.clean();
-        xy2->replace_input(1, z);
 
         reg.print();
         return 0;

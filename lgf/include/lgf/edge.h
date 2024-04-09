@@ -1,7 +1,7 @@
 
 
-#ifndef LGF_dualLink_H_
-#define LGF_dualLink_H_
+#ifndef LGF_EDGE_H_
+#define LGF_EDGE_H_
 #include <vector>
 #include <stdexcept>
 namespace lgf
@@ -12,10 +12,10 @@ namespace lgf
     public:
         edge(node *n) : _n(n) {}
         edge(const edge &e) = delete;
-        edge &operator=(const edge &e) = delete;
-        edge(edge &&e);
+        edge operator=(const edge &e) = delete;
 
-        ~edge() {
+        ~edge()
+        {
             decouple();
         }
 
@@ -65,7 +65,8 @@ namespace lgf
         }
         node *get_dual_node() const
         {
-            if(!dual) return nullptr;
+            if (!dual)
+                return nullptr;
             return dual->get_node();
         }
         // void print_info(){
@@ -75,20 +76,20 @@ namespace lgf
         //     std::cout<<"    dual: "<<dual<<std::endl;
         // }
 
+        edge(edge &&e)
+        {
+            _n = e.get_node();
+            dual = e.get_dual_edge();
+            if (!dual)
+                return;
+            dual->update_dual_edge(this);
+        }
+
     private:
         node *_n = nullptr;
         edge *dual = nullptr;
     };
 
-    edge::edge( edge &&e)
-    {
-        _n = e.get_node();
-        dual = e.get_dual_edge();
-        if (!dual)
-            return;
-        dual->update_dual_edge(this);
-    }
-
-}
+} // namespace lgf
 
 #endif

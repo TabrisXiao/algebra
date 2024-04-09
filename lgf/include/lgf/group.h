@@ -61,9 +61,8 @@ class normalizationPass : public passBase {
 
     void remove_unused_ops(graph* g){
         for(auto op : g->get_nodes()){
-            bool canRemove = op->is_trivial();
-            auto val = op->output();
-            if(val->get_user_size() !=0 ){
+            bool canRemove = op->is_trivial() || op->is_deprecate();
+            if(op->get_user_size() !=0 ){
                 canRemove = false;
                 break;
             }
@@ -85,7 +84,7 @@ class normalizationPass : public passBase {
         auto list = g->get_nodes();
         std::queue<node*> queue;
         for(auto op : list){
-            if(op->is_removable() || !op->is_active()) continue;
+            if(op->is_deprecate()) continue;
             
             // if op is a graph:
             if(auto subg = dynamic_cast<graph*>(op)){
@@ -103,8 +102,9 @@ class normalizationPass : public passBase {
             auto op = queue.front();
             queue.pop();
             auto output = op->output();
-            for(auto user : output->get_users()){
-                if(user->is_removable() || !user->is_active()) continue;
+            for(auto& h : op->get_user_handles()){
+                auto user = h->get_dual_node();
+                if(user->is_deprecate()) continue;
                  if(auto keepop = check_if_identical_exist(user, queue)){
                     user->replace_by(keepop);
                     changed = true;
