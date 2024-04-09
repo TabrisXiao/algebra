@@ -5,6 +5,11 @@
 #include "lgf/attribute.h"
 namespace lgf
 {
+  class varDesc : public simpleValue
+  {
+  public:
+    varDesc() : simpleValue("variable") {}
+  };
 
   class intData : public preservedDataAttr<int>
   {

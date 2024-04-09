@@ -32,6 +32,13 @@ namespace lgf{
             op->infer_trivial_value_desc();
             return op;
         }
+        template<typename... Args>
+        static productOp* build(Args... args){
+            auto op = new productOp();
+            op->register_input(args...);
+            op->infer_trivial_value_desc();
+            return op;
+        }
     };
 
     class inverseOp : public node{

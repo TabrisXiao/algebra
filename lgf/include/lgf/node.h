@@ -117,7 +117,7 @@ namespace lgf
         template <typename... ARGS>
         void register_input(ARGS... args)
         {
-            auto nodes = {args...};
+            auto nodes = std::initializer_list<node*>{args...};
             for (auto n : nodes)
             {
                 add_input(n);
