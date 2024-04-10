@@ -13,9 +13,12 @@ class test_interface : public test_wrapper{
     test_interface() {test_id = "interface test";};
     bool run(){
         variable x;
-        auto y = x;
+        auto y = x+2;
         auto z = 3+x;
         auto w = x * y;
+        x = 3 - z;
+        auto a = x/w;
+        auto v = function::cos(x);
         canvas::get().print();
         return 0;
     }

@@ -89,7 +89,7 @@ namespace lgf
         {
             printer p;
             p << value_rep() << " = "
-              << "Constant: " << value_rep() << " = " << data->represent();
+              << "Constant: " << value_desc_rep() << " = " << data->represent();
             return p.dump();
         }
         void set_data(dataAttr *val)

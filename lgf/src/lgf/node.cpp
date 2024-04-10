@@ -22,12 +22,7 @@ std::string node::inputs_sid(){
 //---------------------------------------------------
 void node::print(){
     global::stream::getInstance().printIndent();
-    //printOutputs();
     global::stream::getInstance() << represent()<<"\n";
-    //if(auto g = expandToGraph()){
-    //    global::stream::getInstance() <<" ";
-    //    g->print();
-    //} else global::stream::getInstance() <<"\n";
 }
 
 //---------------------------------------------------
@@ -51,7 +46,6 @@ void graph::replace_node(node* old, node* new_op){
 }
 
 void graph::print() {
-    assign_id(0);
     global::stream::getInstance().printIndent();
     std::string code = represent();
     // add space if the represent is not empty
@@ -60,14 +54,18 @@ void graph::print() {
     // between "module" and the {}.
     if(!code.empty()) code += " "; 
     global::stream::getInstance()<<code;
-    print_graph();
+    int id = 0;
+    print_graph(id);
 }
 //---------------------------------------------------
 
-void graph::print_graph() {
+void graph::print_graph(int& id_start) {
     global::stream::getInstance()<<"{\n";
     global::stream::getInstance().incrIndentLevel();
-    walk([this](node* op){
+
+    walk([this, &id_start](node* op){
+        op->assign_value_id(id_start);
+        id_start++;
         op->print();
     }, 1);
     global::stream::getInstance().decrIndentLevel();

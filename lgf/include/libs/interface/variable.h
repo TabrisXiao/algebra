@@ -28,28 +28,33 @@ namespace lgi
         {
             v = other.v;
         }
+
+        node* node() const{
+            return v;
+        }
+        
         void operator=(const variable &other)
         {
             v = other.v;
         }
 
         template <typename opTy, typename daTy>
-        variable data_rhs_binary_op(const variable &, const daTy &data)
+        variable data_rhs_binary_op(const variable &var, const daTy &data)
         {
             auto &ctx = canvas::get().get_context();
             auto real = ctx.get_desc<lgf::realNumber>();
             auto cst = canvas::get().get_painter().paint<lgf::cstDeclOp>(real, ctx.get_data_attr<daTy>(data));
-            auto res = canvas::get().get_painter().paint<opTy>(v, cst);
+            auto res = canvas::get().get_painter().paint<opTy>(var.node(), cst);
             return variable(res);
         }
 
         template <typename opTy, typename daTy>
-        variable data_lhs_binary_op(const daTy &data, const variable &)
+        variable data_lhs_binary_op(const daTy &data, const variable &var) const
         {
             auto &ctx = canvas::get().get_context();
             auto real = ctx.get_desc<lgf::realNumber>();
             auto cst = canvas::get().get_painter().paint<lgf::cstDeclOp>(real, ctx.get_data_attr<daTy>(data));
-            auto res = canvas::get().get_painter().paint<opTy>(cst, v);
+            auto res = canvas::get().get_painter().paint<opTy>(cst, var.node());
             return variable(res);
         }
 
@@ -65,20 +70,12 @@ namespace lgi
 
         friend variable operator+(const double &num, const variable &var)
         {
-            auto &ctx = canvas::get().get_context();
-            auto real = ctx.get_desc<lgf::realNumber>();
-            auto cst = canvas::get().get_painter().paint<lgf::cstDeclOp>(real, ctx.get_data_attr<doubleData>(num));
-            auto res = canvas::get().get_painter().paint<sumOp>(cst, var.v);
-            return variable(res);
+            return var.data_lhs_binary_op<lgf::sumOp, lgf::doubleData>(num, var);
         }
         
         friend variable operator+(const int &num, const variable &var)
         {
-            auto &ctx = canvas::get().get_context();
-            auto real = ctx.get_desc<lgf::realNumber>();
-            auto cst = canvas::get().get_painter().paint<lgf::cstDeclOp>(real, ctx.get_data_attr<intData>(num));
-            auto res = canvas::get().get_painter().paint<sumOp>(cst, var.v);
-            return variable(res);
+            return var.data_lhs_binary_op<lgf::sumOp, lgf::intData>(num, var);
         }
 
         variable operator+(const variable &other)
@@ -107,20 +104,86 @@ namespace lgi
 
         friend variable operator*(const double &num, const variable &var)
         {
-            auto &ctx = canvas::get().get_context();
-            auto real = ctx.get_desc<lgf::realNumber>();
-            auto cst = canvas::get().get_painter().paint<lgf::cstDeclOp>(real, ctx.get_data_attr<doubleData>(num));
-            auto res = canvas::get().get_painter().paint<productOp>(cst, var.v);
-            return variable(res);
+            return var.data_lhs_binary_op<lgf::productOp, lgf::doubleData>(num, var);
         }
 
         friend variable operator*(const int &num, const variable &var)
         {
+            return var.data_lhs_binary_op<lgf::productOp, lgf::intData>(num, var);
+        }
+
+        variable operator-() const
+        {
+            auto &ctx = canvas::get().get_context();
+            auto res = canvas::get().get_painter().paint<lgf::negativeOp>(v);
+            return variable(res);
+        }
+
+        variable operator - (const double &num)
+        {
+            return *this + (-num);
+        }
+
+        variable operator - (const int &num)
+        {
+            return *this + (-num);
+        }
+
+        friend variable operator-(const double &num, const variable &var)
+        {
+            return (-var) + num;
+        }
+        friend variable operator-(const int &num, const variable &var)
+        {
+            return (-var) + num;
+        }
+
+        variable operator/(const variable &other)
+        {
+            auto &ctx = canvas::get().get_context();
+            auto inv = canvas::get().get_painter().paint<lgf::inverseOp>(other.node());
+            auto res = canvas::get().get_painter().paint<lgf::productOp>(v, inv);
+            return variable(res);
+        }
+        
+        template<typename T, typename attrT>
+        variable binary_data_lhs_divide(const T &num, const variable &rhs) const {
             auto &ctx = canvas::get().get_context();
             auto real = ctx.get_desc<lgf::realNumber>();
-            auto cst = canvas::get().get_painter().paint<lgf::cstDeclOp>(real, ctx.get_data_attr<intData>(num));
-            auto res = canvas::get().get_painter().paint<productOp>(cst, var.v);
+            auto cst = canvas::get().get_painter().paint<lgf::cstDeclOp>(real, ctx.get_data_attr<attrT>(num));
+            auto inv = canvas::get().get_painter().paint<lgf::inverseOp>(rhs);
+            auto res = canvas::get().get_painter().paint<lgf::productOp>(cst, inv);
             return variable(res);
+        }
+
+        template<typename T, typename attrT>
+        variable binary_data_rhs_divide(const variable &lhs, const T &num) const {
+            auto &ctx = canvas::get().get_context();
+            auto real = ctx.get_desc<lgf::realNumber>();
+            auto cst = canvas::get().get_painter().paint<lgf::cstDeclOp>(real, ctx.get_data_attr<attrT>(num));
+            auto inv = canvas::get().get_painter().paint<lgf::inverseOp>(cst);
+            auto res = canvas::get().get_painter().paint<lgf::productOp>(lhs, inv);
+            return variable(res);
+        }
+
+        friend variable operator/(const double &num, const variable &var)
+        {
+            return var.binary_data_lhs_divide<double, lgf::doubleData>(num, var);
+        }
+
+        friend variable operator/(const int &num, const variable &var)
+        {
+            return var.binary_data_lhs_divide<int, lgf::doubleData>(num, var);
+        }
+
+        variable operator/( const int &num )
+        {
+            return binary_data_rhs_divide<int, lgf::intData>(*this, num);
+        }
+
+        variable operator/( const double &num)
+        {
+            return binary_data_rhs_divide<double, lgf::doubleData>(*this, num);
         }
 
         lgf::value &value() const

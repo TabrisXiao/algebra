@@ -1,7 +1,8 @@
 
 #ifndef LGF_FUNCTIONAL_ANALYSIS_TYPE_H
 #define LGF_FUNCTIONAL_ANALYSIS_TYPE_H
-#include "libs/aab/types.h"
+
+#include "lgf/value.h"
 
 namespace lgf{
 

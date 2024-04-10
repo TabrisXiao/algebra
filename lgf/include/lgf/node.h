@@ -387,7 +387,7 @@ namespace lgf
 
         graph *get_graph() { return dynamic_cast<graph *>(this); }
 
-        virtual void print_graph();
+        virtual void print_graph(int & id_start );
 
         void assign_id(int n = 0);
         std::vector<node *>::iterator insert_after(node *op, node *new_op)

@@ -41,6 +41,17 @@ namespace lgf{
         }
     };
 
+    class negativeOp : public node {
+        public:
+        negativeOp() : node("negative") {}
+        static negativeOp* build(node* n){
+            auto op = new negativeOp();
+            op->register_input(n);
+            op->infer_trivial_value_desc();
+            return op;
+        }
+    };
+
     class inverseOp : public node{
         public:
         inverseOp() : node("inverse") {}

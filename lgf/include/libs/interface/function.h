@@ -4,51 +4,49 @@
 
 #include "canvas.h"
 #include "libs/Builtin/Builtin.h"
-#include "libs/fa/types.h"
-#include "libs/fa/ops.h"
-#include "libs/aab/aab.h"
+#include "libs/functional/functional.h"
 #include "variable.h"
 
 namespace lgi::function{
 using namespace lgi;
 variable cos(const variable& x){
-    auto& ctx = canvas::get().getContext();
-    auto res = canvas::get().getPainter().paint<lgf::funcCosOp>(x.value())->output();
+    auto& ctx = canvas::get().get_context();
+    auto res = canvas::get().get_painter().paint<lgf::funcCosOp>(x.node());
     return variable(res);
 }
 
 variable sin(const variable& x){
-    auto& ctx = canvas::get().getContext();
-    auto res = canvas::get().getPainter().paint<lgf::funcSineOp>(x.value())->output();
+    auto& ctx = canvas::get().get_context();
+    auto res = canvas::get().get_painter().paint<lgf::funcSineOp>(x.node());
     return variable(res);
 }
 
 variable power(const variable& x, double n){
-    auto& ctx = canvas::get().getContext();
-    auto res = canvas::get().getPainter().paint<lgf::powerOp>(x.value(), n)->output();
+    auto& ctx = canvas::get().get_context();
+    auto res = canvas::get().get_painter().paint<lgf::funcPowerOp>(x.node(), n);
     return variable(res);
 }
 
 variable exp(const variable& x){
-    auto& ctx = canvas::get().getContext();
-    auto res = canvas::get().getPainter().paint<lgf::expOp>(x.value())->output();
+    auto& ctx = canvas::get().get_context();
+    auto res = canvas::get().get_painter().paint<lgf::funcExpOp>(x.node());
     return variable(res);
 }
 
 class set {
     public:
     set(bool is_empty = false){
-        auto& ctx = canvas::get().getContext();
+        auto& ctx = canvas::get().get_context();
         if(is_empty){
-            v = canvas::get().getPainter().paint<lgf::declOp>(ctx.getType<lgf::empty_set_t>())->output();
+            v = canvas::get().get_painter().paint<lgf::declOp>(ctx.get_desc<lgf::empty_set_t>());
         }else{
-            v = canvas::get().getPainter().paint<lgf::declOp>(ctx.getType<lgf::set_t>())->output();
+            v = canvas::get().get_painter().paint<lgf::declOp>(ctx.get_desc<lgf::set_desc>());
         }
     }
-    void operator = (const variable& other){
-        v = other.value();
+    void operator = (const set& other){
+        v = other.v;
     } 
-    lgf::value *v = nullptr;
+    lgf::node *v = nullptr;
 };
 
 

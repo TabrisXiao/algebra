@@ -1,17 +1,18 @@
 
 #ifndef LGF_FUNCTIONAL_ANALYSIS_OPS_H
 #define LGF_FUNCTIONAL_ANALYSIS_OPS_H
-#include "libs/aab/ops.h"
-#include "libs/fa/types.h"
+
+#include "lgf/node.h"
+#include "desc.h"
 
 namespace lgf
 {
 
-    class funcSineOp
+    class funcSineOp : public node
     {
     public:
-        funcSineOp() : mappingOp("sine") {}
-        static funcSineOp *build( node *x)
+        funcSineOp() : node("sine") {}
+        static funcSineOp *build(node *x)
         {
             auto op = new funcSineOp();
             op->register_input(x);
@@ -20,11 +21,11 @@ namespace lgf
         }
     };
 
-    class funcCosOp
+    class funcCosOp : public node
     {
     public:
-        funcCosOp() : mappingOp("cos") {}
-        static funcCosOp *build( node *x)
+        funcCosOp() : node("cos") {}
+        static funcCosOp *build(node *x)
         {
             auto op = new funcCosOp();
             op->register_input(x);
@@ -33,13 +34,13 @@ namespace lgf
         }
     };
 
-    class funcPowerOp
+    class funcPowerOp : public node
     {
     public:
-        powerOp() : mappingOp("power") {}
-        static funcPowerOp *build( node* x, double n)
+        funcPowerOp() : node("power") {}
+        static funcPowerOp *build(node *x, double n)
         {
-            auto op = new powerOp();
+            auto op = new funcPowerOp();
             op->register_input(x);
             op->setPower(n);
             op->infer_trivial_value_desc();
@@ -50,11 +51,11 @@ namespace lgf
         double p = 1;
     };
 
-    class funcExpOp
+    class funcExpOp : public node
     {
     public:
-        funcExpOp() : mappingOp("functional::exp") {}
-        static expOp *build(LGFContext *ctx, node *power)
+        funcExpOp() : node("functional::exp") {}
+        static funcExpOp *build(node *power)
         {
             auto op = new funcExpOp();
             op->register_input(power);
@@ -67,11 +68,11 @@ namespace lgf
         }
     };
 
-    class partialDifferentiateOp
+    class partialDifferentiateOp : public node
     {
     public:
-        partialDifferentiateOp() : mappingOp("PartialDifferentiate") {}
-        static partialDifferentiateOp *build( node *func, node *var)
+        partialDifferentiateOp() : node("PartialDifferentiate") {}
+        static partialDifferentiateOp *build(node *func, node *var)
         {
             auto op = new partialDifferentiateOp();
             op->register_input(func, var);
@@ -82,10 +83,10 @@ namespace lgf
         node *var() { return input(1); }
     };
 
-    class differentiateOp
+    class differentiateOp : public node
     {
     public:
-        differentiateOp() : mappingOp("differentiate") {}
+        differentiateOp() : node("differentiate") {}
         static differentiateOp *build(LGFContext *ctx, node *input, node *target)
         {
             auto op = new differentiateOp();
@@ -93,14 +94,14 @@ namespace lgf
             op->set_value_desc(input->get_value_desc());
             return op;
         }
-        node *input() { return input(0); }
+        node *func() { return input(0); }
         node *target() { return input(1); }
     };
 
-    class unionOp : public operation
+    class unionOp : public node
     {
     public:
-        unionOp() : operation("functional::union") {}
+        unionOp() : node("functional::union") {}
         template <typename... ARGS>
         static unionOp *build(LGFContext *ctx, ARGS... args)
         {
@@ -111,10 +112,10 @@ namespace lgf
         }
     };
 
-    class intersectOp : public operation
+    class intersectOp : public node
     {
     public:
-        intersectOp() : operation("functional::intersect") {}
+        intersectOp() : node("functional::intersect") {}
         template <typename... ARGS>
         static intersectOp *build(LGFContext *ctx, ARGS... args)
         {
