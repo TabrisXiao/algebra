@@ -191,6 +191,11 @@ namespace lgi
             return v->get_value();
         }
 
+        void check()
+        {
+            v->set_nontrivial();
+        }
+
     protected:
         lgf::node *v = nullptr;
     };

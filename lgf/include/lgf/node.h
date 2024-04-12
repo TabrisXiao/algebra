@@ -92,19 +92,21 @@ namespace lgf
             users.back()->couple(e.get());
         }
 
-        std::vector<edgeHandle> &get_user_handles()
+        edgeBundle &get_user_handles()
         {
+            users.clean();
             return users;
+        }
+
+        edgeBundle &get_input_handles()
+        {
+            inputs.clean();
+            return inputs;
         }
 
         bool is_valid_handle(edgeHandle &e)
         {
             return e && e->is_coupled();
-        }
-
-        std::vector<edgeHandle> &get_input_handles()
-        {
-            return inputs;
         }
 
         void add_input(node *n)

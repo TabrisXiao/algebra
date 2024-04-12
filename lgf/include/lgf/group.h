@@ -67,27 +67,42 @@ namespace lgf
             // return applyRewriterOnce(p, getGraph());
             remove_identical_ops(p, get_graph());
             resultCode code = apply_rewriter_greedy(p, get_graph());
-            //remove_unused_ops(get_graph());
+            remove_unused_ops(get_graph());
             get_graph()->clean();
             return code;
         }
 
+        void remove_trivial_op(node *op)
+        {
+            if (op->is_deprecate())
+                return;
+            if (op->is_trivial())
+            {
+                for (auto &h : op->get_user_handles())
+                {
+                    if (h && h->is_coupled())
+                    {
+                        auto node = h->get_dual_node();
+                        remove_trivial_op(node);
+                    }
+                }
+                if (!op->get_user_size())
+                {
+                    op->erase();
+                }
+            }
+        }
+
         void remove_unused_ops(graph *g)
         {
-            for (auto op : g->get_nodes())
+            for (auto &op : g->get_nodes())
             {
-                bool canRemove = op->is_trivial() || op->is_deprecate();
-                if (op->get_user_size() != 0)
-                {
-                    canRemove = false;
-                    break;
-                }
-                if (canRemove)
-                    op->erase();
-                else if (auto subg = dynamic_cast<graph *>(op))
+                if (auto subg = dynamic_cast<graph *>(op))
                 {
                     remove_unused_ops(subg);
                 }
+                else
+                    remove_trivial_op(op);
             }
         }
 
@@ -130,7 +145,7 @@ namespace lgf
                     remove_identical_ops(pp, subg);
                     continue;
                 }
-                // checking if the duplicate op exists and 
+                // checking if the duplicate op exists and
                 // replace it if so.
                 auto mark = queue.front();
                 auto target = op->get_op_represent();
@@ -140,27 +155,31 @@ namespace lgf
                     queue.pop();
                     if (checkop != op && target == checkop->get_op_represent())
                     {
-                        if( mark == checkop) mark = queue.front();
-                        //std::cout<<"placing: "<<checkop->represent()<<" by "<<op->represent()<<std::endl;
+                        if (mark == checkop)
+                            mark = queue.front();
+                        // std::cout<<"placing: "<<checkop->represent()<<" by "<<op->represent()<<std::endl;
                         checkop->replace_by(op);
                         checkop->erase();
                         changed = true;
                     }
-                    else {
+                    else
+                    {
                         queue.push(checkop);
                     }
                 } while (queue.front() != mark);
 
                 for (auto &h : op->get_user_handles())
                 {
-                    if(!h->is_coupled()) continue;
+                    if (!h->is_coupled())
+                        continue;
                     auto user = h->get_dual_node();
                     if (user->is_deprecate() || user->is_explored() || !user->is_dependency_fullfilled())
                         continue;
                     queue.push(user);
                 }
             }
-            for(auto node : list ){
+            for (auto node : list)
+            {
                 node->set_exploration(false);
             }
             return changed;
