@@ -55,6 +55,7 @@ namespace lgf
 
         void couple(edge *e)
         {
+            if( dual ) dual->break_edge();
             dual = e;
             e->update_dual_edge(this);
         }

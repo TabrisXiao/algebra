@@ -15,7 +15,7 @@ int main(){
     frame.add_test<test_node>();
     frame.add_test<test_builtin>();
     frame.add_test<test_algebra>();
-    //frame.add_test<test_interface>();
+    frame.add_test<test_interface>();
     //frame.add_test<test_codegen>();
     //frame.add_test<test_clean_pass>();
     //frame.add_test<test_fa>();

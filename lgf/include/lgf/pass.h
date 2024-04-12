@@ -122,14 +122,13 @@ class passManager{
     void run(){
         if(bPrintInitialIR) 
         {   OSTREAM<<"\n------ Input "<<name<<" ------\n";
-            reg->assign_id(0);
             reg->print();
+            OSTREAM<<"\n";
         }
         
         for(auto pass=passes.begin(); pass!=passes.end(); pass++){
             if(bPrintBeforePass){
                 OSTREAM<<"------ IR before pass:  "<<(*pass).get()->_pass_name<<" ------\n";
-                reg->assign_id(0);
                 reg->print();
                 OSTREAM<<"\n";
             }
@@ -138,15 +137,14 @@ class passManager{
             validation(reg);
             if(bPrintAfterPass){
                 OSTREAM<<"------ IR after pass: "<<(*pass).get()->_pass_name<<" ------\n";
-                reg->assign_id(0);
                 reg->print();
                 OSTREAM<<"\n";
             }
         }
         if(bPrintFinalIR) 
         {   OSTREAM<<"\n------ IR after "<<name<<" ------\n";
-            reg->assign_id(0);
             reg->print();
+            OSTREAM<<"\n";
         }
     }
 

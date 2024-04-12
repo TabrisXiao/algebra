@@ -38,6 +38,7 @@ class addop : public node {
     static addop* build( node* lhs, node* rhs){
         auto op = new addop();
         op->register_input(lhs, rhs);
+        op->set_sid("add");
         op->set_value_desc(lhs->get_value_desc());
         return op;
     }

@@ -62,7 +62,11 @@ void graph::print_graph(int& id_start) {
     global::stream::getInstance()<<"{\n";
     global::stream::getInstance().incrIndentLevel();
 
-    assign_id(id_start);
+    walk([this, &id_start](node* op){
+        op->assign_value_id(id_start);
+        id_start++;
+        op->print();
+    }, 1);
     global::stream::getInstance().decrIndentLevel();
     global::stream::getInstance().printIndent();
     global::stream::getInstance()<<"}\n";
@@ -73,7 +77,6 @@ void graph::assign_id(int n0 ){
     walk([this, &n](node* op){
         op->assign_value_id(n);
         n++;
-        op->print();
     }, 1);
 }
 //---------------------------------------------------

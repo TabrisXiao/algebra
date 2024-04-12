@@ -67,7 +67,7 @@ namespace lgf
             // return applyRewriterOnce(p, getGraph());
             remove_identical_ops(p, get_graph());
             resultCode code = apply_rewriter_greedy(p, get_graph());
-            remove_unused_ops(get_graph());
+            //remove_unused_ops(get_graph());
             get_graph()->clean();
             return code;
         }
@@ -124,7 +124,6 @@ namespace lgf
                 auto op = queue.front();
                 queue.pop();
                 op->set_exploration(true);
-                std::cout << "op: " << op->represent() << std::endl;
                 if (auto subg = dynamic_cast<graph *>(op))
                 {
                     painter pp(subg);
@@ -141,7 +140,8 @@ namespace lgf
                     queue.pop();
                     if (checkop != op && target == checkop->get_op_represent())
                     {
-                        std::cout<<"placing: "<<checkop->represent()<<" by "<<op->represent()<<std::endl;
+                        if( mark == checkop) mark = queue.front();
+                        //std::cout<<"placing: "<<checkop->represent()<<" by "<<op->represent()<<std::endl;
                         checkop->replace_by(op);
                         checkop->erase();
                         changed = true;
@@ -157,12 +157,8 @@ namespace lgf
                     auto user = h->get_dual_node();
                     if (user->is_deprecate() || user->is_explored() || !user->is_dependency_fullfilled())
                         continue;
-                    std::cout<<"  ---  pushing: "<<user->represent()<<std::endl;
-                    //user->set_exploration(true);
                     queue.push(user);
                 }
-                
-                std::cout << "op: done" << std::endl;
             }
             for(auto node : list ){
                 node->set_exploration(false);
