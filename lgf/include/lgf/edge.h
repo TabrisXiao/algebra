@@ -4,19 +4,53 @@
 #define LGF_EDGE_H_
 #include <vector>
 #include <stdexcept>
+#include <memory>
 namespace lgf
 {
     class node;
+    class edge;
+    typedef std::unique_ptr<edge> edgeHandle;
+    class edgeBundle : public std::vector<edgeHandle>
+    {
+        public:
+        edgeBundle() = default;
+        void need_clean()
+        {
+            bNeedClean = 1;
+        }
+        bool is_valid_handle(edgeHandle &e);
+
+        void clean();
+        edgeHandle& operator[](size_t i){
+            clean();
+            return std::vector<edgeHandle>::operator[](i);
+        }
+        edgeHandle& at(size_t i){
+            clean();
+            return std::vector<edgeHandle>::at(i);
+        }
+        size_t size(){
+            clean();
+            return std::vector<edgeHandle>::size();
+        }
+        void push_back(edgeHandle &e);
+        private:
+        bool bNeedClean = 0;
+    };
     class edge
     {
     public:
-        edge(node *n) : _n(n) {}
+        edge(node *n, edgeBundle* b=nullptr) : _n(n), bundle(b) {}
         edge(const edge &e) = delete;
         edge operator=(const edge &e) = delete;
 
         ~edge()
         {
             decouple();
+        }
+
+        void update_bundle(edgeBundle* b){
+            bundle = b;
         }
 
         void couple(edge *e)
@@ -43,6 +77,7 @@ namespace lgf
         // empty this edge and update the dual to be empty as well
         void decouple()
         {
+            bundle->need_clean();
             if (!dual)
                 return;
             dual->break_edge();
@@ -52,6 +87,7 @@ namespace lgf
         void break_edge()
         {
             dual = nullptr;
+            bundle->need_clean();
         }
 
         void update_node(node *n)
@@ -69,6 +105,9 @@ namespace lgf
                 return nullptr;
             return dual->get_node();
         }
+        edgeBundle* get_bundle(){
+            return bundle;
+        }
         // void print_info(){
         //     // debuging function
         //     std::cout<<"edge: "<<this<<"  --------------"<<std::endl;
@@ -83,11 +122,13 @@ namespace lgf
             if (!dual)
                 return;
             dual->update_dual_edge(this);
+            bundle = e.get_bundle();
         }
 
     private:
         node *_n = nullptr;
         edge *dual = nullptr;
+        edgeBundle *bundle= nullptr;
     };
 
 } // namespace lgf

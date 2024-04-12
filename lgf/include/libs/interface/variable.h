@@ -151,7 +151,7 @@ namespace lgi
             auto &ctx = canvas::get().get_context();
             auto real = ctx.get_desc<lgf::realNumber>();
             auto cst = canvas::get().get_painter().paint<lgf::cstDeclOp>(real, ctx.get_data_attr<attrT>(num));
-            auto inv = canvas::get().get_painter().paint<lgf::inverseOp>(rhs);
+            auto inv = canvas::get().get_painter().paint<lgf::inverseOp>(rhs.node());
             auto res = canvas::get().get_painter().paint<lgf::productOp>(cst, inv);
             return variable(res);
         }
@@ -162,7 +162,7 @@ namespace lgi
             auto real = ctx.get_desc<lgf::realNumber>();
             auto cst = canvas::get().get_painter().paint<lgf::cstDeclOp>(real, ctx.get_data_attr<attrT>(num));
             auto inv = canvas::get().get_painter().paint<lgf::inverseOp>(cst);
-            auto res = canvas::get().get_painter().paint<lgf::productOp>(lhs, inv);
+            auto res = canvas::get().get_painter().paint<lgf::productOp>(lhs.node(), inv);
             return variable(res);
         }
 

@@ -44,6 +44,16 @@ class canvas {
         g.print();
     }
 
+    void compile(){
+        pm.set_work_region(&g);
+        pm.add_normalization_pass();
+        pm.run();
+    }
+
+    lgf::passManager& get_pass_manager(){
+        return pm;
+    }
+
 protected:
     canvas(){
         p.set_context(&ctx);
@@ -53,7 +63,7 @@ protected:
     lgf::moduleOp g;
     lgf::LGFContext ctx;
     lgf::painter p;
-
+    lgf::passManager pm;
 };
 
 } // namespace  lgf

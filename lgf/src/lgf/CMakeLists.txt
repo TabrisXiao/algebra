@@ -5,8 +5,10 @@ file(GLOB_RECURSE headers
 set(
     sources
     value.cpp
+    edge.cpp
     node.cpp
     pass.cpp
+    libs/algebra/ops.cpp
 )
 
 create_cpp_library(

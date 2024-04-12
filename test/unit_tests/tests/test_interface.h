@@ -19,7 +19,8 @@ class test_interface : public test_wrapper{
         x = 3 - z;
         auto a = x/w;
         auto v = function::cos(x);
-        canvas::get().print();
+        canvas::get().get_pass_manager().set_log_level(2);
+        canvas::get().compile();
         return 0;
     }
     

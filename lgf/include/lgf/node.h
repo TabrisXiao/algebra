@@ -24,7 +24,6 @@ namespace lgf
     class normalizer;
 
     typedef size_t id_t;
-    typedef std::unique_ptr<edge> edgeHandle;
     class node : public graphObject
     {
     public:
@@ -98,6 +97,11 @@ namespace lgf
             return users;
         }
 
+        bool is_valid_handle(edgeHandle &e)
+        {
+            return e && e->is_coupled();
+        }
+
         std::vector<edgeHandle> &get_input_handles()
         {
             return inputs;
@@ -132,6 +136,60 @@ namespace lgf
             }
         }
 
+        void register_inputs_at(std::vector<node*> &inserts, size_t idx)
+        {
+            if(idx > inputs.size())
+                throw std::runtime_error("register_inputs_at index out of input range");
+            std::vector<edgeHandle> new_inputs;
+            new_inputs.reserve(inputs.size()+inserts.size());
+            for(auto j = 0; j<idx; j++){
+                new_inputs.push_back(std::move(inputs[j]));
+            }
+            for(auto j = 0; j<inserts.size(); j++){
+                if (inserts[j] == this)
+                    return;
+                edgeHandle se = std::make_unique<edge>(this);
+                edgeHandle de = std::make_unique<edge>(inserts[j]);
+                se->couple(de.get());
+                new_inputs.push_back(std::move(se));
+                inserts[j]->add_output_edge(std::move(de));
+            }
+            for(auto j = idx; j<inputs.size(); j++){
+                new_inputs.push_back(std::move(inputs[j]));
+            }
+            inputs.swap(new_inputs);
+        }
+
+        std::vector<node*> get_users(){
+            std::vector<node*> res;
+            res.reserve(users.size());
+            for(auto &e : users){
+                if(!e->is_coupled()) continue;
+                res.push_back(e->get_dual_node());
+            }
+            return res;
+        }
+
+        std::vector<node*> get_input_nodes(){
+            std::vector<node*> res;
+            res.reserve(inputs.size());
+            for(auto &e : inputs){
+                if(!e->is_coupled()) continue;
+                res.push_back(e->get_dual_node());
+            }
+            return res;
+        }
+
+        void drop_input(node* n){
+            auto it = std::find_if(inputs.begin(), inputs.end(), [n](edgeHandle &e)
+                                   { if(!e) return false;
+                                    return e->get_dual_node() == n; });
+            if (it == inputs.end())
+                return;
+            (*it)->decouple();
+            inputs.erase(it);
+        }
+
         void replace_input_by(node *on, node *nn)
         {
             auto it = std::find_if(inputs.begin(), inputs.end(), [on](edgeHandle &e)
@@ -154,10 +212,13 @@ namespace lgf
             {
                 if(e && e->is_coupled())
                 {
+                    // if the new node is a user of this node, skip it.
+                    if(e->get_dual_node() == n)
+                        continue;
                     e->update_node(n);
+                    n->add_output_edge(std::move(e));
                 }
             }
-            users.swap(n->users);
         }
 
         node *input(size_t i=0)
@@ -184,6 +245,11 @@ namespace lgf
             // no longer valid and need to be removed.
             users.erase(users.begin() + i);
             return user(i);
+        }
+
+        template<typename T>
+        T* get_user(size_t i){
+            return dynamic_cast<T*>(user(i));
         }
 
         value &input_value(size_t i)
@@ -236,8 +302,8 @@ namespace lgf
 
         virtual void print();
 
-        size_t get_input_size() const;
-        size_t get_user_size() const { return users.size(); }
+        size_t get_input_size();
+        size_t get_user_size() { return users.size(); }
 
         std::string get_op_represent()
         {
@@ -248,19 +314,6 @@ namespace lgf
                 return code.substr(pos + 1);
             else
                 return code;
-        }
-
-        bool is_identical(node *target)
-        {
-            if (this == target)
-                return true;
-            if (target == nullptr)
-                return false;
-            auto code1 = this->get_op_represent();
-            auto code2 = target->get_op_represent();
-            if (code1 != code2)
-                return false;
-            return true;
         }
 
         graph *get_parent_graph() { return graph_; }
@@ -275,7 +328,8 @@ namespace lgf
             {
                 if (!e->is_coupled())
                     continue;
-                if (e->get_dual_node()->is_explored())
+                auto n = e->get_dual_node();
+                if (n->is_explored() || n->is_deprecate())
                     continue;
                 return false;
             }
@@ -299,8 +353,8 @@ namespace lgf
         // this is a member used to remove the node efficiently.
         // Should be used solely for removing process in graph.
         bool bDeprecate = 0;
-        std::vector<std::unique_ptr<edge>> inputs;
-        std::vector<std::unique_ptr<edge>> users;
+        edgeBundle inputs;
+        edgeBundle users;
         graph *graph_ = nullptr;
     };
 
@@ -343,6 +397,8 @@ namespace lgf
             for (auto node : nodes)
             {
                 if (node->get_input_size() != 0)
+                    continue;
+                if (node->is_deprecate() || node->is_explored())
                     continue;
                 _vq.push(node);
             }

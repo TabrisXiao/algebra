@@ -2,6 +2,7 @@
 #ifndef LGF_LIB_ALGEBRA_OPS_H
 #define LGF_LIB_ALGEBRA_OPS_H
 
+#include "lgf/group.h"
 #include "desc.h"
 
 namespace lgf{
@@ -23,7 +24,7 @@ namespace lgf{
         }
     };
 
-    class productOp : public node{
+    class productOp : public node, public normalizer {
         public:
         productOp() : node("product") {}
         static productOp* build(std::vector<node*>& vec){
@@ -39,6 +40,7 @@ namespace lgf{
             op->infer_trivial_value_desc();
             return op;
         }
+        virtual resultCode rewrite(painter p, node* op) override;
     };
 
     class negativeOp : public node {
@@ -81,6 +83,31 @@ namespace lgf{
             return p.dump();
         }
     };
+
+    // class commuteOp : public node, public graphOperation{
+    //     public:
+    //     commuteOp() : node("commute") {}
+    //     static commuteOp* build(node* lhs, node* rhs){
+    //         auto op = new commuteOp();
+    //         op->register_input(lhs, rhs);
+    //         op->infer_trivial_value_desc();
+    //         return op;
+    //     }
+    //     node* lhs() {return input(0);}
+    //     node* rhs() {return input(1);}
+    //     virtual sid_t represent() override{
+    //         printer p;
+    //         p<<value_rep();
+    //         p<<" = "<<get_sid()<<" : ["<<lhs()->get_sid() << ", "<<rhs()->get_sid()<<"]";
+    //         return p.dump();
+    //     }
+    //     virtual resultCode rewrite(painter p, node* op) override{
+    //         auto lhs = op->input(0);
+    //         auto rhs = op->input(1);
+    //         p->replace_node(op, commuteOp::build(rhs, lhs));
+    //         return resultCode::rewrite();
+    //     }
+    // };
 }
 
 #endif

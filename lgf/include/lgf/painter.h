@@ -129,6 +129,25 @@ namespace lgf
             op2->erase();
         }
 
+        void replace_op(node *op1, node *op2)
+        {
+            // the replace function assume that both ops are in 
+            // the same graph
+            if (op1 == op2)
+                return;
+            // because the op1 is gonna replaced by op2, so
+            // we assume that op1 can't be used by op2
+            op1->replace_by(op2);
+            if (op1->get_user_size())
+            {
+                insert_op(op2);
+            }
+            else
+            {
+                op1->erase();
+            }
+        }
+
         template <typename obj, typename... ARGS>
         obj *replace_op(node *op1, ARGS... args)
         {
@@ -137,29 +156,7 @@ namespace lgf
             // so we only need to consider the case that new created
             // one takes the old one as input.
 
-            bool cycleUse = false;
-            auto &users = op1->get_user_handles();
-            auto iter = std::find_if(users.begin(), users.end(), [op2](edgeHandle &n)
-                                     {  
-                if(!n) return false;
-                return n->get_dual_node() == op2; });
-            if (iter != users.end())
-            {
-                op2->add_output_edge(*iter);
-                cycleUse = true;
-            }
-            op1->replace_by(op2);
-            if (cycleUse)
-            {
-                insert_op(op2);
-            }
-            else
-            {
-                auto &nodes = point.g->get_nodes();
-                auto iter = std::find(nodes.begin(), nodes.end(), op1);
-                *iter = op2;
-                op1->erase();
-            }
+            replace_op(op1, op2);
             return op2;
         }
 

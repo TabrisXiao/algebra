@@ -98,6 +98,24 @@ class passManager{
     void set_work_region(graph *op){reg = op;}
     void enable_print_after_pass(){bPrintAfterPass = 1;}
     void enable_print_before_pass(){bPrintBeforePass = 1;}
+    void set_log_level(int level=0){
+        if(level == 0) {
+            bPrintAfterPass = 0;
+            bPrintBeforePass = 0;
+            bPrintInitialIR = 0;
+            bPrintFinalIR = 0;
+        }
+        if(level > 0 ){
+            bPrintFinalIR = 1;
+            bPrintInitialIR = 1;
+        }
+        if(level > 1 ){
+            bPrintAfterPass = 1;
+        }
+        if(level > 2){
+            bPrintBeforePass = 1;
+        }
+    }
     void init( graph *op) { reg = op;}
     void validation(graph* g);
     
