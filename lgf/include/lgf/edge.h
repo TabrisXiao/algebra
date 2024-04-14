@@ -5,6 +5,7 @@
 #include <vector>
 #include <stdexcept>
 #include <memory>
+#include <iostream>
 namespace lgf
 {
     class node;
@@ -34,6 +35,7 @@ namespace lgf
             return std::vector<edgeHandle>::size();
         }
         void push_back(edgeHandle &e);
+
         private:
         bool bNeedClean = 0;
     };
@@ -50,6 +52,7 @@ namespace lgf
         }
 
         void update_bundle(edgeBundle* b){
+            if(bundle) bundle->need_clean();
             bundle = b;
         }
 
@@ -116,14 +119,20 @@ namespace lgf
         //     std::cout<<"    dual: "<<dual<<std::endl;
         // }
 
+        static bool is_valid_handle(edgeHandle &e){
+            return e && e->is_coupled();
+        }
+
         edge(edge &&e)
         {
+            std::cout<<"move edge"<<std::endl;
             _n = e.get_node();
             dual = e.get_dual_edge();
             if (!dual)
                 return;
             dual->update_dual_edge(this);
             bundle = e.get_bundle();
+            bundle->need_clean();
         }
 
     private:

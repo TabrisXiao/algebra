@@ -13,14 +13,11 @@ class test_interface : public test_wrapper{
     test_interface() {test_id = "interface test";};
     bool run(){
         variable x;
-        auto y = x+2;
+        auto y = x;
         auto z = 3+x;
         auto w = x * y;
-        x = 3 - z;
-        auto a = x/w;
+        auto a = function::d(x, x, 2);
         a.check();
-        auto v = function::cos(x);
-        v.check();
         canvas::get().get_pass_manager().set_log_level(2);
         canvas::get().compile();
         return 0;

@@ -4,6 +4,7 @@
 #include "lgf/context.h"
 #include "lgf/painter.h"
 #include "libs/Builtin/Builtin.h"
+#include "libs/functional/passes.h"
 
 namespace lgi{
 
@@ -47,6 +48,7 @@ class canvas {
     void compile(){
         pm.set_work_region(&g);
         pm.add_normalization_pass();
+        pm.add_pass(createCalculusPass());
         pm.run();
     }
 

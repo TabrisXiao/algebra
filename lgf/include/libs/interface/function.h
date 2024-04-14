@@ -7,48 +7,68 @@
 #include "libs/functional/functional.h"
 #include "variable.h"
 
-namespace lgi::function{
-using namespace lgi;
-variable cos(const variable& x){
-    auto& ctx = canvas::get().get_context();
-    auto res = canvas::get().get_painter().paint<lgf::funcCosOp>(x.node());
-    return variable(res);
-}
+namespace lgi::function
+{
+    using namespace lgi;
+    variable cos(const variable &x)
+    {
+        auto &ctx = canvas::get().get_context();
+        auto res = canvas::get().get_painter().paint<lgf::funcCosOp>(x.node());
+        return variable(res);
+    }
 
-variable sin(const variable& x){
-    auto& ctx = canvas::get().get_context();
-    auto res = canvas::get().get_painter().paint<lgf::funcSineOp>(x.node());
-    return variable(res);
-}
+    variable sin(const variable &x)
+    {
+        auto &ctx = canvas::get().get_context();
+        auto res = canvas::get().get_painter().paint<lgf::funcSineOp>(x.node());
+        return variable(res);
+    }
 
-variable power(const variable& x, double n){
-    auto& ctx = canvas::get().get_context();
-    auto res = canvas::get().get_painter().paint<lgf::funcPowerOp>(x.node(), n);
-    return variable(res);
-}
+    variable power(const variable &x, double n)
+    {
+        auto &ctx = canvas::get().get_context();
+        auto res = canvas::get().get_painter().paint<lgf::funcPowerOp>(x.node(), n);
+        return variable(res);
+    }
 
-variable exp(const variable& x){
-    auto& ctx = canvas::get().get_context();
-    auto res = canvas::get().get_painter().paint<lgf::funcExpOp>(x.node());
-    return variable(res);
-}
+    variable exp(const variable &x)
+    {
+        auto &ctx = canvas::get().get_context();
+        auto res = canvas::get().get_painter().paint<lgf::funcExpOp>(x.node());
+        return variable(res);
+    }
 
-class set {
+    variable d(const variable &x, const variable &y, int order = 1)
+    {
+        auto &ctx = canvas::get().get_context();
+        auto res = canvas::get().get_painter().paint<lgf::differentiateOp>(x.node(), y.node(), order);
+        return variable(res);
+    }
+
+    class set : public variableBase
+    {
     public:
-    set(bool is_empty = false){
-        auto& ctx = canvas::get().get_context();
-        if(is_empty){
-            v = canvas::get().get_painter().paint<lgf::declOp>(ctx.get_desc<lgf::empty_set_t>());
-        }else{
+        set(bool init = 1)
+        {
+            if (!init)
+                return;
+            auto &ctx = canvas::get().get_context();
             v = canvas::get().get_painter().paint<lgf::declOp>(ctx.get_desc<lgf::set_desc>());
         }
-    }
-    void operator = (const set& other){
-        v = other.v;
-    } 
-    lgf::node *v = nullptr;
-};
 
+        set(lgf::node *val) : variableBase(val) {}
+    };
+
+    class interval : public set
+    {
+    public:
+        interval(double lb, double rb, bool lop, bool rop) : set(false)
+        {
+            auto &ctx = canvas::get().get_context();
+            v = canvas::get().get_painter().paint<lgf::declOp>(ctx.get_desc<lgf::realInterval>(lb, rb, lop, rop));
+        }
+        interval(lgf::node *val) : set(val) {}
+    };
 
 } // namespace  lgi::function
 

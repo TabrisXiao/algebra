@@ -63,9 +63,6 @@ namespace lgf
         {
             painter p(get_graph());
             add_rewriter<groupRewriter<normalizer>>();
-            // applyRewriterOnce(p, getGraph());
-            // return applyRewriterOnce(p, getGraph());
-            remove_identical_ops(p, get_graph());
             resultCode code = apply_rewriter_greedy(p, get_graph());
             remove_unused_ops(get_graph());
             get_graph()->clean();
@@ -80,7 +77,7 @@ namespace lgf
             {
                 for (auto &h : op->get_user_handles())
                 {
-                    if (h && h->is_coupled())
+                    if (edge::is_valid_handle(h))
                     {
                         auto node = h->get_dual_node();
                         remove_trivial_op(node);
@@ -88,6 +85,7 @@ namespace lgf
                 }
                 if (!op->get_user_size())
                 {
+                    
                     op->erase();
                 }
             }

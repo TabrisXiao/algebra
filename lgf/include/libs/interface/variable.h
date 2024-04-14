@@ -7,8 +7,43 @@
 
 namespace lgi
 {
+    class variableBase
+    {
+    public:
+        variableBase() = default;
+        void check()
+        {
+            v->set_nontrivial();
+        }
+        variableBase(const variableBase &other)
+        {
+            v = other.v;
+        }
+        variableBase(lgf::node *val)
+        {
+            v = val;
+        }
 
-    class variable
+        void operator=(const variableBase &other)
+        {
+            v = other.v;
+        }
+
+        node *node() const
+        {
+            return v;
+        }
+
+        lgf::value &value() const
+        {
+            return v->get_value();
+        }
+
+        protected:
+        lgf::node *v = nullptr;
+    };
+
+    class variable : public variableBase
     {
     public:
         variable(bool init = 1)
@@ -19,24 +54,7 @@ namespace lgi
             v = canvas::get().get_painter().paint<lgf::declOp>(ctx.get_desc<varDesc>());
         }
 
-        variable(lgf::node *val)
-        {
-            v = val;
-        }
-
-        variable(const variable &other)
-        {
-            v = other.v;
-        }
-
-        node* node() const{
-            return v;
-        }
-        
-        void operator=(const variable &other)
-        {
-            v = other.v;
-        }
+        variable(lgf::node *val): variableBase(val){}
 
         template <typename opTy, typename daTy>
         variable data_rhs_binary_op(const variable &var, const daTy &data)
@@ -72,7 +90,7 @@ namespace lgi
         {
             return var.data_lhs_binary_op<lgf::sumOp, lgf::doubleData>(num, var);
         }
-        
+
         friend variable operator+(const int &num, const variable &var)
         {
             return var.data_lhs_binary_op<lgf::sumOp, lgf::intData>(num, var);
@@ -119,12 +137,12 @@ namespace lgi
             return variable(res);
         }
 
-        variable operator - (const double &num)
+        variable operator-(const double &num)
         {
             return *this + (-num);
         }
 
-        variable operator - (const int &num)
+        variable operator-(const int &num)
         {
             return *this + (-num);
         }
@@ -145,9 +163,10 @@ namespace lgi
             auto res = canvas::get().get_painter().paint<lgf::productOp>(v, inv);
             return variable(res);
         }
-        
-        template<typename T, typename attrT>
-        variable binary_data_lhs_divide(const T &num, const variable &rhs) const {
+
+        template <typename T, typename attrT>
+        variable binary_data_lhs_divide(const T &num, const variable &rhs) const
+        {
             auto &ctx = canvas::get().get_context();
             auto real = ctx.get_desc<lgf::realNumber>();
             auto cst = canvas::get().get_painter().paint<lgf::cstDeclOp>(real, ctx.get_data_attr<attrT>(num));
@@ -156,8 +175,9 @@ namespace lgi
             return variable(res);
         }
 
-        template<typename T, typename attrT>
-        variable binary_data_rhs_divide(const variable &lhs, const T &num) const {
+        template <typename T, typename attrT>
+        variable binary_data_rhs_divide(const variable &lhs, const T &num) const
+        {
             auto &ctx = canvas::get().get_context();
             auto real = ctx.get_desc<lgf::realNumber>();
             auto cst = canvas::get().get_painter().paint<lgf::cstDeclOp>(real, ctx.get_data_attr<attrT>(num));
@@ -176,28 +196,16 @@ namespace lgi
             return var.binary_data_lhs_divide<int, lgf::doubleData>(num, var);
         }
 
-        variable operator/( const int &num )
+        variable operator/(const int &num)
         {
             return binary_data_rhs_divide<int, lgf::intData>(*this, num);
         }
 
-        variable operator/( const double &num)
+        variable operator/(const double &num)
         {
             return binary_data_rhs_divide<double, lgf::doubleData>(*this, num);
         }
 
-        lgf::value &value() const
-        {
-            return v->get_value();
-        }
-
-        void check()
-        {
-            v->set_nontrivial();
-        }
-
-    protected:
-        lgf::node *v = nullptr;
     };
 
 } // namespace lgi

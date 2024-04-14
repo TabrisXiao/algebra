@@ -4,6 +4,7 @@
 #include "tests/test_builtin.h"
 #include "tests/test_algebra.h"
 #include "tests/test_interface.h"
+#include "tests/test_obj.h"
 //#include "tests/test_clean_pass.h"
 //#include "tests/test_fa.h"
 //#include "tests/test_stat.h"
@@ -16,6 +17,7 @@ int main(){
     frame.add_test<test_builtin>();
     frame.add_test<test_algebra>();
     frame.add_test<test_interface>();
+    frame.add_test<test_obj>();
     //frame.add_test<test_codegen>();
     //frame.add_test<test_clean_pass>();
     //frame.add_test<test_fa>();
