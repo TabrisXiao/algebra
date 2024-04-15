@@ -77,9 +77,9 @@ namespace lgf
             {
                 for (auto &h : op->get_user_handles())
                 {
-                    if (edge::is_valid_handle(h))
+                    if (h.is_coupled())
                     {
-                        auto node = h->get_dual_node();
+                        auto node = h.get_dual_node();
                         remove_trivial_op(node);
                     }
                 }
@@ -168,9 +168,9 @@ namespace lgf
 
                 for (auto &h : op->get_user_handles())
                 {
-                    if (!h->is_coupled())
+                    if (!h.is_coupled())
                         continue;
-                    auto user = h->get_dual_node();
+                    auto user = h.get_dual_node();
                     if (user->is_deprecate() || user->is_explored() || !user->is_dependency_fullfilled())
                         continue;
                     queue.push(user);

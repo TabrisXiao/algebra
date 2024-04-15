@@ -12,9 +12,9 @@ void value::print() { global::stream::getInstance()<<represent()<<"\n"; };
 std::string node::inputs_sid(){
     if(get_input_size() == 0) return "";
     printer p;
-    p<<inputs[0]->get_dual_node()->get_value().get_sid();
+    p<<inputs[0].get_dual_node()->get_value().get_sid();
     for(auto iter = inputs.begin()+1; iter != inputs.end(); iter++){
-        p<<", "<<(*iter)->get_dual_node()->get_value().get_sid();
+        p<<", "<<(*iter).get_dual_node()->get_value().get_sid();
     }
     return p.dump();
 }
@@ -34,7 +34,6 @@ void node::assign_value_id(int& n){
 size_t node::get_input_size() {
     return inputs.size();
 }
-
 
 //////////////////////////////////////////////////////
 

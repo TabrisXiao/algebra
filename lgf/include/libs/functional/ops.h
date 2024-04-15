@@ -33,6 +33,10 @@ namespace lgf
         {
             return narg;
         }
+        edgeBundle& get_args()
+        {
+            return get_input_handles();
+        }
 
     private:
         size_t narg = 0;

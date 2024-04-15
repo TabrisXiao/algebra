@@ -68,28 +68,28 @@ namespace lgf
 
         void erase_input(node *n)
         {
-            auto it = std::find_if(inputs.begin(), inputs.end(), [n](edgeHandle &e)
-                                   { if(!e) return false;
-                                    return e->get_dual_node() == n; });
+            auto it = std::find_if(inputs.begin(), inputs.end(), [n](edge &e)
+                                   {
+                                    return e.get_dual_node() == n; });
             if (it == inputs.end())
                 return;
             inputs.erase(it);
         }
 
-        void add_input_edge(edgeHandle &e)
+        void add_input_edge(edge &e)
         {
             inputs.push_back(std::move(e));
         }
 
-        void add_output_edge(edgeHandle &e)
+        void add_output_edge(edge &&e)
         {
             users.push_back(std::move(e));
         }
 
-        void link_to(edgeHandle &e)
+        void link_to(edge &e)
         {
-            users.push_back(std::make_unique<edge>(this));
-            users.back()->couple(e.get());
+            users.push_back(edge(this));
+            users.back().couple(e);
         }
 
         edgeBundle &get_user_handles()
@@ -104,18 +104,18 @@ namespace lgf
             return inputs;
         }
 
-        bool is_valid_handle(edgeHandle &e)
+        bool is_valid_handle(edge &e)
         {
-            return e && e->is_coupled();
+            return e.is_coupled();
         }
 
         void add_input(node *n)
         {
             if (n == this)
                 return;
-            edgeHandle se = std::make_unique<edge>(this);
-            edgeHandle de = std::make_unique<edge>(n);
-            se->couple(de.get());
+            edge se(this);
+            edge de(n);
+            se.couple(de);
             inputs.push_back(std::move(se));
             n->add_output_edge(std::move(de));
         }
@@ -142,7 +142,7 @@ namespace lgf
         {
             if(idx > inputs.size())
                 throw std::runtime_error("register_inputs_at index out of input range");
-            std::vector<edgeHandle> new_inputs;
+            std::vector<edge> new_inputs;
             new_inputs.reserve(inputs.size()+inserts.size());
             for(auto j = 0; j<idx; j++){
                 new_inputs.push_back(std::move(inputs[j]));
@@ -150,9 +150,9 @@ namespace lgf
             for(auto j = 0; j<inserts.size(); j++){
                 if (inserts[j] == this)
                     return;
-                edgeHandle se = std::make_unique<edge>(this);
-                edgeHandle de = std::make_unique<edge>(inserts[j]);
-                se->couple(de.get());
+                edge se(this);
+                edge de(inserts[j]);
+                se.couple(de);
                 new_inputs.push_back(std::move(se));
                 inserts[j]->add_output_edge(std::move(de));
             }
@@ -166,8 +166,8 @@ namespace lgf
             std::vector<node*> res;
             res.reserve(users.size());
             for(auto &e : users){
-                if(!e->is_coupled()) continue;
-                res.push_back(e->get_dual_node());
+                if(!e.is_coupled()) continue;
+                res.push_back(e.get_dual_node());
             }
             return res;
         }
@@ -176,30 +176,30 @@ namespace lgf
             std::vector<node*> res;
             res.reserve(inputs.size());
             for(auto &e : inputs){
-                if(!e->is_coupled()) continue;
-                res.push_back(e->get_dual_node());
+                if(!e.is_coupled()) continue;
+                res.push_back(e.get_dual_node());
             }
             return res;
         }
 
         void drop_input(node* n){
-            auto it = std::find_if(inputs.begin(), inputs.end(), [n](edgeHandle &e)
-                                   { if(!e) return false;
-                                    return e->get_dual_node() == n; });
+            auto it = std::find_if(inputs.begin(), inputs.end(), [n](edge &e)
+                                   { 
+                                    return e.get_dual_node() == n; });
             if (it == inputs.end())
                 return;
-            (*it)->decouple();
+            (*it).decouple();
             inputs.erase(it);
         }
 
         void replace_input_by(node *on, node *nn)
         {
-            auto it = std::find_if(inputs.begin(), inputs.end(), [on](edgeHandle &e)
-                                   { if(!e) return false;
-                                    return e->get_dual_node() == on; });
+            auto it = std::find_if(inputs.begin(), inputs.end(), [on](edge &e)
+                                   { 
+                                    return e.get_dual_node() == on; });
             if (it == inputs.end())
                 return;
-            (*it)->decouple();
+            (*it).decouple();
             nn->link_to(*it);
         }
 
@@ -212,12 +212,12 @@ namespace lgf
                 return;
             for (auto &e : users)
             {
-                if(e && e->is_coupled())
+                if(e.is_coupled())
                 {
                     // if the new node is a user of this node, skip it.
-                    if(e->get_dual_node() == n)
+                    if(e.get_dual_node() == n)
                         continue;
-                    e->update_node(n);
+                    e.update_node(n);
                     n->add_output_edge(std::move(e));
                 }
             }
@@ -228,8 +228,8 @@ namespace lgf
             if (i >= inputs.size())
                 throw std::runtime_error("calling input index out of range");
 
-            if (inputs[i]->is_coupled())
-                return inputs[i]->get_dual_node();
+            if (inputs[i].is_coupled())
+                return inputs[i].get_dual_node();
 
             // if the edge is not coupled, it means that this input is
             // no longer valid and need to be removed.
@@ -241,8 +241,8 @@ namespace lgf
         {
             if (i >= users.size())
                 throw std::runtime_error("calling user index out of range");
-            if (users[i]->is_coupled())
-                return users[i]->get_dual_node();
+            if (users[i].is_coupled())
+                return users[i].get_dual_node();
             // if the edge is not coupled, it means that this user is
             // no longer valid and need to be removed.
             users.erase(users.begin() + i);
@@ -328,9 +328,9 @@ namespace lgf
         {
             for (auto &e : inputs)
             {
-                if (!e->is_coupled())
+                if (!e.is_coupled())
                     continue;
-                auto n = e->get_dual_node();
+                auto n = e.get_dual_node();
                 if (n->is_explored() || n->is_deprecate())
                     continue;
                 return false;
@@ -415,12 +415,12 @@ namespace lgf
                 vertice_buffer.push_back(v);
                 for (auto &h : v->get_user_handles())
                 {
-                    // need to skip invalid edgeHandles
-                    if(!h || !(h->is_coupled()))
+                    // need to skip invalid edges
+                    if(!(h.is_coupled()))
                     {
                         continue;
                     }
-                    auto vn = h->get_dual_node();
+                    auto vn = h.get_dual_node();
                     if (vn->is_explored() || vn->is_deprecate() || !(vn->is_dependency_fullfilled()))
                         continue;
                     _vq.push(vn);

@@ -10,8 +10,7 @@ namespace lgf
 {
     class node;
     class edge;
-    typedef std::unique_ptr<edge> edgeHandle;
-    class edgeBundle : public std::vector<edgeHandle>
+    class edgeBundle : public std::vector<edge>
     {
         public:
         edgeBundle() = default;
@@ -19,33 +18,33 @@ namespace lgf
         {
             bNeedClean = 1;
         }
-        bool is_valid_handle(edgeHandle &e);
 
         void clean();
-        edgeHandle& operator[](size_t i){
+        edge& operator[](size_t i){
             clean();
-            return std::vector<edgeHandle>::operator[](i);
+            return std::vector<edge>::operator[](i);
         }
-        edgeHandle& at(size_t i){
+        edge& at(size_t i){
             clean();
-            return std::vector<edgeHandle>::at(i);
+            return std::vector<edge>::at(i);
         }
         size_t size(){
             clean();
-            return std::vector<edgeHandle>::size();
+            return std::vector<edge>::size();
         }
-        void push_back(edgeHandle &e);
+        void push_back(edge &&e);
 
         private:
         bool bNeedClean = 0;
     };
+
     class edge
     {
     public:
         edge(node *n, edgeBundle* b=nullptr) : _n(n), bundle(b) {}
         edge(const edge &e) = delete;
         edge operator=(const edge &e) = delete;
-
+        
         ~edge()
         {
             decouple();
@@ -56,11 +55,18 @@ namespace lgf
             bundle = b;
         }
 
-        void couple(edge *e)
+        void reset(){
+            if(bundle) bundle->need_clean();
+            bundle = nullptr;
+            dual = nullptr;
+            _n = nullptr;
+        }
+
+        void couple(edge &e)
         {
-            if( dual ) dual->break_edge();
-            dual = e;
-            e->update_dual_edge(this);
+            if( dual ) dual->reset();
+            dual = &e;
+            e.update_dual_edge(this);
         }
 
         void update_dual_edge(edge *e)
@@ -81,17 +87,11 @@ namespace lgf
         // empty this edge and update the dual to be empty as well
         void decouple()
         {
-            bundle->need_clean();
-            if (!dual)
-                return;
-            dual->break_edge();
+            if(bundle) bundle->need_clean();
+            auto target = dual;
             dual = nullptr;
-        }
-
-        void break_edge()
-        {
-            dual = nullptr;
-            bundle->need_clean();
+            if(target) target->decouple();
+            
         }
 
         void update_node(node *n)
@@ -103,36 +103,34 @@ namespace lgf
         {
             return _n;
         }
+
         node *get_dual_node() const
         {
             if (!dual)
                 return nullptr;
             return dual->get_node();
         }
+
         edgeBundle* get_bundle(){
             return bundle;
         }
-        // void print_info(){
-        //     // debuging function
-        //     std::cout<<"edge: "<<this<<"  --------------"<<std::endl;
-        //     std::cout<<"    node: "<<_n<<std::endl;
-        //     std::cout<<"    dual: "<<dual<<std::endl;
-        // }
 
-        static bool is_valid_handle(edgeHandle &e){
-            return e && e->is_coupled();
-        }
+        edge(edge& ) = delete;
 
         edge(edge &&e)
         {
-            std::cout<<"move edge"<<std::endl;
             _n = e.get_node();
-            dual = e.get_dual_edge();
-            if (!dual)
-                return;
-            dual->update_dual_edge(this);
-            bundle = e.get_bundle();
-            bundle->need_clean();
+            auto target = e.get_dual_edge();
+            if(target) couple(*(target));
+            e.reset();
+        }
+
+        edge& operator=(edge &&e) {
+            _n = e.get_node();
+            auto target = e.get_dual_edge();
+            if(target) couple(*(target));
+            e.reset();
+            return *this;
         }
 
     private:

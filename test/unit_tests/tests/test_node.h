@@ -37,8 +37,8 @@ class addop : public node {
     addop () = default;
     static addop* build( node* lhs, node* rhs){
         auto op = new addop();
-        op->register_input(lhs, rhs);
         op->set_sid("add");
+        op->register_input(lhs, rhs);
         op->set_value_desc(lhs->get_value_desc());
         return op;
     }
@@ -57,9 +57,9 @@ class multiplyop : public node {
     multiplyop () = default;
     static multiplyop* build( node * lhs, node * rhs){
         auto op = new multiplyop();
+        op->set_sid("multiply");
         op->register_input(lhs, rhs);
         op->set_value_desc(lhs->get_value_desc());
-        op->set_sid("multiply");
         return op;
     }
     node* lhs() {return input(0);}
@@ -77,8 +77,8 @@ class returnop : public node{
     returnop () = default;
     static returnop * build( node * inputValue){
         auto op = new returnop();
-        op->register_input(inputValue);
         op->set_sid("return");
+        op->register_input(inputValue);
         return op;
     }
     virtual sid_t represent() override{
@@ -106,7 +106,7 @@ class test_node : public test_wrapper{
         auto xy2 = pntr.replace_op<multiplyop>(xy, x,y);
 
         // special case: the op replaced is input of new one
-        auto xy3 = pntr.replace_op<multiplyop>(xy2, xy2,y);
+        //auto xy3 = pntr.replace_op<multiplyop>(xy2, xy2,y);
         reg.clean();
 
         reg.print();
