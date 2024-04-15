@@ -2,9 +2,7 @@
 #pragma once
 
 #include "unit_test_frame.h"
-#include "libs/interface/variable.h"
-#include "libs/interface/function.h"
-#include "libs/interface/stat.h"
+#include "libs/interface/interface.h"
 
 using namespace lgi;
 
@@ -14,14 +12,15 @@ class test_interface : public test_wrapper{
     public:
     test_interface() {test_id = "interface test";};
     bool run(){
-        var x;
+        variable x;
         auto y = x;
-        auto z = x + y;
+        auto z = 3+x;
         auto w = x * y;
-        lgi::stat::normalVariable s;
-        canvas::get().print();
+        auto a = function::d(x, x, 2);
+        a.check();
+        canvas::get().get_pass_manager().set_log_level(2);
+        canvas::get().compile();
         return 0;
     }
-    
 };
 } // namespace test_qft

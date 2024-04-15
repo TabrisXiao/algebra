@@ -4,17 +4,17 @@ file(GLOB_RECURSE headers
 )
 set(
     sources
-    operation.cpp
+    value.cpp
+    edge.cpp
+    node.cpp
     pass.cpp
-    libs/AAB/ops.cpp
-    libs/AAB/passes.cpp
-    libs/SIO/exporter.cpp
+    libs/algebra/ops.cpp
 )
 
 create_cpp_library(
     NAME lgf_lib
-    #HDRS
-    #${headers}
+    HDRS
+    ${headers}
     SRCS
     ${sources}
     INCLUDES

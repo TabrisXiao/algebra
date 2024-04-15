@@ -1,72 +1,35 @@
 
-#ifndef LGF_TYPE_H_
-#define LGF_TYPE_H_
-#include "exception.h"
-#include "liteParser.h"
+#ifndef LGF_OBJECT_H_
+#define LGF_OBJECT_H_
 #include <iostream>
 #include <string>
 
 namespace lgf{
-class LGFContext;
-class LGFModule;
-#define THROW_WHEN(condition, msg) \
-    if (condition) { \
-        std::cerr<<"Runtime Error: " __FILE__ ":"<< std::to_string(__LINE__)<< ": "<<msg<<"\n"; \
-        std::exit(EXIT_FAILURE); \
-    }
-template<typename storageType>
-class typeMarker : private byteCode<storageType> {
+
+//symbolic id;
+typedef std::string sid_t;
+
+class graphObject {
     public:
-    typeMarker(uint8_t size): byteCode(), size_max(size) {}
-    bool is(uint8_t code) { 
-        THROW_WHEN(code > size_max, "typeMarker: code out of range");
-        return ((1<<code) & value) != 0 ; }
-    void mark(uint8_t code ) { 
-        THROW_WHEN(code > size_max, "typeMarker: code out of range");
-        value |= 1<<code; 
+    graphObject() = default;
+    graphObject(sid_t id) : sid(id) {}
+    std::string get_sid() const { return sid; }
+    void set_sid(sid_t id) { sid = id; }
+    bool set_sid_if_null(sid_t id){
+        if(sid.empty()) {
+            sid=id;
+            return 1;
+        }
+        return 0;
     }
-    void combine(storageType& val) { value |= val; }
-    uint8_t size_max=64;
-    storageType value=0;
-};
-
-class objectAbstract {
-    public:
-    objectAbstract(std::string sid): id(sid){}
-    virtual std::string represent() const = 0;
-    std::string getSID(){ return id;}
-    void setSID(std::string sid){ id = sid;}
-    std::string id;
-};
-
-class objectType {
-    public:
-    objectType() = default;
-    objectType(objectType& other) {
-        abstract = other.abstract;
+    void set_nid(uint64_t id){
+        nid = id;
     }
-    objectType(objectAbstract *ptr) { abstract = ptr;}
-    
-    virtual std::string represent() const {
-        if(abstract) return abstract->represent();
-        THROW("Null objectAbstract")
-        return "";
-    }
-    bool operator==(const objectType& other){
-        return this->represent() == other.represent();
-    }
-    void setSID(std::string sid){
-        abstract->setSID(sid);
-    }
-
-    objectAbstract* getAbstract(){ return abstract; }
-
-    template<typename T>
-    T* getAbstract(){
-        return dynamic_cast<T*>(abstract);
-    }
-
-    objectAbstract* abstract = nullptr;
+    uint64_t get_nid() const { return nid; }
+    virtual sid_t represent() = 0;
+    protected:
+    sid_t sid="";
+    uint64_t nid = 0;
 };
 
 }

@@ -1,9 +1,10 @@
 
 #ifndef LGF_INTERFACE_CANVAS_H
 #define LGF_INTERFACE_CANVAS_H
-#include "lgf/LGFContext.h"
+#include "lgf/context.h"
 #include "lgf/painter.h"
 #include "libs/Builtin/Builtin.h"
+#include "libs/functional/passes.h"
 
 namespace lgi{
 
@@ -34,26 +35,37 @@ class canvas {
         }
     }
     
-    lgf::painter & getPainter() {
+    lgf::painter & get_painter() {
         return p;
     }
-    lgf::LGFContext &getContext(){
+    lgf::LGFContext &get_context(){
         return ctx;
     }
     void print(){
         g.print();
     }
 
+    void compile(){
+        pm.set_work_region(&g);
+        pm.add_normalization_pass();
+        pm.add_pass(createCalculusPass());
+        pm.run();
+    }
+
+    lgf::passManager& get_pass_manager(){
+        return pm;
+    }
+
 protected:
     canvas(){
-        p.setContext(&ctx);
-        p.gotoGraph(&g);
+        p.set_context(&ctx);
+        p.goto_graph(&g);
     }
     inline static canvas *gcanvas = nullptr;
     lgf::moduleOp g;
     lgf::LGFContext ctx;
     lgf::painter p;
-
+    lgf::passManager pm;
 };
 
 } // namespace  lgf

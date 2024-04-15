@@ -1,137 +1,188 @@
 #ifndef LGF_GROUP_H
 #define LGF_GROUP_H
 #include <memory.h>
-#include "operation.h"
+#include "node.h"
 #include "painter.h"
 #include "pass.h"
 
-namespace lgf{
+namespace lgf
+{
 
-class group {
+    class group
+    {
     public:
-    group() = default;
-    virtual resultCode rewrite( painter, operation *op) = 0;
-};
+        group() = default;
+        virtual resultCode rewrite(painter, node *op) = 0;
+    };
 
-template<typename groupType>
-class groupRewriter : public rewriterBase{
-    public: 
-    groupRewriter() = default;
-    virtual resultCode execute( painter rewriter,operation* op) override final{
-        if(auto g = dynamic_cast<groupType*>(op))
+    template <typename groupType>
+    class groupRewriter : public rewriterBase
+    {
+    public:
+        groupRewriter() = default;
+        virtual resultCode execute(painter rewriter, node *op) override final
         {
-            auto sig = g->rewrite(rewriter, op);
-            return sig;
-        }
-        return resultCode::pass();
-    }
-};
-
-class normalizer : public group {
-    public: 
-    normalizer() = default;
-};
-
-class normalizationPass : public passBase {
-    public: 
-    normalizationPass() : passBase("normalization"){ }
-    virtual resultCode run(){
-        painter p(getContext());
-        addRewriter<groupRewriter<normalizer>>();
-        // applyRewriterOnce(p, getGraph());
-        // return applyRewriterOnce(p, getGraph());
-        removeIdenticalOps(getGraph());
-        resultCode code = applyRewriterGreedy(p, getGraph());
-        inferTypes(getGraph());
-        removeUnusedOps(getGraph());
-        getGraph()->clean();
-        return code;
-    }
-
-    operation* checkIfIdenticalExist(operation* op, std::queue<operation*> &list){
-        std::queue<operation*> q=list;
-        while(!q.empty()){
-            auto checkop = q.front();
-            q.pop();
-            if(op->isIdentical(checkop)){
-                return checkop;
+            if (auto g = dynamic_cast<groupType *>(op))
+            {
+                auto sig = g->rewrite(rewriter, op);
+                return sig;
             }
+            return resultCode::pass();
         }
-        return nullptr;
-    }
+    };
 
-    void inferTypes(graph* g){
-        auto ctx = g->getContext();
-        for(auto op : g->getNodeList()){
-            op->inferType( ctx );
-            if(auto subg = dynamic_cast<graph*>(op)){
-                inferTypes(subg);
-            }
-        }
-    }
+    class graphOperation : public group
+    {
+    public:
+        graphOperation() = default;
+    };
 
-    void removeUnusedOps(graph* g){
-        for(auto op : g->getNodeList()){
-            bool canRemove = op->getStatus().isTrivial();
-            for(auto & val : op->getOutputs()){
-                if(val->getUserSize() !=0 ){
-                    canRemove = false;
-                    break;
-                }
-            }
-            if(canRemove) op->erase();
-            else if(auto subg = dynamic_cast<graph*>(op)){
-                removeUnusedOps(subg);
-            }
+    class execGraphOpPass : public passBase
+    {
+    public:
+        execGraphOpPass() : passBase("executeGOpPass") {}
+        virtual resultCode run()
+        {
+            painter p(get_graph());
+            add_rewriter<groupRewriter<graphOperation>>();
+            return apply_rewriter_greedy(p, get_graph());
         }
-    }
+    };
 
-    bool removeIdenticalOps(graph* g){
-        // using breadth first walk to remove identical ops
-        // assignID is necessary for the checkIfIdenticalExist function as the id is used to check if two ops are identical
-        g->assignID(0);
-        bool changed = false;
-        if(g == nullptr) {
-            THROW("Remove identical ops failed: graph is invalid.");
-        }
-        auto list = g->getEntry().getIndirectDependecyValue()->getUsers();
-        std::queue<operation*> queue;
-        for(auto op : list){
-            if(op->isRemovable() || !op->isActive()) continue;
-            
-            // if op is a graph:
-            if(auto subg = dynamic_cast<graph*>(op)){
-                
-                removeIdenticalOps(subg);
-                continue;
-            }
-            queue.push(op);
-            // if( !checkIfIdenticalExist(op, queue) ){
-            //     queue.push(op);
-            // }
+    class normalizer : public group
+    {
+    public:
+        normalizer() = default;
+    };
+
+    class normalizationPass : public passBase
+    {
+    public:
+        normalizationPass() : passBase("normalization") {}
+        virtual resultCode run()
+        {
+            painter p(get_graph());
+            add_rewriter<groupRewriter<normalizer>>();
+            resultCode code = apply_rewriter_greedy(p, get_graph());
+            remove_unused_ops(get_graph());
+            get_graph()->clean();
+            return code;
         }
 
-        while(!queue.empty()){
-            auto op = queue.front();
-            queue.pop();
-            for(auto& output: op->getOutputs()){
-                // skip the dependencyValue
-                if(auto dependency = dynamic_cast<dependencyValue*>(output.get())) 
-                    continue;
-                for(auto user : output->getUsers()){
-                    if(user->isRemovable() || !user->isActive()) continue;
-                     if(auto keepop = checkIfIdenticalExist(user, queue)){
-                        user->replaceBy(keepop);
-                        changed = true;
-                    }else{
-                        queue.push(user);
+        void remove_trivial_op(node *op)
+        {
+            if (op->is_deprecate())
+                return;
+            if (op->is_trivial())
+            {
+                for (auto &h : op->get_user_handles())
+                {
+                    if (h.is_coupled())
+                    {
+                        auto node = h.get_dual_node();
+                        remove_trivial_op(node);
                     }
                 }
+                if (!op->get_user_size())
+                {
+                    
+                    op->erase();
+                }
             }
         }
-        return changed;
-    }
-};
+
+        void remove_unused_ops(graph *g)
+        {
+            for (auto &op : g->get_nodes())
+            {
+                if (auto subg = dynamic_cast<graph *>(op))
+                {
+                    remove_unused_ops(subg);
+                }
+                else
+                    remove_trivial_op(op);
+            }
+        }
+
+        bool remove_identical_ops(painter p, graph *g)
+        {
+            // using breadth first walk to remove identical ops
+            // to avoid the case that replace of the early ops makes the later
+            // ops identical.
+            // assignID is necessary for the checkIfIdenticalExist function as the id is used to check if two ops are identical
+
+            bool changed = false;
+            if (!g)
+                return false;
+            g->assign_id(0);
+
+            auto list = g->get_nodes();
+            std::queue<node *> queue;
+            for (auto op : list)
+            {
+                if (op->is_deprecate())
+                    continue;
+                if (op->get_input_size() != 0)
+                    continue;
+                // if op is a graph:
+
+                queue.push(op);
+                // if( !checkIfIdenticalExist(op, queue) ){
+                //     queue.push(op);
+                // }
+            }
+
+            while (queue.size() > 1)
+            {
+                auto op = queue.front();
+                queue.pop();
+                op->set_exploration(true);
+                if (auto subg = dynamic_cast<graph *>(op))
+                {
+                    painter pp(subg);
+                    remove_identical_ops(pp, subg);
+                    continue;
+                }
+                // checking if the duplicate op exists and
+                // replace it if so.
+                auto mark = queue.front();
+                auto target = op->get_op_represent();
+                do
+                {
+                    auto checkop = queue.front();
+                    queue.pop();
+                    if (checkop != op && target == checkop->get_op_represent())
+                    {
+                        if (mark == checkop)
+                            mark = queue.front();
+                        // std::cout<<"placing: "<<checkop->represent()<<" by "<<op->represent()<<std::endl;
+                        checkop->replace_by(op);
+                        checkop->erase();
+                        changed = true;
+                    }
+                    else
+                    {
+                        queue.push(checkop);
+                    }
+                } while (queue.front() != mark);
+
+                for (auto &h : op->get_user_handles())
+                {
+                    if (!h.is_coupled())
+                        continue;
+                    auto user = h.get_dual_node();
+                    if (user->is_deprecate() || user->is_explored() || !user->is_dependency_fullfilled())
+                        continue;
+                    queue.push(user);
+                }
+            }
+            for (auto node : list)
+            {
+                node->set_exploration(false);
+            }
+            return changed;
+        }
+    };
 
 }
 
