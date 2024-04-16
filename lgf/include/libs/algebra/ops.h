@@ -40,7 +40,7 @@ namespace lgf{
             op->infer_trivial_value_desc();
             return op;
         }
-        virtual resultCode rewrite(painter p, node* op) override;
+        virtual resultCode rewrite(painter& p, node* op) override;
     };
 
     class negativeOp : public node {

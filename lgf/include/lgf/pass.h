@@ -36,7 +36,7 @@ class rewriterBase {
     public:
     rewriterBase() = default;
     virtual ~rewriterBase() = default;
-    virtual resultCode execute( painter, node * op) = 0;
+    virtual resultCode execute( painter&, node * op) = 0;
     LGFContext* get_context(){ return ctx; }
     LGFContext *ctx = nullptr;
 };
@@ -44,8 +44,8 @@ class rewriterBase {
 template<typename concreteOp>
 class rewriter : public rewriterBase{
     public : rewriter() = default;
-    virtual resultCode rewrite( painter, concreteOp *op) = 0;
-    virtual resultCode execute( painter rewriter,node* op) override final{
+    virtual resultCode rewrite( painter&, concreteOp *op) = 0;
+    virtual resultCode execute( painter& rewriter,node* op) override final{
         if(auto cop = dynamic_cast<concreteOp*>(op))
         {
             auto sig = rewrite(rewriter, cop);

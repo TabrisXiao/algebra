@@ -38,11 +38,16 @@ namespace lgf
         virtual std::string represent()
         {
             printer p;
-            p << _v_->get_sid() << " = " << get_sid() << " : " << inputs_sid();
+            p << value_rep() << " = " << get_sid() << " : " << inputs_sid();
             return p.dump();
         }
 
         valueDesc *get_value_desc() { return _v_->get_desc(); }
+
+        template<typename T>
+        T* get_value_desc_as(){
+            return dynamic_cast<T*>(_v_->get_desc());
+        }
 
         value &get_value() { return *_v_; }
 

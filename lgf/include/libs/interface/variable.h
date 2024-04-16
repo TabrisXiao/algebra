@@ -13,7 +13,7 @@ namespace lgi
         variableBase() = default;
         void check()
         {
-            v->set_nontrivial();
+            canvas::get().get_painter().paint<lgf::returnOp>(v);
         }
         variableBase(const variableBase &other)
         {

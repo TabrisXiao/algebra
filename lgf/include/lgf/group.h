@@ -12,7 +12,7 @@ namespace lgf
     {
     public:
         group() = default;
-        virtual resultCode rewrite(painter, node *op) = 0;
+        virtual resultCode rewrite(painter&, node *op) = 0;
     };
 
     template <typename groupType>
@@ -20,7 +20,7 @@ namespace lgf
     {
     public:
         groupRewriter() = default;
-        virtual resultCode execute(painter rewriter, node *op) override final
+        virtual resultCode execute(painter& rewriter, node *op) override final
         {
             if (auto g = dynamic_cast<groupType *>(op))
             {

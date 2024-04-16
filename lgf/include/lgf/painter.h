@@ -100,9 +100,9 @@ public:
     return op;
   }
 
-  void insert_op(node *op) {
-    point.iter = point.nodes->insert(point.iter, op) + 1;
-  }
+  //void insert_op(node *op) {
+  //  point.iter = point.nodes->insert(point.iter, op) + 1;
+  //}
 
   template <typename obj> obj *replace_op(node *op1) {
     auto op2 = sketch<obj>();
@@ -124,11 +124,16 @@ public:
     // we assume that op1 can't be used by op2
     op1->replace_by(op2);
     auto iter = std::find(point.nodes->begin(), point.nodes->end(), op1);
-    if (!op1->get_user_size()) {
+    bool keepOrigOp = false;
+    if( op1->get_user_size()) keepOrigOp = 1;
+    if( iter != point.nodes->end() && !keepOrigOp){
       *iter = op2;
       op1->erase();
-    }else{
+    } else {
       point.iter = point.nodes->insert(iter+1, op2)+1;
+      if(!keepOrigOp) {
+        op1->erase();
+      }
     }
   }
 

@@ -49,6 +49,7 @@ class canvas {
         pm.set_work_region(&g);
         pm.add_normalization_pass();
         pm.add_pass(createCalculusPass());
+        pm.add_normalization_pass();
         pm.run();
     }
 

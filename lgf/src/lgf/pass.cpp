@@ -9,7 +9,7 @@ resultCode passBase::apply_rewriter_once(painter &p, graph* g ){
     p.goto_graph(g);
     for(auto ptr=rewriters.begin(); ptr!=rewriters.end(); ptr++)
     {
-        std::vector<node*> nodes = g->get_nodes(); 
+        std::vector<node*> nodes = g->get_nodes();
         for(auto i = 0; i< nodes.size(); i++ ){
             auto& node = nodes[i];
             if(node->is_deprecate()) continue;
