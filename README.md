@@ -6,8 +6,13 @@ Logic graph frame (LGF) is an experimental project that providing a frameworks t
 
 Objects or values are treated as edges of graphs and the operation to these edges are nodes. One nodes consumes several edges and may produce a new value to be consumed by other nodes. This architecture forms a directed graphs can represent a widely processes or conceptions. 
 
-#### Values and Operations
-Based on this idea, the operation can accept values as inputs and create one value as an output (although it can create multiple outputs, but this case equivalents to one operation followed by multiple operations which producing one output each ). 
+#### Values and Nodes
+Based on this idea, the operation can accept values as inputs and create one value as an output (Multiple outputs cases are equivalent to one node connect to multiple nodes in parallel). Value is an abstract object standing for anything could exchange between nodes.  Values and nodes consist the abstract graph.
 
-#### Types
-Beside the object `value` and `operation` as building block to form a graph, the `type` of the value is an object used to describe what the value is and how we interface with this value. As a value produced from an operation, the properties of the value should be determined sololy based on that operation, so the type shouldn't be changed after it has been created. So we allow the copy constructor for `type` but should prevent any changes on the type itself. If you need a different type, you need to create a new one.
+#### Descriptor
+The role of value is determined by the description class `valueDesc`. It is used to store all the properties of the value it associated with. It also provides all the interface method needed for interacting with the values. Note that value descriptor can be customized and can be converted while manipulate the graph if needed.
+
+#### Passes
+After a graph is constructed, one can apply a sequence of processes on the graph to change or transform the graph to another. It includes inserting, replacing and erasing nodes and edges (connection beteween nodes). 
+
+### `C++` interface
