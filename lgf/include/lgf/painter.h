@@ -111,7 +111,7 @@ public:
     op1->replace_by(op2);
     auto &nodes = point.g->get_nodes();
     auto iter = std::find(nodes.begin(), nodes.end(), op1);
-    insert_op(op2);
+    (*iter) = op2;
     op1->erase();
   }
 
@@ -123,10 +123,13 @@ public:
     // because the op1 is gonna replaced by op2, so
     // we assume that op1 can't be used by op2
     op1->replace_by(op2);
+    auto iter = std::find(point.nodes->begin(), point.nodes->end(), op1);
     if (!op1->get_user_size()) {
+      *iter = op2;
       op1->erase();
+    }else{
+      point.iter = point.nodes->insert(iter+1, op2)+1;
     }
-    insert_op(op2);
   }
 
   template <typename obj, typename... ARGS>
@@ -152,6 +155,7 @@ public:
     auto &nodes = op->get_parent_graph()->get_nodes();
     auto iter = std::find(nodes.begin(), nodes.end(), op);
     *iter = newop;
+    op->erase();
     return newop;
   }
 

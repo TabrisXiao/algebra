@@ -9,12 +9,12 @@ resultCode passBase::apply_rewriter_once(painter &p, graph* g ){
     p.goto_graph(g);
     for(auto ptr=rewriters.begin(); ptr!=rewriters.end(); ptr++)
     {
-        auto& nodes = g->get_nodes(); 
+        std::vector<node*> nodes = g->get_nodes(); 
         for(auto i = 0; i< nodes.size(); i++ ){
             auto& node = nodes[i];
             if(node->is_deprecate()) continue;
-            p.set_paintPoint_at(g, &nodes, nodes.begin()+i);
             result.add((*ptr).get()->execute(p, node));
+            if(node->is_deprecate()) continue;
             if(auto subg = dynamic_cast<graph*>(node)){
                 result.add(apply_rewriter_once(p, subg));
             }
