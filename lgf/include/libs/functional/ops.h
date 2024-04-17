@@ -118,6 +118,12 @@ namespace lgf
         node *var() { return input(1); }
         void set_order(int r) { order = r; }
         int get_order() { return order; }
+        virtual sid_t represent() override
+        {
+            auto res = get_value_sid() + " = " + get_sid();
+            res = res + " : " + input()->get_value_sid() + " w.r.t. " + input(1)->get_value_sid() + ", order = " + std::to_string(order);
+            return res;
+        }
         private:
         int order = 1;
     };
@@ -125,7 +131,7 @@ namespace lgf
     class differentiateOp : public mappingOp
     {
     public:
-        differentiateOp() : mappingOp("differentiate") {}
+        differentiateOp() : mappingOp("Differentiate") {}
         static differentiateOp *build(node *input, node *target, int r = 1)
         {
             auto op = new differentiateOp();

@@ -43,13 +43,7 @@ public:
     return "unit<" + elemDesc->represent() + ">";
   }
   valueDesc *get_elem_desc() { return elemDesc; }
-  bool unit_effective_check(valueDesc *desc) {
-    if(auto unit = dynamic_cast<unitDesc *>(desc))
-      desc = unit->get_elem_desc();
-    else if( auto zero = dynamic_cast<zeroDesc *>(desc))
-      desc = zero->get_elem_desc();
-    return dynamic_cast<algebraDesc *>(elemDesc)->unit_effective_check(desc);
-  }
+  virtual bool unit_effective_check(valueDesc *desc);
 
 private:
   valueDesc *elemDesc = nullptr;
@@ -63,9 +57,9 @@ public:
   }
   valueDesc *get_elem_desc() { return elemDesc; }
   bool zero_effective_check(valueDesc *desc) {
-    if(auto unit = dynamic_cast<unitDesc *>(desc))
+    if (auto unit = dynamic_cast<unitDesc *>(desc))
       desc = unit->get_elem_desc();
-    else if( auto zero = dynamic_cast<zeroDesc *>(desc))
+    else if (auto zero = dynamic_cast<zeroDesc *>(desc))
       desc = zero->get_elem_desc();
     return dynamic_cast<algebraDesc *>(elemDesc)->zero_effective_check(desc);
   }

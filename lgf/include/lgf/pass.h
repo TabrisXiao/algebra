@@ -115,6 +115,9 @@ class passManager{
         if(level > 2){
             bPrintBeforePass = 1;
         }
+        if(level > 3){
+            bPrintForEachStep = 1;
+        }
     }
     void init( graph *op) { reg = op;}
     void validation(graph* g);
@@ -160,6 +163,7 @@ class passManager{
     bool bPrintBeforePass = 0;
     bool bPrintInitialIR = 0;
     bool bPrintFinalIR = 0;
+    bool bPrintForEachStep = 0;
     graph * reg = nullptr;
     std::string name = "";
 };

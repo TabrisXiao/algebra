@@ -1,6 +1,6 @@
 
-#ifndef AOG_H_
-#define AOG_H_
+#ifndef LGF_PAINTER_H_
+#define LGF_PAINTER_H_
 #include "global.h"
 #include "node.h"
 #include <algorithm>
@@ -57,7 +57,8 @@ public:
       point.iter++;
   }
 
-  void set_paintPoint_at(graph* g, std::vector<node*>* vec, std::vector<node*>::iterator iter){
+  void set_paintPoint_at(graph *g, std::vector<node *> *vec,
+                         std::vector<node *>::iterator iter) {
     point.g = g;
     point.nodes = vec;
     point.iter = iter;
@@ -100,9 +101,9 @@ public:
     return op;
   }
 
-  //void insert_op(node *op) {
-  //  point.iter = point.nodes->insert(point.iter, op) + 1;
-  //}
+  // void insert_op(node *op) {
+  //   point.iter = point.nodes->insert(point.iter, op) + 1;
+  // }
 
   template <typename obj> obj *replace_op(node *op1) {
     auto op2 = sketch<obj>();
@@ -125,13 +126,14 @@ public:
     op1->replace_by(op2);
     auto iter = std::find(point.nodes->begin(), point.nodes->end(), op1);
     bool keepOrigOp = false;
-    if( op1->get_user_size()) keepOrigOp = 1;
-    if( iter != point.nodes->end() && !keepOrigOp){
+    if (op1->get_user_size())
+      keepOrigOp = 1;
+    if (iter != point.nodes->end() && !keepOrigOp) {
       *iter = op2;
       op1->erase();
     } else {
-      point.iter = point.nodes->insert(iter+1, op2)+1;
-      if(!keepOrigOp) {
+      point.iter = point.nodes->insert(iter + 1, op2) + 1;
+      if (!keepOrigOp) {
         op1->erase();
       }
     }

@@ -16,3 +16,11 @@ The role of value is determined by the description class `valueDesc`. It is used
 After a graph is constructed, one can apply a sequence of processes on the graph to change or transform the graph to another. It includes inserting, replacing and erasing nodes and edges (connection beteween nodes). 
 
 ### `C++` interface
+
+### Todo's
+
+1. Secure the `unitDesc` and `zeroDesc` is flatten, ie.  `unit<unit<real>> = unit<real>`.
+2. Improve the `unit/zero_effective_check`.
+3. Fix the calculus couldn't generate correct `partialDifferentOp`.
+4. Add fix region for `partialDifferentOp`.
+5. Add `option` object for pass.

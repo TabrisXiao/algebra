@@ -2,6 +2,7 @@ file(GLOB_RECURSE headers
     "${PROJECT_SOURCE_DIR}/lgf/include/lgf/*.h"
     #"${PROJECT_SOURCE_DIR}/lgf/include/libs/LinearAlg/*.h"
 )
+
 set(
     sources
     value.cpp
@@ -9,6 +10,7 @@ set(
     node.cpp
     pass.cpp
     libs/algebra/ops.cpp
+    libs/algebra/desc.cpp
 )
 
 create_cpp_library(
