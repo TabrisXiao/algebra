@@ -14,20 +14,9 @@ public:
     auto result = resultCode::pass();
 
     node *func = op->arg();
-    node *target = op->arg(1);
     auto ctx = p.get_context();
 
-    if (func == target) {
-      p.replace_op<declOp>(op,
-                           ctx->get_desc<unitDesc>(target->get_value_desc()));
-      result.add(resultCode::success());
-      return result;
-    }
-
     if (auto f = dynamic_cast<declOp *>(func)) {
-      p.replace_op<declOp>(op,
-                           ctx->get_desc<zeroDesc>(target->get_value_desc()));
-      result.add(resultCode::success());
       return result;
     }
 
@@ -35,27 +24,19 @@ public:
         dynamic_cast<partialDifferentiateOp *>(func)) {
       return resultCode::pass();
     }
+
     auto mapping = dynamic_cast<mappingOp *>(func);
-    if (!mapping)
+    if (!mapping && !dynamic_cast<sumOp *>(func) && !dynamic_cast<productOp *>(func))
       return result;
 
-    if (op->get_order() > 1) {
-      auto d =
-          p.paint<differentiateOp>(op->arg(), op->arg(1), op->get_order() - 1);
-      op->replace_input_by(op->arg(), d);
-      op->set_order(op->get_order() - 1);
-      result.add(resultCode::success());
-      op = d;
-    }
-
     std::vector<node *> sum_args;
-    for (auto &h : mapping->get_input_handles()) {
+    for (auto &h : func->get_input_handles()) {
       if (!h.is_coupled())
         continue;
       auto arg = h.get_dual_node();
-      auto partial1 = p.paint<partialDifferentiateOp>(mapping, arg);
-      auto partial2 = p.paint<partialDifferentiateOp>(arg, target);
-      auto product = p.paint<productOp>(partial1, partial2);
+      auto Df = p.paint<partialDifferentiateOp>(func, arg);
+      auto dx = p.paint<differentiateOp>(arg);
+      auto product = p.paint<productOp>(Df, dx);
       sum_args.push_back(product);
     }
     if (sum_args.size() == 1) {

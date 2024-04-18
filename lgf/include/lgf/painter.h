@@ -121,6 +121,10 @@ public:
     // the same graph
     if (op1 == op2)
       return;
+
+    if (op2->get_parent_graph() && op2->get_parent_graph() != point.g) {
+      throw std::runtime_error("replace_op: ops are in different graphs!");
+    }
     // because the op1 is gonna replaced by op2, so
     // we assume that op1 can't be used by op2
     op1->replace_by(op2);
@@ -129,14 +133,17 @@ public:
     if (op1->get_user_size())
       keepOrigOp = 1;
     if (iter != point.nodes->end() && !keepOrigOp) {
-      *iter = op2;
+      if(op2->get_parent_graph()!= point.g) {
+        *iter = op2;
+      }
       op1->erase();
     } else {
-      point.iter = point.nodes->insert(iter + 1, op2) + 1;
+      if(op2->get_parent_graph()!= point.g) point.iter = point.nodes->insert(iter + 1, op2) + 1;
       if (!keepOrigOp) {
         op1->erase();
       }
     }
+    op2->set_parent_graph(point.g);
   }
 
   template <typename obj, typename... ARGS>

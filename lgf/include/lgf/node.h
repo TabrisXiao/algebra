@@ -189,7 +189,7 @@ namespace lgf
 
         void drop_input(node* n){
             auto it = std::find_if(inputs.begin(), inputs.end(), [n](edge &e)
-                                   { 
+                                   { if( !e.is_coupled() ) return false;
                                     return e.get_dual_node() == n; });
             if (it == inputs.end())
                 return;
@@ -200,7 +200,7 @@ namespace lgf
         void replace_input_by(node *on, node *nn)
         {
             auto it = std::find_if(inputs.begin(), inputs.end(), [on](edge &e)
-                                   { 
+                                   { if( !e.is_coupled() ) return false;
                                     return e.get_dual_node() == on; });
             if (it == inputs.end())
                 return;
@@ -307,7 +307,7 @@ namespace lgf
             bDeprecate = 1;
         }
 
-        virtual void print();
+        virtual void print(); 
 
         size_t get_input_size();
         size_t get_user_size() { return users.size(); }

@@ -17,8 +17,9 @@ public:
     auto y = function::cos(x);
     auto z = 3 + x;
     auto w = x * y;
-    auto a = function::d(y, x, 2);
-    a.check();
+    auto a = function::d(y);
+    auto dw = function::d(w);
+    dw.check();
     canvas::get().get_pass_manager().set_log_level(2);
     canvas::get().compile();
     return 0;

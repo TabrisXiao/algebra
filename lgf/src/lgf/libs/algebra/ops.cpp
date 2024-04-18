@@ -17,7 +17,9 @@ resultCode productOp::rewrite(painter &p, node *op) {
     if (auto product = dynamic_cast<productOp *>(node)) {
       auto new_inputs = product->get_input_nodes();
       op->drop_input(product);
-      op->register_inputs_at(new_inputs, i);
+      op->register_inputs_at(new_inputs, i-1);
+      if(product->get_user_size() == 0)
+        product->erase();
       i++;
       result.add(resultCode::success());
     } else if (auto var = dynamic_cast<declOp *>(node)) {
