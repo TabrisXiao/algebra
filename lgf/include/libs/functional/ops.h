@@ -33,7 +33,7 @@ namespace lgf
         {
             return narg;
         }
-        edgeBundle& get_args()
+        edgeBundle &get_args()
         {
             return get_input_handles();
         }
@@ -133,11 +133,11 @@ namespace lgf
         virtual sid_t represent() override
         {
             auto res = get_value_sid() + " = Partial Differential";
-            res = res + " : " + input()->get_value_sid() + " w.r.t. " + input(1)->get_value_sid() + ", order = " + std::to_string(order);
+            res = res + ": " + input()->get_value_sid() + " w.r.t. " + input(1)->get_value_sid() + ", order = " + std::to_string(order);
             return res;
         }
 
-        private:
+    private:
         int order = 1;
     };
 
@@ -154,7 +154,7 @@ namespace lgf
         }
         virtual sid_t represent() override
         {
-            auto res = get_value_sid() + " = "+get_sid()+" : " + input()->get_value_sid();
+            auto res = get_value_sid() + " = " + get_sid() + ": " + input()->get_value_sid();
             return res;
         }
 

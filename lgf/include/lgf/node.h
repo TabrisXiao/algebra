@@ -38,7 +38,7 @@ namespace lgf
         virtual std::string represent()
         {
             printer p;
-            p << value_rep() << " = " << get_sid() << " : " << inputs_sid();
+            p << value_rep() << " = " << get_sid() << ": " << inputs_sid();
             return p.dump();
         }
 
