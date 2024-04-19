@@ -42,13 +42,6 @@ namespace lgf::SIO
     {
     public:
         representOp(std::string name) : node(name) {}
-        void add_inputs(const std::vector<node *> &args)
-        {
-            for (auto &val : args)
-            {
-                register_input(val);
-            }
-        }
     };
 
     class symbolOp : public representOp
@@ -167,6 +160,18 @@ namespace lgf::SIO
         {
             partialD *op = new partialD();
             op->register_input(func, var);
+            return op;
+        }
+    };
+
+    class differentialOp : public representOp
+    {
+    public:
+        differentialOp() : representOp("sio::differential") {}
+        static differentialOp *build(node *input)
+        {
+            differentialOp *op = new differentialOp();
+            op->register_input(input);
             return op;
         }
     };

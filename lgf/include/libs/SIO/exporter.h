@@ -23,14 +23,16 @@ namespace lgf::SIO
         void run_on_op()
         {
             painter p(g);
+            os << "\n\n--------- latex exports: ---------\n";
             for (auto &node : g->get_nodes())
             {
                 if (!dynamic_cast<opTy *>(node))
                     continue;
-                process(node->input());
+                os << process(node->input());
                 p.replace_op(node, node->input());
                 node->erase();
             }
+            os << "\n--------- end ---------\n\n";
         }
 
         global::stream &os = global::stream::getInstance();
@@ -40,11 +42,11 @@ namespace lgf::SIO
     class export2latex : public exporterBase
     {
     public:
-        export2latex(graph *g_) : exporterBase(g) {}
+        export2latex(graph *g_) : exporterBase(g_) {}
 
         virtual std::string process(node *val) final;
 
-        void run(graph *entry);
+        void run(graph *entry){};
         void run() { run(g); }
         void run_on_op()
         {

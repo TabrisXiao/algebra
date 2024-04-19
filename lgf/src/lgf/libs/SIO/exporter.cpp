@@ -38,15 +38,25 @@ namespace lgf::SIO
         }
         else if (auto op = dynamic_cast<symbolOp *>(n))
         {
-            res += op->get_symbol();
+            auto sym = op->get_symbol();
+            if (sym[0] == '%')
+            {
+                sym[0] = '{';
+                sym = "x_" + sym + "}";
+            }
+            res += sym;
         }
         else if (auto op = dynamic_cast<partialD *>(n))
         {
-            res = "\\frac{d}{d " + process(op->input(1)) + "} " + process(op->input(0));
+            res = "\\frac{\\partial }{\\partial " + process(op->input(1)) + "} " + process(op->input(0));
         }
         else if (auto op = dynamic_cast<negativeOp *>(n))
         {
             res = "-" + process(op->input(0));
+        }
+        else if (auto op = dynamic_cast<differentialOp *>(n))
+        {
+            res = "d" + process(op->input(0)) + " ";
         }
         else
         {

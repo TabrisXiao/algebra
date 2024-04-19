@@ -53,14 +53,17 @@ namespace lgi
       pm.add_pass(lgf::createCalculusPass());
       pm.add_normalization_pass();
       pm.run();
+
+      export2latex();
     }
 
     void export2latex()
     {
       pm.flush();
-      pm.p.add_pass(SIO::createConvertToSIOPass);
+      pm.add_pass(lgf::transform::createConvertToSIOPass());
+      pm.run();
       lgf::SIO::export2latex ex(&g);
-      ex.run();
+      ex.run_on_op();
     }
 
     lgf::passManager &get_pass_manager() { return pm; }

@@ -16,11 +16,11 @@ namespace lgf::transform
     {
     public:
         convertToSIORewriter(std::string funcName = "") : funcName(funcName){};
-        virtual type_t convertType(type_t type) { return type; }
-        virtual resultCode rewrite(painter p, origOp *op)
+        virtual valueDesc *convert_desc(valueDesc *desc) { return desc; }
+        virtual resultCode rewrite(painter &p, origOp *op)
         {
-            auto newop = p.isomorphicRewrite<origOp, targetOp>(op);
-            newop->outputValue(0)->setType(convertType(op->outputValue(0)->getType()));
+            auto newop = p.isomorphic_rewrite<origOp, targetOp>(op);
+            newop->set_value_desc(convert_desc(op->get_value_desc()));
             if (auto funcop = dynamic_cast<SIO::funcOp *>(newop))
             {
                 funcop->setFuncName(funcName);
@@ -36,16 +36,16 @@ namespace lgf::transform
         convertToSIOPass() : passBase("convertToSIOPass") {}
         virtual resultCode run() final
         {
-            painter p(getContext());
-            addRewriter<convertToSIORewriter<declOp, SIO::symbolOp>>();
-            addRewriter<convertToSIORewriter<AAB::sumOp, SIO::sumOp>>();
-            addRewriter<convertToSIORewriter<AAB::negativeOp, SIO::negativeOp>>();
-            addRewriter<convertToSIORewriter<AAB::productOp, SIO::scalarProductOp>>();
-            addRewriter<convertToSIORewriter<AAB::commutableProductOp, SIO::scalarProductOp>>();
-            addRewriter<convertToSIORewriter<funcCosOp, SIO::funcOp>>("cos");
-            addRewriter<convertToSIORewriter<funcSineOp, SIO::funcOp>>("sin");
-            addRewriter<convertToSIORewriter<partialDifferentiateOp, SIO::partialD>>();
-            return applyRewriterGreedy(p, getGraph());
+            painter p(get_graph());
+            add_rewriter<convertToSIORewriter<lgf::declOp, SIO::symbolOp>>();
+            add_rewriter<convertToSIORewriter<lgf::sumOp, SIO::sumOp>>();
+            add_rewriter<convertToSIORewriter<negativeOp, SIO::negativeOp>>();
+            add_rewriter<convertToSIORewriter<productOp, SIO::scalarProductOp>>();
+            add_rewriter<convertToSIORewriter<funcCosOp, SIO::funcOp>>("cos");
+            add_rewriter<convertToSIORewriter<funcSineOp, SIO::funcOp>>("sin");
+            add_rewriter<convertToSIORewriter<partialDifferentiateOp, SIO::partialD>>();
+            add_rewriter<convertToSIORewriter<differentiateOp, SIO::differentialOp>>();
+            return apply_rewriter_greedy(p, get_graph());
         }
     };
 
