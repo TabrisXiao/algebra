@@ -33,6 +33,10 @@ namespace lgf{
             op->infer_trivial_value_desc();
             return op;
         }
+        static productOp* build(){
+            auto op = new productOp();
+            return op;
+        }
         template<typename... Args>
         static productOp* build(Args... args){
             auto op = new productOp();

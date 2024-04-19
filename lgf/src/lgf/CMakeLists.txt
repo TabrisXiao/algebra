@@ -11,6 +11,7 @@ set(
     pass.cpp
     libs/algebra/ops.cpp
     libs/algebra/desc.cpp
+    libs/SIO/exporter.cpp
 )
 
 create_cpp_library(
