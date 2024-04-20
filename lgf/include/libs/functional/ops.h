@@ -46,7 +46,7 @@ namespace lgf
     {
     public:
         funcSineOp() : mappingOp("sine") {}
-        static funcSineOp *build(node *x)
+        static funcSineOp *build(LGFContext *ctx, node *x)
         {
             auto op = new funcSineOp();
             op->add_args(x);
@@ -63,7 +63,7 @@ namespace lgf
     {
     public:
         funcCosOp() : mappingOp("cos") {}
-        static funcCosOp *build(node *x)
+        static funcCosOp *build(LGFContext *ctx, node *x)
         {
             auto op = new funcCosOp();
             op->add_args(x);
@@ -80,7 +80,7 @@ namespace lgf
     {
     public:
         funcPowerOp() : mappingOp("power") {}
-        static funcPowerOp *build(node *x, double n)
+        static funcPowerOp *build(LGFContext *ctx, node *x, double n)
         {
             auto op = new funcPowerOp();
             op->add_args(x);
@@ -101,7 +101,7 @@ namespace lgf
     {
     public:
         funcExpOp() : mappingOp("functional::exp") {}
-        static funcExpOp *build(node *power)
+        static funcExpOp *build(LGFContext *ctx, node *power)
         {
             auto op = new funcExpOp();
             op->add_args(power);
@@ -122,7 +122,7 @@ namespace lgf
     {
     public:
         partialDifferentiateOp() : mappingOp("PartialDifferential") {}
-        static partialDifferentiateOp *build(node *func, node *var, int order = 1)
+        static partialDifferentiateOp *build(LGFContext *ctx, node *func, node *var, int order = 1)
         {
             auto op = new partialDifferentiateOp();
             op->add_args(func, var);
@@ -149,7 +149,7 @@ namespace lgf
     {
     public:
         differentiateOp() : mappingOp("Differential") {}
-        static differentiateOp *build(node *input)
+        static differentiateOp *build(LGFContext *ctx, node *input)
         {
             auto op = new differentiateOp();
             op->add_args(input);

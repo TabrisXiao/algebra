@@ -21,8 +21,8 @@ namespace lgf
     public:
         value(std::string sid = "") : graphObject(sid) {}
 
-        value(valueDesc* d, std::string sid = "") : graphObject(sid), desc(d) {}
-        value(const value& v) : graphObject(v.get_sid()), desc(v.get_desc()) {}
+        value(valueDesc *d, std::string sid = "") : graphObject(sid), desc(d) {}
+        value(const value &v) : graphObject(v.get_sid()), desc(v.get_desc()) {}
 
         virtual ~value() = default;
         virtual sid_t represent();

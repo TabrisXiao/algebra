@@ -53,7 +53,7 @@ namespace lgi::function
             if (!init)
                 return;
             auto &ctx = canvas::get().get_context();
-            v = canvas::get().get_painter().paint<lgf::declOp>(ctx.get_desc<lgf::set_desc>());
+            v = canvas::get().get_painter().paint<lgf::declOp>(ctx.get_desc<lgf::setDesc>());
         }
 
         set(lgf::node *val) : variableBase(val) {}

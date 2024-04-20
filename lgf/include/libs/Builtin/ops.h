@@ -12,7 +12,7 @@ namespace lgf
     public:
         moduleOp() : graph("module") {}
         ~moduleOp() {}
-        static moduleOp *build(sid_t id)
+        static moduleOp *build(LGFContext *ctx, sid_t id)
         {
             auto op = new moduleOp();
             op->set_nontrivial();
@@ -27,7 +27,7 @@ namespace lgf
     {
     public:
         declOp() : node("declOp") {}
-        static declOp *build(valueDesc *desc)
+        static declOp *build(LGFContext *ctx, valueDesc *desc)
         {
             auto op = new declOp();
             op->set_value_desc(desc);
@@ -39,7 +39,7 @@ namespace lgf
             p << value_rep() << " = Declare " << value_desc_rep();
             return p.dump();
         }
-        virtual resultCode rewrite(painter& p, node *op)
+        virtual resultCode rewrite(painter &p, node *op)
         {
             if (op->get_user_size() == 0)
             {
@@ -55,7 +55,7 @@ namespace lgf
     public:
         updateOp() : node("update") {}
         ~updateOp() {}
-        static updateOp *build(node *lhs, node *rhs)
+        static updateOp *build(LGFContext *ctx, node *lhs, node *rhs)
         {
             auto op = new updateOp();
             op->set_value_desc(rhs->get_value_desc());
@@ -78,7 +78,7 @@ namespace lgf
     {
     public:
         cstDeclOp() = default;
-        static cstDeclOp *build(valueDesc *data, dataAttr *val)
+        static cstDeclOp *build(LGFContext *ctx, valueDesc *data, dataAttr *val)
         {
             auto op = new cstDeclOp();
             op->set_value_desc(data);
@@ -103,7 +103,7 @@ namespace lgf
     {
     public:
         returnOp() = default;
-        static returnOp *build(node *val)
+        static returnOp *build(LGFContext *ctx, node *val)
         {
             auto op = new returnOp();
             op->register_input(val);

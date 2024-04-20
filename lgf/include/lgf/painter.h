@@ -82,7 +82,7 @@ namespace lgf
     template <typename obj>
     obj *sketch()
     {
-      auto op = obj::build();
+      auto op = obj::build(ctx);
       // op->inferType(ctx);
       return op;
     }
@@ -90,7 +90,7 @@ namespace lgf
     template <typename obj, typename... ARGS>
     obj *sketch(ARGS... args)
     {
-      auto op = obj::build(args...);
+      auto op = obj::build(ctx, args...);
       // op->inferType(ctx);
       return op;
     }

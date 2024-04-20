@@ -5,7 +5,7 @@
 #include "lgf/attribute.h"
 namespace lgf
 {
-
+  class LFFContext;
   class intData : public preservedDataAttr<int>
   {
   public:
@@ -29,13 +29,13 @@ namespace lgf
   class intValue : public simpleValue
   {
   public:
-    intValue() : simpleValue("int") {}
+    intValue(LGFContext *ctx) : simpleValue("int") {}
   };
 
   class doubleValue : public simpleValue
   {
   public:
-    doubleValue() : simpleValue("double") {}
+    doubleValue(LGFContext *ctx) : simpleValue("double") {}
   };
 
 } // namespace lgf
