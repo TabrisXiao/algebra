@@ -91,6 +91,10 @@ namespace lgf
         void set_power(double n) { p = n; }
         double power() { return p; }
         double p = 1;
+        virtual sid_t represent() override
+        {
+            return get_value_sid() + " = " + input()->get_value_sid() + "power=" + std::to_string(p);
+        }
     };
 
     class funcExpOp : public mappingOp

@@ -25,3 +25,4 @@ After a graph is constructed, one can apply a sequence of processes on the graph
 * Add `option` object for pass.
 * Fix the `convert2SIO` pass.
 * Enable the `export2latex` in interface.
+* Add transform to API graph to enable numerical calculation.
