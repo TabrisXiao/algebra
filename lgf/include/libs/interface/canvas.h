@@ -5,69 +5,82 @@
 #include "lgf/painter.h"
 #include "libs/Builtin/Builtin.h"
 #include "libs/functional/passes.h"
+#include "libs/SIO/exporter.h"
+#include "libs/transform/convertToSIO.h"
 
-namespace lgi{
+namespace lgi
+{
 
-// canvas is a singleton class that contains the information about 
-// painter and context for lgf that currently working.
-class canvas {
-    public:
+  // canvas is a singleton class that contains the information about
+  // painter and context for lgf that currently working.
+  class canvas
+  {
+  public:
     canvas(canvas &) = delete;
     ~canvas() = default;
     void operator=(const canvas &) = delete;
 
-    static canvas &get(){
-        if (gcanvas != nullptr)
-            return *gcanvas;
-        gcanvas = new canvas();
+    static canvas &get()
+    {
+      if (gcanvas != nullptr)
         return *gcanvas;
+      gcanvas = new canvas();
+      return *gcanvas;
     }
-    static void restart(){
-        if(gcanvas) delete gcanvas;
-        get();
+    static void restart()
+    {
+      if (gcanvas)
+        delete gcanvas;
+      get();
     }
-    static void start(){
-        get();
-    }
-    static void end(){
-        if(gcanvas) {
-            delete gcanvas;
-        }
-    }
-    
-    lgf::painter & get_painter() {
-        return p;
-    }
-    lgf::LGFContext &get_context(){
-        return ctx;
-    }
-    void print(){
-        g.print();
+    static void start() { get(); }
+    static void end()
+    {
+      if (gcanvas)
+      {
+        delete gcanvas;
+      }
     }
 
-    void compile(){
-        pm.set_work_region(&g);
-        pm.add_normalization_pass();
-        pm.add_pass(createCalculusPass());
-        pm.run();
+    lgf::painter &get_painter() { return p; }
+    lgf::LGFContext &get_context() { return ctx; }
+    void print() { g.print(); }
+
+    void compile()
+    {
+      pm.set_work_region(&g);
+      pm.add_normalization_pass();
+      pm.add_pass(lgf::createCalculusPass());
+      pm.add_normalization_pass();
+      pm.run();
+
+      export2latex();
     }
 
-    lgf::passManager& get_pass_manager(){
-        return pm;
+    void export2latex()
+    {
+      pm.flush();
+      pm.add_pass(lgf::transform::createConvertToSIOPass());
+      pm.run();
+      lgf::SIO::export2latex ex(&g);
+      ex.run_on_op();
     }
 
-protected:
-    canvas(){
-        p.set_context(&ctx);
-        p.goto_graph(&g);
+    lgf::passManager &get_pass_manager() { return pm; }
+
+  protected:
+    canvas()
+    {
+      p.set_context(&ctx);
+      p.goto_graph(&g);
     }
     inline static canvas *gcanvas = nullptr;
     lgf::moduleOp g;
     lgf::LGFContext ctx;
     lgf::painter p;
     lgf::passManager pm;
-};
+  };
 
-} // namespace  lgf
+} // namespace lgi
 
 #endif

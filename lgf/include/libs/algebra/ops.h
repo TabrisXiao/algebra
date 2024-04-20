@@ -33,6 +33,10 @@ namespace lgf{
             op->infer_trivial_value_desc();
             return op;
         }
+        static productOp* build(){
+            auto op = new productOp();
+            return op;
+        }
         template<typename... Args>
         static productOp* build(Args... args){
             auto op = new productOp();
@@ -40,7 +44,7 @@ namespace lgf{
             op->infer_trivial_value_desc();
             return op;
         }
-        virtual resultCode rewrite(painter p, node* op) override;
+        virtual resultCode rewrite(painter& p, node* op) override;
     };
 
     class negativeOp : public node {

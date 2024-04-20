@@ -38,11 +38,17 @@ namespace lgf
         virtual std::string represent()
         {
             printer p;
-            p << _v_->get_sid() << " = " << get_sid() << " : " << inputs_sid();
+            p << value_rep() << " = " << get_sid() << ": " << inputs_sid();
             return p.dump();
         }
 
         valueDesc *get_value_desc() { return _v_->get_desc(); }
+
+        template <typename T>
+        T *get_value_desc_as()
+        {
+            return dynamic_cast<T *>(_v_->get_desc());
+        }
 
         value &get_value() { return *_v_; }
 
@@ -69,8 +75,7 @@ namespace lgf
         void erase_input(node *n)
         {
             auto it = std::find_if(inputs.begin(), inputs.end(), [n](edge &e)
-                                   {
-                                    return e.get_dual_node() == n; });
+                                   { return e.get_dual_node() == n; });
             if (it == inputs.end())
                 return;
             inputs.erase(it);
@@ -123,7 +128,7 @@ namespace lgf
         template <typename... ARGS>
         void register_input(ARGS... args)
         {
-            auto nodes = std::initializer_list<node*>{args...};
+            auto nodes = std::initializer_list<node *>{args...};
             for (auto n : nodes)
             {
                 add_input(n);
@@ -138,16 +143,18 @@ namespace lgf
             }
         }
 
-        void register_inputs_at(std::vector<node*> &inserts, size_t idx)
+        void register_inputs_at(std::vector<node *> &inserts, size_t idx)
         {
-            if(idx > inputs.size())
+            if (idx > inputs.size())
                 throw std::runtime_error("register_inputs_at index out of input range");
             std::vector<edge> new_inputs;
-            new_inputs.reserve(inputs.size()+inserts.size());
-            for(auto j = 0; j<idx; j++){
+            new_inputs.reserve(inputs.size() + inserts.size());
+            for (auto j = 0; j < idx; j++)
+            {
                 new_inputs.push_back(std::move(inputs[j]));
             }
-            for(auto j = 0; j<inserts.size(); j++){
+            for (auto j = 0; j < inserts.size(); j++)
+            {
                 if (inserts[j] == this)
                     return;
                 edge se(this);
@@ -156,35 +163,43 @@ namespace lgf
                 new_inputs.push_back(std::move(se));
                 inserts[j]->add_output_edge(std::move(de));
             }
-            for(auto j = idx; j<inputs.size(); j++){
+            for (auto j = idx; j < inputs.size(); j++)
+            {
                 new_inputs.push_back(std::move(inputs[j]));
             }
             inputs.swap(new_inputs);
         }
 
-        std::vector<node*> get_users(){
-            std::vector<node*> res;
+        std::vector<node *> get_users()
+        {
+            std::vector<node *> res;
             res.reserve(users.size());
-            for(auto &e : users){
-                if(!e.is_coupled()) continue;
+            for (auto &e : users)
+            {
+                if (!e.is_coupled())
+                    continue;
                 res.push_back(e.get_dual_node());
             }
             return res;
         }
 
-        std::vector<node*> get_input_nodes(){
-            std::vector<node*> res;
+        std::vector<node *> get_input_nodes()
+        {
+            std::vector<node *> res;
             res.reserve(inputs.size());
-            for(auto &e : inputs){
-                if(!e.is_coupled()) continue;
+            for (auto &e : inputs)
+            {
+                if (!e.is_coupled())
+                    continue;
                 res.push_back(e.get_dual_node());
             }
             return res;
         }
 
-        void drop_input(node* n){
+        void drop_input(node *n)
+        {
             auto it = std::find_if(inputs.begin(), inputs.end(), [n](edge &e)
-                                   { 
+                                   { if( !e.is_coupled() ) return false;
                                     return e.get_dual_node() == n; });
             if (it == inputs.end())
                 return;
@@ -192,10 +207,17 @@ namespace lgf
             inputs.erase(it);
         }
 
+        void replace_input_by(edge &h, node *n)
+        {
+            edge e(n);
+            e.couple(h);
+            n->add_output_edge(std::move(e));
+        }
+
         void replace_input_by(node *on, node *nn)
         {
             auto it = std::find_if(inputs.begin(), inputs.end(), [on](edge &e)
-                                   { 
+                                   { if( !e.is_coupled() ) return false;
                                     return e.get_dual_node() == on; });
             if (it == inputs.end())
                 return;
@@ -212,10 +234,10 @@ namespace lgf
                 return;
             for (auto &e : users)
             {
-                if(e.is_coupled())
+                if (e.is_coupled())
                 {
                     // if the new node is a user of this node, skip it.
-                    if(e.get_dual_node() == n)
+                    if (e.get_dual_node() == n)
                         continue;
                     e.update_node(n);
                     n->add_output_edge(std::move(e));
@@ -223,7 +245,7 @@ namespace lgf
             }
         }
 
-        node *input(size_t i=0)
+        node *input(size_t i = 0)
         {
             if (i >= inputs.size())
                 throw std::runtime_error("calling input index out of range");
@@ -249,9 +271,10 @@ namespace lgf
             return user(i);
         }
 
-        template<typename T>
-        T* get_user(size_t i){
-            return dynamic_cast<T*>(user(i));
+        template <typename T>
+        T *get_user(size_t i)
+        {
+            return dynamic_cast<T *>(user(i));
         }
 
         value &input_value(size_t i)
@@ -306,6 +329,20 @@ namespace lgf
 
         size_t get_input_size();
         size_t get_user_size() { return users.size(); }
+
+        sid_t represent_inputs()
+        {
+            sid_t p;
+            for (auto &e : inputs)
+            {
+                if (!e.is_coupled())
+                    continue;
+                p += e.get_dual_node()->get_value_sid() + ", ";
+            }
+            p.pop_back();
+            p.pop_back();
+            return p;
+        }
 
         std::string get_op_represent()
         {
@@ -416,7 +453,7 @@ namespace lgf
                 for (auto &h : v->get_user_handles())
                 {
                     // need to skip invalid edges
-                    if(!(h.is_coupled()))
+                    if (!(h.is_coupled()))
                     {
                         continue;
                     }
@@ -445,7 +482,7 @@ namespace lgf
 
         graph *get_graph() { return dynamic_cast<graph *>(this); }
 
-        virtual void print_graph(int & id_start );
+        virtual void print_graph(int &id_start);
 
         void assign_id(int n = 0);
         std::vector<node *>::iterator insert_after(node *op, node *new_op)

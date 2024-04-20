@@ -39,7 +39,7 @@ namespace lgf
             p << value_rep() << " = Declare " << value_desc_rep();
             return p.dump();
         }
-        virtual resultCode rewrite(painter p, node *op)
+        virtual resultCode rewrite(painter& p, node *op)
         {
             if (op->get_user_size() == 0)
             {

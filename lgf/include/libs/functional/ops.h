@@ -33,7 +33,7 @@ namespace lgf
         {
             return narg;
         }
-        edgeBundle& get_args()
+        edgeBundle &get_args()
         {
             return get_input_handles();
         }
@@ -53,6 +53,10 @@ namespace lgf
             op->infer_trivial_value_desc();
             return op;
         }
+        virtual sid_t represent() override
+        {
+            return get_value_sid() + " = sin( " + input()->get_value_sid() + " )";
+        }
     };
 
     class funcCosOp : public mappingOp
@@ -65,6 +69,10 @@ namespace lgf
             op->add_args(x);
             op->infer_trivial_value_desc();
             return op;
+        }
+        virtual sid_t represent() override
+        {
+            return get_value_sid() + " = cos( " + input()->get_value_sid() + " )";
         }
     };
 
@@ -83,6 +91,10 @@ namespace lgf
         void set_power(double n) { p = n; }
         double power() { return p; }
         double p = 1;
+        virtual sid_t represent() override
+        {
+            return get_value_sid() + " = " + input()->get_value_sid() + "power=" + std::to_string(p);
+        }
     };
 
     class funcExpOp : public mappingOp
@@ -100,12 +112,16 @@ namespace lgf
         {
             return input(0);
         }
+        virtual sid_t represent() override
+        {
+            return get_value_sid() + " = exp( " + input()->get_value_sid() + " )";
+        }
     };
 
     class partialDifferentiateOp : public mappingOp
     {
     public:
-        partialDifferentiateOp() : mappingOp("PartialDifferentiate") {}
+        partialDifferentiateOp() : mappingOp("PartialDifferential") {}
         static partialDifferentiateOp *build(node *func, node *var, int order = 1)
         {
             auto op = new partialDifferentiateOp();
@@ -118,39 +134,32 @@ namespace lgf
         node *var() { return input(1); }
         void set_order(int r) { order = r; }
         int get_order() { return order; }
-        private:
+        virtual sid_t represent() override
+        {
+            auto res = get_value_sid() + " = Partial Differential";
+            res = res + ": " + input()->get_value_sid() + " w.r.t. " + input(1)->get_value_sid() + ", order = " + std::to_string(order);
+            return res;
+        }
+
+    private:
         int order = 1;
     };
 
     class differentiateOp : public mappingOp
     {
     public:
-        differentiateOp() : mappingOp("differentiate") {}
-        static differentiateOp *build(node *input, node *target, int r = 1)
+        differentiateOp() : mappingOp("Differential") {}
+        static differentiateOp *build(node *input)
         {
             auto op = new differentiateOp();
-            op->add_args(input, target);
-            op->set_order(r);
+            op->add_args(input);
             op->set_value_desc(input->get_value_desc());
-            op->verify();
             return op;
         }
-        void set_order(int r) { order = r; }
-        int get_order() { return order; }
-        node *func() { return input(0); }
-        node *target() { return input(1); }
         virtual sid_t represent() override
         {
-            auto res = get_value_sid() + " = " + get_sid();
-            res = res + " : " + input()->get_value_sid() + " w.r.t. " + input(1)->get_value_sid() + ", order = " + std::to_string(order);
+            auto res = get_value_sid() + " = " + get_sid() + ": " + input()->get_value_sid();
             return res;
-        }
-        void verify()
-        {
-            if (! dynamic_cast<lgf::declOp*>(arg(1)))
-            {
-                throw std::runtime_error("differentiateOp: the second argument can only be an independent variable");
-            }
         }
 
     private:
@@ -166,7 +175,7 @@ namespace lgf
         {
             auto op = new unionOp();
             op->add_args(args...);
-            op->createnode(op->inputnode()->getType());
+            op->set_value_desc(op->input()->get_value_desc());
             return op;
         }
     };
@@ -180,7 +189,7 @@ namespace lgf
         {
             auto op = new intersectOp();
             op->add_args(args...);
-            op->createnode(op->inputnode()->getType());
+            op->set_value_desc(op->input()->get_value_desc());
             return op;
         }
     };

@@ -87,7 +87,6 @@ bool graph::clean()
     {
         node* op =(*iter);
         if(op->is_deprecate()){
-            
             iter = nodes.erase(iter);
             check = 1;
             delete op;
