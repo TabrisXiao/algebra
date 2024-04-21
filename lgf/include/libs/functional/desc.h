@@ -18,36 +18,20 @@ namespace lgf
   class realInterval : public setDesc
   {
   public:
-    realInterval(LGFContext *ctx, double left, double right, bool o1, bool o2)
-        : lb(left), rb(right), lop(o1), rop(o2), setDesc(ctx)
+    realInterval(LGFContext *ctx, node *left, node *right, bool ol = 1, bool or = 1) : setDesc(ctx), lb(left), rb(right)
     {
       set_sid("real-interval");
     }
+    bool bLO = false, bRO = false;
+    node *lb = nullptr, *rb = nullptr;
     virtual sid_t represent() override
     {
       auto res = get_sid() + " ";
-      std::string lbm = lop ? "(" : "[";
-      std::string rbm = rop ? ")" : "]";
-      res += lbm + lgf::utils::to_string(lb) + ", " + lgf::utils::to_string(rb) +
-             rbm;
+      std::string lbm = bLO ? "(" : "[";
+      std::string rbm = bRO ? ")" : "]";
+      res += lbm + lb->get_value().get_sid() + ", " + rb->get_value().get_sid() + rbm;
       return res;
     }
-    bool is_belong(double x) const
-    {
-      if (x > rb)
-        return false;
-      if (x < lb)
-        return false;
-      if (x == rb && rop)
-        return false;
-      if (x == lb && lop)
-        return false;
-      return true;
-    }
-
-  private:
-    double lb, rb;
-    bool lop, rop;
   };
 
   class emptySet : public simpleValue
@@ -65,21 +49,21 @@ namespace lgf
   class funcDesc : public valueDesc
   {
   public:
-    funcDesc(LGFContext *ctx, setDesc *d, setDesc *v) : valueDesc("setMeasure") {}
-    setDesc *domain = nullptr, *region = nullptr;
+    funcDesc(LGFContext *ctx, node *d = nullptr, node *v = nullptr) : valueDesc("setMeasure") {}
+    node *domain = nullptr, *region = nullptr;
   };
 
   class measureFuncDecs : public funcDesc
   {
   public:
-    measureFuncDecs(LGFContext *ctx, setDesc *d) : funcDesc(ctx, d, ctx->get_desc<realInterval>(0, 1, 0, 0)){};
+    measureFuncDecs(LGFContext *ctx, node *d) : funcDesc(ctx, d){};
   };
 
-  class probSpace : public valueDesc
-  {
-  public:
-    probSpace(LGFContext *ctx, setDesc *s, sigmaAlgebra *a) : valueDesc("probSpace") {}
-  };
+  // class probSpace : public valueDesc
+  // {
+  // public:
+  //   probSpace(LGFContext *ctx, setDesc *s, sigmaAlgebra *a, mesureFuncDesc *m) : valueDesc("probSpace") {}
+  // };
 } // namespace lgf
 
 #endif

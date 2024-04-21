@@ -33,10 +33,22 @@ namespace lgf
             op->set_value_desc(desc);
             return op;
         }
+        template <typename... ARGS>
+        static declOp *build(LGFContext *ctx, valueDesc *desc, ARGS... args)
+        {
+            auto op = new declOp();
+            op->set_value_desc(desc);
+            op->register_input(args...);
+            return op;
+        }
         virtual std::string represent()
         {
             printer p;
             p << value_rep() << " = Declare " << value_desc_rep();
+            if (get_input_size() > 0)
+            {
+                p << " from: " << represent_inputs();
+            }
             return p.dump();
         }
         virtual resultCode rewrite(painter &p, node *op)

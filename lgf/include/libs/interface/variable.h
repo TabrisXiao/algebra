@@ -68,22 +68,22 @@ namespace lgi
 
     variable operator+(const double &num)
     {
-      return data_rhs_binary_op<lgf::sumOp, lgf::doubleData>(*this, num);
+      return data_rhs_binary_op<lgf::sumOp, lgf::float32Data>(*this, num);
     }
 
     variable operator+(const int &num)
     {
-      return data_rhs_binary_op<lgf::sumOp, lgf::intData>(*this, num);
+      return data_rhs_binary_op<lgf::sumOp, lgf::int32Data>(*this, num);
     }
 
     friend variable operator+(const double &num, const variable &var)
     {
-      return var.data_lhs_binary_op<lgf::sumOp, lgf::doubleData>(num, var);
+      return var.data_lhs_binary_op<lgf::sumOp, lgf::float32Data>(num, var);
     }
 
     friend variable operator+(const int &num, const variable &var)
     {
-      return var.data_lhs_binary_op<lgf::sumOp, lgf::intData>(num, var);
+      return var.data_lhs_binary_op<lgf::sumOp, lgf::int32Data>(num, var);
     }
 
     variable operator+(const variable &other)
@@ -102,22 +102,22 @@ namespace lgi
 
     variable operator*(const double &num)
     {
-      return data_rhs_binary_op<lgf::productOp, lgf::doubleData>(*this, num);
+      return data_rhs_binary_op<lgf::productOp, lgf::float32Data>(*this, num);
     }
 
     variable operator*(const int &num)
     {
-      return data_rhs_binary_op<lgf::productOp, lgf::intData>(*this, num);
+      return data_rhs_binary_op<lgf::productOp, lgf::int32Data>(*this, num);
     }
 
     friend variable operator*(const double &num, const variable &var)
     {
-      return var.data_lhs_binary_op<lgf::productOp, lgf::doubleData>(num, var);
+      return var.data_lhs_binary_op<lgf::productOp, lgf::float32Data>(num, var);
     }
 
     friend variable operator*(const int &num, const variable &var)
     {
-      return var.data_lhs_binary_op<lgf::productOp, lgf::intData>(num, var);
+      return var.data_lhs_binary_op<lgf::productOp, lgf::int32Data>(num, var);
     }
 
     variable operator-() const
@@ -175,22 +175,22 @@ namespace lgi
 
     friend variable operator/(const double &num, const variable &var)
     {
-      return var.binary_data_lhs_divide<double, lgf::doubleData>(num, var);
+      return var.binary_data_lhs_divide<double, lgf::float32Data>(num, var);
     }
 
     friend variable operator/(const int &num, const variable &var)
     {
-      return var.binary_data_lhs_divide<int, lgf::doubleData>(num, var);
+      return var.binary_data_lhs_divide<int, lgf::float32Data>(num, var);
     }
 
     variable operator/(const int &num)
     {
-      return binary_data_rhs_divide<int, lgf::intData>(*this, num);
+      return binary_data_rhs_divide<int, lgf::int32Data>(*this, num);
     }
 
     variable operator/(const double &num)
     {
-      return binary_data_rhs_divide<double, lgf::doubleData>(*this, num);
+      return binary_data_rhs_divide<double, lgf::float32Data>(*this, num);
     }
   };
 

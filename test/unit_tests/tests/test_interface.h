@@ -22,7 +22,11 @@ namespace test_body
       auto a = function::d(y);
       auto dw = function::d(w);
       dw.latex();
-      canvas::get().get_pass_manager().set_log_level(2);
+      function::interval i(0, 1);
+      i.check();
+      canvas::get()
+          .get_pass_manager()
+          .set_log_level(1);
       canvas::get().compile();
       return 0;
     }

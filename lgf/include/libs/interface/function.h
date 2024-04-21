@@ -62,12 +62,21 @@ namespace lgi::function
     class interval : public set
     {
     public:
-        interval(double lb, double rb, bool lop, bool rop) : set(false)
+        interval(double lb, double rb, bool lop = 0, bool rop = 0) : set(false)
         {
             auto &ctx = canvas::get().get_context();
-            v = canvas::get().get_painter().paint<lgf::declOp>(ctx.get_desc<lgf::realInterval>(lb, rb, lop, rop));
+            auto &p = canvas::get().get_painter();
+            auto real = ctx.get_desc<lgf::realNumber>();
+            auto lbv = p.paint<lgf::cstDeclOp>(real, ctx.get_data_attr<lgf::realNumberAttr>(lb));
+            auto rbv = p.paint<lgf::cstDeclOp>(real, ctx.get_data_attr<lgf::realNumberAttr>(rb));
+            v = p.paint<lgf::declOp>(ctx.get_desc<lgf::realInterval>(lbv, rbv, lop, rop), lbv, rbv);
         }
-        interval(lgf::node *val) : set(val) {}
+        interval(variable &x, variable &y)
+        {
+            auto &ctx = canvas::get().get_context();
+            auto &p = canvas::get().get_painter();
+            v = p.paint<lgf::declOp>(ctx.get_desc<lgf::realInterval>(x.node(), y.node(), 0, 0), x.node(), y.node());
+        }
     };
 
 } // namespace  lgi::function

@@ -29,7 +29,7 @@ namespace lgf
         preservedDataAttr(sid_t id, T d) : data(d), dataAttr(id){};
         virtual sid_t represent()
         {
-            return get_sid() + ", val = " + represent_data();
+            return get_sid() + ", " + represent_data();
         }
         virtual sid_t represent_data() = 0;
         void set_data(T d)

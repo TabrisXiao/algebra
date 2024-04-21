@@ -3,39 +3,40 @@
 #define LGF_BUILTIN_TYPES_H_
 #include "lgf/value.h"
 #include "lgf/attribute.h"
+#include "lgf/utils.h"
 namespace lgf
 {
   class LFFContext;
-  class intData : public preservedDataAttr<int>
+  class int32Data : public preservedDataAttr<int>
   {
   public:
-    intData(int d = 0) : preservedDataAttr<int>("int", d) {}
+    int32Data(int d = 0) : preservedDataAttr<int>("i32", d) {}
     virtual sid_t represent_data() override
     {
-      return std::to_string(get_data());
+      return utils::to_string(get_data());
     }
   };
 
-  class doubleData : public preservedDataAttr<double>
+  class float32Data : public preservedDataAttr<double>
   {
   public:
-    doubleData(double d = 0) : preservedDataAttr<double>("double", d) {}
+    float32Data(double d = 0) : preservedDataAttr<double>("f32", d) {}
     virtual sid_t represent_data() override
     {
-      return std::to_string(get_data());
+      return utils::to_string(get_data());
     }
   };
 
-  class intValue : public simpleValue
+  class int32Value : public simpleValue
   {
   public:
-    intValue(LGFContext *ctx) : simpleValue("int") {}
+    int32Value(LGFContext *ctx) : simpleValue("int32") {}
   };
 
-  class doubleValue : public simpleValue
+  class float32Value : public simpleValue
   {
   public:
-    doubleValue(LGFContext *ctx) : simpleValue("double") {}
+    float32Value(LGFContext *ctx) : simpleValue("float32") {}
   };
 
 } // namespace lgf

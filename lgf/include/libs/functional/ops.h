@@ -72,7 +72,7 @@ namespace lgf
         }
         virtual sid_t represent() override
         {
-            return get_value_sid() + " = cos( " + input()->get_value_sid() + " )";
+            return value_rep() + " = cos( " + input()->get_value_sid() + " )";
         }
     };
 
@@ -93,7 +93,7 @@ namespace lgf
         double p = 1;
         virtual sid_t represent() override
         {
-            return get_value_sid() + " = " + input()->get_value_sid() + "power=" + std::to_string(p);
+            return value_rep() + " = " + input()->get_value_sid() + "power=" + std::to_string(p);
         }
     };
 
@@ -114,7 +114,7 @@ namespace lgf
         }
         virtual sid_t represent() override
         {
-            return get_value_sid() + " = exp( " + input()->get_value_sid() + " )";
+            return value_rep() + " = exp( " + input()->get_value_sid() + " )";
         }
     };
 
@@ -136,7 +136,7 @@ namespace lgf
         int get_order() { return order; }
         virtual sid_t represent() override
         {
-            auto res = get_value_sid() + " = Partial Differential";
+            auto res = value_rep() + " = Partial Differential";
             res = res + ": " + input()->get_value_sid() + " w.r.t. " + input(1)->get_value_sid() + ", order = " + std::to_string(order);
             return res;
         }
@@ -158,7 +158,7 @@ namespace lgf
         }
         virtual sid_t represent() override
         {
-            auto res = get_value_sid() + " = " + get_sid() + ": " + input()->get_value_sid();
+            auto res = value_rep() + " = " + get_sid() + ": " + input()->get_value_sid();
             return res;
         }
 
