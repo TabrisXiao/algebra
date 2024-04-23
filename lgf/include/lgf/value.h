@@ -14,6 +14,11 @@ namespace lgf
         valueDesc() = default;
         valueDesc(sid_t id) : graphObject(id) {}
         virtual sid_t represent() { return ""; }
+        template <typename T>
+        T *dyn_cast()
+        {
+            return dynamic_cast<T *>(this);
+        }
     };
 
     class value : public graphObject

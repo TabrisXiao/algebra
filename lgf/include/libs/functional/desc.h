@@ -46,24 +46,6 @@ namespace lgf
     sigmaAlgebra(LGFContext *ctx) : simpleValue("sigma-algebra") {}
   };
 
-  class funcDesc : public valueDesc
-  {
-  public:
-    funcDesc(LGFContext *ctx, node *d = nullptr, node *v = nullptr) : valueDesc("setMeasure") {}
-    node *domain = nullptr, *region = nullptr;
-  };
-
-  class measureFuncDecs : public funcDesc
-  {
-  public:
-    measureFuncDecs(LGFContext *ctx, node *d) : funcDesc(ctx, d){};
-  };
-
-  // class probSpace : public valueDesc
-  // {
-  // public:
-  //   probSpace(LGFContext *ctx, setDesc *s, sigmaAlgebra *a, mesureFuncDesc *m) : valueDesc("probSpace") {}
-  // };
 } // namespace lgf
 
 #endif
