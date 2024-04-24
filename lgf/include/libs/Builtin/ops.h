@@ -169,6 +169,26 @@ namespace lgf
         size_t index;
     };
 
+    class updateListElemOp : public node
+    {
+    public:
+        updateListElemOp() = default;
+        static updateListElemOp *build(LGFContext *ctx, node *linput, size_t idx, node *val)
+        {
+            auto op = new updateListElemOp();
+            op->register_input(linput, val);
+            op->index = idx;
+            op->set_value_desc(val->get_value_desc());
+            return op;
+        }
+        virtual std::string represent()
+        {
+            std::string res = value_rep() + " = " + input(0)->value_rep() + " [" + std::to_string(index) + "] = " + input(1)->value_rep();
+            return res;
+        }
+        size_t index;
+    };
+
     class funcCallOp : public node
     {
     public:

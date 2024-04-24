@@ -18,20 +18,32 @@ namespace lgf
   class realInterval : public setDesc
   {
   public:
-    realInterval(LGFContext *ctx, node *left, node *right, bool ol = 1, bool or = 1) : setDesc(ctx), lb(left), rb(right)
+    realInterval(LGFContext *ctx, double l, double r, bool ol = 1, bool or = 1) : setDesc(ctx), dLeftBound(l), dRightBound(r), bLO(ol), bRO(or), bInit(false)
     {
       set_sid("real-interval");
     }
-    bool bLO = false, bRO = false;
-    node *lb = nullptr, *rb = nullptr;
+    realInterval(LGFContext *ctx) : setDesc(ctx)
+    {
+      set_sid("real-interval");
+    }
+
     virtual sid_t represent() override
     {
-      auto res = get_sid() + " ";
-      std::string lbm = bLO ? "(" : "[";
-      std::string rbm = bRO ? ")" : "]";
-      res += lbm + lb->get_value().get_sid() + ", " + rb->get_value().get_sid() + rbm;
+      auto res = get_sid();
+      if (!bInit)
+      {
+        res += " ";
+        std::string lbm = bLO ? "(" : "[";
+        std::string rbm = bRO ? ")" : "]";
+        res += lbm + utils::to_string(dLeftBound) + ", " + utils::to_string(dRightBound) + rbm;
+      }
       return res;
     }
+
+  private:
+    const bool bInit = true;
+    bool bLO = false, bRO = false;
+    double dLeftBound, dRightBound;
   };
 
   class emptySet : public simpleValue

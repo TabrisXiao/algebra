@@ -52,6 +52,7 @@ namespace lgi
       pm.add_normalization_pass();
       pm.add_pass(lgf::createCalculusPass());
       pm.add_normalization_pass();
+      pm.name = "compile";
       pm.run();
 
       export2latex();
@@ -60,6 +61,7 @@ namespace lgi
     void export2latex()
     {
       pm.flush();
+      pm.name = "export";
       pm.add_pass(lgf::transform::createConvertToSIOPass());
       pm.run();
       lgf::SIO::export2latex ex(&g);

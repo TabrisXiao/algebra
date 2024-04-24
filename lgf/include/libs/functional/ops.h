@@ -166,6 +166,40 @@ namespace lgf
         int order = 1;
     };
 
+    class RiemannIntegralOp : public node
+    {
+    public:
+        RiemannIntegralOp() : node("Integral") {}
+        static RiemannIntegralOp *build(LGFContext *ctx, node *integrand_, node *target_, node *low, node *high)
+        {
+            auto op = new RiemannIntegralOp();
+            op->register_input(integrand_, target_, low, high);
+            op->set_value_desc(integrand_->get_value_desc());
+            return op;
+        }
+        node *get_integrand()
+        {
+            return input(0);
+        }
+        node *get_target()
+        {
+            return input(1);
+        }
+        node *get_lower_bound()
+        {
+            return input(2);
+        }
+        node *get_upper_bound()
+        {
+            return input(3);
+        }
+        virtual sid_t represent() override
+        {
+            auto res = get_value_sid() + " = Riemann Integral " + get_integrand()->get_value_sid() + " w.r.t. " + get_target()->get_value_sid() + " from " + get_lower_bound()->get_value_sid() + " to " + get_upper_bound()->get_value_sid();
+            return res;
+        }
+    };
+
     class unionOp : public mappingOp
     {
     public:

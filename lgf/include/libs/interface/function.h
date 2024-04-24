@@ -45,6 +45,19 @@ namespace lgi::function
         return variable(res);
     }
 
+    variable integral(const variable &f, const variable target, const variable &low, const variable &high)
+    {
+        auto &ctx = canvas::get().get_context();
+        auto res = canvas::get().get_painter().paint<lgf::RiemannIntegralOp>(f.node(), target.node(), low.node(), high.node());
+        return variable(res);
+    }
+
+    variable integral(const variable &f, const variable target, const double low, const double high)
+    {
+        variable l = low, h = high;
+        return integral(f, target, l, h);
+    };
+
     class set : public variableBase
     {
     public:
@@ -66,16 +79,7 @@ namespace lgi::function
         {
             auto &ctx = canvas::get().get_context();
             auto &p = canvas::get().get_painter();
-            auto real = ctx.get_desc<lgf::realNumber>();
-            auto lbv = p.paint<lgf::cstDeclOp>(real, ctx.get_data_attr<lgf::realNumberAttr>(lb));
-            auto rbv = p.paint<lgf::cstDeclOp>(real, ctx.get_data_attr<lgf::realNumberAttr>(rb));
-            v = p.paint<lgf::declOp>(ctx.get_desc<lgf::realInterval>(lbv, rbv, lop, rop), lbv, rbv);
-        }
-        interval(variable &x, variable &y)
-        {
-            auto &ctx = canvas::get().get_context();
-            auto &p = canvas::get().get_painter();
-            v = p.paint<lgf::declOp>(ctx.get_desc<lgf::realInterval>(x.node(), y.node(), 0, 0), x.node(), y.node());
+            v = p.paint<lgf::declOp>(ctx.get_desc<lgf::realInterval>(lb, rb, lop, rop));
         }
     };
 

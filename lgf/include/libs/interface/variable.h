@@ -44,6 +44,45 @@ namespace lgi
 
     variable(lgf::node *val) : variableBase(val) {}
 
+    variable operator=(const double rhs)
+    {
+      auto &ctx = canvas::get().get_context();
+      auto real = ctx.get_desc<lgf::realNumber>();
+      auto data = ctx.get_data_attr<lgf::float32Data>(rhs);
+      auto cst = canvas::get().get_painter().paint<lgf::cstDeclOp>(
+          real, data);
+      return variable(cst);
+    }
+    variable operator=(const int rhs)
+    {
+      auto &ctx = canvas::get().get_context();
+      auto real = ctx.get_desc<lgf::realNumber>();
+      auto data = ctx.get_data_attr<lgf::float32Data>(rhs);
+      auto cst = canvas::get().get_painter().paint<lgf::cstDeclOp>(
+          real, data);
+      return variable(cst);
+    }
+
+    variable(const double &rhs)
+    {
+      auto &ctx = canvas::get().get_context();
+      auto real = ctx.get_desc<lgf::realNumber>();
+      auto data = ctx.get_data_attr<lgf::float32Data>(rhs);
+      auto cst = canvas::get().get_painter().paint<lgf::cstDeclOp>(
+          real, data);
+      v = cst;
+    }
+
+    variable(const int &rhs)
+    {
+      auto &ctx = canvas::get().get_context();
+      auto real = ctx.get_desc<lgf::realNumber>();
+      auto data = ctx.get_data_attr<lgf::float32Data>(rhs);
+      auto cst = canvas::get().get_painter().paint<lgf::cstDeclOp>(
+          real, data);
+      v = cst;
+    }
+
     template <typename opTy, typename daTy>
     variable data_rhs_binary_op(const variable &var, const daTy &data)
     {
