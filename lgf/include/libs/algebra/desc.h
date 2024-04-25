@@ -45,6 +45,7 @@ namespace lgf
 
   public:
     realNumberAttr(double d) : dataAttr("realNumbere"), data(d) {}
+    // realNumberAttr(realNumberAttr &&attr) : dataAttr("realNumber"), data(attr.get_data()), type(attr.get_type()) {}
     void set_type(numberType t) { type = t; }
     virtual sid_t represent() override
     {
@@ -56,6 +57,8 @@ namespace lgf
         return "-inf";
       return "finite";
     }
+    double get_data() { return data; }
+    numberType get_type() { return type; }
     static realNumberAttr get_pinf()
     {
       realNumberAttr res(0);

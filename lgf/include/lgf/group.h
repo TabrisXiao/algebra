@@ -65,7 +65,7 @@ namespace lgf
             add_rewriter<groupRewriter<normalizer>>();
             resultCode code = apply_rewriter_greedy(p, get_graph());
             remove_unused_ops(get_graph());
-            remove_identical_ops(p, get_graph());
+            // remove_identical_ops(p, get_graph());
             get_graph()->clean();
             return code;
         }

@@ -5,7 +5,7 @@
 #include "lgf/painter.h"
 #include "libs/Builtin/Builtin.h"
 #include "libs/functional/passes.h"
-#include "libs/SIO/exporter.h"
+#include "libs/sio/exporter.h"
 #include "libs/transform/convertToSIO.h"
 
 namespace lgi
@@ -64,7 +64,7 @@ namespace lgi
       pm.name = "export";
       pm.add_pass(lgf::transform::createConvertToSIOPass());
       pm.run();
-      lgf::SIO::export2latex ex(&g);
+      lgf::sio::export2latex ex(&g);
       ex.run_on_op();
     }
 

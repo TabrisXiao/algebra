@@ -225,22 +225,23 @@ namespace lgf
             nn->link_to(*it);
         }
 
-        // this function regardless if the case that if there was any
-        // mutual links between this node and the new node.
-        // so it may cause the cycle dependence.
-        void replace_by(node *n)
+        // this function assume that this op takes no inputs from the
+        // new op. But allow this op is a input of the
+        // new op.
+        void replace_by(node *newop)
         {
-            if (this == n)
+            if (this == newop)
                 return;
             for (auto &e : users)
             {
+
                 if (e.is_coupled())
                 {
                     // if the new node is a user of this node, skip it.
-                    if (e.get_dual_node() == n)
+                    if (e.get_dual_node() == newop)
                         continue;
-                    e.update_node(n);
-                    n->add_output_edge(std::move(e));
+                    e.update_node(newop);
+                    newop->add_output_edge(std::move(e));
                 }
             }
         }

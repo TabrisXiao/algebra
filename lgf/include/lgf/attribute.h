@@ -9,10 +9,16 @@ namespace lgf
     public:
         dataAttr() = default;
         dataAttr(sid_t id) : sid(id){};
+        virtual ~dataAttr() = default;
         virtual sid_t represent() = 0;
         sid_t get_sid()
         {
             return sid;
+        }
+        template <typename T>
+        T *dyn_cast()
+        {
+            return dynamic_cast<T *>(this);
         }
 
     private:

@@ -5,7 +5,7 @@
 #include "libs/algebra/algebra.h"
 #include "lgf/group.h"
 
-namespace lgf::SIO
+namespace lgf::sio
 {
     class exportOp : public node
     {
@@ -42,6 +42,38 @@ namespace lgf::SIO
     {
     public:
         representOp(std::string name) : node(name) {}
+    };
+
+    class numberOp : public representOp
+    {
+    public:
+        numberOp() : representOp("sio::number") {}
+        static numberOp *build(LGFContext *ctx, valueDesc *val, std::string number)
+        {
+            numberOp *op = new numberOp();
+            op->set_value_desc(val);
+            op->set_number_str(number);
+            return op;
+        }
+        void set_number_str(std::string number)
+        {
+            numberStr = number;
+            while (numberStr.back() == '0' || numberStr.back() == '.')
+            {
+                numberStr.pop_back();
+            }
+        }
+        std::string get_number_str()
+        {
+            return numberStr;
+        }
+        virtual std::string represent() override
+        {
+            printer p;
+            p << value_rep() << " = number form: " << numberStr;
+            return p.dump();
+        }
+        std::string numberStr;
     };
 
     class symbolOp : public representOp
@@ -122,6 +154,18 @@ namespace lgf::SIO
         static negativeOp *build(LGFContext *ctx, node *input)
         {
             negativeOp *op = new negativeOp();
+            op->register_input(input);
+            return op;
+        }
+    };
+
+    class inverseOp : public representOp
+    {
+    public:
+        inverseOp() : representOp("sio::inverse") {}
+        static inverseOp *build(LGFContext *ctx, node *input)
+        {
+            inverseOp *op = new inverseOp();
             op->register_input(input);
             return op;
         }

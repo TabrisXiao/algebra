@@ -152,7 +152,15 @@ namespace lgf
       auto iter = std::find(point.nodes->begin(), point.nodes->end(), op1);
       bool keepOrigOp = false;
       if (op1->get_user_size())
+      {
+        for (auto &h : op1->get_user_handles())
+        {
+          std::cout << "--remind user: " << h.get_dual_edge() << std::endl;
+          keepOrigOp = 1;
+        }
         keepOrigOp = 1;
+      }
+
       if (iter != point.nodes->end() && !keepOrigOp)
       {
         if (op2->get_parent_graph() != point.g)

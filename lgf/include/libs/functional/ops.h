@@ -5,6 +5,7 @@
 #include "lgf/node.h"
 #include "libs/Builtin/ops.h"
 #include "desc.h"
+#include "lgf/utils.h"
 
 namespace lgf
 {
@@ -14,59 +15,22 @@ namespace lgf
     public:
         mappingOp() = default;
         mappingOp(std::string name) : node(name) {}
-
-        template <typename... ARGS>
-        void add_args(ARGS... args)
-        {
-            auto nds = std::initializer_list<node *>{args...};
-            for (auto nd : nds)
-            {
-                register_input(nd);
-                narg++;
-            }
-        }
-        node *arg(int n = 0)
-        {
-            return input(n);
-        }
-        size_t get_arg_size()
-        {
-            return narg;
-        }
-        edgeBundle &get_args()
-        {
-            return get_input_handles();
-        }
-
-    private:
-        size_t narg = 0;
     };
 
-    class funcSineOp : public mappingOp
+    class elemFuncOp : public mappingOp
     {
     public:
-        funcSineOp() : mappingOp("sine") {}
-        static funcSineOp *build(LGFContext *ctx, node *x)
-        {
-            auto op = new funcSineOp();
-            op->add_args(x);
-            op->infer_trivial_value_desc();
-            return op;
-        }
-        virtual sid_t represent() override
-        {
-            return get_value_sid() + " = sin( " + input()->get_value_sid() + " )";
-        }
+        elemFuncOp(sid_t n) : mappingOp(n){};
     };
 
-    class funcCosOp : public mappingOp
+    class funcCosOp : public elemFuncOp
     {
     public:
-        funcCosOp() : mappingOp("cos") {}
+        funcCosOp() : elemFuncOp("cos") {}
         static funcCosOp *build(LGFContext *ctx, node *x)
         {
             auto op = new funcCosOp();
-            op->add_args(x);
+            op->register_input(x);
             op->infer_trivial_value_desc();
             return op;
         }
@@ -76,14 +40,31 @@ namespace lgf
         }
     };
 
-    class funcPowerOp : public mappingOp
+    class funcSineOp : public elemFuncOp
     {
     public:
-        funcPowerOp() : mappingOp("power") {}
+        funcSineOp() : elemFuncOp("sine") {}
+        static funcSineOp *build(LGFContext *ctx, node *x)
+        {
+            auto op = new funcSineOp();
+            op->register_input(x);
+            op->infer_trivial_value_desc();
+            return op;
+        }
+        virtual sid_t represent() override
+        {
+            return value_rep() + " = sin( " + input()->get_value_sid() + " )";
+        }
+    };
+
+    class funcPowerOp : public elemFuncOp
+    {
+    public:
+        funcPowerOp() : elemFuncOp("power") {}
         static funcPowerOp *build(LGFContext *ctx, node *x, double n)
         {
             auto op = new funcPowerOp();
-            op->add_args(x);
+            op->register_input(x);
             op->set_power(n);
             op->infer_trivial_value_desc();
             return op;
@@ -93,18 +74,18 @@ namespace lgf
         double p = 1;
         virtual sid_t represent() override
         {
-            return value_rep() + " = " + input()->get_value_sid() + "power=" + std::to_string(p);
+            return value_rep() + " = " + input()->get_value_sid() + " with power= " + utils::to_string(p);
         }
     };
 
-    class funcExpOp : public mappingOp
+    class funcExpOp : public elemFuncOp
     {
     public:
-        funcExpOp() : mappingOp("functional::exp") {}
+        funcExpOp() : elemFuncOp("functional::exp") {}
         static funcExpOp *build(LGFContext *ctx, node *power)
         {
             auto op = new funcExpOp();
-            op->add_args(power);
+            op->register_input(power);
             op->infer_trivial_value_desc();
             return op;
         }
@@ -118,14 +99,14 @@ namespace lgf
         }
     };
 
-    class partialDifferentiateOp : public mappingOp
+    class partialDifferentiateOp : public elemFuncOp
     {
     public:
-        partialDifferentiateOp() : mappingOp("PartialDifferential") {}
+        partialDifferentiateOp() : elemFuncOp("PartialDifferential") {}
         static partialDifferentiateOp *build(LGFContext *ctx, node *func, node *var, int order = 1)
         {
             auto op = new partialDifferentiateOp();
-            op->add_args(func, var);
+            op->register_input(func, var);
             op->set_order(order);
             op->set_value_desc(func->get_value_desc());
             return op;
@@ -145,14 +126,14 @@ namespace lgf
         int order = 1;
     };
 
-    class differentiateOp : public mappingOp
+    class differentiateOp : public elemFuncOp
     {
     public:
-        differentiateOp() : mappingOp("Differential") {}
+        differentiateOp() : elemFuncOp("Differential") {}
         static differentiateOp *build(LGFContext *ctx, node *input)
         {
             auto op = new differentiateOp();
-            op->add_args(input);
+            op->register_input(input);
             op->set_value_desc(input->get_value_desc());
             return op;
         }

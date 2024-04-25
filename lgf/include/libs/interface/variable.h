@@ -4,7 +4,7 @@
 #include "canvas.h"
 #include "libs/Builtin/Builtin.h"
 #include "libs/algebra/algebra.h"
-#include "libs/SIO/ops.h"
+#include "libs/sio/ops.h"
 
 namespace lgi
 {
@@ -15,7 +15,7 @@ namespace lgi
     void check() { canvas::get().get_painter().paint<lgf::returnOp>(v); }
     void latex()
     {
-      canvas::get().get_painter().paint<lgf::SIO::latexExportOp>(v);
+      canvas::get().get_painter().paint<lgf::sio::latexExportOp>(v);
     }
     variableBase(const variableBase &other) { v = other.v; }
     variableBase(lgf::node *val) { v = val; }

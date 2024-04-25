@@ -15,11 +15,12 @@ namespace test_body
     test_interface() { test_id = "interface test"; };
     bool run()
     {
-      variable x, z = 3, s = 1;
-      auto y = function::cos(x) + z;
-      auto i = function::integral(y, x, 0, 1);
-      y.latex();
-      i.check();
+      variable x, sig;
+      auto y = function::exp(x / sig);
+      auto z = function::power(x, 3.5);
+      auto dy = function::d(y);
+      auto dz = function::d(z);
+      dz.latex();
       canvas::get()
           .get_pass_manager()
           .set_log_level(1);

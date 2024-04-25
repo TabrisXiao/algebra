@@ -11,7 +11,7 @@ namespace lgf
         printer p;
         if (!desc)
             return p.dump();
-        p << get_sid() << " " << desc->get_sid();
+        p << get_sid() << " " << desc->represent();
         return p.dump();
     }
 

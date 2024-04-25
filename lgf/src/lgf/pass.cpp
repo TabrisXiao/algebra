@@ -4,19 +4,23 @@
 // #include "utility.h"
 using namespace lgf;
 
-resultCode passBase::apply_rewriter_once(painter &p, graph *g) {
+resultCode passBase::apply_rewriter_once(painter &p, graph *g)
+{
   resultCode result;
   p.goto_graph(g);
-  for (auto ptr = rewriters.begin(); ptr != rewriters.end(); ptr++) {
+  for (auto ptr = rewriters.begin(); ptr != rewriters.end(); ptr++)
+  {
     std::vector<node *> nodes = g->get_nodes();
-    for (auto i = 0; i < nodes.size(); i++) {
+    for (auto i = 0; i < nodes.size(); i++)
+    {
       auto &node = nodes[i];
       if (node->is_deprecate())
         continue;
       result.add((*ptr).get()->execute(p, node));
       if (node->is_deprecate())
         continue;
-      if (auto subg = dynamic_cast<graph *>(node)) {
+      if (auto subg = dynamic_cast<graph *>(node))
+      {
         result.add(apply_rewriter_once(p, subg));
       }
     }
@@ -25,14 +29,17 @@ resultCode passBase::apply_rewriter_once(painter &p, graph *g) {
 }
 //---------------------------------------------------
 
-resultCode passBase::apply_rewriter_greedy(painter &p, graph *g) {
+resultCode passBase::apply_rewriter_greedy(painter &p, graph *g)
+{
   auto result = apply_rewriter_once(p, g);
   g->clean();
   int counts = 1;
   auto final_result = result;
-  while (result.isSuccess()) {
+  while (result.isSuccess())
+  {
     result = apply_rewriter_once(p, g);
-    if (0) {
+    if (0)
+    {
       OSTREAM << "\n------ Pass: " << _pass_name << " step: " << counts
               << " ------\n";
       g->print();
@@ -47,14 +54,17 @@ resultCode passBase::apply_rewriter_greedy(painter &p, graph *g) {
 //---------------------------------------------------
 
 resultCode passBase::walk_apply_rewriter_once(painter &p, graph *g,
-                                              bool deepWalk) {
+                                              bool deepWalk)
+{
   p.goto_graph(g);
   resultCode result;
   g->walk(
-      [&](node *op) {
+      [&](node *op)
+      {
         if (op->is_deprecate())
           return;
-        for (auto ptr = rewriters.begin(); ptr != rewriters.end(); ptr++) {
+        for (auto ptr = rewriters.begin(); ptr != rewriters.end(); ptr++)
+        {
           result.add((*ptr).get()->execute(p, op));
         }
       },
@@ -63,12 +73,15 @@ resultCode passBase::walk_apply_rewriter_once(painter &p, graph *g,
 }
 //---------------------------------------------------
 
-bool passBase::translation(painter &p, graph *g) {
+bool passBase::translation(painter &p, graph *g)
+{
   g->walk(
-      [&](node *op) {
+      [&](node *op)
+      {
         if (op->is_deprecate())
           return;
-        for (auto ptr = rewriters.begin(); ptr != rewriters.end(); ptr++) {
+        for (auto ptr = rewriters.begin(); ptr != rewriters.end(); ptr++)
+        {
           (*ptr).get()->execute(p, op);
         }
       },
@@ -77,22 +90,27 @@ bool passBase::translation(painter &p, graph *g) {
 }
 //---------------------------------------------------
 
-void passManager::validation(graph *g) {
+void passManager::validation(graph *g)
+{
   auto nodes = g->get_nodes();
-  for (auto &node : nodes) {
+  for (auto &node : nodes)
+  {
     if (node->is_deprecate())
       continue;
-    if (auto subg = dynamic_cast<graph *>(node)) {
+    if (auto subg = dynamic_cast<graph *>(node))
+    {
       validation(subg);
     }
   }
-  if (g->clean()) {
+  if (g->clean())
+  {
     validation(g);
   }
 }
 //---------------------------------------------------
 
-void passManager::add_normalization_pass() {
+void passManager::add_normalization_pass()
+{
   add_pass(std::make_unique<normalizationPass>());
 }
 //---------------------------------------------------

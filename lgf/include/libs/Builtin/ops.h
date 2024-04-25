@@ -108,6 +108,10 @@ namespace lgf
         {
             data = val;
         }
+        dataAttr *get_data_attr()
+        {
+            return data;
+        }
         dataAttr *data = nullptr;
     };
 
