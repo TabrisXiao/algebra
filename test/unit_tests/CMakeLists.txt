@@ -12,5 +12,5 @@ create_cpp_binary(
     lgf_lib
     INCLUDES
     ${PROJECT_SOURCE_DIR}/test/include/
-    COPTS /EHsc /W0 /std:c++17
+    COPTS ${COMPILER_OPTIONS}
 )
