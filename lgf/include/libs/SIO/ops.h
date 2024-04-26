@@ -5,7 +5,7 @@
 #include "libs/algebra/algebra.h"
 #include "lgf/group.h"
 
-namespace lgf::SIO
+namespace lgf::sio
 {
     class exportOp : public node
     {
@@ -14,7 +14,7 @@ namespace lgf::SIO
         {
             set_nontrivial();
         }
-        static exportOp *build(node *value)
+        static exportOp *build(LGFContext *ctx, node *value)
         {
             exportOp *op = new exportOp("sio::export");
             op->register_input(value);
@@ -30,7 +30,7 @@ namespace lgf::SIO
     {
     public:
         latexExportOp() : exportOp("sio::LatexExporter") {}
-        static latexExportOp *build(node *value)
+        static latexExportOp *build(LGFContext *ctx, node *value)
         {
             latexExportOp *op = new latexExportOp();
             op->register_input(value);
@@ -44,11 +44,43 @@ namespace lgf::SIO
         representOp(std::string name) : node(name) {}
     };
 
+    class numberOp : public representOp
+    {
+    public:
+        numberOp() : representOp("sio::number") {}
+        static numberOp *build(LGFContext *ctx, valueDesc *val, std::string number)
+        {
+            numberOp *op = new numberOp();
+            op->set_value_desc(val);
+            op->set_number_str(number);
+            return op;
+        }
+        void set_number_str(std::string number)
+        {
+            numberStr = number;
+            while (numberStr.back() == '0' || numberStr.back() == '.')
+            {
+                numberStr.pop_back();
+            }
+        }
+        std::string get_number_str()
+        {
+            return numberStr;
+        }
+        virtual std::string represent() override
+        {
+            printer p;
+            p << value_rep() << " = number form: " << numberStr;
+            return p.dump();
+        }
+        std::string numberStr;
+    };
+
     class symbolOp : public representOp
     {
     public:
         symbolOp() : representOp("sio::symbol") {}
-        static symbolOp *build(valueDesc *val, std::string sid)
+        static symbolOp *build(LGFContext *ctx, valueDesc *val, std::string sid)
         {
             symbolOp *op = new symbolOp();
             op->get_value().set_sid(sid);
@@ -70,7 +102,7 @@ namespace lgf::SIO
     {
     public:
         sumOp() : representOp("sio::sum") {}
-        static sumOp *build(valueDesc *desc, std::vector<node *> &args)
+        static sumOp *build(LGFContext *ctx, valueDesc *desc, std::vector<node *> &args)
         {
             sumOp *op = new sumOp();
             op->register_inputs(args);
@@ -83,7 +115,7 @@ namespace lgf::SIO
     {
     public:
         scalarProductOp() : representOp("sio::scalarProduct") {}
-        static scalarProductOp *build(std::vector<node *> args)
+        static scalarProductOp *build(LGFContext *ctx, std::vector<node *> args)
         {
             scalarProductOp *op = new scalarProductOp();
             op->register_inputs(args);
@@ -95,7 +127,7 @@ namespace lgf::SIO
     {
     public:
         equalOp() : representOp("sio::equal") {}
-        static equalOp *build(lgf::LGFContext, node *lhs, node *rhs)
+        static equalOp *build(LGFContext *ctx, lgf::LGFContext, node *lhs, node *rhs)
         {
             equalOp *op = new equalOp();
             op->register_input(lhs, rhs);
@@ -107,7 +139,7 @@ namespace lgf::SIO
     {
     public:
         assignOp() : representOp("sio::assign") {}
-        static assignOp *build(node *lhs, node *rhs)
+        static assignOp *build(LGFContext *ctx, node *lhs, node *rhs)
         {
             assignOp *op = new assignOp();
             op->register_input(lhs, rhs);
@@ -119,9 +151,21 @@ namespace lgf::SIO
     {
     public:
         negativeOp() : representOp("sio::negative") {}
-        static negativeOp *build(node *input)
+        static negativeOp *build(LGFContext *ctx, node *input)
         {
             negativeOp *op = new negativeOp();
+            op->register_input(input);
+            return op;
+        }
+    };
+
+    class inverseOp : public representOp
+    {
+    public:
+        inverseOp() : representOp("sio::inverse") {}
+        static inverseOp *build(LGFContext *ctx, node *input)
+        {
+            inverseOp *op = new inverseOp();
             op->register_input(input);
             return op;
         }
@@ -131,7 +175,7 @@ namespace lgf::SIO
     {
     public:
         funcOp() : representOp("sio::func") {}
-        static funcOp *build(std::string sid, std::vector<node *> &args)
+        static funcOp *build(LGFContext *ctx, std::string sid, std::vector<node *> &args)
         {
             funcOp *op = new funcOp();
             op->register_inputs(args);
@@ -156,7 +200,7 @@ namespace lgf::SIO
     {
     public:
         partialD() : representOp("sio::partialD") {}
-        static partialD *build(node *func, node *var)
+        static partialD *build(LGFContext *ctx, node *func, node *var)
         {
             partialD *op = new partialD();
             op->register_input(func, var);
@@ -168,7 +212,7 @@ namespace lgf::SIO
     {
     public:
         differentialOp() : representOp("sio::differential") {}
-        static differentialOp *build(node *input)
+        static differentialOp *build(LGFContext *ctx, node *input)
         {
             differentialOp *op = new differentialOp();
             op->register_input(input);

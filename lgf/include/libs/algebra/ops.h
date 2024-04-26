@@ -3,54 +3,66 @@
 #define LGF_LIB_ALGEBRA_OPS_H
 
 #include "lgf/group.h"
+#include "lgf/context.h"
 #include "desc.h"
 
-namespace lgf{
-    class sumOp : public node{
-        public:
+namespace lgf
+{
+    class sumOp : public node, public normalizer
+    {
+    public:
         sumOp() : node("sum") {}
-        static sumOp* build(std::vector<node*>& vec){
+        static sumOp *build(LGFContext *ctx, std::vector<node *> &vec)
+        {
             auto op = new sumOp();
             op->register_inputs(vec);
             op->infer_trivial_value_desc();
             return op;
         }
-        template<typename... Args>
-        static sumOp* build(Args... args){
+        template <typename... Args>
+        static sumOp *build(LGFContext *ctx, Args... args)
+        {
             auto op = new sumOp();
             op->register_input(args...);
             op->infer_trivial_value_desc();
             return op;
         }
+        virtual resultCode rewrite(painter &p, node *op) override;
     };
 
-    class productOp : public node, public normalizer {
-        public:
+    class productOp : public node, public normalizer
+    {
+    public:
         productOp() : node("product") {}
-        static productOp* build(std::vector<node*>& vec){
+        static productOp *build(LGFContext *ctx, std::vector<node *> &vec)
+        {
             auto op = new productOp();
             op->register_inputs(vec);
             op->infer_trivial_value_desc();
             return op;
         }
-        static productOp* build(){
+        static productOp *build(LGFContext *ctx)
+        {
             auto op = new productOp();
             return op;
         }
-        template<typename... Args>
-        static productOp* build(Args... args){
+        template <typename... Args>
+        static productOp *build(LGFContext *ctx, Args... args)
+        {
             auto op = new productOp();
             op->register_input(args...);
             op->infer_trivial_value_desc();
             return op;
         }
-        virtual resultCode rewrite(painter& p, node* op) override;
+        virtual resultCode rewrite(painter &p, node *op) override;
     };
 
-    class negativeOp : public node {
-        public:
+    class negativeOp : public node
+    {
+    public:
         negativeOp() : node("negative") {}
-        static negativeOp* build(node* n){
+        static negativeOp *build(LGFContext *ctx, node *n)
+        {
             auto op = new negativeOp();
             op->register_input(n);
             op->infer_trivial_value_desc();
@@ -58,10 +70,12 @@ namespace lgf{
         }
     };
 
-    class inverseOp : public node{
-        public:
+    class inverseOp : public node
+    {
+    public:
         inverseOp() : node("inverse") {}
-        static inverseOp* build(node* n){
+        static inverseOp *build(LGFContext *ctx, node *n)
+        {
             auto op = new inverseOp();
             op->register_input(n);
             op->infer_trivial_value_desc();
@@ -69,21 +83,24 @@ namespace lgf{
         }
     };
 
-    class minusOp : public node {
-        public:
+    class minusOp : public node
+    {
+    public:
         minusOp() : node("minus") {}
-        static minusOp* build(node* lhs, node* rhs){
+        static minusOp *build(LGFContext *ctx, node *lhs, node *rhs)
+        {
             auto op = new minusOp();
             op->register_input(lhs, rhs);
             op->infer_trivial_value_desc();
             return op;
         }
-        node* lhs() {return input(0);}
-        node* rhs() {return input(1);}
-        virtual sid_t represent() override{
+        node *lhs() { return input(0); }
+        node *rhs() { return input(1); }
+        virtual sid_t represent() override
+        {
             printer p;
-            p<<value_rep();
-            p<<" = "<<get_sid()<<" : "<<lhs()->get_sid() << " - "<<rhs()->get_sid();
+            p << value_rep();
+            p << " = " << get_sid() << " : " << lhs()->get_sid() << " - " << rhs()->get_sid();
             return p.dump();
         }
     };

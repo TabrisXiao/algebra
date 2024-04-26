@@ -7,7 +7,7 @@
 #include "lgf/node.h"
 #include "ops.h"
 
-namespace lgf::SIO
+namespace lgf::sio
 {
     class exporterBase
     {
@@ -28,8 +28,8 @@ namespace lgf::SIO
             {
                 if (!dynamic_cast<opTy *>(node))
                     continue;
+                os << "\n --- \n";
                 os << process(node->input());
-                p.replace_op(node, node->input());
                 node->erase();
             }
             os << "\n--------- end ---------\n\n";
@@ -53,6 +53,6 @@ namespace lgf::SIO
             exporterBase::run_on_op<latexExportOp>();
         }
     };
-} // namespace lgf::SIO
+} // namespace lgf::sio
 
 #endif

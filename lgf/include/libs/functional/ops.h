@@ -5,6 +5,7 @@
 #include "lgf/node.h"
 #include "libs/Builtin/ops.h"
 #include "desc.h"
+#include "lgf/utils.h"
 
 namespace lgf
 {
@@ -14,76 +15,56 @@ namespace lgf
     public:
         mappingOp() = default;
         mappingOp(std::string name) : node(name) {}
-
-        template <typename... ARGS>
-        void add_args(ARGS... args)
-        {
-            auto nds = std::initializer_list<node *>{args...};
-            for (auto nd : nds)
-            {
-                register_input(nd);
-                narg++;
-            }
-        }
-        node *arg(int n = 0)
-        {
-            return input(n);
-        }
-        size_t get_arg_size()
-        {
-            return narg;
-        }
-        edgeBundle &get_args()
-        {
-            return get_input_handles();
-        }
-
-    private:
-        size_t narg = 0;
     };
 
-    class funcSineOp : public mappingOp
+    class elemFuncOp : public mappingOp
     {
     public:
-        funcSineOp() : mappingOp("sine") {}
-        static funcSineOp *build(node *x)
-        {
-            auto op = new funcSineOp();
-            op->add_args(x);
-            op->infer_trivial_value_desc();
-            return op;
-        }
-        virtual sid_t represent() override
-        {
-            return get_value_sid() + " = sin( " + input()->get_value_sid() + " )";
-        }
+        elemFuncOp(sid_t n) : mappingOp(n){};
     };
 
-    class funcCosOp : public mappingOp
+    class funcCosOp : public elemFuncOp
     {
     public:
-        funcCosOp() : mappingOp("cos") {}
-        static funcCosOp *build(node *x)
+        funcCosOp() : elemFuncOp("cos") {}
+        static funcCosOp *build(LGFContext *ctx, node *x)
         {
             auto op = new funcCosOp();
-            op->add_args(x);
+            op->register_input(x);
             op->infer_trivial_value_desc();
             return op;
         }
         virtual sid_t represent() override
         {
-            return get_value_sid() + " = cos( " + input()->get_value_sid() + " )";
+            return value_rep() + " = cos( " + input()->get_value_sid() + " )";
         }
     };
 
-    class funcPowerOp : public mappingOp
+    class funcSineOp : public elemFuncOp
     {
     public:
-        funcPowerOp() : mappingOp("power") {}
-        static funcPowerOp *build(node *x, double n)
+        funcSineOp() : elemFuncOp("sine") {}
+        static funcSineOp *build(LGFContext *ctx, node *x)
+        {
+            auto op = new funcSineOp();
+            op->register_input(x);
+            op->infer_trivial_value_desc();
+            return op;
+        }
+        virtual sid_t represent() override
+        {
+            return value_rep() + " = sin( " + input()->get_value_sid() + " )";
+        }
+    };
+
+    class funcPowerOp : public elemFuncOp
+    {
+    public:
+        funcPowerOp() : elemFuncOp("power") {}
+        static funcPowerOp *build(LGFContext *ctx, node *x, double n)
         {
             auto op = new funcPowerOp();
-            op->add_args(x);
+            op->register_input(x);
             op->set_power(n);
             op->infer_trivial_value_desc();
             return op;
@@ -93,18 +74,18 @@ namespace lgf
         double p = 1;
         virtual sid_t represent() override
         {
-            return get_value_sid() + " = " + input()->get_value_sid() + "power=" + std::to_string(p);
+            return value_rep() + " = " + input()->get_value_sid() + " with power= " + utils::to_string(p);
         }
     };
 
-    class funcExpOp : public mappingOp
+    class funcExpOp : public elemFuncOp
     {
     public:
-        funcExpOp() : mappingOp("functional::exp") {}
-        static funcExpOp *build(node *power)
+        funcExpOp() : elemFuncOp("functional::exp") {}
+        static funcExpOp *build(LGFContext *ctx, node *power)
         {
             auto op = new funcExpOp();
-            op->add_args(power);
+            op->register_input(power);
             op->infer_trivial_value_desc();
             return op;
         }
@@ -114,18 +95,18 @@ namespace lgf
         }
         virtual sid_t represent() override
         {
-            return get_value_sid() + " = exp( " + input()->get_value_sid() + " )";
+            return value_rep() + " = exp( " + input()->get_value_sid() + " )";
         }
     };
 
-    class partialDifferentiateOp : public mappingOp
+    class partialDifferentiateOp : public elemFuncOp
     {
     public:
-        partialDifferentiateOp() : mappingOp("PartialDifferential") {}
-        static partialDifferentiateOp *build(node *func, node *var, int order = 1)
+        partialDifferentiateOp() : elemFuncOp("PartialDifferential") {}
+        static partialDifferentiateOp *build(LGFContext *ctx, node *func, node *var, int order = 1)
         {
             auto op = new partialDifferentiateOp();
-            op->add_args(func, var);
+            op->register_input(func, var);
             op->set_order(order);
             op->set_value_desc(func->get_value_desc());
             return op;
@@ -136,7 +117,7 @@ namespace lgf
         int get_order() { return order; }
         virtual sid_t represent() override
         {
-            auto res = get_value_sid() + " = Partial Differential";
+            auto res = value_rep() + " = Partial Differential";
             res = res + ": " + input()->get_value_sid() + " w.r.t. " + input(1)->get_value_sid() + ", order = " + std::to_string(order);
             return res;
         }
@@ -145,25 +126,59 @@ namespace lgf
         int order = 1;
     };
 
-    class differentiateOp : public mappingOp
+    class differentiateOp : public elemFuncOp
     {
     public:
-        differentiateOp() : mappingOp("Differential") {}
-        static differentiateOp *build(node *input)
+        differentiateOp() : elemFuncOp("Differential") {}
+        static differentiateOp *build(LGFContext *ctx, node *input)
         {
             auto op = new differentiateOp();
-            op->add_args(input);
+            op->register_input(input);
             op->set_value_desc(input->get_value_desc());
             return op;
         }
         virtual sid_t represent() override
         {
-            auto res = get_value_sid() + " = " + get_sid() + ": " + input()->get_value_sid();
+            auto res = value_rep() + " = " + get_sid() + ": " + input()->get_value_sid();
             return res;
         }
 
     private:
         int order = 1;
+    };
+
+    class RiemannIntegralOp : public node
+    {
+    public:
+        RiemannIntegralOp() : node("Integral") {}
+        static RiemannIntegralOp *build(LGFContext *ctx, node *integrand_, node *target_, node *low, node *high)
+        {
+            auto op = new RiemannIntegralOp();
+            op->register_input(integrand_, target_, low, high);
+            op->set_value_desc(integrand_->get_value_desc());
+            return op;
+        }
+        node *get_integrand()
+        {
+            return input(0);
+        }
+        node *get_target()
+        {
+            return input(1);
+        }
+        node *get_lower_bound()
+        {
+            return input(2);
+        }
+        node *get_upper_bound()
+        {
+            return input(3);
+        }
+        virtual sid_t represent() override
+        {
+            auto res = get_value_sid() + " = Riemann Integral " + get_integrand()->get_value_sid() + " w.r.t. " + get_target()->get_value_sid() + " from " + get_lower_bound()->get_value_sid() + " to " + get_upper_bound()->get_value_sid();
+            return res;
+        }
     };
 
     class unionOp : public mappingOp

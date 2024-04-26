@@ -1,14 +1,14 @@
 
-#include "libs/SIO/exporter.h"
+#include "libs/sio/exporter.h"
 #include "libs/Builtin/ops.h"
-#include "libs/SIO/ops.h"
+#include "libs/sio/ops.h"
 
-namespace lgf::SIO
+namespace lgf::sio
 {
     std::string export2latex::process(node *n)
     {
         std::string res;
-        if (auto op = dynamic_cast<SIO::scalarProductOp *>(n))
+        if (auto op = dynamic_cast<sio::scalarProductOp *>(n))
         {
             for (auto &input : op->get_input_handles())
             {
@@ -57,6 +57,14 @@ namespace lgf::SIO
         else if (auto op = dynamic_cast<differentialOp *>(n))
         {
             res = "d" + process(op->input(0)) + " ";
+        }
+        else if (auto cst = n->dyn_cast<numberOp>())
+        {
+            res = cst->get_number_str();
+        }
+        else if (auto inverse = n->dyn_cast<inverseOp>())
+        {
+            res = process(inverse->input(0)) + "^{-1}";
         }
         else
         {
@@ -114,4 +122,4 @@ namespace lgf::SIO
     //     if( mainFound ) os<<"\n\n--- end ---\n";
     // }
 
-} // namespace lgf::SIO
+} // namespace lgf::sio

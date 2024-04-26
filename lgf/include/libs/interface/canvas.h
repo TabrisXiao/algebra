@@ -5,7 +5,7 @@
 #include "lgf/painter.h"
 #include "libs/Builtin/Builtin.h"
 #include "libs/functional/passes.h"
-#include "libs/SIO/exporter.h"
+#include "libs/sio/exporter.h"
 #include "libs/transform/convertToSIO.h"
 
 namespace lgi
@@ -52,6 +52,7 @@ namespace lgi
       pm.add_normalization_pass();
       pm.add_pass(lgf::createCalculusPass());
       pm.add_normalization_pass();
+      pm.name = "compile";
       pm.run();
 
       export2latex();
@@ -60,9 +61,10 @@ namespace lgi
     void export2latex()
     {
       pm.flush();
+      pm.name = "export";
       pm.add_pass(lgf::transform::createConvertToSIOPass());
       pm.run();
-      lgf::SIO::export2latex ex(&g);
+      lgf::sio::export2latex ex(&g);
       ex.run_on_op();
     }
 
