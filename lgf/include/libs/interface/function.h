@@ -3,7 +3,7 @@
 #define LGF_INTERFACE_FUNCTION_H
 
 #include "canvas.h"
-#include "libs/Builtin/Builtin.h"
+#include "libs/builtin/builtin.h"
 #include "libs/functional/functional.h"
 #include "variable.h"
 

@@ -70,7 +70,7 @@ namespace lgf
     {
     public:
         passBase(const char *name) : _pass_name(name) {}
-
+        virtual ~passBase() = default;
         // the return value is not defined yet.
         virtual resultCode run() = 0;
         graph *get_graph() { return g; }

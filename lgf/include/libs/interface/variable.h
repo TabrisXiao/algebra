@@ -2,7 +2,7 @@
 #ifndef LGF_INTERFACE_VAR_H
 #define LGF_INTERFACE_VAR_H
 #include "canvas.h"
-#include "libs/Builtin/Builtin.h"
+#include "libs/builtin/builtin.h"
 #include "libs/algebra/algebra.h"
 #include "libs/sio/ops.h"
 

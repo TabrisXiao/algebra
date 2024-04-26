@@ -3,7 +3,7 @@
 #define LGF_INTERFACE_CANVAS_H
 #include "lgf/context.h"
 #include "lgf/painter.h"
-#include "libs/Builtin/Builtin.h"
+#include "libs/builtin/builtin.h"
 #include "libs/functional/passes.h"
 #include "libs/sio/exporter.h"
 #include "libs/transform/convertToSIO.h"

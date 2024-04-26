@@ -3,7 +3,7 @@
 #ifndef TRANSFORM_CONVERT_TO_SIO_H
 #define TRANSFORM_CONVERT_TO_SIO_H
 
-#include "libs/Builtin/ops.h"
+#include "libs/builtin/ops.h"
 #include "libs/algebra/algebra.h"
 #include "libs/sio/sio.h"
 #include "lgf/pass.h"

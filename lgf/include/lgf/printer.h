@@ -49,7 +49,7 @@ class parser {
     }
     std::string getRestBuffer(){return buffer.substr(curCol);}
     std::string buffer;
-    int curCol = 0;
+    size_t curCol = 0;
 };
 
 #endif

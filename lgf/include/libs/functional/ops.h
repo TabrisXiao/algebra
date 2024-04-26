@@ -3,7 +3,7 @@
 #define LGF_FUNCTIONAL_ANALYSIS_OPS_H
 
 #include "lgf/node.h"
-#include "libs/Builtin/ops.h"
+#include "libs/builtin/ops.h"
 #include "desc.h"
 #include "lgf/utils.h"
 
@@ -144,7 +144,7 @@ namespace lgf
         }
 
     private:
-        int order = 1;
+        // int order = 1;
     };
 
     class RiemannIntegralOp : public node
@@ -189,7 +189,7 @@ namespace lgf
         static unionOp *build(LGFContext *ctx, ARGS... args)
         {
             auto op = new unionOp();
-            op->add_args(args...);
+            op->register_input(args...);
             op->set_value_desc(op->input()->get_value_desc());
             return op;
         }
@@ -203,7 +203,7 @@ namespace lgf
         static intersectOp *build(LGFContext *ctx, ARGS... args)
         {
             auto op = new intersectOp();
-            op->add_args(args...);
+            op->register_input(args...);
             op->set_value_desc(op->input()->get_value_desc());
             return op;
         }

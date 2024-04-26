@@ -149,11 +149,11 @@ namespace lgf
                 throw std::runtime_error("register_inputs_at index out of input range");
             std::vector<edge> new_inputs;
             new_inputs.reserve(inputs.size() + inserts.size());
-            for (auto j = 0; j < idx; j++)
+            for (size_t j = 0; j < idx; j++)
             {
                 new_inputs.push_back(std::move(inputs[j]));
             }
-            for (auto j = 0; j < inserts.size(); j++)
+            for (size_t j = 0; j < inserts.size(); j++)
             {
                 if (inserts[j] == this)
                     return;
@@ -408,7 +408,7 @@ namespace lgf
 
         virtual void print() override;
 
-        virtual std::string represent() { return ""; }
+        virtual std::string represent() override { return ""; }
 
         // return how many nodes graph contained
         size_t get_node_size() { return nodes.size(); }

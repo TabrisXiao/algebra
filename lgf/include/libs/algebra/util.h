@@ -36,15 +36,22 @@ namespace lgf
         resultCode result = resultCode::pass();
         for (auto i = 1; i < op->get_input_handles().size(); i++)
         {
-            if (auto lhs = op->input(i - 1)->dyn_cast<lhsTy>() &&auto rhs = op->input(i)->dyn_cast<rhsTy>())
+            auto lhs = op->input(i - 1)->dyn_cast<lhsTy>();
+            auto rhs = op->input(i)->dyn_cast<rhsTy>();
+            if (lhs && rhs)
             {
                 fn(lhs, rhs);
                 result.add(resultCode::success());
             }
-            else if (auto lhs = op->input(i)->dyn_cast<lhsTy>() &&auto rhs = op->input(i - 1)->dyn_cast<rhsTy>())
+            else
             {
-                fn(lhs, rhs);
-                result.add(resultCode::success());
+                lhs = op->input(i)->dyn_cast<lhsTy>();
+                rhs = op->input(i - 1)->dyn_cast<rhsTy>();
+                if (lhs && rhs)
+                {
+                    fn(lhs, rhs);
+                    result.add(resultCode::success());
+                }
             }
             i++;
         }
