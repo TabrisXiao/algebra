@@ -21,7 +21,7 @@ create_cpp_library(
     lgf_lib
     INCLUDES
     ${PROJECT_SOURCE_DIR}/lgf/include/
-    COPTS /EHsc
+    COPTS ${COMPILER_OPTIONS}
 )
 
 create_cpp_binary(
@@ -32,5 +32,5 @@ create_cpp_binary(
     LINK_LIBS
     lgf_lib
     lgf_compiler_lib
-    COPTS /EHsc /W0 /std:c++17
+    COPTS ${COMPILER_OPTIONS}
 )

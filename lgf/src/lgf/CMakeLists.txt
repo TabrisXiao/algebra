@@ -24,5 +24,5 @@ create_cpp_library(
     ${sources}
     INCLUDES
     ${PROJECT_SOURCE_DIR}/lgf/include/
-    COPTS /EHsc
+    COPTS ${COMPILER_OPTIONS}
 )

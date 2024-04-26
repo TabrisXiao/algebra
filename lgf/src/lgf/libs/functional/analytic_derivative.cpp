@@ -1,5 +1,4 @@
 
-#pragma once
 #include "libs/functional/passes.h"
 #include "libs/algebra/desc.h"
 

@@ -66,15 +66,18 @@ namespace lgf
   public:
     using digit_t = digitType;
     bitCode() {}
-    bitCode(digitType &val) { value = val; }
+    //bitCode(digitType val) { value = val; }
+    //bitCode(digitType &val) { value = val; }
     bitCode(bitCode &code) { value = code.value; }
+    bitCode(const bitCode &code) { value = code.value; }
+    bitCode(const digitType &val) { value = val; }
 
     bitCode shift(size_t val)
     {
       value |= 1 << val;
       return *this;
     }
-    bitCode add(bitCode &val)
+    bitCode add(const bitCode &val)
     {
       value |= val.value;
       return *this;

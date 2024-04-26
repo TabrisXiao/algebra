@@ -18,7 +18,7 @@ namespace lgf
   class realInterval : public setDesc
   {
   public:
-    realInterval(LGFContext *ctx, double l, double r, bool ol = 1, bool or = 1) : setDesc(ctx), dLeftBound(l), dRightBound(r), bLO(ol), bRO(or), bInit(false)
+    realInterval(LGFContext *ctx, double l, double r, bool ol = 1, bool or_ = 1) : setDesc(ctx), dLeftBound(l), dRightBound(r), bLO(ol), bRO(or_), bInit(false)
     {
       set_sid("real-interval");
     }
