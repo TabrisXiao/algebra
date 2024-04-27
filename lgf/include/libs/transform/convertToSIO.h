@@ -69,7 +69,8 @@ namespace lgf::transform
             add_rewriter<convertToSIORewriter<productOp, sio::scalarProductOp>>();
             add_rewriter<convertToSIORewriter<funcCosOp, sio::funcOp>>("cos");
             add_rewriter<convertToSIORewriter<funcSineOp, sio::funcOp>>("sin");
-            add_rewriter<convertToSIORewriter<funcExpOp, sio::funcOp>>("exp");
+            add_rewriter<convertToSIORewriter<funcExponentationOp, sio::funcOp>>("exp");
+            add_rewriter<convertToSIORewriter<funcLogarithmOp, sio::funcOp>>("log");
             add_rewriter<convertToSIORewriter<partialDifferentiateOp, sio::partialD>>();
             add_rewriter<convertToSIORewriter<differentiateOp, sio::differentialOp>>();
             return apply_rewriter_greedy(p, get_graph());

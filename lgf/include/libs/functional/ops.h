@@ -78,24 +78,53 @@ namespace lgf
         }
     };
 
-    class funcExpOp : public elemFuncOp
+    class funcExponentationOp : public elemFuncOp
     {
     public:
-        funcExpOp() : elemFuncOp("functional::exp") {}
-        static funcExpOp *build(LGFContext *ctx, node *power)
+        funcExponentationOp() : elemFuncOp("functional::exp") {}
+        static funcExponentationOp *build(LGFContext *ctx, node *base, node *power)
         {
-            auto op = new funcExpOp();
-            op->register_input(power);
+            auto op = new funcExponentationOp();
+            op->register_input(base, power);
             op->infer_trivial_value_desc();
             return op;
         }
         node *power()
         {
+            return input(1);
+        }
+        node *base()
+        {
             return input(0);
         }
         virtual sid_t represent() override
         {
-            return value_rep() + " = exp( " + input()->get_value_sid() + " )";
+            return value_rep() + " = base: " + input()->get_value_sid() + " w. power: " + power()->get_value_sid();
+        }
+    };
+
+    class funcLogarithmOp : public elemFuncOp
+    {
+    public:
+        funcLogarithmOp() : elemFuncOp("functional::log") {}
+        static funcLogarithmOp *build(LGFContext *ctx, node *base, node *arg)
+        {
+            auto op = new funcLogarithmOp();
+            op->register_input(base, arg);
+            op->infer_trivial_value_desc();
+            return op;
+        }
+        node *base()
+        {
+            return input(0);
+        }
+        node *arg()
+        {
+            return input(1);
+        }
+        virtual sid_t represent() override
+        {
+            return value_rep() + " = log base: " + base()->get_value_sid() + " of " + arg()->get_value_sid();
         }
     };
 

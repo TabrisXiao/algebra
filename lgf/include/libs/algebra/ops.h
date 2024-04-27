@@ -100,7 +100,7 @@ namespace lgf
         {
             printer p;
             p << value_rep();
-            p << " = " << get_sid() << " : " << lhs()->get_sid() << " - " << rhs()->get_sid();
+            p << " = " << get_sid() << ": " << lhs()->get_value_sid() << " - " << rhs()->get_value_sid();
             return p.dump();
         }
     };

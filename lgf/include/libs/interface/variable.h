@@ -41,6 +41,7 @@ namespace lgi
       v = canvas::get().get_painter().paint<lgf::declOp>(
           ctx.get_desc<lgf::varDesc>());
     }
+    virtual ~variable() {}
 
     variable(lgf::node *val) : variableBase(val) {}
 
@@ -230,6 +231,30 @@ namespace lgi
     variable operator/(const double &num)
     {
       return binary_data_rhs_divide<double, lgf::float32Data>(*this, num);
+    }
+  };
+
+  class real : public variable
+  {
+  public:
+    real(bool init = 1) : variable(0)
+    {
+      if (!init)
+        return;
+      auto &ctx = canvas::get().get_context();
+      v = canvas::get().get_painter().paint<lgf::declOp>(ctx.get_desc<lgf::realNumber>());
+    }
+    static real pi()
+    {
+      auto &ctx = canvas::get().get_context();
+      auto res = canvas::get().get_painter().paint<lgf::cstDeclOp>(ctx.get_desc<lgf::realNumber>(), ctx.get_data_attr<lgf::realNumberAttr>(lgf::realNumberAttr::pi));
+      return real(res);
+    }
+    static real e()
+    {
+      auto &ctx = canvas::get().get_context();
+      auto res = canvas::get().get_painter().paint<lgf::cstDeclOp>(ctx.get_desc<lgf::realNumber>(), ctx.get_data_attr<lgf::realNumberAttr>(lgf::realNumberAttr::e));
+      return real(res);
     }
   };
 
