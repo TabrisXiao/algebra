@@ -24,17 +24,33 @@ namespace lgi::function
         return variable(res);
     }
 
-    variable power(const variable &x, double n)
+    variable exponent(const variable &x, const variable &y)
     {
         auto &ctx = canvas::get().get_context();
-        auto res = canvas::get().get_painter().paint<lgf::funcPowerOp>(x.node(), n);
+        auto res = canvas::get().get_painter().paint<lgf::funcExponentationOp>(x.node(), y.node());
         return variable(res);
     }
 
     variable exp(const variable &x)
     {
         auto &ctx = canvas::get().get_context();
-        auto res = canvas::get().get_painter().paint<lgf::funcExpOp>(x.node());
+        auto e = real::e();
+        auto res = canvas::get().get_painter().paint<lgf::funcExponentationOp>(e.node(), x.node());
+        return variable(res);
+    }
+
+    variable log(const variable &base, const variable &x)
+    {
+        auto &ctx = canvas::get().get_context();
+        auto res = canvas::get().get_painter().paint<lgf::funcLogarithmOp>(base.node(), x.node());
+        return variable(res);
+    }
+
+    variable ln(const variable &x)
+    {
+        auto &ctx = canvas::get().get_context();
+        auto e = real::e();
+        auto res = canvas::get().get_painter().paint<lgf::funcLogarithmOp>(e.node(), x.node());
         return variable(res);
     }
 

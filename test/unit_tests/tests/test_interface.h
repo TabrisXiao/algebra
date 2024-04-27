@@ -16,14 +16,12 @@ namespace test_body
     bool run()
     {
       variable x, sig;
-      auto y = function::exp(x / sig);
-      auto z = function::power(x, 3.5);
+      auto y = function::exp(x);
       auto dy = function::d(y);
-      auto dz = function::d(z);
-      dz.latex();
+      dy.latex();
       canvas::get()
           .get_pass_manager()
-          .set_log_level(1);
+          .set_log_level(2);
       canvas::get().compile();
       return 0;
     }

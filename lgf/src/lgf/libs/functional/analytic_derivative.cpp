@@ -174,23 +174,28 @@ lgf::resultCode lgf::analyticFuncDerivativeRewriter::rewrite(painter &p, partial
         p.replace_op(op, product);
         return resultCode::success();
     }
-    if (auto exp = func->dyn_cast<funcExpOp>())
+    if (auto exp = func->dyn_cast<funcExponentationOp>())
     {
-        auto x = exp->input();
-        auto dx = p.paint<partialDifferentiateOp>(x, target);
-        auto product = p.paint<productOp>(exp, dx);
-        p.replace_op(op, product);
-        return resultCode::success();
-    }
-    if (auto power = func->dyn_cast<funcPowerOp>())
-    {
-        auto x = power->input();
-        auto dx = p.paint<partialDifferentiateOp>(x, target);
-        auto order = ctx->get_data_attr<float32Data>(power->power());
-        auto cst = p.paint<cstDeclOp>(ctx->get_desc<realNumber>(), order);
-        auto np = p.paint<funcPowerOp>(x, power->power() - 1);
-        auto product = p.paint<productOp>(cst, np, dx);
-        p.replace_op(op, product);
+        // d x^y = y x^(y-1) dx + ln(x) x^y dy
+        auto base = exp->base();
+        auto power = exp->power();
+        auto e_data = ctx->get_data_attr<realNumberAttr>(realNumberAttr::e);
+        auto e = p.paint<cstDeclOp>(ctx->get_desc<realNumber>(), e_data);
+        auto unit = p.paint<declOp>(ctx->get_desc<unitDesc>(target->get_value_desc()));
+        auto nunit = p.paint<negativeOp>(unit);
+        auto ym1 = p.paint<sumOp>(power, nunit);
+        // y x^(y-1) dx
+        auto dx = p.paint<partialDifferentiateOp>(base, target);
+        auto xym1 = p.paint<funcExponentationOp>(base, ym1);
+        auto product1 = p.paint<productOp>(power, xym1, dx);
+
+        // ln(x) x^y dy
+        auto ln = p.paint<funcLogarithmOp>(base, base);
+        auto dy = p.paint<partialDifferentiateOp>(power, target);
+        auto product2 = p.paint<productOp>(ln, exp, dy);
+        // summation
+        auto sum = p.paint<sumOp>(product1, product2);
+        p.replace_op(op, sum);
         return resultCode::success();
     }
     return result;

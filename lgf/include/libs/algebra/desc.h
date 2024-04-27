@@ -35,16 +35,18 @@ namespace lgf
 
   class realNumberAttr : public dataAttr
   {
+  public:
     enum numberType : int8_t
     {
       real,
       inf,
       ninf,
+      e,
+      pi,
       finite
     };
-
-  public:
     realNumberAttr(double d) : dataAttr("realNumbere"), data(d) {}
+    realNumberAttr(numberType t) : dataAttr("realNumber"), type(t) {}
     // realNumberAttr(realNumberAttr &&attr) : dataAttr("realNumber"), data(attr.get_data()), type(attr.get_type()) {}
     void set_type(numberType t) { type = t; }
     virtual sid_t represent() override
@@ -55,6 +57,10 @@ namespace lgf
         return "inf";
       if (type == ninf)
         return "-inf";
+      if (type == e)
+        return "e";
+      if (type == pi)
+        return "pi";
       return "finite";
     }
     double get_data() { return data; }
