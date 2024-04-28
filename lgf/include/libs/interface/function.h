@@ -35,7 +35,7 @@ namespace lgi::function
     variable exp(const variable &x)
     {
         auto &ctx = canvas::get().get_context();
-        auto e = real::e();
+        auto e = constant::e();
         auto res = canvas::get().get_painter().paint<lgf::funcExponentationOp>(e.node(), x.node());
         return variable(res);
     }
@@ -50,7 +50,7 @@ namespace lgi::function
     variable ln(const variable &x)
     {
         auto &ctx = canvas::get().get_context();
-        auto e = real::e();
+        auto e = constant::e();
         auto res = canvas::get().get_painter().paint<lgf::funcLogarithmOp>(e.node(), x.node());
         return variable(res);
     }
