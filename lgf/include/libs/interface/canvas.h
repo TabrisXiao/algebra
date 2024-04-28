@@ -49,9 +49,9 @@ namespace lgi
     void compile()
     {
       pm.set_work_region(&g);
-      pm.add_normalization_pass();
+      pm.add_pass(lgf::createNormalizationPass());
       pm.add_pass(lgf::createCalculusPass());
-      pm.add_normalization_pass();
+      pm.add_pass(lgf::createNormalizationPass());
       pm.name = "compile";
       pm.run();
 

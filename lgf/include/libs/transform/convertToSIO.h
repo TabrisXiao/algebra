@@ -39,18 +39,45 @@ namespace lgf::transform
         convertCstToSIO() = default;
         virtual resultCode rewrite(painter &p, cstDeclOp *op)
         {
-            sid_t number;
-            if (auto f32d = op->get_data_attr()->dyn_cast<float32Data>())
+            auto desc = op->get_value_desc();
+            if (desc->dyn_cast<unitDesc>())
             {
-                number = f32d->represent_data();
+                auto elem = desc->dyn_cast<unitDesc>()->get_elem_desc();
+                if (elem->is<realNumber, varDesc>())
+                {
+                    p.replace_op<lgf::sio::numberOp>(op, op->get_value_desc(), "1");
+                    return resultCode::success();
+                }
             }
-            else if (auto i32d = op->get_data_attr()->dyn_cast<int32Data>())
+            else if (desc->dyn_cast<zeroDesc>())
             {
-                number = i32d->represent_data();
+                auto elem = desc->dyn_cast<zeroDesc>()->get_elem_desc();
+                if (elem->is<realNumber, varDesc>())
+                {
+                    p.replace_op<lgf::sio::numberOp>(op, op->get_value_desc(), "0");
+                    return resultCode::success();
+                }
             }
-            std::cout << op->represent() << std::endl;
-            p.replace_op<lgf::sio::numberOp>(op, op->get_value_desc(), number);
-            return resultCode::success();
+            else if (desc->is<realNumber>())
+            {
+                auto real_data = op->get_data_attr()->dyn_cast<realNumberAttr>();
+                p.replace_op<lgf::sio::numberOp>(op, op->get_value_desc(), real_data->represent());
+                return resultCode::success();
+            }
+            else if (op->get_data_attr())
+            {
+                sid_t number;
+                if (auto f32d = op->get_data_attr()->dyn_cast<float32Data>())
+                {
+                    number = f32d->represent_data();
+                }
+                else if (auto i32d = op->get_data_attr()->dyn_cast<int32Data>())
+                {
+                    number = i32d->represent_data();
+                }
+                p.replace_op<lgf::sio::numberOp>(op, op->get_value_desc(), number);
+                return resultCode::success();
+            }
         };
     };
 

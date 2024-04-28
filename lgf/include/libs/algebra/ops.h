@@ -2,7 +2,7 @@
 #ifndef LGF_LIB_ALGEBRA_OPS_H
 #define LGF_LIB_ALGEBRA_OPS_H
 
-#include "lgf/group.h"
+#include "libs/builtin/builtin.h"
 #include "lgf/context.h"
 #include "desc.h"
 

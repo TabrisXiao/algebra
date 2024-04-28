@@ -108,9 +108,3 @@ void passManager::validation(graph *g)
   }
 }
 //---------------------------------------------------
-
-void passManager::add_normalization_pass()
-{
-  add_pass(std::make_unique<normalizationPass>());
-}
-//---------------------------------------------------

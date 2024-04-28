@@ -182,7 +182,6 @@ namespace lgf
             ps->set_work_graph(dynamic_cast<graph *>(g));
             passes.push_back(std::move(ps));
         }
-        void add_normalization_pass();
         void flush()
         {
             passes.clear();

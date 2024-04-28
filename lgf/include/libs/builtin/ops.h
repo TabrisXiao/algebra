@@ -31,6 +31,7 @@ namespace lgf
         {
             auto op = new declOp();
             op->set_value_desc(desc);
+            op->set_nontrivial();
             return op;
         }
         template <typename... ARGS>
@@ -90,7 +91,7 @@ namespace lgf
     {
     public:
         cstDeclOp() = default;
-        static cstDeclOp *build(LGFContext *ctx, valueDesc *data, dataAttr *val)
+        static cstDeclOp *build(LGFContext *ctx, valueDesc *data, dataAttr *val = nullptr)
         {
             auto op = new cstDeclOp();
             op->set_value_desc(data);
@@ -101,7 +102,11 @@ namespace lgf
         {
             printer p;
             p << value_rep() << " = "
-              << "Constant: " << value_desc_rep() << " = " << data->represent();
+              << "Constant: " << value_desc_rep();
+            if (data)
+            {
+                p << " = " << data->represent();
+            }
             return p.dump();
         }
         void set_data(dataAttr *val)

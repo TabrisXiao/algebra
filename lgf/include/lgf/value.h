@@ -20,6 +20,12 @@ namespace lgf
         {
             return dynamic_cast<T *>(this);
         }
+
+        template <typename... ARGS>
+        bool is()
+        {
+            return (... || dynamic_cast<ARGS *>(this));
+        }
     };
 
     class value : public graphObject
