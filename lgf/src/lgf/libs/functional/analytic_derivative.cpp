@@ -98,12 +98,18 @@ lgf::resultCode lgf::analyticFuncDerivativeRewriter::rewrite(painter &p, partial
     ctx = p.get_context();
     auto func = op->func();
     auto target = op->var();
+    if (dynamic_cast<cstDeclOp *>(func) || dynamic_cast<cstDeclOp *>(target))
+    {
+        p.replace_op<cstDeclOp>(
+            op, p.get_context()->get_desc<zeroDesc>(op->get_value_desc()));
+        return resultCode::success();
+    }
+
     if (func == target)
     {
         p.replace_op<cstDeclOp>(
             op, p.get_context()->get_desc<unitDesc>(target->get_value_desc()));
-        result.add(resultCode::success());
-        return result;
+        return resultCode::success();
     }
 
     if (auto sum = dynamic_cast<sumOp *>(func))
@@ -122,7 +128,6 @@ lgf::resultCode lgf::analyticFuncDerivativeRewriter::rewrite(painter &p, partial
     if (auto product = dynamic_cast<productOp *>(func))
     {
         std::vector<node *> sum_args;
-        std::cout << func->represent() << std::endl;
         for (auto &h : func->get_input_handles())
         {
             auto arg = h.get_dual_node();

@@ -101,7 +101,14 @@ namespace lgf
   class unitDesc : public valueDesc
   {
   public:
-    unitDesc(LGFContext *ctx, valueDesc *elem) : valueDesc("unit"), elemDesc(elem) {}
+    unitDesc(LGFContext *ctx, valueDesc *elem) : valueDesc("unit"), elemDesc(elem)
+    {
+      auto ee = dynamic_cast<unitDesc *>(elem);
+      if (ee)
+      {
+        elemDesc = ee->get_elem_desc();
+      }
+    }
     virtual sid_t represent() override
     {
       return "unit<" + elemDesc->represent() + ">";
@@ -116,7 +123,14 @@ namespace lgf
   class zeroDesc : public valueDesc
   {
   public:
-    zeroDesc(LGFContext *ctx, valueDesc *elem) : valueDesc("zero"), elemDesc(elem) {}
+    zeroDesc(LGFContext *ctx, valueDesc *elem) : valueDesc("zero"), elemDesc(elem)
+    {
+      auto ee = dynamic_cast<zeroDesc *>(elem);
+      if (ee)
+      {
+        elemDesc = ee->get_elem_desc();
+      }
+    }
     virtual sid_t represent() override
     {
       return "zero<" + elemDesc->represent() + ">";

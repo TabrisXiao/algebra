@@ -78,7 +78,7 @@ namespace lgf
         }
     };
 
-    class funcExponentationOp : public elemFuncOp
+    class funcExponentationOp : public elemFuncOp, public normalizer
     {
     public:
         funcExponentationOp() : elemFuncOp("functional::exp") {}
@@ -99,11 +99,12 @@ namespace lgf
         }
         virtual sid_t represent() override
         {
-            return value_rep() + " = base: " + input()->get_value_sid() + " w. power: " + power()->get_value_sid();
+            return value_rep() + " = exponent base: " + input()->get_value_sid() + " w. power: " + power()->get_value_sid();
         }
+        virtual resultCode rewrite(painter &p, node *op) override;
     };
 
-    class funcLogarithmOp : public elemFuncOp
+    class funcLogarithmOp : public elemFuncOp, public normalizer
     {
     public:
         funcLogarithmOp() : elemFuncOp("functional::log") {}
@@ -126,6 +127,7 @@ namespace lgf
         {
             return value_rep() + " = log base: " + base()->get_value_sid() + " of " + arg()->get_value_sid();
         }
+        virtual resultCode rewrite(painter &p, node *op) override;
     };
 
     class partialDifferentiateOp : public elemFuncOp

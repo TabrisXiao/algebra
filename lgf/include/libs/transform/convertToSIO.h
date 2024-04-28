@@ -78,6 +78,7 @@ namespace lgf::transform
                 p.replace_op<lgf::sio::numberOp>(op, op->get_value_desc(), number);
                 return resultCode::success();
             }
+            return resultCode::pass();
         };
     };
 

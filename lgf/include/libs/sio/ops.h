@@ -58,6 +58,8 @@ namespace lgf::sio
         void set_number_str(std::string number)
         {
             numberStr = number;
+            if (numberStr.size() == 1)
+                return;
             while (numberStr.back() == '0' || numberStr.back() == '.')
             {
                 numberStr.pop_back();
