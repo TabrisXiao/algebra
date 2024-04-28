@@ -33,7 +33,8 @@ namespace lgf
     resultCode run_op_pair_base_on_type(node *op, callable &&fn)
     {
         resultCode result = resultCode::pass();
-        for (auto i = 1; i < op->get_input_handles().size(); i++)
+        size_t i = 1;
+        while (i < op->get_input_size())
         {
             auto lhs = op->input(i - 1)->dyn_cast<lhsTy>();
             auto rhs = op->input(i)->dyn_cast<rhsTy>();

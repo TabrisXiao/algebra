@@ -24,7 +24,8 @@ namespace lgi::function
         return variable(res);
     }
 
-    variable exponent(const variable &x, const variable &y)
+    template <typename T, typename U>
+    variable exponent(const T &x, const U &y)
     {
         auto &ctx = canvas::get().get_context();
         auto res = canvas::get().get_painter().paint<lgf::funcExponentationOp>(x.node(), y.node());

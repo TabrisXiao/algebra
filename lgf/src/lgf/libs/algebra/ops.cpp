@@ -43,6 +43,17 @@ namespace lgf
       } 
       return resultCode::pass(); }));
 
+    result.add(run_op_pair_base_on_desc<zeroDesc, valueDesc>(op, [&op](node *lhs, node *rhs) -> resultCode
+                                                             {
+      auto zero = lhs->get_value_desc_as<zeroDesc>();
+      auto value = rhs->get_value_desc();
+      if (zero->zero_effective_check(value))
+      {
+        op->drop_input(rhs);
+        return resultCode::success();
+      } 
+      return resultCode::pass(); }));
+
     return result;
   }
 } // namespace lgf
