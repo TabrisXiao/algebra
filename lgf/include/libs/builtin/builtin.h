@@ -4,5 +4,6 @@
 
 #include "ops.h"
 #include "desc.h"
+#include "passes.h"
 
 #endif

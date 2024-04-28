@@ -9,6 +9,7 @@ set(
     edge.cpp
     node.cpp
     pass.cpp
+    libs/builtin/normalization.cpp
     libs/algebra/ops.cpp
     libs/algebra/desc.cpp
     libs/functional/passes.cpp

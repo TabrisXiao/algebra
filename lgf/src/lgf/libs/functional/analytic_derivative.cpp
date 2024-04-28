@@ -24,7 +24,7 @@ lgf::resultCode lgf::ChainRuleRewriter::rewrite(painter &p, differentiateOp *op)
 
     if (auto cst = func->dyn_cast<cstDeclOp>())
     {
-        p.replace_op<declOp>(op, ctx->get_desc<zeroDesc>(cst->get_value_desc()));
+        p.replace_op<cstDeclOp>(op, ctx->get_desc<zeroDesc>(cst->get_value_desc()));
         return resultCode::success();
     }
 
@@ -100,7 +100,7 @@ lgf::resultCode lgf::analyticFuncDerivativeRewriter::rewrite(painter &p, partial
     auto target = op->var();
     if (func == target)
     {
-        p.replace_op<declOp>(
+        p.replace_op<cstDeclOp>(
             op, p.get_context()->get_desc<unitDesc>(target->get_value_desc()));
         result.add(resultCode::success());
         return result;
@@ -181,7 +181,7 @@ lgf::resultCode lgf::analyticFuncDerivativeRewriter::rewrite(painter &p, partial
         auto power = exp->power();
         auto e_data = ctx->get_data_attr<realNumberAttr>(realNumberAttr::e);
         auto e = p.paint<cstDeclOp>(ctx->get_desc<realNumber>(), e_data);
-        auto unit = p.paint<declOp>(ctx->get_desc<unitDesc>(target->get_value_desc()));
+        auto unit = p.paint<cstDeclOp>(ctx->get_desc<unitDesc>(target->get_value_desc()));
         auto nunit = p.paint<negativeOp>(unit);
         auto ym1 = p.paint<sumOp>(power, nunit);
         // y x^(y-1) dx
@@ -190,7 +190,7 @@ lgf::resultCode lgf::analyticFuncDerivativeRewriter::rewrite(painter &p, partial
         auto product1 = p.paint<productOp>(power, xym1, dx);
 
         // ln(x) x^y dy
-        auto ln = p.paint<funcLogarithmOp>(base, base);
+        auto ln = p.paint<funcLogarithmOp>(e, base);
         auto dy = p.paint<partialDifferentiateOp>(power, target);
         auto product2 = p.paint<productOp>(ln, exp, dy);
         // summation

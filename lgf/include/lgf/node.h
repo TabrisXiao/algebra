@@ -249,7 +249,7 @@ namespace lgf
         node *input(size_t i = 0)
         {
             if (i >= inputs.size())
-                throw std::runtime_error("calling input index out of range");
+                throw std::runtime_error("input(size_t i): calling input index out of range");
 
             if (inputs[i].is_coupled())
                 return inputs[i].get_dual_node();
@@ -364,6 +364,7 @@ namespace lgf
 
         bool is_dependency_fullfilled()
         {
+            inputs.clean();
             for (auto &e : inputs)
             {
                 if (!e.is_coupled())

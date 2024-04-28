@@ -7,7 +7,6 @@
 
 namespace lgf
 {
-
     template <typename T>
     resultCode flatten_same_type_inputs(node *op)
     {

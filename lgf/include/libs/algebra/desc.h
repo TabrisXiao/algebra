@@ -49,10 +49,11 @@ namespace lgf
     realNumberAttr(numberType t) : dataAttr("realNumber"), type(t) {}
     // realNumberAttr(realNumberAttr &&attr) : dataAttr("realNumber"), data(attr.get_data()), type(attr.get_type()) {}
     void set_type(numberType t) { type = t; }
+
     virtual sid_t represent() override
     {
       if (type == real)
-        return "f32, " + utils::to_string(data);
+        return utils::to_string(data);
       if (type == inf)
         return "inf";
       if (type == ninf)
