@@ -19,8 +19,7 @@ After a graph is constructed, one can apply a sequence of processes on the graph
 
 ### Todo's
 
-* Fix the duplicate ops remove pass.
-* Fix the derivative pass.
+* Redesign the zero and unit in algebra.
 * Express simple function of log and exp.
 * Improve the `unit/zero_effective_check`.
 * Add `option` object for pass.

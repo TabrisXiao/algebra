@@ -23,13 +23,13 @@ namespace lgf
   {
   public:
     varDesc(LGFContext *ctx) : simpleValue("variable") {}
-    virtual bool unit_effective_check(valueDesc *desc) final
+    virtual bool unit_effective_check(valueDesc *desc) override
     {
-      return dynamic_cast<varDesc *>(desc) != nullptr;
+      return true;
     }
-    virtual bool zero_effective_check(valueDesc *desc) final
+    virtual bool zero_effective_check(valueDesc *desc) override
     {
-      return dynamic_cast<varDesc *>(desc) != nullptr;
+      return true;
     }
   };
 
@@ -90,11 +90,11 @@ namespace lgf
     realNumber(LGFContext *ctx) : simpleValue("realNumber") {}
     virtual bool unit_effective_check(valueDesc *desc) final
     {
-      return dynamic_cast<realNumber *>(desc) != nullptr;
+      return desc->is<realNumber, varDesc>();
     }
     virtual bool zero_effective_check(valueDesc *desc) final
     {
-      return dynamic_cast<realNumber *>(desc) != nullptr;
+      return desc->is<realNumber, varDesc>();
     }
   };
 

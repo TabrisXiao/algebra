@@ -16,7 +16,8 @@ namespace test_body
     bool run()
     {
       variable x;
-      auto y = function::exp(x);
+      real z(2);
+      auto y = function::exponent(z, x);
       auto dy = function::d(y);
       dy.latex();
       canvas::get()

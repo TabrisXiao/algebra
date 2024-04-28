@@ -112,6 +112,24 @@ lgf::resultCode lgf::analyticFuncDerivativeRewriter::rewrite(painter &p, partial
         return resultCode::success();
     }
 
+    // case of dy/dx
+    auto declop = func->dyn_cast<declOp>();
+    if (declop)
+    {
+        if (declop == target)
+        {
+            p.replace_op<cstDeclOp>(
+                op, p.get_context()->get_desc<unitDesc>(target->get_value_desc()));
+            return resultCode::success();
+        }
+        else
+        {
+            p.replace_op<cstDeclOp>(
+                op, p.get_context()->get_desc<zeroDesc>(func->get_value_desc()));
+            return resultCode::success();
+        }
+    }
+
     if (auto sum = dynamic_cast<sumOp *>(func))
     {
         for (auto &h : func->get_input_handles())
