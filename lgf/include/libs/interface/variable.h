@@ -244,6 +244,7 @@ namespace lgi
       auto &ctx = canvas::get().get_context();
       v = canvas::get().get_painter().paint<lgf::declOp>(ctx.get_desc<lgf::realNumber>());
     }
+    real(lgf::node *val) : variable(val) {}
     static real pi()
     {
       auto &ctx = canvas::get().get_context();

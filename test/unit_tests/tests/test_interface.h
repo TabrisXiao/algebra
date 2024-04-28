@@ -15,7 +15,7 @@ namespace test_body
     test_interface() { test_id = "interface test"; };
     bool run()
     {
-      variable x, sig;
+      variable x;
       auto y = function::exp(x);
       auto dy = function::d(y);
       dy.latex();

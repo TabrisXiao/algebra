@@ -19,10 +19,10 @@ After a graph is constructed, one can apply a sequence of processes on the graph
 
 ### Todo's
 
-* Secure the `unitDesc` and `zeroDesc` is flatten, ie.  `unit<unit<real>> = unit<real>`.
+* Fix the duplicate ops remove pass.
+* Fix the derivative pass.
+* Express simple function of log and exp.
 * Improve the `unit/zero_effective_check`.
-* Add fix region for `partialDifferentOp`.
 * Add `option` object for pass.
-* Fix the `convert2SIO` pass.
 * Enable the `export2latex` in interface.
 * Add transform to API graph to enable numerical calculation.
