@@ -45,20 +45,20 @@ namespace lgi
 
     variable(lgf::node *val) : variableBase(val) {}
 
-    variable operator=(const double rhs)
+    variable operator=(const double &rhs)
     {
       auto &ctx = canvas::get().get_context();
       auto real = ctx.get_desc<lgf::realNumber>();
-      auto data = ctx.get_data_attr<lgf::float32Data>(rhs);
+      auto data = ctx.get_data_attr<lgf::realNumberAttr>(rhs);
       auto cst = canvas::get().get_painter().paint<lgf::cstDeclOp>(
           real, data);
       return variable(cst);
     }
-    variable operator=(const int rhs)
+    variable operator=(const int &rhs)
     {
       auto &ctx = canvas::get().get_context();
       auto real = ctx.get_desc<lgf::realNumber>();
-      auto data = ctx.get_data_attr<lgf::float32Data>(rhs);
+      auto data = ctx.get_data_attr<lgf::realNumberAttr>(rhs);
       auto cst = canvas::get().get_painter().paint<lgf::cstDeclOp>(
           real, data);
       return variable(cst);
@@ -68,7 +68,7 @@ namespace lgi
     {
       auto &ctx = canvas::get().get_context();
       auto real = ctx.get_desc<lgf::realNumber>();
-      auto data = ctx.get_data_attr<lgf::float32Data>(rhs);
+      auto data = ctx.get_data_attr<lgf::realNumberAttr>(rhs);
       auto cst = canvas::get().get_painter().paint<lgf::cstDeclOp>(
           real, data);
       v = cst;
@@ -78,7 +78,7 @@ namespace lgi
     {
       auto &ctx = canvas::get().get_context();
       auto real = ctx.get_desc<lgf::realNumber>();
-      auto data = ctx.get_data_attr<lgf::float32Data>(rhs);
+      auto data = ctx.get_data_attr<lgf::realNumberAttr>(rhs);
       auto cst = canvas::get().get_painter().paint<lgf::cstDeclOp>(
           real, data);
       v = cst;
@@ -234,30 +234,22 @@ namespace lgi
     }
   };
 
-  class real : public variable
+  namespace constant
   {
-  public:
-    real(bool init = 1) : variable(0)
-    {
-      if (!init)
-        return;
-      auto &ctx = canvas::get().get_context();
-      v = canvas::get().get_painter().paint<lgf::declOp>(ctx.get_desc<lgf::realNumber>());
-    }
-    real(lgf::node *val) : variable(val) {}
-    static real pi()
+    variable pi()
     {
       auto &ctx = canvas::get().get_context();
       auto res = canvas::get().get_painter().paint<lgf::cstDeclOp>(ctx.get_desc<lgf::realNumber>(), ctx.get_data_attr<lgf::realNumberAttr>(lgf::realNumberAttr::pi));
-      return real(res);
+      return variable(res);
     }
-    static real e()
+    variable e()
     {
       auto &ctx = canvas::get().get_context();
       auto res = canvas::get().get_painter().paint<lgf::cstDeclOp>(ctx.get_desc<lgf::realNumber>(), ctx.get_data_attr<lgf::realNumberAttr>(lgf::realNumberAttr::e));
-      return real(res);
+      return variable(res);
     }
-  };
+
+  } // namespace const
 
 } // namespace lgi
 

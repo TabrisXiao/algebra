@@ -65,6 +65,7 @@ namespace lgi
       pm.add_pass(lgf::transform::createConvertToSIOPass());
       pm.run();
       lgf::sio::export2latex ex(&g);
+      g.assign_id();
       ex.run_on_op();
     }
 

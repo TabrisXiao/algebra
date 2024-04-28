@@ -15,14 +15,14 @@ namespace test_body
     test_interface() { test_id = "interface test"; };
     bool run()
     {
-      variable x;
-      real z(2);
-      auto y = function::exponent(z, x);
+      variable x, sig, z = 2;
+      auto y = function::exp(x / function::exponent(sig, z));
+      y.latex();
       auto dy = function::d(y);
       dy.latex();
       canvas::get()
           .get_pass_manager()
-          .set_log_level(2);
+          .set_log_level(1);
       canvas::get().compile();
       return 0;
     }

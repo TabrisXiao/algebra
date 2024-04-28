@@ -64,22 +64,23 @@ namespace lgf
                 continue;
             if (op->get_input_size() != 0)
                 continue;
-            // skip non-trivial op, assuming no duplicate in declOp
-            if (op->is_trivial())
-            {
-                queue.push(op);
-            }
+            queue.push(op);
         }
 
-        while (queue.size() > 1)
+        while (queue.size())
         {
             auto op = queue.front();
             queue.pop();
-            while (op == queue.front())
+            while (queue.size() && op == queue.front())
             {
                 queue.pop();
             }
             op->set_exploration(true);
+            // skip non-trivial op
+            if (!op->is_trivial())
+            {
+                continue;
+            }
             // checking if the duplicate op exists and
             // replace it if so.
             lgf::node *mark = nullptr;

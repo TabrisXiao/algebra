@@ -20,8 +20,8 @@ After a graph is constructed, one can apply a sequence of processes on the graph
 ### Todo's
 
 * Redesign the zero and unit in algebra.
+* Fuse the exponent and the inverse op.
 * Express simple function of log and exp.
 * Improve the `unit/zero_effective_check`.
 * Add `option` object for pass.
-* Enable the `export2latex` in interface.
 * Add transform to API graph to enable numerical calculation.
