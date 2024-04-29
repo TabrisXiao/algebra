@@ -16,6 +16,7 @@ resultCode passBase::apply_rewriter_once(painter &p, graph *g)
       auto &node = nodes[i];
       if (node->is_deprecate())
         continue;
+      p.set_paintPoint_after(node);
       result.add((*ptr).get()->execute(p, node));
       if (node->is_deprecate())
         continue;
@@ -38,7 +39,7 @@ resultCode passBase::apply_rewriter_greedy(painter &p, graph *g)
   while (result.isSuccess())
   {
     result = apply_rewriter_once(p, g);
-    if (0)
+    if (1)
     {
       OSTREAM << "\n------ Pass: " << _pass_name << " step: " << counts
               << " ------\n";

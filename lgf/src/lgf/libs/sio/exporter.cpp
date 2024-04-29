@@ -28,13 +28,7 @@ namespace lgf::sio
         }
         else if (auto op = dynamic_cast<funcOp *>(n))
         {
-            res += op->getFuncName() + "(";
-            for (auto &input : op->get_input_handles())
-            {
-                res += process(input.get_dual_node()) + ",";
-            }
-            res.pop_back();
-            res += ")";
+            res += simp_func_expression(op);
         }
         else if (auto op = dynamic_cast<symbolOp *>(n))
         {
@@ -64,7 +58,7 @@ namespace lgf::sio
         }
         else if (auto inverse = n->dyn_cast<inverseOp>())
         {
-            res = process(inverse->input(0)) + "^{-1}";
+            res = "1/" + process(inverse->input(0));
         }
         else
         {
@@ -74,52 +68,47 @@ namespace lgf::sio
         return res;
     }
 
-    // void export2Txt::run(graph* entry){
-    //     auto list = entry->getNodeList();
-    //     bool mainFound = false;
-    //     auto module = dynamic_cast<moduleOp*>(entry);
-    //     if(module && module->name == "main"){
-    //         mainFound = true;
-    //     }
-    //     if( mainFound ) os<<"--- export main to text: ---\n\n";
-    //     for(auto & node : list ){
-    //         if(auto op = dynamic_cast<returnOp*>(node)){
-    //             if(op->getInputSize() == 1){
-    //                 auto val = op->inputValue(0);
-    //                 os<<process(val);
-    //             }
-    //         }else if(auto module = dynamic_cast<moduleOp*>(node)){
-    //             for(auto & input : module->getInputs()){
-    //                 run(module);
+    bool is_special_number(node *op, std::string str)
+    {
+        auto num = op->dyn_cast<numberOp>();
+        if (!num)
+        {
+            return false;
+        }
+        return num->get_number_str() == str;
+    }
 
-    //             }
-    //         }
-    //     }
-    //     if( mainFound ) os<<"\n\n--- end ---\n";
-    // }
+    std::string export2latex::simp_func_expression(node *val)
+    {
+        std::string result;
+        auto funcName = val->dyn_cast<funcOp>()->getFuncName();
+        if (funcName == "exp")
+        {
+            auto num = val->input()->dyn_cast<numberOp>();
+            if (num && num->get_number_str() == "e")
+            {
+                return "\\exp\\left(" + process(val->input(1)) + "\\right)";
+            }
+            return process(val->input()) + "^{" + process(val->input(1)) + "}";
+        }
+        else if (funcName == "log")
+        {
+            if (is_special_number(val->input(), "e"))
+            {
+                return "\\ln\\left(" + process(val->input(1)) + "\\right)";
+            }
+            else
+            {
+                return "\\log_{" + process(val->input()) + "}\\left(" + process(val->input(1)) + "\\right)";
+            }
+        }
 
-    // void export2latex::run(graph* entry){
-    //     auto list = entry->getNodeList();
-    //     bool mainFound = false;
-    //     auto module = dynamic_cast<moduleOp*>(entry);
-    //     if(module && module->name == "main"){
-    //         mainFound = true;
-    //     }
-    //     if( mainFound ) os<<"--- export main to latex: ---\n\n";
-    //     for(auto & node : list ){
-    //         if(auto op = dynamic_cast<returnOp*>(node)){
-    //             if(op->getInputSize() == 1){
-    //                 auto val = op->inputValue(0);
-    //                 os<<process(val);
-    //             }
-    //         }else if(auto module = dynamic_cast<moduleOp*>(node)){
-    //             for(auto & input : module->getInputs()){
-    //                 run(module);
-
-    //             }
-    //         }
-    //     }
-    //     if( mainFound ) os<<"\n\n--- end ---\n";
-    // }
-
+        result += funcName + "(";
+        for (auto &input : val->get_input_handles())
+        {
+            result += process(input.get_dual_node()) + ",";
+        }
+        result.pop_back();
+        return result + ")";
+    }
 } // namespace lgf::sio
