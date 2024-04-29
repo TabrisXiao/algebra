@@ -3,7 +3,6 @@
 #include "object.h"
 #include <string>
 #include <vector>
-
 namespace lgf
 {
 

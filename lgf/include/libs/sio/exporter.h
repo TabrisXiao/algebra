@@ -45,7 +45,7 @@ namespace lgf::sio
         export2latex(graph *g_) : exporterBase(g_) {}
 
         virtual std::string process(node *val) final;
-
+        std::string simp_func_expression(node *val);
         void run(graph *entry){};
         void run() { run(g); }
         void run_on_op()

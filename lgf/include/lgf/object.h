@@ -1,14 +1,10 @@
 
 #ifndef LGF_OBJECT_H_
 #define LGF_OBJECT_H_
-#include <iostream>
-#include <string>
+#include "config.h"
 
 namespace lgf
 {
-
-    // symbolic id;
-    typedef std::string sid_t;
 
     class graphObject
     {
@@ -43,6 +39,35 @@ namespace lgf
         uint64_t nid = 0;
     };
 
+    // bitCode is a template object to encode type tag into binary type:
+    //
+    template <typename digitType>
+    class bitCode
+    {
+    public:
+        using digit_t = digitType;
+        bitCode() {}
+        bitCode(bitCode &code) { value = code.value; }
+        bitCode(const bitCode &code) { value = code.value; }
+        bitCode(const digitType &val) { value = val; }
+
+        bitCode shift(size_t val)
+        {
+            value |= 1 << val;
+            return *this;
+        }
+        bitCode add(const bitCode &val)
+        {
+            value |= val.value;
+            return *this;
+        }
+        bool check(digitType val)
+        {
+            return (value & val) == val;
+        }
+        void reset() { value = 0; }
+        digit_t value = 0;
+    };
 }
 
 #endif

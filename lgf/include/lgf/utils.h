@@ -57,37 +57,5 @@ namespace lgf
     logicResult(bool t) { value = t; }
     bool value = 0;
   };
-
-  // bitCode is a template object to encode type tag into binary type:
-  //
-  template <typename digitType>
-  class bitCode
-  {
-  public:
-    using digit_t = digitType;
-    bitCode() {}
-    //bitCode(digitType val) { value = val; }
-    //bitCode(digitType &val) { value = val; }
-    bitCode(bitCode &code) { value = code.value; }
-    bitCode(const bitCode &code) { value = code.value; }
-    bitCode(const digitType &val) { value = val; }
-
-    bitCode shift(size_t val)
-    {
-      value |= 1 << val;
-      return *this;
-    }
-    bitCode add(const bitCode &val)
-    {
-      value |= val.value;
-      return *this;
-    }
-    bool check(digitType val)
-    {
-      return (value & val) == val;
-    }
-    void reset() { value = 0; }
-    digit_t value = 0;
-  };
 }
 #endif
