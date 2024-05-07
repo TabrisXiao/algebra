@@ -39,7 +39,7 @@ namespace lgi
         return;
       auto &ctx = canvas::get().get_context();
       v = canvas::get().get_painter().paint<lgf::declOp>(
-          ctx.get_desc<lgf::varDesc>());
+          lgf::varDesc::get());
     }
     virtual ~variable() {}
 
@@ -48,7 +48,7 @@ namespace lgi
     variable operator=(const double &rhs)
     {
       auto &ctx = canvas::get().get_context();
-      auto real = ctx.get_desc<lgf::realNumber>();
+      auto real = lgf::realNumber::get();
       auto data = ctx.get_data_attr<lgf::realNumberAttr>(rhs);
       auto cst = canvas::get().get_painter().paint<lgf::cstDeclOp>(
           real, data);
@@ -57,7 +57,7 @@ namespace lgi
     variable operator=(const int &rhs)
     {
       auto &ctx = canvas::get().get_context();
-      auto real = ctx.get_desc<lgf::realNumber>();
+      auto real = lgf::realNumber::get();
       auto data = ctx.get_data_attr<lgf::realNumberAttr>(rhs);
       auto cst = canvas::get().get_painter().paint<lgf::cstDeclOp>(
           real, data);
@@ -67,7 +67,7 @@ namespace lgi
     variable(const double &rhs)
     {
       auto &ctx = canvas::get().get_context();
-      auto real = ctx.get_desc<lgf::realNumber>();
+      auto real = lgf::realNumber::get();
       auto data = ctx.get_data_attr<lgf::realNumberAttr>(rhs);
       auto cst = canvas::get().get_painter().paint<lgf::cstDeclOp>(
           real, data);
@@ -77,7 +77,7 @@ namespace lgi
     variable(const int &rhs)
     {
       auto &ctx = canvas::get().get_context();
-      auto real = ctx.get_desc<lgf::realNumber>();
+      auto real = lgf::realNumber::get();
       auto data = ctx.get_data_attr<lgf::realNumberAttr>(rhs);
       auto cst = canvas::get().get_painter().paint<lgf::cstDeclOp>(
           real, data);
@@ -88,7 +88,7 @@ namespace lgi
     variable data_rhs_binary_op(const variable &var, const daTy &data)
     {
       auto &ctx = canvas::get().get_context();
-      auto real = ctx.get_desc<lgf::realNumber>();
+      auto real = lgf::realNumber::get();
       auto cst = canvas::get().get_painter().paint<lgf::cstDeclOp>(
           real, ctx.get_data_attr<daTy>(data));
       auto res = canvas::get().get_painter().paint<opTy>(var.node(), cst);
@@ -99,7 +99,7 @@ namespace lgi
     variable data_lhs_binary_op(const daTy &data, const variable &var) const
     {
       auto &ctx = canvas::get().get_context();
-      auto real = ctx.get_desc<lgf::realNumber>();
+      auto real = lgf::realNumber::get();
       auto cst = canvas::get().get_painter().paint<lgf::cstDeclOp>(
           real, ctx.get_data_attr<daTy>(data));
       auto res = canvas::get().get_painter().paint<opTy>(cst, var.node());
@@ -192,7 +192,7 @@ namespace lgi
     variable binary_data_lhs_divide(const T &num, const variable &rhs) const
     {
       auto &ctx = canvas::get().get_context();
-      auto real = ctx.get_desc<lgf::realNumber>();
+      auto real = lgf::realNumber::get();
       auto cst = canvas::get().get_painter().paint<lgf::cstDeclOp>(
           real, ctx.get_data_attr<attrT>(num));
       auto inv = canvas::get().get_painter().paint<lgf::inverseOp>(rhs.node());
@@ -204,7 +204,7 @@ namespace lgi
     variable binary_data_rhs_divide(const variable &lhs, const T &num) const
     {
       auto &ctx = canvas::get().get_context();
-      auto real = ctx.get_desc<lgf::realNumber>();
+      auto real = lgf::realNumber::get();
       auto cst = canvas::get().get_painter().paint<lgf::cstDeclOp>(
           real, ctx.get_data_attr<attrT>(num));
       auto inv = canvas::get().get_painter().paint<lgf::inverseOp>(cst);
@@ -239,13 +239,13 @@ namespace lgi
     variable pi()
     {
       auto &ctx = canvas::get().get_context();
-      auto res = canvas::get().get_painter().paint<lgf::cstDeclOp>(ctx.get_desc<lgf::realNumber>(), ctx.get_data_attr<lgf::realNumberAttr>(lgf::realNumberAttr::pi));
+      auto res = canvas::get().get_painter().paint<lgf::cstDeclOp>(lgf::realNumber::get(), ctx.get_data_attr<lgf::realNumberAttr>(lgf::realNumberAttr::pi));
       return variable(res);
     }
     variable e()
     {
       auto &ctx = canvas::get().get_context();
-      auto res = canvas::get().get_painter().paint<lgf::cstDeclOp>(ctx.get_desc<lgf::realNumber>(), ctx.get_data_attr<lgf::realNumberAttr>(lgf::realNumberAttr::e));
+      auto res = canvas::get().get_painter().paint<lgf::cstDeclOp>(lgf::realNumber::get(), ctx.get_data_attr<lgf::realNumberAttr>(lgf::realNumberAttr::e));
       return variable(res);
     }
 

@@ -16,7 +16,7 @@ namespace lgf::transform
     {
     public:
         convertToSIORewriter(std::string funcName = "") : funcName(funcName){};
-        virtual valueDesc *convert_desc(LGFContext *ctx, valueDesc *desc)
+        virtual descriptor convert_desc(LGFContext *ctx, descriptor desc)
         {
             return desc;
         }
@@ -40,25 +40,26 @@ namespace lgf::transform
         virtual resultCode rewrite(painter &p, cstDeclOp *op)
         {
             auto desc = op->get_value_desc();
-            if (desc->dyn_cast<unitDesc>())
-            {
-                auto elem = desc->dyn_cast<unitDesc>()->get_elem_desc();
-                if (elem->is<realNumber, varDesc>())
-                {
-                    p.replace_op<lgf::sio::numberOp>(op, op->get_value_desc(), "1");
-                    return resultCode::success();
-                }
-            }
-            else if (desc->dyn_cast<zeroDesc>())
-            {
-                auto elem = desc->dyn_cast<zeroDesc>()->get_elem_desc();
-                if (elem->is<realNumber, varDesc>())
-                {
-                    p.replace_op<lgf::sio::numberOp>(op, op->get_value_desc(), "0");
-                    return resultCode::success();
-                }
-            }
-            else if (desc->is<realNumber>())
+            // if (desc->dyn_cast<unitDesc>())
+            // {
+            //     auto elem = desc->dyn_cast<unitDesc>()->get_elem_desc();
+            //     if (elem->is<realNumber, varDesc>())
+            //     {
+            //         p.replace_op<lgf::sio::numberOp>(op, op->get_value_desc(), "1");
+            //         return resultCode::success();
+            //     }
+            // }
+            // else if (desc->dyn_cast<zeroDesc>())
+            // {
+            //     auto elem = desc->dyn_cast<zeroDesc>()->get_elem_desc();
+            //     if (elem->is<realNumber, varDesc>())
+            //     {
+            //         p.replace_op<lgf::sio::numberOp>(op, op->get_value_desc(), "0");
+            //         return resultCode::success();
+            //     }
+            // }
+            // else
+            if (desc.is<realNumber>())
             {
                 auto real_data = op->get_data_attr()->dyn_cast<realNumberAttr>();
                 p.replace_op<lgf::sio::numberOp>(op, op->get_value_desc(), real_data->represent());

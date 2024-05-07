@@ -83,22 +83,22 @@ namespace lgi::function
             if (!init)
                 return;
             auto &ctx = canvas::get().get_context();
-            v = canvas::get().get_painter().paint<lgf::declOp>(ctx.get_desc<lgf::setDesc>());
+            v = canvas::get().get_painter().paint<lgf::declOp>(lgf::setDesc::get());
         }
 
         set(lgf::node *val) : variableBase(val) {}
     };
 
-    class interval : public set
-    {
-    public:
-        interval(double lb, double rb, bool lop = 0, bool rop = 0) : set(false)
-        {
-            auto &ctx = canvas::get().get_context();
-            auto &p = canvas::get().get_painter();
-            v = p.paint<lgf::declOp>(ctx.get_desc<lgf::realInterval>(lb, rb, lop, rop));
-        }
-    };
+    // class interval : public set
+    // {
+    // public:
+    //     interval(double lb, double rb, bool lop = 0, bool rop = 0) : set(false)
+    //     {
+    //         auto &ctx = canvas::get().get_context();
+    //         auto &p = canvas::get().get_painter();
+    //         v = p.paint<lgf::declOp>(lgf::realInterval::get(lb, rb, lop, rop));
+    //     }
+    // };
 
 } // namespace  lgi::function
 

@@ -3,6 +3,7 @@
 #define LGF_LIB_ALGEBRA_DESC_H
 
 #include "lgf/attribute.h"
+#include "lgf/code.h"
 #include "lgf/context.h"
 #include "lgf/value.h"
 #include "lgf/attribute.h"
@@ -10,26 +11,27 @@
 
 namespace lgf
 {
+  // template<typename T>
+  // class interfaceBase {
+  //   public:
+  //   interfaceBase() = default;
+  //   virtual ~interfaceBase() = default;
+  //   void binary_op(node* lhs, node* rhs){
+  //     return T::binary_op(lhs, rhs);
+  //   }
+  // };
 
-  class algebraDesc
+  class varDesc : public descBase
   {
   public:
-    algebraDesc() = default;
-    virtual bool unit_effective_check(valueDesc *desc) = 0;
-    virtual bool zero_effective_check(valueDesc *desc) = 0;
-  };
-
-  class varDesc : public simpleValue, public algebraDesc
-  {
-  public:
-    varDesc(LGFContext *ctx) : simpleValue("variable") {}
-    virtual bool unit_effective_check(valueDesc *desc) override
+    varDesc() : descBase("variable") {}
+    inline static descriptor get()
     {
-      return true;
+      return descriptor::get<varDesc>();
     }
-    virtual bool zero_effective_check(valueDesc *desc) override
+    virtual std::unique_ptr<descBase> copy() override
     {
-      return true;
+      return std::make_unique<varDesc>();
     }
   };
 
@@ -39,6 +41,7 @@ namespace lgf
     enum numberType : int8_t
     {
       real,
+      one,
       inf,
       ninf,
       e,
@@ -84,69 +87,15 @@ namespace lgf
     double data = 0;
   };
 
-  class realNumber : public simpleValue, public algebraDesc
+  class realNumber : public descBase
   {
   public:
-    realNumber(LGFContext *ctx) : simpleValue("realNumber") {}
-    virtual bool unit_effective_check(valueDesc *desc) final
+    realNumber() : descBase("realNumber"){};
+    static descriptor get()
     {
-      return desc->is<realNumber, varDesc>();
+      return descriptor::get<realNumber>();
     }
-    virtual bool zero_effective_check(valueDesc *desc) final
-    {
-      return desc->is<realNumber, varDesc>();
-    }
-  };
-
-  class unitDesc : public valueDesc
-  {
-  public:
-    unitDesc(LGFContext *ctx, valueDesc *elem) : valueDesc("unit"), elemDesc(elem)
-    {
-      auto ee = dynamic_cast<unitDesc *>(elem);
-      if (ee)
-      {
-        elemDesc = ee->get_elem_desc();
-      }
-    }
-    virtual sid_t represent() override
-    {
-      return "unit<" + elemDesc->represent() + ">";
-    }
-    valueDesc *get_elem_desc() { return elemDesc; }
-    virtual bool unit_effective_check(valueDesc *desc);
-
-  private:
-    valueDesc *elemDesc = nullptr;
-  };
-
-  class zeroDesc : public valueDesc
-  {
-  public:
-    zeroDesc(LGFContext *ctx, valueDesc *elem) : valueDesc("zero"), elemDesc(elem)
-    {
-      auto ee = dynamic_cast<zeroDesc *>(elem);
-      if (ee)
-      {
-        elemDesc = ee->get_elem_desc();
-      }
-    }
-    virtual sid_t represent() override
-    {
-      return "zero<" + elemDesc->represent() + ">";
-    }
-    valueDesc *get_elem_desc() { return elemDesc; }
-    bool zero_effective_check(valueDesc *desc)
-    {
-      if (auto unit = dynamic_cast<unitDesc *>(desc))
-        desc = unit->get_elem_desc();
-      else if (auto zero = dynamic_cast<zeroDesc *>(desc))
-        desc = zero->get_elem_desc();
-      return dynamic_cast<algebraDesc *>(elemDesc)->zero_effective_check(desc);
-    }
-
-  private:
-    valueDesc *elemDesc = nullptr;
+    virtual std::unique_ptr<descBase> copy() override { return std::make_unique<realNumber>(); }
   };
 
 } // namespace lgf

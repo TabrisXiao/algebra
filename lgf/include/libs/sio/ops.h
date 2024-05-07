@@ -48,7 +48,7 @@ namespace lgf::sio
     {
     public:
         numberOp() : representOp("sio::number") {}
-        static numberOp *build(LGFContext *ctx, valueDesc *val, std::string number)
+        static numberOp *build(LGFContext *ctx, descriptor val, std::string number)
         {
             numberOp *op = new numberOp();
             op->set_value_desc(val);
@@ -82,7 +82,7 @@ namespace lgf::sio
     {
     public:
         symbolOp() : representOp("sio::symbol") {}
-        static symbolOp *build(LGFContext *ctx, valueDesc *val, std::string sid)
+        static symbolOp *build(LGFContext *ctx, descriptor val, std::string sid)
         {
             symbolOp *op = new symbolOp();
             op->get_value().set_sid(sid);
@@ -104,7 +104,7 @@ namespace lgf::sio
     {
     public:
         sumOp() : representOp("sio::sum") {}
-        static sumOp *build(LGFContext *ctx, valueDesc *desc, std::vector<node *> &args)
+        static sumOp *build(LGFContext *ctx, descriptor desc, std::vector<node *> &args)
         {
             sumOp *op = new sumOp();
             op->register_inputs(args);

@@ -6,10 +6,18 @@
 
 namespace lgf::sio
 {
-    class expDesc : public simpleValue
+    class expDesc : public descBase
     {
     public:
-        expDesc(LGFContext *ctx) : simpleValue("expressible") {}
+        expDesc() : descBase("expressible") {}
+        static descriptor get()
+        {
+            return descriptor::get<expDesc>();
+        }
+        std::unique_ptr<descBase> copy()
+        {
+            return std::make_unique<expDesc>();
+        }
     };
 } // namespace lgf::sio
 

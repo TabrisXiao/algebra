@@ -27,8 +27,9 @@ namespace lgf
         auto arg = log->arg();
         if (base == arg)
         {
-            auto unit = ctx->get_desc<unitDesc>(base->get_value_desc());
-            p.replace_op<lgf::cstDeclOp>(op, unit);
+            auto unit = realNumber::get();
+            auto unitAttr = ctx->get_data_attr<realNumberAttr>(realNumberAttr::one);
+            p.replace_op<lgf::cstDeclOp>(op, unit, unitAttr);
             return resultCode::success();
         }
         return resultCode::pass();

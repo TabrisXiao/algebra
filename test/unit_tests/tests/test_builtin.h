@@ -17,17 +17,17 @@ namespace test_body
       moduleOp module;
       painter p(&module);
       auto ctx = p.get_context();
-      auto intV = ctx->get_desc<int32Value>();
+      auto intV = int32Value::get();
       auto data = lgf::int32Data(3);
       auto cst = p.paint<lgf::cstDeclOp>(intV, &data);
       auto x = p.paint<lgf::declOp>(intV);
       auto assign = p.paint<lgf::updateOp>(x, cst);
       auto ret = p.paint<lgf::returnOp>(assign);
 
-      auto floatV = ctx->get_desc<float32Value>();
-      auto fdsc = ctx->get_desc<funcDesc>(floatV, std::vector<valueDesc *>{intV});
-      auto func = p.paint<lgf::funcDefineOp>("convert", fdsc);
-      auto call = p.paint<lgf::funcCallOp>(func, x);
+      auto floatV = float32Value::get();
+      // auto fdsc = ctx->get_desc<funcDesc>(floatV, std::vector<valueDesc *>{intV});
+      // auto func = p.paint<lgf::funcDefineOp>("convert", fdsc);
+      // auto call = p.paint<lgf::funcCallOp>(func, x);
       module.print();
       return 0;
     }

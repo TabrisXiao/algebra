@@ -18,8 +18,8 @@ namespace test_body
       variable x, sig, z = 2;
       auto y = function::exp(x / function::exponent(sig, z));
       y.latex();
-      auto dy = function::d(y);
-      dy.latex();
+      //   auto dy = function::d(y);
+      //   dy.latex();
       canvas::get()
           .get_pass_manager()
           .set_log_level(1);

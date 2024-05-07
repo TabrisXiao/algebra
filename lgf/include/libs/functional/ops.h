@@ -31,7 +31,7 @@ namespace lgf
         {
             auto op = new funcCosOp();
             op->register_input(x);
-            op->infer_trivial_value_desc();
+            op->set_value_desc(x->get_value_desc());
             return op;
         }
         virtual sid_t represent() override
@@ -48,7 +48,7 @@ namespace lgf
         {
             auto op = new funcSineOp();
             op->register_input(x);
-            op->infer_trivial_value_desc();
+            op->set_value_desc(x->get_value_desc());
             return op;
         }
         virtual sid_t represent() override
@@ -66,7 +66,7 @@ namespace lgf
             auto op = new funcPowerOp();
             op->register_input(x);
             op->set_power(n);
-            op->infer_trivial_value_desc();
+            op->set_value_desc(x->get_value_desc());
             return op;
         }
         void set_power(double n) { p = n; }
@@ -86,7 +86,7 @@ namespace lgf
         {
             auto op = new funcExponentationOp();
             op->register_input(base, power);
-            op->infer_trivial_value_desc();
+            op->set_value_desc(power->get_value_desc());
             return op;
         }
         node *power()
@@ -112,7 +112,7 @@ namespace lgf
         {
             auto op = new funcLogarithmOp();
             op->register_input(base, arg);
-            op->infer_trivial_value_desc();
+            op->set_value_desc(base->get_value_desc());
             return op;
         }
         node *base()

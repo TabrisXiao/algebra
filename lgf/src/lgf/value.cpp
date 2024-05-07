@@ -9,9 +9,7 @@ namespace lgf
     std::string value::represent()
     {
         printer p;
-        if (!desc)
-            return p.dump();
-        p << get_sid() << " " << desc->represent();
+        p << get_sid() << " " << desc.represent();
         return p.dump();
     }
 
