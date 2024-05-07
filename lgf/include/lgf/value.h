@@ -3,69 +3,90 @@
 #include "object.h"
 #include <string>
 #include <vector>
+#include "code.h"
 namespace lgf
 {
 
     class node;
-    class valueDesc : public graphObject
+
+    class descBase : public lgfObject
     {
     public:
-        valueDesc() = default;
-        valueDesc(sid_t id) : graphObject(id) {}
-        virtual ~valueDesc() = default;
-        virtual sid_t represent() { return ""; }
-        template <typename T>
-        T *dyn_cast()
+        descBase() = default;
+        descBase(sid_t id) : lgfObject(id) {}
+        virtual ~descBase() = default;
+        virtual std::unique_ptr<descBase> copy() { return std::make_unique<descBase>(sid); };
+        virtual sid_t represent() { return sid; }
+    };
+
+    class descriptor : public morphism_wrapper<descBase>
+    {
+    public:
+        descriptor() = default;
+        descriptor(const descriptor &d) : morphism_wrapper<descBase>(d) {}
+        descriptor(std::unique_ptr<descBase> &&p)
         {
-            return dynamic_cast<T *>(this);
+            ptr = std::move(p->copy());
+        }
+        template <typename T>
+        inline static descriptor get()
+        {
+            return descriptor(std::make_unique<T>());
+        }
+        template <typename T, typename... ARGS>
+        inline static descriptor get(ARGS... args)
+        {
+            return descriptor(std::make_unique<T>(args...));
         }
 
+        std::unique_ptr<descBase> &get_desc_ptr() { return ptr; }
+        sid_t represent()
+        {
+            if (ptr)
+                return ptr->represent();
+            else
+                return "";
+        }
         template <typename... ARGS>
         bool is()
         {
-            return (... || dynamic_cast<ARGS *>(this));
+            return (... || dynamic_cast<ARGS *>(ptr.get()));
         }
+        sid_t get_sid() { return ptr->get_sid(); }
     };
 
-    class value : public graphObject
+    class value : public lgfObject
     {
     public:
-        value(std::string sid = "") : graphObject(sid) {}
+        value(std::string sid = "") : lgfObject(sid) {}
 
-        value(valueDesc *d, std::string sid = "") : graphObject(sid), desc(d) {}
-        value(const value &v) : graphObject(v.get_sid()), desc(v.get_desc()) {}
+        value(descriptor &d, std::string sid = "") : lgfObject(sid), desc(std::move(d.get_desc_ptr())) {}
 
         virtual ~value() = default;
         virtual sid_t represent();
         sid_t desc_represent()
         {
-            if (desc)
-                return desc->represent();
-            return "";
+            return desc.represent();
         }
 
         void print();
 
-        valueDesc *get_desc() const { return desc; }
-        void set_desc(valueDesc *i)
+        descriptor get_desc() { return desc; }
+        void set_desc(descriptor &d)
         {
-            desc = i;
+            desc = d;
         }
+        void set_nid(uint64_t id)
+        {
+            nid = id;
+        }
+        uint64_t get_nid() const { return nid; }
 
     private:
-        valueDesc *desc = nullptr;
+        uint64_t nid = 0;
+        descriptor desc;
     };
 
-    // simple value is the value that can be identified by a single sid.
-    class simpleValue : public valueDesc
-    {
-    public:
-        simpleValue(sid_t id) : valueDesc(id) {}
-        virtual sid_t represent() override
-        {
-            return get_sid();
-        }
-    };
 } // namespace lgf
 
 #endif

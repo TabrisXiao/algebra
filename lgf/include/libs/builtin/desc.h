@@ -4,6 +4,7 @@
 #include "lgf/value.h"
 #include "lgf/attribute.h"
 #include "lgf/utils.h"
+#include "lgf/context.h"
 namespace lgf
 {
   class LFFContext;
@@ -27,37 +28,56 @@ namespace lgf
     }
   };
 
-  class int32Value : public simpleValue
+  class int32Value : public descBase
   {
   public:
-    int32Value(LGFContext *ctx) : simpleValue("int32") {}
-  };
-
-  class float32Value : public simpleValue
-  {
-  public:
-    float32Value(LGFContext *ctx) : simpleValue("float32") {}
-  };
-
-  class listDesc : public valueDesc
-  {
-  public:
-    listDesc(LGFContext *ctx) : valueDesc("list") {}
-    template <typename... ARGS>
-    listDesc(LGFContext *ctx, ARGS... args) : valueDesc("list")
+    int32Value() : descBase("int32") {}
+    int32Value(LGFContext *ctx) : descBase("int32") {}
+    static descriptor get()
     {
-      auto nds = std::initializer_list<valueDesc *>{args...};
+      return descriptor(std::make_unique<int32Value>());
+    }
+  };
+
+  class float32Value : public descBase
+  {
+  public:
+    float32Value() : descBase("float32") {}
+    float32Value(LGFContext *ctx) : descBase("float32") {}
+    static descriptor get()
+    {
+      return descriptor::get<float32Value>();
+    }
+  };
+
+  class listDesc : public descBase
+  {
+  public:
+    listDesc() : descBase("list") {}
+    template <typename... ARGS>
+    listDesc(ARGS... args) : descBase("list")
+    {
+      auto nds = std::initializer_list<descriptor>{args...};
       for (auto nd : nds)
       {
         data.push_back(nd);
       }
+    }
+    template <typename... ARGS>
+    static descriptor get(ARGS... arg)
+    {
+      return descriptor::get<listDesc>(arg...);
+    }
+    virtual std::unique_ptr<descBase> copy() override
+    {
+      return std::make_unique<listDesc>(*this);
     }
     virtual sid_t represent() override
     {
       sid_t res = get_sid() + "{";
       for (auto desc : data)
       {
-        res += desc->get_sid() + ", ";
+        res += desc.get_sid() + ", ";
       }
       res.pop_back();
       res += "}";
@@ -67,24 +87,28 @@ namespace lgf
     {
       return data.size();
     }
-    valueDesc *get(int i)
+    descriptor at(int i)
     {
       return data[i];
     }
 
   private:
-    std::vector<valueDesc *> data;
+    std::vector<descriptor> data;
   };
 
-  class funcDesc : public valueDesc
+  class funcDesc : public descBase
   {
   public:
-    funcDesc(LGFContext *ctx) : valueDesc("func") {}
+    funcDesc() : descBase("func") {}
 
-    funcDesc(LGFContext *ctx, valueDesc *out, std::vector<valueDesc *> &in) : valueDesc("func")
+    funcDesc(descriptor out, std::vector<descriptor> &in) : descBase("func")
     {
       ret = out;
       args = in;
+    }
+    virtual std::unique_ptr<descBase> copy() override
+    {
+      return std::make_unique<funcDesc>(ret, args);
     }
 
     virtual sid_t represent() override
@@ -92,7 +116,7 @@ namespace lgf
       sid_t res = get_sid() + ": " + "(";
       for (auto desc : args)
       {
-        res += desc->get_sid() + ", ";
+        res += desc.get_sid() + ", ";
       }
       res.pop_back();
       res.pop_back();
@@ -100,20 +124,20 @@ namespace lgf
       return res;
     }
 
-    valueDesc *get_arg_desc(int i)
+    descriptor get_arg_desc(int i)
     {
       return args[i];
     }
-    valueDesc *get_ret_desc()
+    descriptor get_ret_desc()
     {
       return ret;
     }
-    std::vector<valueDesc *> &get_arg_descs()
+    std::vector<descriptor> &get_arg_descs()
     {
       return args;
     }
-    std::vector<valueDesc *> args;
-    valueDesc *ret = nullptr;
+    std::vector<descriptor> args;
+    descriptor ret;
   };
 
 } // namespace lgf

@@ -24,12 +24,12 @@ namespace lgf
     class normalizer;
 
     typedef size_t id_t;
-    class node : public graphObject
+    class node : public lgfObject
     {
     public:
         // the first output value is dependency value used to store
         // the dependency inform that don't have value connections
-        node(std::string id = "op", graph *g = nullptr) : graphObject(id)
+        node(std::string id = "op", graph *g = nullptr) : lgfObject(id)
         {
             _v_ = std::make_unique<value>();
             graph_ = g;
@@ -42,7 +42,7 @@ namespace lgf
             return p.dump();
         }
 
-        valueDesc *get_value_desc() { return _v_->get_desc(); }
+        descriptor get_value_desc() { return _v_->get_desc(); }
 
         template <typename T>
         T *get_value_desc_as()
@@ -52,9 +52,9 @@ namespace lgf
 
         value &get_value() { return *_v_; }
 
-        void set_value_desc(valueDesc *desc)
+        void set_value_desc(descriptor d)
         {
-            _v_->set_desc(desc);
+            _v_->set_desc(d);
         }
 
         sid_t get_value_sid()
@@ -286,13 +286,6 @@ namespace lgf
         value &output()
         {
             return get_value();
-        }
-
-        void infer_trivial_value_desc()
-        {
-            if (!inputs.size())
-                return;
-            get_value().set_desc(input_value(0).get_desc());
         }
 
         // drop all inputs to this node, and remove all connects

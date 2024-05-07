@@ -2,15 +2,15 @@
 #ifndef LGF_OBJECT_H_
 #define LGF_OBJECT_H_
 #include "config.h"
-
+#include <iostream>
 namespace lgf
 {
 
-    class graphObject
+    class lgfObject
     {
     public:
-        graphObject() = default;
-        graphObject(sid_t id) : sid(id) {}
+        lgfObject() = default;
+        lgfObject(sid_t id) : sid(id) {}
         std::string get_sid() const { return sid; }
         void set_sid(sid_t id) { sid = id; }
         bool set_sid_if_null(sid_t id)
@@ -22,21 +22,16 @@ namespace lgf
             }
             return 0;
         }
-        void set_nid(uint64_t id)
-        {
-            nid = id;
-        }
         template <typename T>
         T *dyn_cast()
         {
             return dynamic_cast<T *>(this);
         }
-        uint64_t get_nid() const { return nid; }
+
         virtual sid_t represent() = 0;
 
     protected:
         sid_t sid = "";
-        uint64_t nid = 0;
     };
 
     // bitCode is a template object to encode type tag into binary type:
@@ -67,6 +62,41 @@ namespace lgf
         }
         void reset() { value = 0; }
         digit_t value = 0;
+    };
+
+    template <typename T>
+    class morphism_wrapper
+    {
+        // this object is a container to wrapper all classes derived from base type T.
+        // This object allow the copy and the assignment for the derived class provided the
+        // wrapped class having a virtual function defined in the signature:
+        // virtual std::unique_ptr<T> copy();
+    public:
+        morphism_wrapper() = default;
+
+        morphism_wrapper(const morphism_wrapper &src)
+        {
+            ptr = std::move(src.get()->copy());
+        }
+        morphism_wrapper(morphism_wrapper &src)
+        {
+            ptr = std::move(src.get()->copy());
+        }
+        morphism_wrapper &operator=(const morphism_wrapper &src)
+        {
+            ptr = std::move(src.get()->copy());
+            return *this;
+        }
+        T *get() const { return ptr.get(); }
+        template <typename U>
+        U *dyn_cast()
+        {
+            auto p = dynamic_cast<U *>(ptr.get());
+            return p;
+        }
+
+    public:
+        std::unique_ptr<T> ptr = nullptr;
     };
 }
 

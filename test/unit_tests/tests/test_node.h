@@ -12,7 +12,7 @@ namespace test_body
     {
     public:
         real() = default;
-        virtual sid_t represent() override
+        virtual sid_t represent_type() override
         {
             return "real";
         }

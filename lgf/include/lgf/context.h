@@ -18,15 +18,6 @@ namespace lgf
         LGFContext(LGFContext &) = delete;
 
         template <typename T, typename... Args>
-        T *get_desc(Args... args)
-        {
-            auto desc = std::make_unique<T>(this, args...);
-            auto ptr = desc.get();
-            descs.push_back(std::move(desc));
-            return ptr;
-        }
-
-        template <typename T, typename... Args>
         T *get_data_attr(Args... args)
         {
             auto attr = std::make_unique<T>(args...);
@@ -35,7 +26,6 @@ namespace lgf
             return ptr;
         }
 
-        std::vector<std::unique_ptr<valueDesc>> descs;
         std::vector<std::unique_ptr<dataAttr>> data;
     };
 

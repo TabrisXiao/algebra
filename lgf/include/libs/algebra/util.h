@@ -30,7 +30,7 @@ namespace lgf
     }
 
     template <typename callable, typename lhsTy, typename rhsTy>
-    resultCode run_op_pair_base_on_type(node *op, callable &&fn)
+    resultCode run_op_pair_base_on_op(node *op, callable &&fn)
     {
         resultCode result = resultCode::pass();
         size_t i = 1;

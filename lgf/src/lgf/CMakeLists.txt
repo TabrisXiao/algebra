@@ -5,13 +5,13 @@ file(GLOB_RECURSE headers
 
 set(
     sources
+    code.cpp
     value.cpp
     edge.cpp
     node.cpp
     pass.cpp
     libs/builtin/normalization.cpp
     libs/algebra/ops.cpp
-    libs/algebra/desc.cpp
     libs/functional/ops.cpp
     libs/functional/passes.cpp
     libs/functional/analytic_derivative.cpp

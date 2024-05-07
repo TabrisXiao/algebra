@@ -16,7 +16,7 @@ namespace lgf
         {
             auto op = new sumOp();
             op->register_inputs(vec);
-            op->infer_trivial_value_desc();
+            op->set_value_desc(vec[0]->get_value_desc());
             return op;
         }
         template <typename... Args>
@@ -24,7 +24,7 @@ namespace lgf
         {
             auto op = new sumOp();
             op->register_input(args...);
-            op->infer_trivial_value_desc();
+            op->set_value_desc(op->input()->get_value_desc());
             return op;
         }
         virtual resultCode rewrite(painter &p, node *op) override;
@@ -38,7 +38,7 @@ namespace lgf
         {
             auto op = new productOp();
             op->register_inputs(vec);
-            op->infer_trivial_value_desc();
+            op->set_value_desc(vec[0]->get_value_desc());
             return op;
         }
         static productOp *build(LGFContext *ctx)
@@ -51,7 +51,7 @@ namespace lgf
         {
             auto op = new productOp();
             op->register_input(args...);
-            op->infer_trivial_value_desc();
+            op->set_value_desc(op->input()->get_value_desc());
             return op;
         }
         virtual resultCode rewrite(painter &p, node *op) override;
@@ -65,7 +65,7 @@ namespace lgf
         {
             auto op = new negativeOp();
             op->register_input(n);
-            op->infer_trivial_value_desc();
+            op->set_value_desc(n->get_value_desc());
             return op;
         }
     };
@@ -78,7 +78,7 @@ namespace lgf
         {
             auto op = new inverseOp();
             op->register_input(n);
-            op->infer_trivial_value_desc();
+            op->set_value_desc(n->get_value_desc());
             return op;
         }
     };
@@ -91,7 +91,7 @@ namespace lgf
         {
             auto op = new minusOp();
             op->register_input(lhs, rhs);
-            op->infer_trivial_value_desc();
+            op->set_value_desc(lhs->get_value_desc());
             return op;
         }
         node *lhs() { return input(0); }

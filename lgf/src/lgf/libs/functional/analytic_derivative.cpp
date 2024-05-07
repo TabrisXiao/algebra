@@ -24,7 +24,7 @@ lgf::resultCode lgf::ChainRuleRewriter::rewrite(painter &p, differentiateOp *op)
 
     if (auto cst = func->dyn_cast<cstDeclOp>())
     {
-        p.replace_op<cstDeclOp>(op, ctx->get_desc<zeroDesc>(cst->get_value_desc()));
+        // p.replace_op<cstDeclOp>(op, cst->get_value_desc());
         return resultCode::success();
     }
 
@@ -62,7 +62,7 @@ lgf::resultCode lgf::ChainRuleRewriter::rewrite(painter &p, differentiateOp *op)
                     prod->register_input(h1.get_dual_node());
                 }
             }
-            prod->infer_trivial_value_desc();
+            // prod->infer_trivial_value_desc();
             sum_args.push_back(prod);
         }
         p.replace_op<sumOp>(op, sum_args);
@@ -100,15 +100,15 @@ lgf::resultCode lgf::analyticFuncDerivativeRewriter::rewrite(painter &p, partial
     auto target = op->var();
     if (dynamic_cast<cstDeclOp *>(func) || dynamic_cast<cstDeclOp *>(target))
     {
-        p.replace_op<cstDeclOp>(
-            op, p.get_context()->get_desc<zeroDesc>(op->get_value_desc()));
+        // p.replace_op<cstDeclOp>(
+        //     op, p.get_context()->get_desc<zeroDesc>(op->get_value_desc()));
         return resultCode::success();
     }
 
     if (func == target)
     {
-        p.replace_op<cstDeclOp>(
-            op, p.get_context()->get_desc<unitDesc>(target->get_value_desc()));
+        // p.replace_op<cstDeclOp>(
+        //     op, p.get_context()->get_desc<unitDesc>(target->get_value_desc()));
         return resultCode::success();
     }
 
@@ -118,14 +118,14 @@ lgf::resultCode lgf::analyticFuncDerivativeRewriter::rewrite(painter &p, partial
     {
         if (declop == target)
         {
-            p.replace_op<cstDeclOp>(
-                op, p.get_context()->get_desc<unitDesc>(target->get_value_desc()));
+            // p.replace_op<cstDeclOp>(
+            //     op, p.get_context()->get_desc<unitDesc>(target->get_value_desc()));
             return resultCode::success();
         }
         else
         {
-            p.replace_op<cstDeclOp>(
-                op, p.get_context()->get_desc<zeroDesc>(func->get_value_desc()));
+            // p.replace_op<cstDeclOp>(
+            //     op, p.get_context()->get_desc<zeroDesc>(func->get_value_desc()));
             return resultCode::success();
         }
     }
@@ -162,7 +162,7 @@ lgf::resultCode lgf::analyticFuncDerivativeRewriter::rewrite(painter &p, partial
                     prod->register_input(arg);
                 }
             }
-            prod->infer_trivial_value_desc();
+            // prod->infer_trivial_value_desc();
             sum_args.push_back(prod);
         }
         p.replace_op<sumOp>(op, sum_args);
@@ -203,22 +203,22 @@ lgf::resultCode lgf::analyticFuncDerivativeRewriter::rewrite(painter &p, partial
         auto base = exp->base();
         auto power = exp->power();
         auto e_data = ctx->get_data_attr<realNumberAttr>(realNumberAttr::e);
-        auto e = p.paint<cstDeclOp>(ctx->get_desc<realNumber>(), e_data);
-        auto unit = p.paint<cstDeclOp>(ctx->get_desc<unitDesc>(target->get_value_desc()));
-        auto nunit = p.paint<negativeOp>(unit);
-        auto ym1 = p.paint<sumOp>(power, nunit);
-        // y x^(y-1) dx
+        auto e = p.paint<cstDeclOp>(realNumber::get(), e_data);
+        // auto unit = p.paint<cstDeclOp>(ctx->get_desc<unitDesc>(target->get_value_desc()));
+        // auto nunit = p.paint<negativeOp>(unit);
+        // auto ym1 = p.paint<sumOp>(power, nunit);
+        //  y x^(y-1) dx
         auto dx = p.paint<partialDifferentiateOp>(base, target);
-        auto xym1 = p.paint<funcExponentationOp>(base, ym1);
-        auto product1 = p.paint<productOp>(power, xym1, dx);
+        // auto xym1 = p.paint<funcExponentationOp>(base, ym1);
+        // auto product1 = p.paint<productOp>(power, xym1, dx);
 
         // ln(x) x^y dy
         auto ln = p.paint<funcLogarithmOp>(e, base);
         auto dy = p.paint<partialDifferentiateOp>(power, target);
         auto product2 = p.paint<productOp>(ln, exp, dy);
         // summation
-        auto sum = p.paint<sumOp>(product1, product2);
-        p.replace_op(op, sum);
+        // auto sum = p.paint<sumOp>(product1, product2);
+        // p.replace_op(op, sum);
         return resultCode::success();
     }
     return result;

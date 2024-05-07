@@ -9,53 +9,32 @@
 namespace lgf
 {
 
-  class setDesc : public simpleValue
+  class setDesc : public descBase
   {
   public:
-    setDesc(LGFContext *ctx) : simpleValue("set") {}
+    setDesc() : descBase("set") {}
+    static descriptor get()
+    {
+      return descriptor::get<setDesc>();
+    }
+    virtual std::unique_ptr<descBase> copy() override
+    {
+      return std::make_unique<setDesc>();
+    }
   };
 
-  class realInterval : public setDesc
+  class sigmaAlgebra : public descBase
   {
   public:
-    realInterval(LGFContext *ctx, double l, double r, bool ol = 1, bool or_ = 1) : setDesc(ctx), dLeftBound(l), dRightBound(r), bLO(ol), bRO(or_), bInit(false)
+    sigmaAlgebra() : descBase("sigma-algebra") {}
+    static descriptor get()
     {
-      set_sid("real-interval");
+      return descriptor::get<sigmaAlgebra>();
     }
-    realInterval(LGFContext *ctx) : setDesc(ctx)
+    virtual std::unique_ptr<descBase> copy()
     {
-      set_sid("real-interval");
+      return std::make_unique<sigmaAlgebra>();
     }
-
-    virtual sid_t represent() override
-    {
-      auto res = get_sid();
-      if (!bInit)
-      {
-        res += " ";
-        std::string lbm = bLO ? "(" : "[";
-        std::string rbm = bRO ? ")" : "]";
-        res += lbm + utils::to_string(dLeftBound) + ", " + utils::to_string(dRightBound) + rbm;
-      }
-      return res;
-    }
-
-  private:
-    const bool bInit = true;
-    bool bLO = false, bRO = false;
-    double dLeftBound, dRightBound;
-  };
-
-  class emptySet : public simpleValue
-  {
-  public:
-    emptySet(LGFContext *ctx) : simpleValue("empty-set"){};
-  };
-
-  class sigmaAlgebra : public simpleValue
-  {
-  public:
-    sigmaAlgebra(LGFContext *ctx) : simpleValue("sigma-algebra") {}
   };
 
 } // namespace lgf
