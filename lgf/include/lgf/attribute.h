@@ -4,51 +4,52 @@
 #include "object.h"
 namespace lgf
 {
-    class dataAttr
+    class attrBase : public lgfObject
     {
     public:
-        dataAttr() = default;
-        dataAttr(sid_t id) : sid(id){};
-        virtual ~dataAttr() = default;
+        attrBase() = default;
+        attrBase(sid_t id) : lgfObject(id) {}
+        virtual ~attrBase() = default;
+        virtual std::unique_ptr<attrBase> copy() = 0;
         virtual sid_t represent() = 0;
-        sid_t get_sid()
-        {
-            return sid;
-        }
-        template <typename T>
-        T *dyn_cast()
-        {
-            return dynamic_cast<T *>(this);
-        }
-
-    private:
-        sid_t sid;
     };
 
-    // preserved data attribute contains contains the data itself.
-    // this is useful when cost of data copy is low and make the
-    // attribute creataion more convenient.
-    template <typename T>
-    class preservedDataAttr : public dataAttr
+    class attribute : public morphism_wrapper<attrBase>
     {
     public:
-        preservedDataAttr(sid_t id, T d) : data(d), dataAttr(id){};
-        virtual sid_t represent()
+        attribute() = default;
+        attribute(const attribute &att) : morphism_wrapper<attrBase>(att) {}
+        attribute(std::unique_ptr<attrBase> &&imp)
         {
-            return get_sid() + ", " + represent_data();
+            set_ptr(std::move(imp));
         }
-        virtual sid_t represent_data() = 0;
-        void set_data(T d)
+        sid_t represent()
         {
-            data = d;
+            if (!get_ptr())
+                throw std::runtime_error("attribute: Invalid attribute!");
+            return get_ptr()->represent();
         }
-        T get_data()
+        template <typename T>
+        inline static attribute get()
         {
-            return data;
+            return attribute(std::make_unique<T>());
         }
+        template <typename T, typename... ARGS>
+        inline static attribute get(ARGS... args)
+        {
+            return attribute(std::make_unique<T>(args...));
+        }
+    };
+
+    template <typename T>
+    class singleData : public attrBase
+    {
+    public:
+        singleData(sid_t id, T &t) : attrBase(id), data_(t) {}
+        T get_data() { return data_; }
 
     private:
-        T data;
+        T data_;
     };
 }
 #endif

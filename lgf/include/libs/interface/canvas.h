@@ -6,6 +6,7 @@
 #include "libs/builtin/builtin.h"
 #include "libs/functional/passes.h"
 #include "libs/sio/exporter.h"
+#include "libs/transform/algebra/normalization_pass.h"
 #include "libs/transform/convertToSIO.h"
 
 namespace lgi
@@ -49,9 +50,9 @@ namespace lgi
     void compile()
     {
       pm.set_work_region(&g);
-      pm.add_pass(lgf::createNormalizationPass());
+      pm.add_pass(lgf::createAlgebraNormalizationPass());
       pm.add_pass(lgf::createCalculusPass());
-      pm.add_pass(lgf::createNormalizationPass());
+      pm.add_pass(lgf::createAlgebraNormalizationPass());
       pm.name = "compile";
       pm.run();
 

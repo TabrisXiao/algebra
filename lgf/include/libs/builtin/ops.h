@@ -91,7 +91,7 @@ namespace lgf
     {
     public:
         cstDeclOp() = default;
-        static cstDeclOp *build(LGFContext *ctx, descriptor &data, dataAttr *val = nullptr)
+        static cstDeclOp *build(LGFContext *ctx, descriptor &data, attribute &val)
         {
             auto op = new cstDeclOp();
             op->set_value_desc(data);
@@ -103,21 +103,21 @@ namespace lgf
             printer p;
             p << value_rep() << " = "
               << "Constant: " << value_desc_rep();
-            if (data)
+            if (data.get_ptr())
             {
-                p << " = " << data->represent();
+                p << " = " << data.represent();
             }
             return p.dump();
         }
-        void set_data(dataAttr *val)
+        void set_data(attribute val)
         {
             data = val;
         }
-        dataAttr *get_data_attr()
+        attribute &get_data_attr()
         {
             return data;
         }
-        dataAttr *data = nullptr;
+        attribute data;
     };
 
     class returnOp : public node

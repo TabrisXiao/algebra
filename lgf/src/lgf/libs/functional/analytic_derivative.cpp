@@ -7,10 +7,8 @@ lgf::resultCode lgf::ChainRuleRewriter::rewrite(painter &p, differentiateOp *op)
     // this apply the differentiation chain rule to all
     // differentiateOp in the graph
     auto result = resultCode::pass();
-
     node *func = op->input();
     auto ctx = p.get_context();
-
     if (auto f = dynamic_cast<declOp *>(func))
     {
         return result;
@@ -21,10 +19,9 @@ lgf::resultCode lgf::ChainRuleRewriter::rewrite(painter &p, differentiateOp *op)
     {
         return resultCode::pass();
     }
-
     if (auto cst = func->dyn_cast<cstDeclOp>())
     {
-        // p.replace_op<cstDeclOp>(op, cst->get_value_desc());
+        p.replace_op<cstDeclOp>(op, realNumber::get(), realNumberData::get(realNumberData::real, 0));
         return resultCode::success();
     }
 
@@ -62,13 +59,12 @@ lgf::resultCode lgf::ChainRuleRewriter::rewrite(painter &p, differentiateOp *op)
                     prod->register_input(h1.get_dual_node());
                 }
             }
-            // prod->infer_trivial_value_desc();
+            prod->set_value_desc(df->get_value_desc());
             sum_args.push_back(prod);
         }
         p.replace_op<sumOp>(op, sum_args);
         return resultCode::success();
     }
-
     if (auto mapping = dynamic_cast<elemFuncOp *>(func))
     {
         std::vector<node *> sum_args;
@@ -88,7 +84,6 @@ lgf::resultCode lgf::ChainRuleRewriter::rewrite(painter &p, differentiateOp *op)
             p.replace_op<sumOp>(op, sum_args);
         result.add(resultCode::success());
     }
-
     return result;
 }
 
@@ -100,15 +95,13 @@ lgf::resultCode lgf::analyticFuncDerivativeRewriter::rewrite(painter &p, partial
     auto target = op->var();
     if (dynamic_cast<cstDeclOp *>(func) || dynamic_cast<cstDeclOp *>(target))
     {
-        // p.replace_op<cstDeclOp>(
-        //     op, p.get_context()->get_desc<zeroDesc>(op->get_value_desc()));
+        p.replace_op<cstDeclOp>(op, realNumber::get(), realNumberData::get(realNumberData::real, 0));
         return resultCode::success();
     }
 
     if (func == target)
     {
-        // p.replace_op<cstDeclOp>(
-        //     op, p.get_context()->get_desc<unitDesc>(target->get_value_desc()));
+        p.replace_op<cstDeclOp>(op, realNumber::get(), realNumberData::get(realNumberData::real, 1));
         return resultCode::success();
     }
 
@@ -118,14 +111,12 @@ lgf::resultCode lgf::analyticFuncDerivativeRewriter::rewrite(painter &p, partial
     {
         if (declop == target)
         {
-            // p.replace_op<cstDeclOp>(
-            //     op, p.get_context()->get_desc<unitDesc>(target->get_value_desc()));
+            p.replace_op<cstDeclOp>(op, realNumber::get(), realNumberData::get(realNumberData::real, 1));
             return resultCode::success();
         }
         else
         {
-            // p.replace_op<cstDeclOp>(
-            //     op, p.get_context()->get_desc<zeroDesc>(func->get_value_desc()));
+            p.replace_op<cstDeclOp>(op, realNumber::get(), realNumberData::get(realNumberData::real, 0));
             return resultCode::success();
         }
     }
@@ -202,23 +193,23 @@ lgf::resultCode lgf::analyticFuncDerivativeRewriter::rewrite(painter &p, partial
         // d x^y = y x^(y-1) dx + ln(x) x^y dy
         auto base = exp->base();
         auto power = exp->power();
-        auto e_data = ctx->get_data_attr<realNumberAttr>(realNumberAttr::e);
+        auto e_data = realNumberData::get(realNumberData::e);
         auto e = p.paint<cstDeclOp>(realNumber::get(), e_data);
-        // auto unit = p.paint<cstDeclOp>(ctx->get_desc<unitDesc>(target->get_value_desc()));
-        // auto nunit = p.paint<negativeOp>(unit);
-        // auto ym1 = p.paint<sumOp>(power, nunit);
+        auto unit = p.paint<cstDeclOp>(realNumber::get(), realNumberData::get(realNumberData::real, 1));
+        auto nunit = p.paint<negativeOp>(unit);
+        auto ym1 = p.paint<sumOp>(power, nunit);
         //  y x^(y-1) dx
         auto dx = p.paint<partialDifferentiateOp>(base, target);
-        // auto xym1 = p.paint<funcExponentationOp>(base, ym1);
-        // auto product1 = p.paint<productOp>(power, xym1, dx);
+        auto xym1 = p.paint<funcExponentationOp>(base, ym1);
+        auto product1 = p.paint<productOp>(power, xym1, dx);
 
         // ln(x) x^y dy
         auto ln = p.paint<funcLogarithmOp>(e, base);
         auto dy = p.paint<partialDifferentiateOp>(power, target);
         auto product2 = p.paint<productOp>(ln, exp, dy);
         // summation
-        // auto sum = p.paint<sumOp>(product1, product2);
-        // p.replace_op(op, sum);
+        auto sum = p.paint<sumOp>(product1, product2);
+        p.replace_op(op, sum);
         return resultCode::success();
     }
     return result;

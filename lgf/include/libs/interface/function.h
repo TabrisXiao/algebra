@@ -57,7 +57,6 @@ namespace lgi::function
 
     variable d(const variable &x)
     {
-        auto &ctx = canvas::get().get_context();
         auto res = canvas::get().get_painter().paint<lgf::differentiateOp>(x.node());
         return variable(res);
     }

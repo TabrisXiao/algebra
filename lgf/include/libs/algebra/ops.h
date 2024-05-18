@@ -16,7 +16,8 @@ namespace lgf
         {
             auto op = new sumOp();
             op->register_inputs(vec);
-            op->set_value_desc(vec[0]->get_value_desc());
+            auto desc = vec[0]->get_value_desc();
+            op->set_value_desc(desc);
             return op;
         }
         template <typename... Args>

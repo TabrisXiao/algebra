@@ -10,12 +10,12 @@ namespace lgf
     class normalizationPass : public passBase
     {
     public:
-        normalizationPass() : passBase("normalization") {}
+        normalizationPass(const char *name = "normalization") : passBase(name) {}
         virtual resultCode run()
         {
             painter p(get_graph());
             add_rewriter<groupRewriter<normalizer>>();
-            remove_unused_ops(get_graph());
+            //remove_unused_ops(get_graph());
             remove_identical_ops(p, get_graph());
             resultCode code = apply_rewriter_greedy(p, get_graph());
             remove_unused_ops(get_graph());

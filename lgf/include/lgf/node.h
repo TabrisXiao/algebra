@@ -42,7 +42,10 @@ namespace lgf
             return p.dump();
         }
 
-        descriptor get_value_desc() { return _v_->get_desc(); }
+        descriptor get_value_desc()
+        {
+            return _v_->get_desc();
+        }
 
         template <typename T>
         T *get_value_desc_as()
@@ -54,6 +57,10 @@ namespace lgf
 
         void set_value_desc(descriptor d)
         {
+            if (d.is_null())
+            {
+                throw std::runtime_error("set_value_desc: descriptor is null");
+            }
             _v_->set_desc(d);
         }
 

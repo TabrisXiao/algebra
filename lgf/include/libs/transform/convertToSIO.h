@@ -61,20 +61,20 @@ namespace lgf::transform
             // else
             if (desc.is<realNumber>())
             {
-                auto real_data = op->get_data_attr()->dyn_cast<realNumberAttr>();
-                p.replace_op<lgf::sio::numberOp>(op, op->get_value_desc(), real_data->represent());
+                auto real_data = op->get_data_attr();
+                p.replace_op<lgf::sio::numberOp>(op, op->get_value_desc(), real_data.represent());
                 return resultCode::success();
             }
-            else if (op->get_data_attr())
+            else if (op->get_data_attr().get_ptr())
             {
                 sid_t number;
-                if (auto f32d = op->get_data_attr()->dyn_cast<float32Data>())
+                if (auto f32d = op->get_data_attr().dyn_cast<realNumberData>())
                 {
-                    number = f32d->represent_data();
+                    number = f32d->represent();
                 }
-                else if (auto i32d = op->get_data_attr()->dyn_cast<int32Data>())
+                else if (auto i32d = op->get_data_attr().dyn_cast<realNumberData>())
                 {
-                    number = i32d->represent_data();
+                    number = i32d->represent();
                 }
                 p.replace_op<lgf::sio::numberOp>(op, op->get_value_desc(), number);
                 return resultCode::success();

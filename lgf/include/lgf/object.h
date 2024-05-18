@@ -2,7 +2,7 @@
 #ifndef LGF_OBJECT_H_
 #define LGF_OBJECT_H_
 #include "config.h"
-#include <iostream>
+
 namespace lgf
 {
 
@@ -76,26 +76,31 @@ namespace lgf
 
         morphism_wrapper(const morphism_wrapper &src)
         {
-            ptr = std::move(src.get()->copy());
+            ptr = std::move(src.get_ptr()->copy());
         }
         morphism_wrapper(morphism_wrapper &src)
         {
-            ptr = std::move(src.get()->copy());
+            ptr = std::move(src.get_ptr()->copy());
         }
         morphism_wrapper &operator=(const morphism_wrapper &src)
         {
-            ptr = std::move(src.get()->copy());
+            ptr = std::move(src.get_ptr()->copy());
             return *this;
         }
-        T *get() const { return ptr.get(); }
+        T *get_ptr() const { return ptr.get(); }
+        void set_ptr(std::unique_ptr<T> &&p)
+        {
+            ptr = std::move(p);
+        }
         template <typename U>
         U *dyn_cast()
         {
             auto p = dynamic_cast<U *>(ptr.get());
             return p;
         }
+        bool is_null() { return ptr == nullptr; }
 
-    public:
+    private:
         std::unique_ptr<T> ptr = nullptr;
     };
 }

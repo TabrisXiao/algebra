@@ -7,24 +7,39 @@
 #include "lgf/context.h"
 namespace lgf
 {
-  class LFFContext;
-  class int32Data : public preservedDataAttr<int>
+  class int32Data : public singleData<int>
   {
   public:
-    int32Data(int d = 0) : preservedDataAttr<int>("i32", d) {}
-    virtual sid_t represent_data() override
+    int32Data(int d = 0) : singleData<int>("i32", d) {}
+    virtual sid_t represent() override
     {
       return utils::to_string(get_data());
     }
+    virtual std::unique_ptr<attrBase> copy() override
+    {
+      return std::make_unique<int32Data>(get_data());
+    }
+    static attribute get(int d)
+    {
+      return attribute::get<int32Data>(d);
+    }
   };
 
-  class float32Data : public preservedDataAttr<double>
+  class float32Data : public singleData<double>
   {
   public:
-    float32Data(double d = 0) : preservedDataAttr<double>("f32", d) {}
-    virtual sid_t represent_data() override
+    float32Data(double d = 0) : singleData<double>("f32", d) {}
+    virtual sid_t represent() override
     {
       return utils::to_string(get_data());
+    }
+    static attribute get(double d)
+    {
+      return attribute::get<float32Data>(d);
+    }
+    virtual std::unique_ptr<attrBase> copy() override
+    {
+      return std::make_unique<float32Data>(get_data());
     }
   };
 
