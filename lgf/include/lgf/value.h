@@ -26,7 +26,12 @@ namespace lgf
         descriptor(const descriptor &d) : morphism_wrapper<descBase>(d) {}
         descriptor(std::unique_ptr<descBase> &&p)
         {
-            ptr = std::move(p->copy());
+            set_ptr(std::move(p));
+        }
+        descriptor &operator=(const descriptor &src)
+        {
+            set_ptr(std::move(src.get_ptr()->copy()));
+            return *this;
         }
         template <typename T>
         inline static descriptor get()
@@ -39,20 +44,20 @@ namespace lgf
             return descriptor(std::make_unique<T>(args...));
         }
 
-        std::unique_ptr<descBase> &get_desc_ptr() { return ptr; }
+        // std::unique_ptr<descBase> &get_desc_ptr() { return *(get_ptr()); }
         sid_t represent()
         {
-            if (ptr)
-                return ptr->represent();
+            if (get_ptr())
+                return get_ptr()->represent();
             else
                 return "";
         }
         template <typename... ARGS>
         bool is()
         {
-            return (... || dynamic_cast<ARGS *>(ptr.get()));
+            return (... || dynamic_cast<ARGS *>(get_ptr()));
         }
-        sid_t get_sid() { return ptr->get_sid(); }
+        sid_t get_sid() { return get_ptr()->get_sid(); }
     };
 
     class value : public lgfObject
@@ -60,7 +65,7 @@ namespace lgf
     public:
         value(std::string sid = "") : lgfObject(sid) {}
 
-        value(descriptor &d, std::string sid = "") : lgfObject(sid), desc(std::move(d.get_desc_ptr())) {}
+        value(descriptor &d, std::string sid = "") : lgfObject(sid), desc(d) {}
 
         virtual ~value() = default;
         virtual sid_t represent();
@@ -71,7 +76,10 @@ namespace lgf
 
         void print();
 
-        descriptor get_desc() { return desc; }
+        descriptor get_desc()
+        {
+            return desc;
+        }
         void set_desc(descriptor &d)
         {
             desc = d;

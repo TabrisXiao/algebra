@@ -28,7 +28,7 @@ namespace lgf
         if (base == arg)
         {
             auto unit = realNumber::get();
-            auto unitAttr = ctx->get_data_attr<realNumberAttr>(realNumberAttr::one);
+            auto unitAttr = realNumberData::get(realNumberData::real, 1);
             p.replace_op<lgf::cstDeclOp>(op, unit, unitAttr);
             return resultCode::success();
         }

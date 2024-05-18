@@ -2,6 +2,7 @@
 #ifndef LGF_UTILS_H
 #define LGF_UTILS_H
 #include <string>
+#include <iostream>
 namespace lgf::utils
 {
 
@@ -57,5 +58,22 @@ namespace lgf
     logicResult(bool t) { value = t; }
     bool value = 0;
   };
+
+  class debug_guard
+  {
+  public:
+    debug_guard(std::string pos) : id(pos)
+    {
+      std::cout << "[debug log] Enter: " << id << "..." << std::endl;
+    }
+    ~debug_guard()
+    {
+      std::cout << "[debug log] Exit: " << id << ". " << std::endl;
+    }
+    std::string id;
+  };
+
+#define DEBUG_LOG_GUARD \
+  debug_guard(__FUNCTION__);
 }
 #endif

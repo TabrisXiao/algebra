@@ -39,7 +39,7 @@ resultCode passBase::apply_rewriter_greedy(painter &p, graph *g)
   while (result.isSuccess())
   {
     result = apply_rewriter_once(p, g);
-    if (1)
+    if (0)
     {
       OSTREAM << "\n------ Pass: " << _pass_name << " step: " << counts
               << " ------\n";

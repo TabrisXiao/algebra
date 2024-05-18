@@ -35,22 +35,29 @@ namespace lgf
     }
   };
 
-  class realNumberAttr : public dataAttr
+  class realNumberData : public attrBase
   {
   public:
     enum numberType : int8_t
     {
       real,
-      one,
       inf,
       ninf,
       e,
-      pi,
-      finite
+      pi
     };
-    realNumberAttr(double d) : dataAttr("realNumbere"), data(d) {}
-    realNumberAttr(numberType t) : dataAttr("realNumber"), type(t) {}
-    // realNumberAttr(realNumberAttr &&attr) : dataAttr("realNumber"), data(attr.get_data()), type(attr.get_type()) {}
+
+    realNumberData(numberType t, double d = 0) : attrBase("realNumberData"), type(t), data(d) {}
+    virtual std::unique_ptr<attrBase> copy() override
+    {
+      return std::make_unique<realNumberData>(type, data);
+    }
+
+    static attribute get(numberType t, double d = 0)
+    {
+      return attribute::get<realNumberData>(t, d);
+    }
+
     void set_type(numberType t) { type = t; }
 
     virtual sid_t represent() override
@@ -65,21 +72,33 @@ namespace lgf
         return "e";
       if (type == pi)
         return "pi";
+
+      throw std::runtime_error("real number data: Unknown data type!");
       return "finite";
     }
     double get_data() { return data; }
     numberType get_type() { return type; }
-    static realNumberAttr get_pinf()
+    static realNumberData get_pinf()
     {
-      realNumberAttr res(0);
-      res.set_type(inf);
-      return res;
+      return realNumberData(realNumberData::inf, 0);
     }
-    static realNumberAttr get_ninf()
+    static realNumberData get_ninf()
     {
-      realNumberAttr res(0);
-      res.set_type(ninf);
-      return res;
+      return realNumberData(ninf, 0);
+    }
+    bool is_unit()
+    {
+      if (type == real)
+        return data == 1;
+      return false;
+    }
+    bool is_zero()
+    {
+      if (type == real)
+      {
+        return data == 0;
+      }
+      return false;
     }
 
   private:

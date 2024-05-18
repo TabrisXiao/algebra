@@ -49,7 +49,7 @@ namespace lgi
     {
       auto &ctx = canvas::get().get_context();
       auto real = lgf::realNumber::get();
-      auto data = ctx.get_data_attr<lgf::realNumberAttr>(rhs);
+      auto data = lgf::realNumberData::get(lgf::realNumberData::real, rhs);
       auto cst = canvas::get().get_painter().paint<lgf::cstDeclOp>(
           real, data);
       return variable(cst);
@@ -58,7 +58,7 @@ namespace lgi
     {
       auto &ctx = canvas::get().get_context();
       auto real = lgf::realNumber::get();
-      auto data = ctx.get_data_attr<lgf::realNumberAttr>(rhs);
+      auto data = lgf::realNumberData::get(lgf::realNumberData::real, rhs);
       auto cst = canvas::get().get_painter().paint<lgf::cstDeclOp>(
           real, data);
       return variable(cst);
@@ -68,7 +68,7 @@ namespace lgi
     {
       auto &ctx = canvas::get().get_context();
       auto real = lgf::realNumber::get();
-      auto data = ctx.get_data_attr<lgf::realNumberAttr>(rhs);
+      auto data = lgf::realNumberData::get(lgf::realNumberData::real, rhs);
       auto cst = canvas::get().get_painter().paint<lgf::cstDeclOp>(
           real, data);
       v = cst;
@@ -78,7 +78,7 @@ namespace lgi
     {
       auto &ctx = canvas::get().get_context();
       auto real = lgf::realNumber::get();
-      auto data = ctx.get_data_attr<lgf::realNumberAttr>(rhs);
+      auto data = lgf::realNumberData::get(lgf::realNumberData::real, rhs);
       auto cst = canvas::get().get_painter().paint<lgf::cstDeclOp>(
           real, data);
       v = cst;
@@ -90,7 +90,7 @@ namespace lgi
       auto &ctx = canvas::get().get_context();
       auto real = lgf::realNumber::get();
       auto cst = canvas::get().get_painter().paint<lgf::cstDeclOp>(
-          real, ctx.get_data_attr<daTy>(data));
+          real, lgf::realNumberData::get(lgf::realNumberData::real, data));
       auto res = canvas::get().get_painter().paint<opTy>(var.node(), cst);
       return variable(res);
     }
@@ -101,29 +101,29 @@ namespace lgi
       auto &ctx = canvas::get().get_context();
       auto real = lgf::realNumber::get();
       auto cst = canvas::get().get_painter().paint<lgf::cstDeclOp>(
-          real, ctx.get_data_attr<daTy>(data));
+          real, lgf::realNumberData::get(lgf::realNumberData::real, data));
       auto res = canvas::get().get_painter().paint<opTy>(cst, var.node());
       return variable(res);
     }
 
     variable operator+(const double &num)
     {
-      return data_rhs_binary_op<lgf::sumOp, lgf::float32Data>(*this, num);
+      return data_rhs_binary_op<lgf::sumOp, double>(*this, num);
     }
 
     variable operator+(const int &num)
     {
-      return data_rhs_binary_op<lgf::sumOp, lgf::int32Data>(*this, num);
+      return data_rhs_binary_op<lgf::sumOp, int>(*this, num);
     }
 
     friend variable operator+(const double &num, const variable &var)
     {
-      return var.data_lhs_binary_op<lgf::sumOp, lgf::float32Data>(num, var);
+      return var.data_lhs_binary_op<lgf::sumOp, double>(num, var);
     }
 
     friend variable operator+(const int &num, const variable &var)
     {
-      return var.data_lhs_binary_op<lgf::sumOp, lgf::int32Data>(num, var);
+      return var.data_lhs_binary_op<lgf::sumOp, int>(num, var);
     }
 
     variable operator+(const variable &other)
@@ -142,22 +142,22 @@ namespace lgi
 
     variable operator*(const double &num)
     {
-      return data_rhs_binary_op<lgf::productOp, lgf::float32Data>(*this, num);
+      return data_rhs_binary_op<lgf::productOp, double>(*this, num);
     }
 
     variable operator*(const int &num)
     {
-      return data_rhs_binary_op<lgf::productOp, lgf::int32Data>(*this, num);
+      return data_rhs_binary_op<lgf::productOp, int>(*this, num);
     }
 
     friend variable operator*(const double &num, const variable &var)
     {
-      return var.data_lhs_binary_op<lgf::productOp, lgf::float32Data>(num, var);
+      return var.data_lhs_binary_op<lgf::productOp, double>(num, var);
     }
 
     friend variable operator*(const int &num, const variable &var)
     {
-      return var.data_lhs_binary_op<lgf::productOp, lgf::int32Data>(num, var);
+      return var.data_lhs_binary_op<lgf::productOp, int>(num, var);
     }
 
     variable operator-() const
@@ -194,7 +194,7 @@ namespace lgi
       auto &ctx = canvas::get().get_context();
       auto real = lgf::realNumber::get();
       auto cst = canvas::get().get_painter().paint<lgf::cstDeclOp>(
-          real, ctx.get_data_attr<attrT>(num));
+          real, attrT::get(num));
       auto inv = canvas::get().get_painter().paint<lgf::inverseOp>(rhs.node());
       auto res = canvas::get().get_painter().paint<lgf::productOp>(cst, inv);
       return variable(res);
@@ -206,7 +206,7 @@ namespace lgi
       auto &ctx = canvas::get().get_context();
       auto real = lgf::realNumber::get();
       auto cst = canvas::get().get_painter().paint<lgf::cstDeclOp>(
-          real, ctx.get_data_attr<attrT>(num));
+          real, attrT::get(num));
       auto inv = canvas::get().get_painter().paint<lgf::inverseOp>(cst);
       auto res =
           canvas::get().get_painter().paint<lgf::productOp>(lhs.node(), inv);
@@ -239,13 +239,13 @@ namespace lgi
     variable pi()
     {
       auto &ctx = canvas::get().get_context();
-      auto res = canvas::get().get_painter().paint<lgf::cstDeclOp>(lgf::realNumber::get(), ctx.get_data_attr<lgf::realNumberAttr>(lgf::realNumberAttr::pi));
+      auto res = canvas::get().get_painter().paint<lgf::cstDeclOp>(lgf::realNumber::get(), lgf::realNumberData::get(lgf::realNumberData::pi));
       return variable(res);
     }
     variable e()
     {
       auto &ctx = canvas::get().get_context();
-      auto res = canvas::get().get_painter().paint<lgf::cstDeclOp>(lgf::realNumber::get(), ctx.get_data_attr<lgf::realNumberAttr>(lgf::realNumberAttr::e));
+      auto res = canvas::get().get_painter().paint<lgf::cstDeclOp>(lgf::realNumber::get(), lgf::realNumberData::get(lgf::realNumberData::e));
       return variable(res);
     }
 
