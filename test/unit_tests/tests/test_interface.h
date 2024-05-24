@@ -16,7 +16,7 @@ namespace test_body
     bool run()
     {
       variable x, sig, z = 2;
-      auto y = function::exp(1 / x);
+      auto y = function::exp(x / sig);
       y.latex();
       auto dy = function::d(y);
       dy.latex();

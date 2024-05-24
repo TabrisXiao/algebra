@@ -84,7 +84,7 @@ namespace lgf
             // checking if the duplicate op exists and
             // replace it if so.
             lgf::node *mark = nullptr;
-            while (queue.size() > 1)
+            while (queue.size() > 0)
             {
                 if (queue.front()->is_deprecate())
                 {
@@ -99,17 +99,19 @@ namespace lgf
                 auto target = op->get_op_represent();
                 do
                 {
+                    if (!mark)
+                        mark = queue.front();
                     auto checkop = queue.front();
                     queue.pop();
                     if (checkop == op || checkop->is_deprecate())
                         continue;
                     if (target == checkop->get_op_represent())
                     {
-                        if (mark == checkop)
-                            mark = queue.front();
                         checkop->replace_by(op);
                         checkop->erase();
                         changed = true;
+                        if (mark == checkop)
+                            mark = nullptr;
                     }
                     else
                     {
