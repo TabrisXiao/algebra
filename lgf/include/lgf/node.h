@@ -155,7 +155,8 @@ namespace lgf
             if (idx > inputs.size())
                 throw std::runtime_error("register_inputs_at index out of input range");
             std::vector<edge> new_inputs;
-            new_inputs.reserve(inputs.size() + inserts.size());
+            new_inputs.reserve(inputs.size() + inserts.size() + 1);
+            auto size = inputs.size();
             for (size_t j = 0; j < idx; j++)
             {
                 new_inputs.push_back(std::move(inputs[j]));
@@ -167,13 +168,14 @@ namespace lgf
                 edge se(this);
                 edge de(inserts[j]);
                 se.couple(de);
-                new_inputs.push_back(std::move(se));
                 inserts[j]->add_output_edge(std::move(de));
+                new_inputs.push_back(std::move(se));
             }
-            for (auto j = idx; j < inputs.size(); j++)
+            for (auto j = idx; j < size; j++)
             {
                 new_inputs.push_back(std::move(inputs[j]));
             }
+
             inputs.swap(new_inputs);
         }
 

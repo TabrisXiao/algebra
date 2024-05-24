@@ -22,7 +22,7 @@ namespace lgf
         void clean();
         edge &operator[](size_t i)
         {
-            clean();
+            // clean();
             return std::vector<edge>::operator[](i);
         }
         edge &at(size_t i)
@@ -35,6 +35,7 @@ namespace lgf
             clean();
             return std::vector<edge>::size();
         }
+        size_t size0() { return std::vector<edge>::size(); }
         void push_back(edge &&e);
 
     private:

@@ -65,6 +65,23 @@ lgf::resultCode lgf::ChainRuleRewriter::rewrite(painter &p, differentiateOp *op)
         p.replace_op<sumOp>(op, sum_args);
         return resultCode::success();
     }
+    if (auto neg = func->dyn_cast<negativeOp>())
+    {
+        auto dx = p.paint<differentiateOp>(neg->input());
+        auto neg_dx = p.paint<negativeOp>(dx);
+        p.replace_op(op, neg_dx);
+        return resultCode::success();
+    }
+    if (auto inv = func->dyn_cast<inverseOp>())
+    {
+        auto c2 = p.paint<cstDeclOp>(realNumber::get(), realNumberData::get(realNumberData::real, 2));
+        auto p2 = p.paint<funcExponentationOp>(func, c2);
+        auto dx = p.paint<differentiateOp>(func->input());
+        auto neg = p.paint<negativeOp>(p2);
+        auto product = p.paint<productOp>(neg, dx);
+        p.replace_op(op, product);
+        return resultCode::success();
+    }
     if (auto mapping = dynamic_cast<elemFuncOp *>(func))
     {
         std::vector<node *> sum_args;
@@ -198,12 +215,12 @@ lgf::resultCode lgf::analyticFuncDerivativeRewriter::rewrite(painter &p, partial
         auto unit = p.paint<cstDeclOp>(realNumber::get(), realNumberData::get(realNumberData::real, 1));
         auto nunit = p.paint<negativeOp>(unit);
         auto ym1 = p.paint<sumOp>(power, nunit);
-        //  y x^(y-1) dx
+        //  first part: y x^(y-1) dx
         auto dx = p.paint<partialDifferentiateOp>(base, target);
         auto xym1 = p.paint<funcExponentationOp>(base, ym1);
         auto product1 = p.paint<productOp>(power, xym1, dx);
 
-        // ln(x) x^y dy
+        // second part: ln(x) x^y dy
         auto ln = p.paint<funcLogarithmOp>(e, base);
         auto dy = p.paint<partialDifferentiateOp>(power, target);
         auto product2 = p.paint<productOp>(ln, exp, dy);
@@ -212,5 +229,6 @@ lgf::resultCode lgf::analyticFuncDerivativeRewriter::rewrite(painter &p, partial
         p.replace_op(op, sum);
         return resultCode::success();
     }
+
     return result;
 }
