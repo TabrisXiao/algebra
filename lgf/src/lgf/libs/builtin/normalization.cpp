@@ -14,7 +14,7 @@ namespace lgf
     {
         if (op->is_deprecate())
             return;
-        if (op->is_trivial())
+        if (!op->get_status(eNonTrivial))
         {
             for (auto &h : op->get_user_handles())
             {
@@ -77,7 +77,7 @@ namespace lgf
             }
             op->set_exploration(true);
             // skip non-trivial op
-            if (!op->is_trivial())
+            if (op->get_status(eNonTrivial))
             {
                 continue;
             }
@@ -126,7 +126,7 @@ namespace lgf
                 auto user = h.get_dual_node();
                 if (user->is_deprecate() || user->is_explored() || !user->is_dependency_fullfilled())
                     continue;
-                if (user->is_trivial())
+                if (!user->get_status(eNonTrivial))
                 {
                     queue.push(user);
                 }

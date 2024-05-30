@@ -311,10 +311,6 @@ namespace lgf
             deprecate();
         }
 
-        void set_nontrivial() { bTrivial = 0; }
-
-        bool is_trivial() { return bTrivial; }
-
         void assign_value_id(int &n);
 
         void set_exploration(bool a) { bExplored = a; }
@@ -384,6 +380,19 @@ namespace lgf
             bExplored = 0;
         }
 
+        void mark_status(size_t s)
+        {
+            status.shift(s);
+        }
+        void remove_status(size_t s)
+        {
+            status.clear(s);
+        }
+        bool get_status(size_t s)
+        {
+            return status.bit_check(s);
+        }
+
     private:
         std::unique_ptr<value> _v_;
         // this function is used to determine if this node contained
@@ -391,11 +400,12 @@ namespace lgf
         // this function.
         // virtual graph* getSubgraph(){ return nullptr;}
         bool bExplored = 0;
-        bool bTrivial = 1;
 
         // this is a member used to remove the node efficiently.
         // Should be used solely for removing process in graph.
         bool bDeprecate = 0;
+        // this status is added for customized usage.
+        bitCode<size_t> status;
         edgeBundle inputs;
         edgeBundle users;
         graph *graph_ = nullptr;

@@ -12,7 +12,7 @@ namespace lgf::sio
     public:
         exportOp(std::string name) : node(name)
         {
-            set_nontrivial();
+            mark_status(eNonTrivial);
         }
         static exportOp *build(LGFContext *ctx, node *value)
         {

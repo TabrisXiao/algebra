@@ -7,6 +7,12 @@
 #include <string>
 namespace lgf
 {
+    enum : uint8_t
+    {
+        eNonTrivial = 0,
+        eIdenticalRemovable = 1,
+    };
+
     class moduleOp : public graph
     {
     public:
@@ -15,7 +21,7 @@ namespace lgf
         static moduleOp *build(LGFContext *ctx, sid_t id)
         {
             auto op = new moduleOp();
-            op->set_nontrivial();
+            op->mark_status(eNonTrivial);
             op->name = id;
             return op;
         }
@@ -31,7 +37,7 @@ namespace lgf
         {
             auto op = new declOp();
             op->set_value_desc(desc);
-            op->set_nontrivial();
+            op->mark_status(eNonTrivial);
             return op;
         }
         template <typename... ARGS>
@@ -128,7 +134,7 @@ namespace lgf
         {
             auto op = new returnOp();
             op->register_input(val);
-            op->set_nontrivial();
+            op->mark_status(eNonTrivial);
             return op;
         }
         virtual std::string represent()
@@ -255,7 +261,7 @@ namespace lgf
 
         funcDefineOp() : graph("define func:")
         {
-            set_nontrivial();
+            mark_status(eNonTrivial);
         }
         void set_name(sid_t n)
         {

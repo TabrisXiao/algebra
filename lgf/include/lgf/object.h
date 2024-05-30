@@ -51,6 +51,15 @@ namespace lgf
             value |= 1 << val;
             return *this;
         }
+        bool bit_check(size_t val)
+        {
+            return (value & (1 << val));
+        }
+        bitCode clear(size_t val)
+        {
+            value &= ~(1 << val);
+            return *this;
+        }
         bitCode add(const bitCode &val)
         {
             value |= val.value;
