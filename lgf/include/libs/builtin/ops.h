@@ -7,7 +7,7 @@
 #include <string>
 namespace lgf
 {
-    enum : uint8_t
+    enum builtin_feature_e : uint8_t
     {
         eNonTrivial = 0,
         eIdenticalRemovable = 1,
@@ -96,7 +96,7 @@ namespace lgf
     class cstDeclOp : public lgf::node
     {
     public:
-        cstDeclOp() = default;
+        cstDeclOp() { mark_status(eIdenticalRemovable); };
         static cstDeclOp *build(LGFContext *ctx, descriptor &data, attribute &val)
         {
             auto op = new cstDeclOp();
