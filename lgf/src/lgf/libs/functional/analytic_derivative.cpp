@@ -116,12 +116,6 @@ lgf::resultCode lgf::analyticFuncDerivativeRewriter::rewrite(painter &p, partial
         return resultCode::success();
     }
 
-    if (func == target)
-    {
-        p.replace_op<cstDeclOp>(op, realNumber::get(), realNumberData::get(realNumberData::real, 1));
-        return resultCode::success();
-    }
-
     // case of dy/dx
     auto declop = func->dyn_cast<declOp>();
     if (declop)
@@ -136,6 +130,14 @@ lgf::resultCode lgf::analyticFuncDerivativeRewriter::rewrite(painter &p, partial
             p.replace_op<cstDeclOp>(op, realNumber::get(), realNumberData::get(realNumberData::real, 0));
             return resultCode::success();
         }
+    }
+
+    // checking uid to determine if the two nodes are the same functions
+    // we can't directly compare the pointer value as the values can be different while representing the same structure.
+    if (func->get_uid() == target->get_uid())
+    {
+        p.replace_op<cstDeclOp>(op, realNumber::get(), realNumberData::get(realNumberData::real, 1));
+        return resultCode::success();
     }
 
     if (auto sum = dynamic_cast<sumOp *>(func))

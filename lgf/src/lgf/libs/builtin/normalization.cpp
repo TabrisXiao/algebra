@@ -64,7 +64,8 @@ namespace lgf
                 continue;
             if (op->get_input_size() != 0)
                 continue;
-            queue.push(op);
+            if (op->get_status(eIdenticalRemovable))
+                queue.push(op);
         }
 
         while (queue.size())
@@ -126,7 +127,7 @@ namespace lgf
                 auto user = h.get_dual_node();
                 if (user->is_deprecate() || user->is_explored() || !user->is_dependency_fullfilled())
                     continue;
-                if (!user->get_status(eNonTrivial))
+                if (user->get_status(eIdenticalRemovable))
                 {
                     queue.push(user);
                 }

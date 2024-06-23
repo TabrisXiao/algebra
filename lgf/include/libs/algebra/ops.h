@@ -11,7 +11,11 @@ namespace lgf
     class sumOp : public node, public normalizer
     {
     public:
-        sumOp() : node("sum") {}
+        sumOp() : node("sum")
+        {
+            mark_status(eIdenticalRemovable);
+            set_commutable(1);
+        }
         static sumOp *build(LGFContext *ctx, std::vector<node *> &vec)
         {
             auto op = new sumOp();
@@ -34,7 +38,11 @@ namespace lgf
     class productOp : public node, public normalizer
     {
     public:
-        productOp() : node("product") {}
+        productOp() : node("product")
+        {
+            mark_status(eIdenticalRemovable);
+            set_commutable(1);
+        }
         static productOp *build(LGFContext *ctx, std::vector<node *> &vec)
         {
             auto op = new productOp();
@@ -61,7 +69,7 @@ namespace lgf
     class negativeOp : public node
     {
     public:
-        negativeOp() : node("negative") {}
+        negativeOp() : node("negative") { mark_status(eIdenticalRemovable); }
         static negativeOp *build(LGFContext *ctx, node *n)
         {
             auto op = new negativeOp();
@@ -74,7 +82,7 @@ namespace lgf
     class inverseOp : public node
     {
     public:
-        inverseOp() : node("inverse") {}
+        inverseOp() : node("inverse") { mark_status(eIdenticalRemovable); }
         static inverseOp *build(LGFContext *ctx, node *n)
         {
             auto op = new inverseOp();
@@ -87,7 +95,7 @@ namespace lgf
     class minusOp : public node
     {
     public:
-        minusOp() : node("minus") {}
+        minusOp() : node("minus") { mark_status(eIdenticalRemovable); }
         static minusOp *build(LGFContext *ctx, node *lhs, node *rhs)
         {
             auto op = new minusOp();

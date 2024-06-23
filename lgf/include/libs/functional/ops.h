@@ -14,7 +14,7 @@ namespace lgf
     {
     public:
         mappingOp() = default;
-        mappingOp(std::string name) : node(name) {}
+        mappingOp(std::string name) : node(name) { mark_status(eIdenticalRemovable); }
     };
 
     class elemFuncOp : public mappingOp
@@ -157,10 +157,10 @@ namespace lgf
         int order = 1;
     };
 
-    class differentiateOp : public elemFuncOp
+    class differentiateOp : public mappingOp
     {
     public:
-        differentiateOp() : elemFuncOp("Differential") {}
+        differentiateOp() : mappingOp("Differential") {}
         static differentiateOp *build(LGFContext *ctx, node *input)
         {
             auto op = new differentiateOp();

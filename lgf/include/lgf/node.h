@@ -343,6 +343,31 @@ namespace lgf
             return p;
         }
 
+        bool is_commutable() { return bCommutable; }
+        void set_commutable(bool a) { bCommutable = a; }
+        std::string get_uid()
+        {
+            std::string id = get_sid();
+            id += '(';
+            std::vector<std::string> vec;
+            for (auto i = 0; i < inputs.size(); i++)
+            {
+                auto n = inputs[i].get_dual_node();
+                vec.push_back(n->get_uid());
+            }
+            if (bCommutable)
+            {
+                std::sort(vec.begin(), vec.end());
+            }
+            for (auto i = 0; i < vec.size(); i++)
+            {
+                id = id + vec[i] + ',';
+            }
+            id.pop_back();
+            id += ')';
+            return id;
+        }
+
         std::string get_op_represent()
         {
             // get representation of this node after the first "="
@@ -400,7 +425,7 @@ namespace lgf
         // this function.
         // virtual graph* getSubgraph(){ return nullptr;}
         bool bExplored = 0;
-
+        bool bCommutable = 0;
         // this is a member used to remove the node efficiently.
         // Should be used solely for removing process in graph.
         bool bDeprecate = 0;
