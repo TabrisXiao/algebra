@@ -134,7 +134,7 @@ lgf::resultCode lgf::analyticFuncDerivativeRewriter::rewrite(painter &p, partial
 
     // checking uid to determine if the two nodes are the same functions
     // we can't directly compare the pointer value as the values can be different while representing the same structure.
-    if (func->get_uid() == target->get_uid())
+    if (identiferInterface::is_equivalent(func, target))
     {
         p.replace_op<cstDeclOp>(op, realNumber::get(), realNumberData::get(realNumberData::real, 1));
         return resultCode::success();

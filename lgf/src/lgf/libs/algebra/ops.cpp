@@ -6,7 +6,7 @@
 namespace lgf
 {
 
-  resultCode sumOp::rewrite(painter &p, node *op)
+  resultCode sumOp::normalize(painter &p, node *op)
   {
     if (op->get_input_size() == 1)
     {
@@ -18,7 +18,7 @@ namespace lgf
     return result;
   };
 
-  resultCode productOp::rewrite(painter &p, node *op)
+  resultCode productOp::normalize(painter &p, node *op)
   {
     resultCode result = resultCode::pass();
     if (op->get_input_size() == 1)

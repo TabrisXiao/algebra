@@ -1,7 +1,7 @@
 
 #ifndef LGF_BUILTIN_PASSES_H
 #define LGF_BUILTIN_PASSES_H
-#include "lgf/group.h"
+#include "lgf/pass.h"
 #include "ops.h"
 
 namespace lgf
@@ -14,8 +14,8 @@ namespace lgf
         virtual resultCode run()
         {
             painter p(get_graph());
-            add_rewriter<groupRewriter<normalizer>>();
-            //remove_unused_ops(get_graph());
+            add_rewriter<normalizeRewriter>();
+            // remove_unused_ops(get_graph());
             remove_identical_ops(p, get_graph());
             resultCode code = apply_rewriter_greedy(p, get_graph());
             remove_unused_ops(get_graph());

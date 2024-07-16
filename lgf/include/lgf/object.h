@@ -22,6 +22,11 @@ namespace lgf
             }
             return 0;
         }
+        template <typename... T>
+        bool isa()
+        {
+            return (dynamic_cast<T *>(this) || ...);
+        }
         template <typename T>
         T *dyn_cast()
         {

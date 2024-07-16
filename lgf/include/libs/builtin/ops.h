@@ -4,6 +4,7 @@
 #include "lgf/value.h"
 #include "desc.h"
 #include "lgf/group.h"
+#include "lgf/pass.h"
 #include <string>
 namespace lgf
 {
@@ -58,7 +59,7 @@ namespace lgf
             }
             return p.dump();
         }
-        virtual resultCode rewrite(painter &p, node *op)
+        virtual resultCode normalize(painter &p, node *op)
         {
             if (op->get_user_size() == 0)
             {

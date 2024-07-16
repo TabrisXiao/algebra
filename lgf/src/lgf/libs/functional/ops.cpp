@@ -4,7 +4,7 @@
 
 namespace lgf
 {
-    resultCode funcExponentationOp::rewrite(painter &p, node *op)
+    resultCode funcExponentationOp::normalize(painter &p, node *op)
     {
 
         auto base = op->input(0);
@@ -19,7 +19,7 @@ namespace lgf
 
         return resultCode::pass();
     }
-    resultCode funcLogarithmOp::rewrite(painter &p, node *op)
+    resultCode funcLogarithmOp::normalize(painter &p, node *op)
     {
         auto ctx = p.get_context();
         auto log = op->dyn_cast<funcLogarithmOp>();
