@@ -1,7 +1,5 @@
 
 #include "lgf/pass.h"
-#include "lgf/group.h"
-// #include "utility.h"
 using namespace lgf;
 
 resultCode passBase::apply_rewriter_once(painter &p, graph *g)

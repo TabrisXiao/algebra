@@ -3,7 +3,6 @@
 #include "lgf/node.h"
 #include "lgf/value.h"
 #include "desc.h"
-#include "lgf/group.h"
 #include "lgf/pass.h"
 #include <string>
 namespace lgf

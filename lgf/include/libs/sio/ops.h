@@ -3,7 +3,6 @@
 #include "lgf/node.h"
 #include "libs/builtin/builtin.h"
 #include "libs/algebra/algebra.h"
-#include "lgf/group.h"
 
 namespace lgf::sio
 {
