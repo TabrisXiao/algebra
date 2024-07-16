@@ -48,12 +48,6 @@ namespace lgf
             return apply_rewriter_greedy(p, get_graph());
         }
     };
-
-    class normalizer : public group
-    {
-    public:
-        normalizer() = default;
-    };
 }
 
 #endif

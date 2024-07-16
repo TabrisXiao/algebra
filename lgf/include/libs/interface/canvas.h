@@ -52,7 +52,7 @@ namespace lgi
       pm.set_work_region(&g);
       pm.add_pass(lgf::createAlgebraNormalizationPass());
       pm.add_pass(lgf::createCalculusPass());
-      pm.add_pass(lgf::createAlgebraNormalizationPass());
+      // pm.add_pass(lgf::createAlgebraNormalizationPass());
       pm.name = "compile";
       pm.run();
 

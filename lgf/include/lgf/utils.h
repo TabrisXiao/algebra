@@ -37,6 +37,36 @@ namespace lgf::utils
 
 namespace lgf
 {
+  class resultCode : public bitCode<int8_t>
+  {
+  public:
+    enum result : int8_t
+    {
+      default_result,
+      success_result,
+      failed_result
+    };
+    resultCode() : bitCode() { value = 0; }
+    resultCode(int8_t v) : bitCode(int8_t(v)) {}
+    static resultCode success()
+    {
+      return resultCode(int8_t(resultCode::result::success_result));
+    }
+    static resultCode fail()
+    {
+      return resultCode(int8_t(resultCode::result::failed_result));
+    }
+
+    static resultCode pass()
+    {
+      return resultCode(int8_t(resultCode::result::default_result));
+    }
+
+    bool isSuccess()
+    {
+      return check(success_result);
+    }
+  };
   class logicResult
   {
   public:
@@ -71,6 +101,46 @@ namespace lgf
       std::cout << "[debug log] Exit: " << id << ". " << std::endl;
     }
     std::string id;
+  };
+
+  class symbolID
+  {
+  public:
+    symbolID() = default;
+    symbolID(const symbolID &a) : id(a.id) {}
+    symbolID(std::string id) : id(id) {}
+    std::string getID() const
+    {
+      return id.value();
+    }
+    void set_value(std::string id)
+    {
+      this->id = id;
+    }
+    bool has_value() const
+    {
+      return id.has_value();
+    }
+    symbolID &operator=(std::string id)
+    {
+      this->id = id;
+      return *this;
+    }
+    bool operator==(const symbolID &a) const
+    {
+      if (!id.has_value() || !a.id.has_value())
+        return false;
+      return id == a.id;
+    }
+    symbolID &operator=(const symbolID &a)
+    {
+      id = a.id;
+      return *this;
+    }
+    std::string value() { return id.value(); }
+
+  private:
+    std::optional<std::string> id;
   };
 
 #define DEBUG_LOG_GUARD \

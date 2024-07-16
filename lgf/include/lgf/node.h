@@ -16,12 +16,12 @@
 #include <memory>
 #include <algorithm>
 #include "utils.h"
+#include "identifier.h"
 
 // logic graph frameworks
 namespace lgf
 {
     class graph;
-    class normalizer;
 
     typedef size_t id_t;
     class node : public lgfObject
@@ -345,28 +345,30 @@ namespace lgf
 
         bool is_commutable() { return bCommutable; }
         void set_commutable(bool a) { bCommutable = a; }
-        std::string get_uid()
-        {
-            std::string id = get_sid();
-            id += '(';
-            std::vector<std::string> vec;
-            for (auto i = 0; i < inputs.size(); i++)
-            {
-                auto n = inputs[i].get_dual_node();
-                vec.push_back(n->get_uid());
-            }
-            if (bCommutable)
-            {
-                std::sort(vec.begin(), vec.end());
-            }
-            for (auto i = 0; i < vec.size(); i++)
-            {
-                id = id + vec[i] + ',';
-            }
-            id.pop_back();
-            id += ')';
-            return id;
-        }
+
+        // this function only valid for tree structure graph.
+        // std::string get_uid()
+        // {
+        //     std::string id = get_sid();
+        //     id += '(';
+        //     std::vector<std::string> vec;
+        //     for (auto i = 0; i < inputs.size(); i++)
+        //     {
+        //         auto n = inputs[i].get_dual_node();
+        //         vec.push_back(n->get_uid());
+        //     }
+        //     if (bCommutable)
+        //     {
+        //         std::sort(vec.begin(), vec.end());
+        //     }
+        //     for (auto i = 0; i < vec.size(); i++)
+        //     {
+        //         id = id + vec[i] + ',';
+        //     }
+        //     id.pop_back();
+        //     id += ')';
+        //     return id;
+        // }
 
         std::string get_op_represent()
         {

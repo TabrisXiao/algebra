@@ -32,7 +32,7 @@ namespace lgf
             op->set_value_desc(op->input()->get_value_desc());
             return op;
         }
-        virtual resultCode rewrite(painter &p, node *op) override;
+        virtual resultCode normalize(painter &p, node *op);
     };
 
     class productOp : public node, public normalizer
@@ -63,7 +63,7 @@ namespace lgf
             op->set_value_desc(op->input()->get_value_desc());
             return op;
         }
-        virtual resultCode rewrite(painter &p, node *op) override;
+        virtual resultCode normalize(painter &p, node *op);
     };
 
     class negativeOp : public node

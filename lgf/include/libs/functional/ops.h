@@ -34,7 +34,7 @@ namespace lgf
             op->set_value_desc(x->get_value_desc());
             return op;
         }
-        virtual sid_t represent() override
+        virtual sid_t represent() override final
         {
             return value_rep() + " = cos( " + input()->get_value_sid() + " )";
         }
@@ -101,7 +101,7 @@ namespace lgf
         {
             return value_rep() + " = exponent base: " + input()->get_value_sid() + " w. power: " + power()->get_value_sid();
         }
-        virtual resultCode rewrite(painter &p, node *op) override;
+        virtual resultCode normalize(painter &p, node *op) override;
     };
 
     class funcLogarithmOp : public elemFuncOp, public normalizer
@@ -127,7 +127,7 @@ namespace lgf
         {
             return value_rep() + " = log base: " + base()->get_value_sid() + " of " + arg()->get_value_sid();
         }
-        virtual resultCode rewrite(painter &p, node *op) override;
+        virtual resultCode normalize(painter &p, node *op) override final;
     };
 
     class partialDifferentiateOp : public elemFuncOp

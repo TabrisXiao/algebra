@@ -29,6 +29,7 @@ namespace lgf
       painter p(get_graph());
       add_rewriter<ChainRuleRewriter>();
       add_rewriter<analyticFuncDerivativeRewriter>();
+      add_rewriter<normalizeRewriter>();
       auto result = apply_rewriter_greedy(p, get_graph());
       return result;
     }

@@ -4,40 +4,10 @@
 #include "node.h"
 #include "painter.h"
 #include "utils.h"
+#include "interface.h"
 
 namespace lgf
 {
-
-    class resultCode : public bitCode<int8_t>
-    {
-    public:
-        enum result : int8_t
-        {
-            default_result,
-            success_result,
-            failed_result
-        };
-        resultCode() : bitCode() { value = 0; }
-        resultCode(int8_t v) : bitCode(int8_t(v)) {}
-        static resultCode success()
-        {
-            return resultCode(int8_t(resultCode::result::success_result));
-        }
-        static resultCode fail()
-        {
-            return resultCode(int8_t(resultCode::result::failed_result));
-        }
-
-        static resultCode pass()
-        {
-            return resultCode(int8_t(resultCode::result::default_result));
-        }
-
-        bool isSuccess()
-        {
-            return check(success_result);
-        }
-    };
 
     class rewriterBase
     {
@@ -66,6 +36,79 @@ namespace lgf
         }
     };
 
+    class normalizer
+    {
+    public:
+        normalizer() = default;
+        virtual ~normalizer() = default;
+        virtual resultCode normalize(painter &, node *op) = 0;
+    };
+
+    class normalizeRewriter : public rewriterBase
+    {
+    public:
+        normalizeRewriter() = default;
+        virtual resultCode execute(painter &rewriter, node *op) final
+        {
+            if (auto cop = dynamic_cast<normalizer *>(op))
+            {
+                auto sig = cop->normalize(rewriter, op);
+                return sig;
+            }
+            return resultCode::pass();
+        }
+    };
+
+    class identiferInterface
+    {
+    public:
+        identiferInterface() = default;
+        virtual ~identiferInterface() = default;
+        symbolID get_uid_for_tree(node *op)
+        {
+            std::string id = op->get_sid();
+            id += '(';
+            std::vector<std::string> vec;
+            for (auto i = 0; i < op->get_input_size(); i++)
+            {
+                if (auto n = dynamic_cast<identiferInterface *>(op->input(i)))
+                    vec.push_back(n->get_uid().value());
+            }
+            if (op->is_commutable())
+            {
+                std::sort(vec.begin(), vec.end());
+            }
+            for (auto i = 0; i < vec.size(); i++)
+            {
+                id = id + vec[i] + ',';
+            }
+            id.pop_back();
+            id += ')';
+            symbolID result = id;
+            return result;
+        }
+
+        // get_uid: get unique id for the node this interface associated with.
+        // if two nodes have the same uid, they are equivalent and should be removed by reduce process.
+        virtual symbolID get_uid()
+        {
+            return get_uid_for_tree(dynamic_cast<node *>(this));
+        }
+
+        // static function can be used to test if two nodes are equivalent.
+        static bool is_equivalent(node *a, node *b)
+        {
+            if (auto ia = dynamic_cast<identiferInterface *>(a))
+            {
+                if (auto ib = dynamic_cast<identiferInterface *>(b))
+                {
+                    return ia->get_uid() == ib->get_uid();
+                }
+            }
+            return 0;
+        }
+    };
+
     class passBase
     {
     public:
@@ -79,12 +122,16 @@ namespace lgf
         template <typename T, typename... ARGS>
         void add_rewriter(ARGS... arg)
         {
-            auto ptr = std::make_unique<T>(arg...);
+            std::unique_ptr<rewriterBase> ptr = std::make_unique<T>(arg...);
             rewriters.push_back(std::move(ptr));
         }
 
+        resultCode apply_reduce_once(painter &p, graph *g);
+
         resultCode apply_rewriter_once(painter &p, graph *g);
         resultCode apply_rewriter_greedy(painter &p, graph *g);
+
+        resultCode apply_rewriter_and_reduce_greedy(painter &p, graph *g);
 
         resultCode walk_apply_rewriter_once(painter &p, graph *g, bool deepwalk = 0);
 
