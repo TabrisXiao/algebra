@@ -4,7 +4,6 @@
 #include "node.h"
 #include "painter.h"
 #include "utils.h"
-#include "interface.h"
 
 namespace lgf
 {

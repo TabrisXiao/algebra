@@ -102,6 +102,7 @@ namespace lgf::transform
             add_rewriter<convertToSIORewriter<funcLogarithmOp, sio::funcOp>>("log");
             add_rewriter<convertToSIORewriter<partialDifferentiateOp, sio::partialD>>();
             add_rewriter<convertToSIORewriter<differentiateOp, sio::differentialOp>>();
+            
             return apply_rewriter_greedy(p, get_graph());
         }
     };

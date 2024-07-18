@@ -29,7 +29,7 @@ namespace lgf
         virtual std::string represent() { return get_sid() + " " + name; }
     };
 
-    class declOp : public node, public normalizer
+    class declOp : public node, public normalizer, public identiferInterface
     {
     public:
         declOp() : node("declOp") {}
@@ -93,7 +93,7 @@ namespace lgf
 
     //----------------------------------------
 
-    class cstDeclOp : public lgf::node
+    class cstDeclOp : public lgf::node, public identiferInterface
     {
     public:
         cstDeclOp() { mark_status(eIdenticalRemovable); };
@@ -207,7 +207,10 @@ namespace lgf
     class funcCallOp : public node
     {
     public:
-        funcCallOp() = default;
+        funcCallOp()
+        {
+            mark_status(eNonTrivial);
+        }
         static funcCallOp *build(LGFContext *ctx, node *func)
         {
             auto op = new funcCallOp();

@@ -62,6 +62,8 @@ namespace lgf::sio
             while (numberStr.back() == '0' || numberStr.back() == '.')
             {
                 numberStr.pop_back();
+                if (numberStr.empty())
+                    break;
             }
         }
         std::string get_number_str()

@@ -1,6 +1,7 @@
 
 #ifndef LGF_UTILS_H
 #define LGF_UTILS_H
+#include <optional>
 #include <string>
 #include <iostream>
 namespace lgf::utils
