@@ -16,7 +16,6 @@
 #include <memory>
 #include <algorithm>
 #include "utils.h"
-#include "identifier.h"
 
 // logic graph frameworks
 namespace lgf

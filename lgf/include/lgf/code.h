@@ -1,7 +1,7 @@
 
 #ifndef LGF_CODE_H_
 #define LGF_CODE_H_
-
+#include <stdexcept>
 #include <string>
 
 namespace lgf

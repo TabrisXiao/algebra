@@ -1,6 +1,7 @@
 
 #ifndef LGF_OBJECT_H_
 #define LGF_OBJECT_H_
+#include <memory>
 #include "config.h"
 
 namespace lgf
