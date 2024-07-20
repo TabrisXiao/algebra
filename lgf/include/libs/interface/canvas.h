@@ -4,9 +4,9 @@
 #include "lgf/context.h"
 #include "lgf/painter.h"
 #include "libs/builtin/builtin.h"
-#include "libs/functional/passes.h"
 #include "libs/sio/exporter.h"
-#include "libs/transform/algebra/normalization_pass.h"
+#include "libs/math/functional/passes.h"
+#include "libs/transform/math/algebra/normalization_pass.h"
 #include "libs/transform/convertToSIO.h"
 
 namespace lgi

@@ -11,10 +11,10 @@ set(
     node.cpp
     pass.cpp
     libs/builtin/normalization.cpp
-    libs/algebra/ops.cpp
-    libs/functional/ops.cpp
-    libs/functional/passes.cpp
-    libs/functional/analytic_derivative.cpp
+    libs/math/algebra/ops.cpp
+    libs/math/functional/ops.cpp
+    libs/math/functional/passes.cpp
+    libs/math/functional/analytic_derivative.cpp
     libs/SIO/exporter.cpp
 )
 
