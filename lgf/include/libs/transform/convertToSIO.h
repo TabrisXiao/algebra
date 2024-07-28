@@ -15,7 +15,7 @@ namespace lgf::transform
     class convertToSIORewriter : public rewriter<origOp>
     {
     public:
-        convertToSIORewriter(std::string funcName = "") : funcName(funcName){};
+        convertToSIORewriter(std::string funcName = "") : funcName(funcName) {};
         virtual descriptor convert_desc(LGFContext *ctx, descriptor desc)
         {
             return desc;
@@ -65,7 +65,7 @@ namespace lgf::transform
                 p.replace_op<lgf::sio::numberOp>(op, op->get_value_desc(), real_data.represent());
                 return resultCode::success();
             }
-            else if (op->get_data_attr().get_ptr())
+            else if (!op->get_data_attr().is_null())
             {
                 sid_t number;
                 if (auto f32d = op->get_data_attr().dyn_cast<realNumberData>())

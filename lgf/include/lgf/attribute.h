@@ -10,34 +10,32 @@ namespace lgf
         attrBase() = default;
         attrBase(sid_t id) : lgfObject(id) {}
         virtual ~attrBase() = default;
-        virtual std::unique_ptr<attrBase> copy() = 0;
         virtual sid_t represent() = 0;
     };
 
-    class attribute : public morphism_wrapper<attrBase>
+    class attribute : public objectHandle<attrBase>
     {
     public:
         attribute() = default;
-        attribute(const attribute &att) : morphism_wrapper<attrBase>(att) {}
-        attribute(std::unique_ptr<attrBase> &&imp)
+        attribute(const attribute &att) : objectHandle<attrBase>(att) {}
+        attribute(std::shared_ptr<attrBase> imp) : objectHandle<attrBase>(imp)
         {
-            set_ptr(std::move(imp));
         }
         sid_t represent()
         {
-            if (!get_ptr())
+            if (is_null())
                 throw std::runtime_error("attribute: Invalid attribute!");
-            return get_ptr()->represent();
+            return value().represent();
         }
         template <typename T>
         inline static attribute get()
         {
-            return attribute(std::make_unique<T>());
+            return attribute(std::make_shared<T>());
         }
         template <typename T, typename... ARGS>
         inline static attribute get(ARGS... args)
         {
-            return attribute(std::make_unique<T>(args...));
+            return attribute(std::make_shared<T>(args...));
         }
     };
 
@@ -50,6 +48,12 @@ namespace lgf
 
     private:
         T data_;
+    };
+
+    class tuple : public attrBase
+    {
+    public:
+        std::vector<attribute> data;
     };
 }
 #endif
