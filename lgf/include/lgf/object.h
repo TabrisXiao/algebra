@@ -118,6 +118,31 @@ namespace lgf
     private:
         std::unique_ptr<T> ptr = nullptr;
     };
+
+    // objectHandle is a template object to handle derived class of objectImp.
+    // it resolve the class slicing problem by using shared_ptr to store the derived class.
+    // The objectHandle object can be assigned to another objectHandle object.
+    template <typename detial_t>
+    class objectHandle
+    {
+    public:
+        template <typename... ARGS>
+        void create(ARGS... args)
+        {
+            detail = std::make_shared<detial_t>(args...);
+        }
+        void assign(const std::shared_ptr<detial_t> &obj) { detail = obj; }
+        bool is_null() const { return detail == nullptr; }
+        objectHandle<detial_t> &operator=(const objectHandle &obj)
+        {
+            if (!obj.is_null())
+                detail = obj.detail;
+            return *this;
+        }
+
+    private:
+        std::shared_ptr<detial_t> detail;
+    };
 }
 
 #endif
