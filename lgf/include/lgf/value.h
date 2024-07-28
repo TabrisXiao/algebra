@@ -15,49 +15,41 @@ namespace lgf
         descBase() = default;
         descBase(sid_t id) : lgfObject(id) {}
         virtual ~descBase() = default;
-        virtual std::unique_ptr<descBase> copy() { return std::make_unique<descBase>(sid); };
         virtual sid_t represent() { return sid; }
     };
 
-    class descriptor : public morphism_wrapper<descBase>
+    class descriptor : public objectHandle<descBase>
     {
     public:
         descriptor() = default;
-        descriptor(const descriptor &d) : morphism_wrapper<descBase>(d) {}
-        descriptor(std::unique_ptr<descBase> &&p)
-        {
-            set_ptr(std::move(p));
-        }
-        descriptor &operator=(const descriptor &src)
-        {
-            set_ptr(std::move(src.get_ptr()->copy()));
-            return *this;
-        }
+        descriptor(const descriptor &d) : objectHandle<descBase>(d) {}
+        descriptor(std::shared_ptr<descBase> d) : objectHandle<descBase>(d) {}
+
         template <typename T>
         inline static descriptor get()
         {
-            return descriptor(std::make_unique<T>());
+            return descriptor(std::make_shared<T>());
         }
         template <typename T, typename... ARGS>
         inline static descriptor get(ARGS... args)
         {
-            return descriptor(std::make_unique<T>(args...));
+            return descriptor(std::make_shared<T>(args...));
         }
 
         // std::unique_ptr<descBase> &get_desc_ptr() { return *(get_ptr()); }
         sid_t represent()
         {
-            if (get_ptr())
-                return get_ptr()->represent();
+            if (!is_null())
+                return value().represent();
             else
                 return "";
         }
         template <typename... ARGS>
         bool is()
         {
-            return (... || dynamic_cast<ARGS *>(get_ptr()));
+            return (... || dynamic_cast<ARGS *>(&value()));
         }
-        sid_t get_sid() { return get_ptr()->get_sid(); }
+        sid_t get_sid() { return value().get_sid(); }
     };
 
     class value : public lgfObject

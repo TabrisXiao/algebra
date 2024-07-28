@@ -109,7 +109,7 @@ namespace lgf
             printer p;
             p << value_rep() << " = "
               << "Constant: " << value_desc_rep();
-            if (data.get_ptr())
+            if (!data.is_null())
             {
                 p << " = " << data.represent();
             }

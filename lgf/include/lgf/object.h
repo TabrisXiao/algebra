@@ -79,46 +79,6 @@ namespace lgf
         digit_t value = 0;
     };
 
-    template <typename T>
-    class morphism_wrapper
-    {
-        // this object is a container to wrapper all classes derived from base type T.
-        // This object allow the copy and the assignment for the derived class provided the
-        // wrapped class having a virtual function defined in the signature:
-        // virtual std::unique_ptr<T> copy();
-    public:
-        morphism_wrapper() = default;
-
-        morphism_wrapper(const morphism_wrapper &src)
-        {
-            ptr = std::move(src.get_ptr()->copy());
-        }
-        morphism_wrapper(morphism_wrapper &src)
-        {
-            ptr = std::move(src.get_ptr()->copy());
-        }
-        morphism_wrapper &operator=(const morphism_wrapper &src)
-        {
-            ptr = std::move(src.get_ptr()->copy());
-            return *this;
-        }
-        T *get_ptr() const { return ptr.get(); }
-        void set_ptr(std::unique_ptr<T> &&p)
-        {
-            ptr = std::move(p);
-        }
-        template <typename U>
-        U *dyn_cast()
-        {
-            auto p = dynamic_cast<U *>(ptr.get());
-            return p;
-        }
-        bool is_null() { return ptr == nullptr; }
-
-    private:
-        std::unique_ptr<T> ptr = nullptr;
-    };
-
     // objectHandle is a template object to handle derived class of objectImp.
     // it resolve the class slicing problem by using shared_ptr to store the derived class.
     // The objectHandle object can be assigned to another objectHandle object.
@@ -126,11 +86,9 @@ namespace lgf
     class objectHandle
     {
     public:
-        template <typename... ARGS>
-        void create(ARGS... args)
-        {
-            detail = std::make_shared<detial_t>(args...);
-        }
+        objectHandle() = default;
+        objectHandle(std::shared_ptr<detial_t> &obj) : detail(obj) {}
+        objectHandle(const objectHandle &obj) : detail(obj.detail) {}
         void assign(const std::shared_ptr<detial_t> &obj) { detail = obj; }
         bool is_null() const { return detail == nullptr; }
         objectHandle<detial_t> &operator=(const objectHandle &obj)
@@ -138,6 +96,14 @@ namespace lgf
             if (!obj.is_null())
                 detail = obj.detail;
             return *this;
+        }
+        detial_t &value() { return *detail; }
+        detial_t *ptr() { return detail.get(); }
+        template <typename U>
+        U *dyn_cast()
+        {
+            auto p = dynamic_cast<U *>(detail.get());
+            return p;
         }
 
     private:

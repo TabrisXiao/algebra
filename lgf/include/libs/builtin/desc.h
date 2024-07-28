@@ -15,10 +15,6 @@ namespace lgf
     {
       return utils::to_string(get_data());
     }
-    virtual std::unique_ptr<attrBase> copy() override
-    {
-      return std::make_unique<int32Data>(get_data());
-    }
     static attribute get(int d)
     {
       return attribute::get<int32Data>(d);
@@ -37,10 +33,6 @@ namespace lgf
     {
       return attribute::get<float32Data>(d);
     }
-    virtual std::unique_ptr<attrBase> copy() override
-    {
-      return std::make_unique<float32Data>(get_data());
-    }
   };
 
   class int32Value : public descBase
@@ -50,7 +42,7 @@ namespace lgf
     int32Value(LGFContext *ctx) : descBase("int32") {}
     static descriptor get()
     {
-      return descriptor(std::make_unique<int32Value>());
+      return descriptor(std::make_shared<int32Value>());
     }
   };
 
@@ -82,10 +74,6 @@ namespace lgf
     static descriptor get(ARGS... arg)
     {
       return descriptor::get<listDesc>(arg...);
-    }
-    virtual std::unique_ptr<descBase> copy() override
-    {
-      return std::make_unique<listDesc>(*this);
     }
     virtual sid_t represent() override
     {
@@ -120,10 +108,6 @@ namespace lgf
     {
       ret = out;
       args = in;
-    }
-    virtual std::unique_ptr<descBase> copy() override
-    {
-      return std::make_unique<funcDesc>(ret, args);
     }
 
     virtual sid_t represent() override
