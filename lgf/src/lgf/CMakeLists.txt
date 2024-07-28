@@ -12,6 +12,7 @@ set(
     pass.cpp
     libs/builtin/normalization.cpp
     libs/math/algebra/ops.cpp
+    libs/math/normalization.cpp
     libs/math/functional/ops.cpp
     libs/math/functional/passes.cpp
     libs/math/functional/analytic_derivative.cpp
