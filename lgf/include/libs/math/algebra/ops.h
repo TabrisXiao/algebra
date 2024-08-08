@@ -6,7 +6,7 @@
 #include "lgf/context.h"
 #include "desc.h"
 
-namespace lgf
+namespace lgf::math
 {
     class sumOp : public node, public normalizer
     {
@@ -18,7 +18,7 @@ namespace lgf
         }
         static sumOp *build(LGFContext *ctx, std::vector<node *> &vec)
         {
-            auto op = new sumOp();
+            auto op = new math::sumOp();
             op->register_inputs(vec);
             auto desc = vec[0]->get_value_desc();
             op->set_value_desc(desc);
@@ -27,7 +27,7 @@ namespace lgf
         template <typename... Args>
         static sumOp *build(LGFContext *ctx, Args... args)
         {
-            auto op = new sumOp();
+            auto op = new math::sumOp();
             op->register_input(args...);
             op->set_value_desc(op->input()->get_value_desc());
             return op;
@@ -87,7 +87,7 @@ namespace lgf
         negativeOp() : node("negative") { mark_status(eIdenticalRemovable); }
         static negativeOp *build(LGFContext *ctx, node *n)
         {
-            auto op = new negativeOp();
+            auto op = new math::negativeOp();
             op->register_input(n);
             op->set_value_desc(n->get_value_desc());
             return op;
@@ -100,7 +100,7 @@ namespace lgf
         inverseOp() : node("inverse") { mark_status(eIdenticalRemovable); }
         static inverseOp *build(LGFContext *ctx, node *n)
         {
-            auto op = new inverseOp();
+            auto op = new math::inverseOp();
             op->register_input(n);
             op->set_value_desc(n->get_value_desc());
             return op;
@@ -113,7 +113,7 @@ namespace lgf
         minusOp() : node("minus") { mark_status(eIdenticalRemovable); }
         static minusOp *build(LGFContext *ctx, node *lhs, node *rhs)
         {
-            auto op = new minusOp();
+            auto op = new math::minusOp();
             op->register_input(lhs, rhs);
             op->set_value_desc(lhs->get_value_desc());
             return op;

@@ -7,7 +7,7 @@
 #include "desc.h"
 #include "lgf/utils.h"
 
-namespace lgf
+namespace lgf::math
 {
 
     class elemFuncOp : public mathOp

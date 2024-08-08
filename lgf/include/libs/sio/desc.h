@@ -6,15 +6,15 @@
 
 namespace lgf::sio
 {
-    class expDesc : public descBase
+    class expDesc : public descImpl
     {
     public:
-        expDesc() : descBase("expressible") {}
+        expDesc() : descImpl("expressible") {}
         static descriptor get()
         {
             return descriptor::get<expDesc>();
         }
-        std::unique_ptr<descBase> copy()
+        std::unique_ptr<descImpl> copy()
         {
             return std::make_unique<expDesc>();
         }

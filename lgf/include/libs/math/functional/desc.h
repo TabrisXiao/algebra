@@ -6,28 +6,28 @@
 #include "lgf/context.h"
 #include "lgf/utils.h"
 
-namespace lgf
+namespace lgf::math
 {
 
-  class setDesc : public descBase
+  class setDesc : public descImpl
   {
   public:
-    setDesc() : descBase("set") {}
+    setDesc() : descImpl("set") {}
     static descriptor get()
     {
       return descriptor::get<setDesc>();
     }
   };
 
-  class sigmaAlgebra : public descBase
+  class sigmaAlgebra : public descImpl
   {
   public:
-    sigmaAlgebra() : descBase("sigma-algebra") {}
+    sigmaAlgebra() : descImpl("sigma-algebra") {}
     static descriptor get()
     {
       return descriptor::get<sigmaAlgebra>();
     }
-    virtual std::unique_ptr<descBase> copy()
+    virtual std::unique_ptr<descImpl> copy()
     {
       return std::make_unique<sigmaAlgebra>();
     }

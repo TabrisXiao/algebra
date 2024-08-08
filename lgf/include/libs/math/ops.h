@@ -5,7 +5,7 @@
 #include "libs/builtin/ops.h"
 #include "lgf/pass.h"
 
-namespace lgf
+namespace lgf::math
 {
 
     class mathOp : public node, public identiferInterface

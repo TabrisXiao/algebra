@@ -9,7 +9,7 @@
 #include "lgf/attribute.h"
 #include "lgf/utils.h"
 
-namespace lgf
+namespace lgf::math
 {
   // template<typename T>
   // class interfaceBase {
@@ -21,20 +21,20 @@ namespace lgf
   //   }
   // };
 
-  class varDesc : public descBase
+  class varDesc : public descImpl
   {
   public:
-    varDesc() : descBase("variable") {}
+    varDesc() : descImpl("variable") {}
     inline static descriptor get()
     {
       return descriptor::get<varDesc>();
     }
   };
 
-  class integer : public descBase
+  class integer : public descImpl
   {
   public:
-    integer() : descBase("integer") {}
+    integer() : descImpl("integer") {}
     static descriptor get()
     {
       return descriptor::get<integer>();
@@ -121,22 +121,22 @@ namespace lgf
     double data = 0;
   };
 
-  class realNumber : public descBase
+  class realNumber : public descImpl
   {
   public:
-    realNumber() : descBase("realNumber") {};
+    realNumber() : descImpl("realNumber"){};
     static descriptor get()
     {
       return descriptor::get<realNumber>();
     }
   };
 
-  class matrix : public descBase
+  class matrix : public descImpl
   {
   public:
-    matrix() : descBase("matrix") {}
-    matrix(uint64_t nc, uint64_t nr, descriptor base) : descBase("matrix"), col(nc), row(nr), elemDesc(base) {}
-    matrix(descriptor base) : descBase("matrix"), elemDesc(base) {}
+    matrix() : descImpl("matrix") {}
+    matrix(uint64_t nc, uint64_t nr, descriptor base) : descImpl("matrix"), col(nc), row(nr), elemDesc(base) {}
+    matrix(descriptor base) : descImpl("matrix"), elemDesc(base) {}
     static descriptor get(descriptor base)
     {
       return descriptor::get<matrix>(base);

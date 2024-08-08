@@ -35,34 +35,34 @@ namespace lgf
     }
   };
 
-  class int32Value : public descBase
+  class int32Value : public descImpl
   {
   public:
-    int32Value() : descBase("int32") {}
-    int32Value(LGFContext *ctx) : descBase("int32") {}
+    int32Value() : descImpl("int32") {}
+    int32Value(LGFContext *ctx) : descImpl("int32") {}
     static descriptor get()
     {
       return descriptor(std::make_shared<int32Value>());
     }
   };
 
-  class float32Value : public descBase
+  class float32Value : public descImpl
   {
   public:
-    float32Value() : descBase("float32") {}
-    float32Value(LGFContext *ctx) : descBase("float32") {}
+    float32Value() : descImpl("float32") {}
+    float32Value(LGFContext *ctx) : descImpl("float32") {}
     static descriptor get()
     {
       return descriptor::get<float32Value>();
     }
   };
 
-  class listDesc : public descBase
+  class listDesc : public descImpl
   {
   public:
-    listDesc() : descBase("list") {}
+    listDesc() : descImpl("list") {}
     template <typename... ARGS>
-    listDesc(ARGS... args) : descBase("list")
+    listDesc(ARGS... args) : descImpl("list")
     {
       auto nds = std::initializer_list<descriptor>{args...};
       for (auto nd : nds)
@@ -99,12 +99,12 @@ namespace lgf
     std::vector<descriptor> data;
   };
 
-  class funcDesc : public descBase
+  class funcDesc : public descImpl
   {
   public:
-    funcDesc() : descBase("func") {}
+    funcDesc() : descImpl("func") {}
 
-    funcDesc(descriptor out, std::vector<descriptor> &in) : descBase("func")
+    funcDesc(descriptor out, std::vector<descriptor> &in) : descImpl("func")
     {
       ret = out;
       args = in;

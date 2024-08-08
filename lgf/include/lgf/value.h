@@ -9,21 +9,21 @@ namespace lgf
 
     class node;
 
-    class descBase : public lgfObject
+    class descImpl : public lgfObject
     {
     public:
-        descBase() = default;
-        descBase(sid_t id) : lgfObject(id) {}
-        virtual ~descBase() = default;
+        descImpl() = default;
+        descImpl(sid_t id) : lgfObject(id) {}
+        virtual ~descImpl() = default;
         virtual sid_t represent() { return sid; }
     };
 
-    class descriptor : public objectHandle<descBase>
+    class descriptor : public objectHandle<descImpl>
     {
     public:
         descriptor() = default;
-        descriptor(const descriptor &d) : objectHandle<descBase>(d) {}
-        descriptor(std::shared_ptr<descBase> d) : objectHandle<descBase>(d) {}
+        descriptor(const descriptor &d) : objectHandle<descImpl>(d) {}
+        descriptor(std::shared_ptr<descImpl> d) : objectHandle<descImpl>(d) {}
 
         template <typename T>
         inline static descriptor get()
@@ -36,7 +36,7 @@ namespace lgf
             return descriptor(std::make_shared<T>(args...));
         }
 
-        // std::unique_ptr<descBase> &get_desc_ptr() { return *(get_ptr()); }
+        // std::unique_ptr<descImpl> &get_desc_ptr() { return *(get_ptr()); }
         sid_t represent()
         {
             if (!is_null())
