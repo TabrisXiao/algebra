@@ -1,6 +1,7 @@
 
 #include "libs/math/normalization.h"
 
+using namespace lgf::math;
 using namespace lgf;
 bool is_unit(node *op)
 {
@@ -48,7 +49,7 @@ bool is_zero(node *op)
     return false;
 }
 
-resultCode lgf::zeroRewriter::rewrite(painter &p, cstDeclOp *op)
+resultCode lgf::math::zeroRewriter::rewrite(painter &p, cstDeclOp *op)
 {
     if (!is_zero(op))
     {
@@ -75,7 +76,7 @@ resultCode lgf::zeroRewriter::rewrite(painter &p, cstDeclOp *op)
     return resultCode::pass();
 }
 
-resultCode lgf::unitRewriter::rewrite(painter &p, cstDeclOp *op)
+resultCode lgf::math::unitRewriter::rewrite(painter &p, cstDeclOp *op)
 {
     if (!is_unit(op))
     {

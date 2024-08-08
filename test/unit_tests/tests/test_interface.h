@@ -4,7 +4,7 @@
 #include "libs/interface/interface.h"
 #include "unit_test_frame.h"
 
-using namespace lgi;
+using namespace lgi::math;
 
 namespace test_body
 {
@@ -16,9 +16,9 @@ namespace test_body
     bool run()
     {
       variable x, sig, z = 2;
-      auto y = function::cos(function::cos(function::cos(x)));
+      auto y = cos(cos(cos(x)));
       y.latex();
-      auto dy = function::d(y);
+      auto dy = d(y);
       dy.latex();
       canvas::get()
           .get_pass_manager()

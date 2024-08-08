@@ -3,7 +3,7 @@
 #define TRANSFORM_ALGEBRA_SIMPLIFICATION_PASS
 #include "libs/builtin/passes.h"
 #include "libs/math/algebra/ops.h"
-namespace lgf
+namespace lgf::math
 {
 
     class zeroRewriter : public rewriter<cstDeclOp>

@@ -5,7 +5,7 @@
 #include "libs/math/algebra/algebra.h"
 #include "libs/math/normalization.h"
 #include "ops.h"
-namespace lgf
+namespace lgf::math
 {
   class ChainRuleRewriter : public rewriter<differentiateOp>
   {

@@ -2,7 +2,7 @@
 #include "libs/math/algebra/ops.h"
 #include "libs/math/algebra/util.h"
 
-namespace lgf
+namespace lgf::math
 {
 
   resultCode sumOp::normalize(painter &p, node *op)

@@ -2,7 +2,7 @@
 #include "libs/math/functional/passes.h"
 #include "libs/math/algebra/desc.h"
 
-lgf::resultCode lgf::ChainRuleRewriter::rewrite(painter &p, differentiateOp *op)
+lgf::resultCode lgf::math::ChainRuleRewriter::rewrite(painter &p, differentiateOp *op)
 {
     // this apply the differentiation chain rule to all
     // differentiateOp in the graph
@@ -104,7 +104,7 @@ lgf::resultCode lgf::ChainRuleRewriter::rewrite(painter &p, differentiateOp *op)
     return result;
 }
 
-lgf::resultCode lgf::analyticFuncDerivativeRewriter::rewrite(painter &p, partialDifferentiateOp *op)
+lgf::resultCode lgf::math::analyticFuncDerivativeRewriter::rewrite(painter &p, partialDifferentiateOp *op)
 {
     auto result = resultCode::pass();
     ctx = p.get_context();

@@ -16,7 +16,7 @@ public:
     test_obj() { test_id = "object test"; };
     bool run()
     {
-        auto desc = realNumber::get();
+        auto desc = lgf::math::realNumber::get();
         descriptor desc2(desc);
 
         std::cout << desc2.represent() << std::endl;

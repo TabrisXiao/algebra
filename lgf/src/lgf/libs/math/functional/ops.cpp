@@ -2,7 +2,7 @@
 #include "libs/math/functional/ops.h"
 #include "libs/math/algebra/desc.h"
 
-namespace lgf
+namespace lgf::math
 {
     resultCode funcExponentationOp::normalize(painter &p, node *op)
     {
