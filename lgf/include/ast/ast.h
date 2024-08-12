@@ -2,6 +2,7 @@
 #define LGF_AST_TREE_H
 #include <vector>
 #include <memory>
+#include <string>
 
 namespace lgf::ast
 {
@@ -12,6 +13,7 @@ namespace lgf::ast
         number = 3,
         call = 4,
         define = 5,
+        module = 6,
     };
     enum astBinaryOpType : uint16_t
     {
@@ -38,6 +40,7 @@ namespace lgf::ast
         astNode() = default;
         astNode(astType k) : kind(k) {}
         virtual ~astNode() = default;
+        void set_kind(astType k) { kind = k; }
 
     private:
         astType kind;
@@ -46,17 +49,24 @@ namespace lgf::ast
     class astBlock : public astNode
     {
     public:
-        astBlock() : astNode(astType::block){};
-        std::vector<astNode *> get_nodes() { return nodes; }
+        astBlock() : astNode(astType::block) {};
+        std::vector<std::unique_ptr<astNode>> &get_nodes()
+        {
+            return nodes;
+        }
+        void add_node(std::unique_ptr<astNode> node)
+        {
+            nodes.push_back(std::move(node));
+        }
 
     private:
-        std::vector<astNode *> nodes;
+        std::vector<std::unique_ptr<astNode>> nodes;
     };
 
     class astExpr : public astNode
     {
     public:
-        astExpr() : astNode(astType::expr){};
+        astExpr() : astNode(astType::expr) {};
         std::string get_expr() { return id; }
 
     private:
@@ -66,7 +76,7 @@ namespace lgf::ast
     class astNumber : public astNode
     {
     public:
-        astNumber() : astNode(astType::number){};
+        astNumber() : astNode(astType::number) {};
         template <typename T>
         void store(T val)
         {
@@ -85,7 +95,7 @@ namespace lgf::ast
     class astBinaryOp : public astNode
     {
     public:
-        astBinaryOp() : astNode(astType::call){};
+        astBinaryOp() : astNode(astType::call) {};
         astBinaryOpType get_op() { return op_type; }
         astNode *get_lhs() { return lhs; }
         astNode *get_rhs() { return rhs; }
@@ -98,7 +108,7 @@ namespace lgf::ast
     class astDefine : public astNode
     {
     public:
-        astDefine() : astNode(astType::define){};
+        astDefine() : astNode(astType::define) {};
         std::string get_name() { return name; }
         astBlock *get_value() { return block; }
 
@@ -110,7 +120,10 @@ namespace lgf::ast
     class astModule : public astBlock
     {
     public:
-        astModule(const std::string &n) : astBlock(), name(n){};
+        astModule(const std::string &n) : astBlock(), name(n)
+        {
+            set_kind(astType::module);
+        };
         std::string get_name() { return name; }
 
     private:

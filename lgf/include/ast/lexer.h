@@ -96,36 +96,47 @@ namespace lgf::ast
                     lastChar = get_next_char();
                 } while (isdigit(lastChar) || lastChar == '.');
                 number = strtod(numStr.c_str(), nullptr);
-                return tok_number;
+                curTok = tok_number;
             }
             // Identifier: [a-zA-Z][a-zA-Z0-9_]*
             if (isalpha(lastChar))
             {
                 identifierStr = lastChar;
-                while (isalnum((lastChar = l0token(get_next_char()))) || lastChar == '_')
+                lastChar = get_next_char();
+                while (isalnum(lastChar) || lastChar == '_')
+                {
                     identifierStr += lastChar;
-                return l0token::tok_identifier;
+                    lastChar = get_next_char();
+                }
+                curTok = tok_identifier;
+                return curTok;
             }
             if (lastChar == EOF)
             {
                 if (fs->is_eof())
-                    return tok_eof;
+                {
+                    curTok = tok_eof;
+                    return curTok;
+                }
                 else
                 {
                     lastChar = get_next_char();
-                    return get_next_l0token();
+                    curTok = get_next_l0token();
+                    return curTok;
                 }
             }
             else
             {
                 identifierStr = "";
-                while (!isspace(lastChar) && lastChar != EOF)
+                while (!isspace(lastChar) && lastChar != EOF && !isalpha(lastChar))
                 {
                     identifierStr += lastChar;
                     lastChar = get_next_char();
                 }
+                curTok = tok_special;
+                return curTok;
             }
-            return l0token::tok_special;
+            return curTok;
         }
 
         void consume(l0token tok)
