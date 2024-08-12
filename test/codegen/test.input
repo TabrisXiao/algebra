@@ -1,0 +1,10 @@
+
+template<node> addOp {
+    input: {
+        variable: lhs
+        variable: rhs
+    }
+    output:{
+        variable: output
+    }
+}
