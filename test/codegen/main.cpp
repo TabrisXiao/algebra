@@ -8,6 +8,6 @@ int main()
 
     const std::string test = "../algebra/test/codegen/test.input";
     lgfOpCodeGen gen;
-    
+
     gen.run(test);
 }

@@ -17,31 +17,31 @@ namespace lgf::ast
         {
             lex.set_input_stream(fs);
         }
-        void parser_less_than()
+        void parse_less_than()
         {
             lex.consume_special("<");
         }
-        void parser_greater_than()
+        void parse_greater_than()
         {
             lex.consume_special(">");
         }
-        void parser_equal()
+        void parse_equal()
         {
             lex.consume_special("=");
         }
-        void parser_semicolon()
+        void parse_semicolon()
         {
             lex.consume_special(";");
         }
-        void parser_comma()
+        void parse_comma()
         {
             lex.consume_special(",");
         }
-        void parser_colon()
+        void parse_colon()
         {
             lex.consume_special(":");
         }
-        std::string parser_id()
+        std::string parse_id()
         {
             auto id = lex.get_cur_string();
             lex.consume(l0lexer::l0token::tok_identifier);

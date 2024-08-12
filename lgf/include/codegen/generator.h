@@ -5,6 +5,7 @@
 #include "ast/lexer.h"
 #include <map>
 #include <memory>
+#include "ast/stream.h"
 using namespace lgf::ast;
 namespace lgf::codegen
 {
@@ -13,7 +14,7 @@ namespace lgf::codegen
     public:
         generatorBase(const std::string n) : name(n) {}
         virtual ~generatorBase() {}
-        virtual std::unique_ptr<astModule> parse(lexer &l) = 0;
+        virtual std::unique_ptr<astNode> parse(fiostream &fs) = 0;
 
     private:
         std::string name;
