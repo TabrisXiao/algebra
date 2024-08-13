@@ -1,7 +1,7 @@
 
 template<node> addOp {
     input: {
-        variable: lhs
+        variable: lhs,
         variable: rhs
     }
     output:{

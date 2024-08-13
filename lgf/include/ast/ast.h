@@ -14,6 +14,7 @@ namespace lgf::ast
         call = 4,
         define = 5,
         module = 6,
+        variable = 7,
     };
     enum astBinaryOpType : uint16_t
     {
@@ -63,6 +64,20 @@ namespace lgf::ast
         std::vector<std::unique_ptr<astNode>> nodes;
     };
 
+    class astVar : public astNode
+    {
+    public:
+        astVar() : astNode(astType::variable) {};
+        astVar(const std::string &n, const std::string &t) : astNode(astType::variable), name(n), type(t) {}
+        void set_name(const std::string &n) { name = n; }
+        void set_type(const std::string &t) { type = t; }
+        std::string get_name() { return name; }
+
+    private:
+        std::string name;
+        std::string type;
+    };
+
     class astExpr : public astNode
     {
     public:
@@ -105,16 +120,22 @@ namespace lgf::ast
         astNode *lhs, *rhs;
     };
 
-    class astDefine : public astNode
+    class astFuncDefine : public astNode
     {
     public:
-        astDefine() : astNode(astType::define) {};
+        astFuncDefine() : astNode(astType::define) {};
         std::string get_name() { return name; }
-        astBlock *get_value() { return block; }
+        astBlock &get_value() { return block; }
+        void add_arg(std::unique_ptr<astNode> &&arg)
+        {
+            args.push_back(std::move(arg));
+        }
 
     private:
         std::string name;
-        astBlock *block;
+        std::vector<std::unique_ptr<astNode>> args;
+        std::unique_ptr<astNode> ret;
+        astBlock block;
     };
 
     class astModule : public astBlock
