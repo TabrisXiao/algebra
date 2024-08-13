@@ -41,6 +41,18 @@ namespace lgf::ast
         {
             lex.consume_special(":");
         }
+        void parse_left_brace()
+        {
+            lex.consume_special("{");
+        }
+        void parse_right_brace()
+        {
+            lex.consume_special("}");
+        }
+        std::string get_cur_string()
+        {
+            return lex.get_cur_string();
+        }
         std::string parse_id()
         {
             auto id = lex.get_cur_string();

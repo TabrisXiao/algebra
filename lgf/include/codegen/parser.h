@@ -2,9 +2,17 @@
 #ifndef LIBS_CODEGEN_PARSER_H
 #define LIBS_CODEGEN_PARSER_H
 #include "ast/parser.h"
-#include "generator.h"
+#include "modules.h"
 namespace lgf::codegen
 {
+    class codegenParserBook : public parserBook
+    {
+    public:
+        codegenParserBook()
+        {
+            pmap["node"] = std::make_unique<nodeParser>();
+        }
+    };
 
     class codegenParser : public lgf::ast::parser
     {
@@ -14,6 +22,10 @@ namespace lgf::codegen
             root = std::make_unique<ast::astModule>("");
         }
         virtual ~codegenParser() = default;
+        void add_node(std::unique_ptr<ast::astNode> node)
+        {
+            root->add_node(std::move(node));
+        }
         bool parse()
         {
             // return true if error
@@ -42,12 +54,13 @@ namespace lgf::codegen
             parse_less_than();
             auto id = parse_id();
             parse_greater_than();
-            auto tp = tmap.get(id)->get();
+            auto tp = tmap.get(id);
             THROW_WHEN(tp == nullptr, "Parse error: Can't find the template: " + id);
             root->add_node(std::move(tp->parse(get_input_stream())));
         }
-        generatorMap tmap;
+        codegenParserBook tmap;
         std::unique_ptr<ast::astModule> root;
     };
+
 }
 #endif
