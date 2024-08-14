@@ -19,35 +19,35 @@ namespace lgf::ast
         }
         void parse_less_than()
         {
-            lex.consume_special("<");
+            lex.parse("<");
         }
         void parse_greater_than()
         {
-            lex.consume_special(">");
+            lex.parse(">");
         }
         void parse_equal()
         {
-            lex.consume_special("=");
+            lex.parse("=");
         }
         void parse_semicolon()
         {
-            lex.consume_special(";");
+            lex.parse(";");
         }
         void parse_comma()
         {
-            lex.consume_special(",");
+            lex.parse(",");
         }
         void parse_colon()
         {
-            lex.consume_special(":");
+            lex.parse(":");
         }
         void parse_left_brace()
         {
-            lex.consume_special("{");
+            lex.parse("{");
         }
         void parse_right_brace()
         {
-            lex.consume_special("}");
+            lex.parse("}");
         }
         std::string get_cur_string()
         {
@@ -55,8 +55,8 @@ namespace lgf::ast
         }
         std::string parse_id()
         {
+            lex.parse(l0lexer::l0token::tok_identifier);
             auto id = lex.get_cur_string();
-            lex.consume(l0lexer::l0token::tok_identifier);
             return id;
         }
         fiostream &get_input_stream() const

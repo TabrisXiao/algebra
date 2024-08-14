@@ -26,6 +26,7 @@ namespace lgf::ast
             loc.path = std::make_shared<std::filesystem::path>(std::filesystem::absolute(filename));
             file.open(*loc.path.get());
             THROW_WHEN(!file.is_open(), "fiostream error: Can't open the file: " + loc.path->string());
+            get_next_line();
         }
         std::filesystem::path get_file_path()
         {
@@ -36,7 +37,9 @@ namespace lgf::ast
             if (std::getline(file, buffer))
             {
                 cur = buffer.begin();
+
                 loc.line++;
+                loc.col = 1;
             }
             else
             {
@@ -48,18 +51,29 @@ namespace lgf::ast
             return loc;
         }
 
-        char get_next_char()
+        char get_cur_char()
         {
-            if (buffer.empty() || cur == buffer.end())
-            {
-                get_next_line();
-            }
-            if (buffer.empty())
+            if (cur == buffer.end())
             {
                 return EOF;
             }
+            return *cur;
+        }
+
+        char get_next_char()
+        {
+            if (buffer.empty() || (cur + 1) == buffer.end())
+            {
+                get_next_line();
+                if (buffer.empty())
+                {
+                    return EOF;
+                }
+                return *cur;
+            }
             loc.col++;
-            return *cur++;
+            cur = cur + 1;
+            return *(cur);
         }
         bool is_eof()
         {

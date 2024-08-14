@@ -28,7 +28,8 @@ namespace lgf::ast
             tok_eof = -1,
             tok_identifier = 1,
             tok_number = 2,
-            tok_special = 3,
+            tok_other = 3,
+            tok_unknown = 999
         };
         l0lexer() = default;
         l0lexer(l0lexer &l)
@@ -38,8 +39,7 @@ namespace lgf::ast
         void inherit(l0lexer &l)
         {
             fs = l.fs;
-            lastChar = l.lastChar;
-            curTok = l.curTok;
+            lastTok = l.lastTok;
             identifierStr = l.identifierStr;
             number = l.number;
             fs = &(l.get_input_stream());
@@ -47,8 +47,7 @@ namespace lgf::ast
         void set_input_stream(fiostream &fs)
         {
             this->fs = &fs;
-            lastChar = ' ';
-            curTok = tok_eof;
+            lastTok = tok_eof;
             identifierStr = "";
             number = 0;
         }
@@ -85,67 +84,79 @@ namespace lgf::ast
         {
             return fs->get_next_char();
         }
+        char get_cur_char()
+        {
+            return fs->get_cur_char();
+        }
 
         l0token get_next_l0token()
         {
+            auto curChar = get_cur_char();
             // skip all space
-            while (isspace(lastChar))
-                lastChar = get_next_char();
+            while (isspace(curChar))
+                curChar = get_next_char();
             // Number: [0-9] ([0-9.])*
-            if (isdigit(lastChar))
+            if (isdigit(curChar))
             {
                 std::string numStr;
                 do
                 {
-                    numStr += lastChar;
-                    lastChar = get_next_char();
-                } while (isdigit(lastChar) || lastChar == '.');
+                    numStr += curChar;
+                    curChar = get_next_char();
+                } while (isdigit(curChar) || curChar == '.');
                 number = strtod(numStr.c_str(), nullptr);
-                return tok_number;
+                lastTok = tok_number;
+                return lastTok;
             }
             // Identifier: [a-zA-Z][a-zA-Z0-9_]*
-            if (isalpha(lastChar))
+            if (isalpha(curChar))
             {
-                identifierStr = lastChar;
-                while (isalnum((lastChar = l0token(get_next_char()))) || lastChar == '_')
-                    identifierStr += lastChar;
-                return l0token::tok_identifier;
+                identifierStr = curChar;
+                while (isalnum((curChar = l0token(get_next_char()))) || curChar == '_')
+                {
+                    identifierStr += curChar;
+                }
+                lastTok = tok_identifier;
+                return lastTok;
             }
-            if (lastChar == EOF)
+            if (curChar == EOF)
             {
                 if (fs->is_eof())
                     return tok_eof;
                 else
                 {
-                    lastChar = get_next_char();
+                    curChar = get_next_char();
                     return get_next_l0token();
                 }
             }
             else
             {
-                identifierStr = "";
-                while (!isspace(lastChar) && lastChar != EOF)
+                identifierStr = curChar;
+                while (!isspace(curChar = get_next_char()) && !isalnum(curChar) && curChar != EOF)
                 {
-                    identifierStr += lastChar;
-                    lastChar = get_next_char();
+                    identifierStr += curChar;
                 }
+                lastTok = tok_other;
+                return lastTok;
             }
-            return l0token::tok_special;
+            lastTok = tok_unknown;
+            return lastTok;
         }
 
-        void consume(l0token tok)
+        void parse(l0token tok)
         {
-            if (tok != curTok)
+            get_next_l0token();
+            if (tok != lastTok)
             {
                 auto symbol = convert_current_token2string();
                 std::cerr << get_loc().print() << ": consuming an unexpected token \"" << convert_current_token2string() << "\"." << std::endl;
                 std::exit(EXIT_FAILURE);
             }
-            get_next_l0token();
         }
-        void consume_special(std::string str)
+        void parse(std::string str)
         {
-            if (curTok != tok_special)
+            get_next_l0token();
+            if (lastTok != tok_other)
             {
                 std::cerr << get_loc().print() << ": consuming an unexpected token \"" << convert_current_token2string() << "\"." << std::endl;
                 std::exit(EXIT_FAILURE);
@@ -155,29 +166,27 @@ namespace lgf::ast
                 std::cerr << get_loc().print() << ": consuming an unexpected inputs \"" << identifierStr << "\"." << std::endl;
                 std::exit(EXIT_FAILURE);
             }
-            get_next_l0token();
         }
         l0token get_cur_token()
         {
-            return curTok;
+            return lastTok;
         }
 
         std::string convert_current_token2string()
         {
-            if (curTok >= 0)
-                return std::string(1, static_cast<char>(curTok));
+            if (lastTok >= 0)
+                return std::string(1, static_cast<char>(lastTok));
             else
                 return identifierStr;
         }
         fiostream::location get_loc() { return fs->get_loc(); }
 
         std::string get_cur_string() { return identifierStr; }
-        l0token curTok;
+        l0token lastTok;
         // If the current Token is an identifier, this string contains the value.
         std::string identifierStr;
         // If the current Token is a number, this variable contains the value.
         double number;
-        char lastChar = ' ';
         lgf::ast::fiostream *fs = nullptr;
     };
 }
