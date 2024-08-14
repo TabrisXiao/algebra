@@ -29,13 +29,12 @@ namespace lgf::codegen
         bool parse()
         {
             // return true if error
-            lx().get_next_l0token();
-            while (lx().get_cur_token() != ast::l0lexer::l0token::tok_eof)
+            while (lx().get_next_l0token() != ast::l0lexer::l0token::tok_eof)
             {
                 if (lx().get_cur_token() == ast::l0lexer::l0token::tok_identifier)
                 {
                     // Parse identifier
-                    std::string id = parse_id();
+                    std::string id = get_cur_string();
                     if (id == "template")
                     {
                         parser_template();
