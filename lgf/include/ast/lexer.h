@@ -33,11 +33,16 @@ namespace lgf::ast
         l0lexer() = default;
         l0lexer(l0lexer &l)
         {
+            inherit(l);
+        }
+        void inherit(l0lexer &l)
+        {
             fs = l.fs;
             lastChar = l.lastChar;
             curTok = l.curTok;
             identifierStr = l.identifierStr;
             number = l.number;
+            fs = &(l.get_input_stream());
         }
         void set_input_stream(fiostream &fs)
         {
@@ -96,47 +101,36 @@ namespace lgf::ast
                     lastChar = get_next_char();
                 } while (isdigit(lastChar) || lastChar == '.');
                 number = strtod(numStr.c_str(), nullptr);
-                curTok = tok_number;
+                return tok_number;
             }
             // Identifier: [a-zA-Z][a-zA-Z0-9_]*
             if (isalpha(lastChar))
             {
                 identifierStr = lastChar;
-                lastChar = get_next_char();
-                while (isalnum(lastChar) || lastChar == '_')
-                {
+                while (isalnum((lastChar = l0token(get_next_char()))) || lastChar == '_')
                     identifierStr += lastChar;
-                    lastChar = get_next_char();
-                }
-                curTok = tok_identifier;
-                return curTok;
+                return l0token::tok_identifier;
             }
             if (lastChar == EOF)
             {
                 if (fs->is_eof())
-                {
-                    curTok = tok_eof;
-                    return curTok;
-                }
+                    return tok_eof;
                 else
                 {
                     lastChar = get_next_char();
-                    curTok = get_next_l0token();
-                    return curTok;
+                    return get_next_l0token();
                 }
             }
             else
             {
                 identifierStr = "";
-                while (!isspace(lastChar) && lastChar != EOF && !isalpha(lastChar))
+                while (!isspace(lastChar) && lastChar != EOF)
                 {
                     identifierStr += lastChar;
                     lastChar = get_next_char();
                 }
-                curTok = tok_special;
-                return curTok;
             }
-            return curTok;
+            return l0token::tok_special;
         }
 
         void consume(l0token tok)
