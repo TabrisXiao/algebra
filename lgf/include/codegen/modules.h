@@ -42,11 +42,16 @@ namespace lgf::codegen
         virtual ~nodeParser() = default;
         virtual std::unique_ptr<astNode> parse(fiostream &fs) override
         {
+            set_input_stream(fs);
+            std::cout << " here " << std::endl;
             auto id = parse_id();
+            std::cout << " here " << std::endl;
             node = std::make_unique<astModule>(id);
+            std::cout << " here " << std::endl;
             parse_left_brace();
             while (get_cur_string() != "}")
             {
+                std::cout << "loop" << std::endl;
                 auto key = parse_id();
                 if (key == "input")
                 {

@@ -6,7 +6,7 @@ int main()
 {
     using namespace lgf::codegen;
 
-    const std::string test = "../algebra/test/codegen/test.input";
+    const std::string test = "./test/codegen/test.input";
     lgfOpCodeGen gen;
 
     gen.run(test);
