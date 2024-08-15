@@ -67,8 +67,7 @@ namespace lgf::codegen
             if (arg_str.size() > 0)
                 arg_str = ", " + arg_str;
             os().indent() << "static " << name << "* build" << "(LGFContext* ctx" << arg_str << ") {\n";
-            os().incr_indent_level();
-            os().indent() << "auto n = new " << name << "();\n";
+            os().incr_indent()<< "auto n = new " << name << "();\n";
             os().indent() << "return n;\n";
             os().decr_indent_level();
             os().indent() << "}\n";

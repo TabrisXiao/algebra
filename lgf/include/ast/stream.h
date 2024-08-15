@@ -133,8 +133,18 @@ namespace lgf::ast
         cgstream &indent()
         {
             for (int i = 0; i < curIndentLevel; i++)
-                *os << "  ";
+                *os << "    ";
             return *this;
+        }
+        cgstream &incr_indent()
+        {
+            incr_indent_level();
+            return indent();
+        }
+        cgstream &decr_indent()
+        {
+            decr_indent_level();
+            return indent();
         }
         void incr_indent_level(int n = 1) { curIndentLevel += n; }
         void decr_indent_level(int n = 1)
