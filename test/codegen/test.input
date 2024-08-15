@@ -1,8 +1,8 @@
 
 module<node> addOp {
     input = {
-        node*: lhs,
-        node*: rhs
+        variable: lhs,
+        variable: rhs
     }
     output = variable: output
 }
