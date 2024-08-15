@@ -1,10 +1,8 @@
 
-template<node> addOp {
-    input: {
-        variable: lhs,
-        variable: rhs
+module<node> addOp {
+    input = {
+        node*: lhs,
+        node*: rhs
     }
-    output:{
-        variable: output
-    }
+    output = variable: output
 }

@@ -9,6 +9,7 @@
 #ifdef _WIN32
 #include <windows.h>
 #endif
+#include "writer.h"
 namespace lgf::codegen
 {
     class lgfOpCodeGen
@@ -68,13 +69,21 @@ namespace lgf::codegen
                 std::cerr << "Error: Parsing failed." << std::endl;
                 std::exit(EXIT_FAILURE);
             }
-            std::cout << "\033[32m[   Done  ] \033[0m";
+            std::cout << "     \033[33m parsing finished, generating code... \033[0m" << std::endl;
+            if (wm.process(*p.root, os))
+            {
+                std::cerr << "Error: Code generation failed." << std::endl;
+                std::exit(EXIT_FAILURE);
+            }
+            std::cout << "\033[32m[   Done  ] \033[0m" << std::endl;
         }
 
     private:
         ast::cgstream stream;
         ast::fiostream fs;
+        ast::cgstream os;
         codegen::codegenParser p;
+        codegen::writerManager wm;
     };
 };
 

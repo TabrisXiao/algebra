@@ -130,10 +130,11 @@ namespace lgf::ast
             *os << data;
             return *this;
         }
-        void print_indent()
+        cgstream &indent()
         {
             for (int i = 0; i < curIndentLevel; i++)
                 *os << "  ";
+            return *this;
         }
         void incr_indent_level(int n = 1) { curIndentLevel += n; }
         void decr_indent_level(int n = 1)
@@ -142,9 +143,9 @@ namespace lgf::ast
             if (curIndentLevel < 0)
                 curIndentLevel = 0;
         }
+        std::ostream *os = &std::cout;
 
     protected:
-        std::ostream *os = &std::cout;
         std::stringstream ss;
         std::ofstream outputf;
         int curIndentLevel = 0;
