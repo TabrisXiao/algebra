@@ -3,6 +3,8 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <map>
+#include "lgf/utils.h"
 
 namespace lgf::ast
 {
@@ -15,6 +17,7 @@ namespace lgf::ast
         define = 5,
         module = 6,
         variable = 7,
+        dict = 8,
     };
     enum astBinaryOpType : uint16_t
     {
@@ -68,9 +71,10 @@ namespace lgf::ast
     {
     public:
         astVar() : astNode(astType::variable) {};
-        astVar(const std::string &n, const std::string &t) : astNode(astType::variable), name(n), type(t) {}
+        astVar(const std::string &t, const std::string &n) : astNode(astType::variable), name(n), type(t) {}
         void set_name(const std::string &n) { name = n; }
         void set_type(const std::string &t) { type = t; }
+        std::string get_type_id() { return type; }
         std::string get_name() { return name; }
 
     private:
@@ -82,6 +86,8 @@ namespace lgf::ast
     {
     public:
         astExpr() : astNode(astType::expr) {};
+        astExpr(const std::string &e) : astNode(astType::expr), id(e) {}
+        void set_expr(const std::string &e) { id = e; }
         std::string get_expr() { return id; }
 
     private:
@@ -92,6 +98,11 @@ namespace lgf::ast
     {
     public:
         astNumber() : astNode(astType::number) {};
+        template <typename T>
+        astNumber(T val) : astNode(astType::number)
+        {
+            store(val);
+        }
         template <typename T>
         void store(T val)
         {
@@ -130,6 +141,10 @@ namespace lgf::ast
         {
             args.push_back(std::move(arg));
         }
+        void add_ret(std::unique_ptr<astNode> &&r)
+        {
+            ret = std::move(r);
+        }
 
     private:
         std::string name;
@@ -141,14 +156,68 @@ namespace lgf::ast
     class astModule : public astBlock
     {
     public:
-        astModule(const std::string &n) : astBlock(), name(n)
+        astModule(const std::string &n, const size_t id = 0) : astBlock(), name(n), uid(id)
         {
             set_kind(astType::module);
         };
         std::string get_name() { return name; }
+        size_t get_uid() { return uid; }
 
     private:
         std::string name;
+        size_t uid = 0;
+    };
+
+    class astDictionary : public astNode
+    {
+    public:
+        astDictionary() : astNode(astType::dict) {};
+        logicResult add(const std::string &key, std::unique_ptr<astNode> &&node)
+        {
+            if (contents.find(key) != contents.end())
+            {
+                return logicResult::fail();
+            }
+            contents[key] = std::move(node);
+            return logicResult::success();
+        }
+        logicResult find(const std::string &key)
+        {
+            if (contents.find(key) == contents.end())
+            {
+                return logicResult::fail();
+            }
+            return logicResult::success();
+        }
+
+        astNode *get(const std::string &key)
+        {
+            if (contents.find(key) == contents.end())
+            {
+                return nullptr;
+            }
+            return contents[key].get();
+        }
+        template <typename T>
+        T *get(const std::string &key)
+        {
+            if (contents.find(key) == contents.end())
+            {
+                return nullptr;
+            }
+            return dynamic_cast<T *>(contents[key].get());
+        }
+        void erase(const std::string &key)
+        {
+            contents.erase(key);
+        }
+        std::map<std::string, std::unique_ptr<astNode>> &get_contents()
+        {
+            return contents;
+        }
+
+    private:
+        std::map<std::string, std::unique_ptr<astNode>> contents;
     };
 }
 

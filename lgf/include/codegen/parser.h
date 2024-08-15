@@ -20,6 +20,7 @@ namespace lgf::codegen
         codegenParser()
         {
             root = std::make_unique<ast::astModule>("");
+            load_lexer<ast::cLikeLexer>();
         }
         virtual ~codegenParser() = default;
         void add_node(std::unique_ptr<ast::astNode> node)
@@ -29,15 +30,15 @@ namespace lgf::codegen
         bool parse()
         {
             // return true if error
-            while (lx().get_next_l0token() != ast::l0lexer::l0token::tok_eof)
+            while (lx()->get_next_token() != ast::lexer::l0token::tok_eof)
             {
-                if (lx().get_cur_token() == ast::l0lexer::l0token::tok_identifier)
+                if (lx()->last_tok() == ast::lexer::l0token::tok_identifier)
                 {
                     // Parse identifier
-                    std::string id = get_cur_string();
-                    if (id == "template")
+                    std::string id = get_string();
+                    if (id == "module")
                     {
-                        parser_template();
+                        parser_module();
                     }
                 }
                 else
@@ -48,18 +49,17 @@ namespace lgf::codegen
             }
             return false;
         }
-        void parser_template()
+        void parser_module()
         {
             parse_less_than();
             auto id = parse_id();
             parse_greater_than();
-            auto tp = tmap.get(id);
+            auto tp = mmap.get(id);
             THROW_WHEN(tp == nullptr, "Parse error: Can't find the template: " + id);
             root->add_node(std::move(tp->parse(get_input_stream())));
         }
-        codegenParserBook tmap;
+        codegenParserBook mmap;
         std::unique_ptr<ast::astModule> root;
     };
-
 }
 #endif

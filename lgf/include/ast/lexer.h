@@ -20,23 +20,22 @@ namespace lgf::ast
         }
     };
 
-    class l0lexer
+    class lexer
     {
     public:
         enum l0token : int
         {
             tok_eof = -1,
-            tok_identifier = 1,
-            tok_number = 2,
-            tok_other = 3,
-            tok_unknown = 999
+            tok_identifier = -2,
+            tok_number = -3,
+            tok_other = -4,
         };
-        l0lexer() = default;
-        l0lexer(l0lexer &l)
+        lexer() = default;
+        lexer(lexer &l)
         {
             inherit(l);
         }
-        void inherit(l0lexer &l)
+        void inherit(lexer &l)
         {
             fs = l.fs;
             lastTok = l.lastTok;
@@ -55,7 +54,7 @@ namespace lgf::ast
         {
             return *fs;
         }
-        ~l0lexer() = default;
+        virtual ~lexer() = default;
 
         static constexpr bool isalpha(unsigned ch)
         {
@@ -89,7 +88,12 @@ namespace lgf::ast
             return fs->get_cur_char();
         }
 
-        l0token get_next_l0token()
+        virtual int get_next_token()
+        {
+            return get_next_l0token();
+        }
+
+        int get_next_l0token()
         {
             auto curChar = get_cur_char();
             // skip all space
@@ -106,10 +110,9 @@ namespace lgf::ast
                 } while (isdigit(curChar) || curChar == '.');
                 number = strtod(numStr.c_str(), nullptr);
                 lastTok = tok_number;
-                return lastTok;
             }
             // Identifier: [a-zA-Z][a-zA-Z0-9_]*
-            if (isalpha(curChar))
+            else if (isalpha(curChar))
             {
                 identifierStr = curChar;
                 while (isalnum((curChar = l0token(get_next_char()))) || curChar == '_')
@@ -117,9 +120,8 @@ namespace lgf::ast
                     identifierStr += curChar;
                 }
                 lastTok = tok_identifier;
-                return lastTok;
             }
-            if (curChar == EOF)
+            else if (curChar == EOF)
             {
                 if (fs->is_eof())
                     return tok_eof;
@@ -132,14 +134,11 @@ namespace lgf::ast
             else
             {
                 identifierStr = curChar;
-                while (!isspace(curChar = get_next_char()) && !isalnum(curChar) && curChar != EOF)
-                {
-                    identifierStr += curChar;
-                }
                 lastTok = tok_other;
-                return lastTok;
+                get_next_char();
             }
-            lastTok = tok_unknown;
+            while (isspace(curChar))
+                curChar = get_next_char();
             return lastTok;
         }
 
@@ -148,46 +147,105 @@ namespace lgf::ast
             get_next_l0token();
             if (tok != lastTok)
             {
-                auto symbol = convert_current_token2string();
-                std::cerr << get_loc().print() << ": consuming an unexpected token \"" << convert_current_token2string() << "\"." << std::endl;
+                std::cerr << get_loc().print() << ": consuming an unexpected token." << std::endl;
                 std::exit(EXIT_FAILURE);
             }
         }
-        void parse(std::string str)
+        virtual void parse(std::string str)
         {
             get_next_l0token();
-            if (lastTok != tok_other)
+            if (lastTok != tok_other && lastTok != tok_identifier)
             {
-                std::cerr << get_loc().print() << ": consuming an unexpected token \"" << convert_current_token2string() << "\"." << std::endl;
+                std::cerr << get_loc().print() << ": consuming an string but got other token" << std::endl;
                 std::exit(EXIT_FAILURE);
             }
             if (str != identifierStr)
             {
-                std::cerr << get_loc().print() << ": consuming an unexpected inputs \"" << identifierStr << "\"." << std::endl;
+                std::cerr << get_loc().print() << ": consuming string \"" << str << "\" but got: \"" << identifierStr << "\"." << std::endl;
                 std::exit(EXIT_FAILURE);
             }
         }
-        l0token get_cur_token()
+        l0token last_tok()
         {
-            return lastTok;
+            return l0token(lastTok);
         }
 
-        std::string convert_current_token2string()
-        {
-            if (lastTok >= 0)
-                return std::string(1, static_cast<char>(lastTok));
-            else
-                return identifierStr;
-        }
         fiostream::location get_loc() { return fs->get_loc(); }
 
-        std::string get_cur_string() { return identifierStr; }
-        l0token lastTok;
+        std::string get_string() { return identifierStr; }
+        int lastTok;
         // If the current Token is an identifier, this string contains the value.
         std::string identifierStr;
         // If the current Token is a number, this variable contains the value.
         double number;
         lgf::ast::fiostream *fs = nullptr;
+    };
+
+    class cLikeLexer : public lexer
+    {
+    public:
+        enum cToken : int
+        {
+            tok_identifier = -1,
+            tok_number = -2,
+            tok_eof = -100,
+            tok_unknown = -999,
+        };
+        cLikeLexer() = default;
+        cToken find_cToken(std::string str)
+        {
+            if (str.size() == 1)
+            {
+                return cToken(str[0]);
+            }
+            else
+            {
+                return cToken::tok_unknown;
+            }
+        }
+        virtual int get_next_token() override
+        {
+            auto tok = get_next_l0token();
+            lastTok = cToken::tok_unknown;
+            if (tok == tok_identifier)
+                lastTok = cToken::tok_identifier;
+            else if (tok == tok_number)
+                lastTok = cToken::tok_number;
+            else if (tok == tok_eof)
+                lastTok = cToken::tok_eof;
+            else if (tok == tok_other)
+            {
+                lastTok = find_cToken(identifierStr);
+            }
+            return lastTok;
+        }
+
+        void parse(cToken tok)
+        {
+            get_next_token();
+            if (tok != lastTok)
+            {
+                std::cerr << get_loc().print() << ": consuming an unexpected token." << std::endl;
+                std::exit(EXIT_FAILURE);
+            }
+        }
+        void parse(std::string str) override
+        {
+            if (str.size() == 1)
+            {
+                parse(cToken(str[0]));
+            }
+            else
+            {
+                auto tok = find_cToken(str);
+                get_next_token();
+                if (lastTok != tok)
+                {
+                    std::cerr << get_loc().print() << ": consuming an unexpected token." << std::endl;
+                    std::exit(EXIT_FAILURE);
+                }
+            }
+        }
     };
 }
 

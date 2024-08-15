@@ -4,6 +4,7 @@
 #include <optional>
 #include <string>
 #include <iostream>
+
 namespace lgf::utils
 {
 
@@ -38,6 +39,42 @@ namespace lgf::utils
 
 namespace lgf
 {
+  template <typename digitType>
+  class bitCode
+  {
+  public:
+    using digit_t = digitType;
+    bitCode() {}
+    bitCode(bitCode &code) { value = code.value; }
+    bitCode(const bitCode &code) { value = code.value; }
+    bitCode(const digitType &val) { value = val; }
+
+    bitCode shift(size_t val)
+    {
+      value |= 1 << val;
+      return *this;
+    }
+    bool bit_check(size_t val)
+    {
+      return (value & (1 << val));
+    }
+    bitCode clear(size_t val)
+    {
+      value &= ~(1 << val);
+      return *this;
+    }
+    bitCode add(const bitCode &val)
+    {
+      value |= val.value;
+      return *this;
+    }
+    bool check(digitType val)
+    {
+      return (value & val) == val;
+    }
+    void reset() { value = 0; }
+    digit_t value = 0;
+  };
   class resultCode : public bitCode<int8_t>
   {
   public:
@@ -81,6 +118,8 @@ namespace lgf
     {
       return logicResult(1);
     }
+    bool is_fail() { return value == 1; }
+    bool is_success() { return value == 0; }
     bool getValue() const { return value; }
     bool operator==(const logicResult &a) { return value == a.getValue(); }
     operator bool() const { return value; }

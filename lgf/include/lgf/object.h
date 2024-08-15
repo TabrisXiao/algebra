@@ -42,42 +42,6 @@ namespace lgf
 
     // bitCode is a template object to encode type tag into binary type:
     //
-    template <typename digitType>
-    class bitCode
-    {
-    public:
-        using digit_t = digitType;
-        bitCode() {}
-        bitCode(bitCode &code) { value = code.value; }
-        bitCode(const bitCode &code) { value = code.value; }
-        bitCode(const digitType &val) { value = val; }
-
-        bitCode shift(size_t val)
-        {
-            value |= 1 << val;
-            return *this;
-        }
-        bool bit_check(size_t val)
-        {
-            return (value & (1 << val));
-        }
-        bitCode clear(size_t val)
-        {
-            value &= ~(1 << val);
-            return *this;
-        }
-        bitCode add(const bitCode &val)
-        {
-            value |= val.value;
-            return *this;
-        }
-        bool check(digitType val)
-        {
-            return (value & val) == val;
-        }
-        void reset() { value = 0; }
-        digit_t value = 0;
-    };
 
     // objectHandle is a template object to handle derived class of objectImp.
     // it resolve the class slicing problem by using shared_ptr to store the derived class.
