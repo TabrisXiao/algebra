@@ -19,14 +19,13 @@ namespace lgf::codegen
     public:
         codegenParser()
         {
-            root = std::make_unique<ast::astModule>("");
+            root = std::make_unique<ast::astDictionary>();
+            auto ptr = std::make_unique<ast::astList>();
+            list = dynamic_cast<ast::astList *>(ptr.get());
+            root->add("content", std::move(ptr));
             load_lexer<ast::cLikeLexer>();
         }
         virtual ~codegenParser() = default;
-        void add_node(std::unique_ptr<ast::astNode> node)
-        {
-            root->add_node(std::move(node));
-        }
         bool parse()
         {
             // return true if error
@@ -56,10 +55,11 @@ namespace lgf::codegen
             parse_greater_than();
             auto tp = mmap.get(id);
             THROW_WHEN(tp == nullptr, "Parse error: Can't find the template: " + id);
-            root->add_node(std::move(tp->parse(get_input_stream())));
+            list->add(std::move(tp->parse(get_input_stream())));
         }
         codegenParserBook mmap;
-        std::unique_ptr<ast::astModule> root;
+        std::unique_ptr<ast::astDictionary> root;
+        ast::astList *list = nullptr;
     };
 }
 #endif

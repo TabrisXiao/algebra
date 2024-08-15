@@ -20,6 +20,15 @@ namespace lgf::codegen
             cg = &fs;
             return run(r);
         }
+        std::string chain_string(std::vector<std::string> &v)
+        {
+            std::string str = "";
+            for (auto &s : v)
+            {
+                str = str + s + ", ";
+            }
+            return str.substr(0, str.size() - 2);
+        }
 
         ast::cgstream &os() { return *cg; }
 
@@ -59,20 +68,42 @@ namespace lgf::codegen
                     auto key = c.first;
                     auto value = c.second.get();
                     auto type = dynamic_cast<ast::astVar *>(value)->get_type_id();
-                    arg_str = arg_str + type + " " + key + ", ";
+                    arg_type.push_back(type);
+                    arg_str = arg_str + "node*" + " " + key + ", ";
+                    arg_id.push_back(key);
                 }
 
                 arg_str = arg_str.substr(0, arg_str.size() - 2);
             }
+            if (root->find("output").is_success())
+            {
+                auto retop = root->get<ast::astVar>("output");
+                output_id = retop->get_name();
+                output_type = retop->get_type_id();
+                arg_str = "descriptor " + output_id + ", " + arg_str;
+            }
             if (arg_str.size() > 0)
                 arg_str = ", " + arg_str;
             os().indent() << "static " << name << "* build" << "(LGFContext* ctx" << arg_str << ") {\n";
-            os().incr_indent()<< "auto n = new " << name << "();\n";
+            os().incr_indent() << "auto op = new " << name << "();\n";
+            auto arg_list = chain_string(arg_id);
+            os().indent() << "op->register_input(" + arg_list + ");\n";
+            if (output_id.size() > 0)
+            {
+                os().indent() << "op->set_value_desc(" << output_id << ");\n";
+            }
             os().indent() << "return n;\n";
-            os().decr_indent_level();
-            os().indent() << "}\n";
+            os().decr_indent() << "}\n";
+            for (auto i = 0; i < arg_id.size(); i++)
+            {
+                os().indent() << "node* " << arg_id[i] << "(){\n";
+                os().incr_indent() << "return input(" << i << ");\n";
+                os().decr_indent() << "}\n";
+            }
         }
         ast::astDictionary *root;
+        std::vector<std::string> arg_type, arg_id;
+        std::string output_id, output_type;
     };
 
     class writerManager
@@ -95,10 +126,11 @@ namespace lgf::codegen
             }
             return wmap[id].get();
         }
-        bool process(ast::astModule &root, ast::cgstream &fs)
+        bool process(ast::astDictionary &root, ast::cgstream &fs)
         {
             cg = &fs;
-            for (auto &node : root.get_nodes())
+            auto list = root.get<ast::astList>("content");
+            for (auto &node : list->get_content())
             {
                 auto sm = dynamic_cast<ast::astDictionary *>(node.get());
                 auto uid = sm->get<astNumber>("uid")->get<uid::uid_t>();
