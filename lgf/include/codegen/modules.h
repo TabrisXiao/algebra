@@ -5,7 +5,7 @@
 #include "ast/lexer.h"
 #include <map>
 #include <memory>
-#include "ast/stream.h"
+#include "utils/stream.h"
 #include "uid.h"
 using namespace lgf::ast;
 namespace lgf::codegen

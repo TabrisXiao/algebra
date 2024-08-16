@@ -5,10 +5,12 @@
 #include <string>
 #include <fstream>
 #include <filesystem>
-#include "lgf/exception.h"
-#include "stream.h"
+#include "utils/exception.h"
+#include "utils/stream.h"
+using namespace utils;
 namespace lgf::ast
 {
+
     struct location
     {
         std::shared_ptr<std::string> file; ///< filename.
@@ -178,7 +180,7 @@ namespace lgf::ast
         std::string identifierStr;
         // If the current Token is a number, this variable contains the value.
         double number;
-        lgf::ast::fiostream *fs = nullptr;
+        fiostream *fs = nullptr;
     };
 
     class cLikeLexer : public lexer

@@ -5,7 +5,7 @@
 #include "ast/ast.h"
 #include "parser.h"
 #include <filesystem>
-#include "ast/stream.h"
+#include "utils/stream.h"
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -20,6 +20,10 @@ namespace lgf::codegen
         bool is_valid_file(const std::string &filePath)
         {
             return std::filesystem::exists(filePath) && std::filesystem::is_regular_file(filePath);
+        }
+        void output_to_file(const std::string &filePath)
+        {
+            os.live_stream_to_file(filePath);
         }
         bool search_file(const std::string &folderPath, const std::string &fileName)
         {
@@ -79,9 +83,9 @@ namespace lgf::codegen
         }
 
     private:
-        ast::cgstream stream;
-        ast::fiostream fs;
-        ast::cgstream os;
+        ::utils::cgstream stream;
+        ::utils::fiostream fs;
+        ::utils::cgstream os;
         codegen::codegenParser p;
         codegen::writerManager wm;
     };

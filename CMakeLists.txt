@@ -5,7 +5,7 @@ project(algebra LANGUAGES CXX C)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 #set(CMAKE_BINARY_DIR output)
 set(CMAKE_CXX_STANDARD 17 CACHE STRING "C++ standard to conform to")
-
+set(CMAKE_CXX_STANDARD_REQUIRED True)
 if(MSVC)
     set(COMPILER_OPTIONS /EHsc /W0 /std:c++17)
 elseif(APPLE)
