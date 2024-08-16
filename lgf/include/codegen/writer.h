@@ -2,11 +2,11 @@
 #ifndef LGF_CODEGEN_WRITER_H
 #define LGF_CODEGEN_WRITER_H
 #include <map>
-#include "ast/stream.h"
+#include "utils/stream.h"
 #include "ast/ast.h"
 #include "uid.h"
 #include "lgf/utils.h"
-
+using namespace utils;
 namespace lgf::codegen
 {
     class writer
@@ -15,7 +15,7 @@ namespace lgf::codegen
         writer() = default;
         virtual ~writer() = default;
         virtual bool run(ast::astDictionary *) = 0;
-        bool write(ast::astDictionary *r, ast::cgstream &fs)
+        bool write(ast::astDictionary *r, cgstream &fs)
         {
             cg = &fs;
             return run(r);
@@ -30,10 +30,10 @@ namespace lgf::codegen
             return str.substr(0, str.size() - 2);
         }
 
-        ast::cgstream &os() { return *cg; }
+        cgstream &os() { return *cg; }
 
     private:
-        ast::cgstream *cg;
+        cgstream *cg;
     };
 
     class nodeWriter : public writer
@@ -126,7 +126,7 @@ namespace lgf::codegen
             }
             return wmap[id].get();
         }
-        bool process(ast::astDictionary &root, ast::cgstream &fs)
+        bool process(ast::astDictionary &root, cgstream &fs)
         {
             cg = &fs;
             auto list = root.get<ast::astList>("content");
@@ -146,7 +146,7 @@ namespace lgf::codegen
 
     private:
         std::map<size_t, std::unique_ptr<writer>> wmap;
-        ast::cgstream *cg;
+        cgstream *cg;
     };
 
 } // namespace lgf::codegen

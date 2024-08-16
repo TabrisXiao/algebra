@@ -1,11 +1,11 @@
-#ifndef LGF_AST_STREAM_H
-#define LGF_AST_STREAM_H
+#ifndef UTILS_STREAM_H
+#define UTILS_STREAM_H
 #include <filesystem>
 #include <fstream>
 #include <memory>
 #include <sstream>
-#include "lgf/exception.h"
-namespace lgf::ast
+#include "exception.h"
+namespace utils
 {
     class fiostream
     {
@@ -176,6 +176,6 @@ namespace lgf::ast
         }
         cgstream *st = nullptr;
     };
-} // namespace lgf::ast
+} // namespace utils
 
 #endif

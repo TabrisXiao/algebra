@@ -12,7 +12,7 @@
 #include <string>
 #include "printer.h"
 #include "global.h"
-#include "exception.h"
+#include "utils/exception.h"
 #include <memory>
 #include <algorithm>
 #include "utils.h"
