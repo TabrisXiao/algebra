@@ -2,6 +2,7 @@
 #ifndef LIBS_CODEGEN_PARSER_H
 #define LIBS_CODEGEN_PARSER_H
 #include "ast/parser.h"
+#include "ast/context.h"
 #include "modules.h"
 namespace lgf::codegen
 {
@@ -26,8 +27,9 @@ namespace lgf::codegen
             load_lexer<ast::cLikeLexer>();
         }
         virtual ~codegenParser() = default;
-        bool parse()
+        bool parse(::ast::context &ctx)
         {
+            this->ctx = &ctx;
             // return true if error
             while (lx()->get_next_token() != ast::lexer::l0token::tok_eof)
             {
@@ -55,11 +57,12 @@ namespace lgf::codegen
             parse_greater_than();
             auto tp = mmap.get(id);
             THROW_WHEN(tp == nullptr, "Parse error: Can't find the template: " + id);
-            list->add(std::move(tp->parse(get_input_stream())));
+            list->add(std::move(tp->parse(*ctx, get_input_stream())));
         }
         codegenParserBook mmap;
         std::unique_ptr<ast::astDictionary> root;
         ast::astList *list = nullptr;
+        ::ast::context *ctx;
     };
 }
 #endif

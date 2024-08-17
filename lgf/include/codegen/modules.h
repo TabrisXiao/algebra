@@ -7,6 +7,8 @@
 #include <memory>
 #include "utils/stream.h"
 #include "uid.h"
+#include "ast/context.h"
+
 using namespace lgf::ast;
 namespace lgf::codegen
 {
@@ -15,7 +17,7 @@ namespace lgf::codegen
     public:
         parserModule() = default;
         virtual ~parserModule() = default;
-        virtual std::unique_ptr<astNode> parse(fiostream &fs) = 0;
+        virtual std::unique_ptr<astNode> parse(::ast::context &, fiostream &fs) = 0;
     };
 
     class parserBook
@@ -45,8 +47,9 @@ namespace lgf::codegen
             load_lexer<cLikeLexer>();
         }
         virtual ~nodeParser() = default;
-        virtual std::unique_ptr<astNode> parse(fiostream &fs) override
+        virtual std::unique_ptr<astNode> parse(::ast::context &c_, fiostream &fs) override
         {
+            ctx = &c_;
             set_input_stream(fs);
             auto id = parse_id();
             auto idnode = std::make_unique<astExpr>(id);
@@ -109,6 +112,7 @@ namespace lgf::codegen
 
     private:
         std::unique_ptr<ast::astDictionary> root;
+        ::ast::context *ctx;
     };
 }
 

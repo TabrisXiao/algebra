@@ -32,7 +32,14 @@ int main(int argc, char *argv[])
 {
     // all possible options are started with a dash
     config_t config(argc, argv);
-
+    if (config.has("h"))
+    {
+        std::cout << "Usage: codegen [options] <input_file> <output_file>" << std::endl;
+        std::cout << "Options:" << std::endl;
+        std::cout << "-r: Recursively search for input files from given path." << std::endl;
+        std::cout << "-h: Display this help message." << std::endl;
+        std::exit(EXIT_SUCCESS);
+    }
     lgf::codegen::lgfOpCodeGen factory;
     for (auto &input : config.input_files)
     {

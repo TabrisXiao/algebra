@@ -10,6 +10,7 @@
 #include <windows.h>
 #endif
 #include "writer.h"
+#include "ast/context.h"
 namespace lgf::codegen
 {
     class lgfOpCodeGen
@@ -68,7 +69,7 @@ namespace lgf::codegen
             SetConsoleMode(hConsole, consoleMode);
 #endif
             std::cout << "\033[33m[ Parsing ]: \033[0m" << filePath << std::endl;
-            if (p.parse())
+            if (p.parse(ctx))
             {
                 std::cerr << "Error: Parsing failed." << std::endl;
                 std::exit(EXIT_FAILURE);
@@ -88,6 +89,7 @@ namespace lgf::codegen
         ::utils::cgstream os;
         codegen::codegenParser p;
         codegen::writerManager wm;
+        ::ast::context ctx;
     };
 };
 
