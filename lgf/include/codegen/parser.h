@@ -17,6 +17,8 @@ namespace lgf::codegen
 
     class codegenParser : public lgf::ast::parser
     {
+        using token = ast::cLikeLexer::cToken;
+
     public:
         codegenParser()
         {
@@ -31,9 +33,9 @@ namespace lgf::codegen
         {
             this->ctx = &ctx;
             // return true if error
-            while (lx()->get_next_token() != ast::lexer::l0token::tok_eof)
+            while (lx()->get_next_token() != token::tok_eof)
             {
-                if (lx()->cur_tok() == ast::lexer::l0token::tok_identifier)
+                if (lx()->cur_tok() == token::tok_identifier)
                 {
                     // Parse identifier
                     std::string id = get_string();

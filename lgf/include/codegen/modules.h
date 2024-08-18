@@ -17,6 +17,10 @@ namespace lgf::codegen
     public:
         parserModule() = default;
         virtual ~parserModule() = default;
+        ast::cLikeLexer::cToken next_token()
+        {
+            return ast::cLikeLexer::cToken(lx()->get_next_token());
+        }
         virtual std::unique_ptr<astNode> parse(::ast::context &, fiostream &fs) = 0;
     };
 
@@ -83,6 +87,10 @@ namespace lgf::codegen
                 {
                     parse_property();
                 }
+                else if (key == "ir_name")
+                {
+                    parse_dict_item(key, root.get());
+                }
                 else
                 {
                     THROW("Parse error: Unknown key: " + key);
@@ -90,6 +98,36 @@ namespace lgf::codegen
             }
             parse_right_brace();
             return std::move(root);
+        }
+
+        void parse_dict_item(std::string key, ast::astDictionary *node)
+        {
+            if (node->find(key).is_success())
+            {
+                THROW("Parse error: Duplicate key: " + key);
+            }
+            parse_equal();
+            auto tok = next_token();
+            if (tok == token('{'))
+            {
+                auto ptr = std::make_unique<astDictionary>();
+                auto id = parse_id();
+                parse_dict_item(id, ptr.get());
+                parse_right_brace();
+                node->add(key, std::move(ptr));
+            }
+            else
+            {
+                if (tok == token::tok_identifier)
+                {
+                    auto id = get_string();
+                    node->add(key, std::move(std::make_unique<astExpr>(id)));
+                }
+                else
+                {
+                    THROW("Parse error: Unkown item at " + loc().print());
+                }
+            }
         }
 
         void parse_input()

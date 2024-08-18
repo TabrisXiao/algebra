@@ -1,6 +1,7 @@
 
 
-module<node> addOp : mathOp {
+module<node> addOp  : mathOp {
+    ir_name = add
     input = {
         variable: lhs,
         variable: rhs

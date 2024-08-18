@@ -56,7 +56,12 @@ namespace lgf::codegen
         }
         void write_property(const std::string &n)
         {
-            os().indent() << n << "(): node(\"" << n << "\")";
+            auto alias = n;
+            if (root->find("ir_name").is_success())
+            {
+                alias = root->get<ast::astExpr>("ir_name")->get_expr();
+            }
+            os().indent() << n << "(): node(\"" << alias << "\")";
 
             if (root->find("property").is_success())
             {
@@ -78,14 +83,14 @@ namespace lgf::codegen
                     }
                 }
                 os().decr_indent_level();
-                os().indent() << "}\n";
+                os().indent() << "}\n\n";
             }
             else
             {
-                os() << " {}\n";
+                os() << " {}\n\n";
             }
 
-            os().indent() << "virtual ~" << n << "() = default;\n";
+            os().indent() << "virtual ~" << n << "() = default;\n\n";
         }
 
         void write_build_func(std::string name)
@@ -125,12 +130,12 @@ namespace lgf::codegen
                 os().indent() << "op->set_value_desc(" << output_id << ");\n";
             }
             os().indent() << "return n;\n";
-            os().decr_indent() << "}\n";
+            os().decr_indent() << "}\n\n";
             for (auto i = 0; i < arg_id.size(); i++)
             {
                 os().indent() << "node* " << arg_id[i] << "(){\n";
                 os().incr_indent() << "return input(" << i << ");\n";
-                os().decr_indent() << "}\n";
+                os().decr_indent() << "}\n\n";
             }
         }
         ast::astDictionary *root;

@@ -215,13 +215,13 @@ namespace lgf::ast
         {
             auto tok = get_next_l0token();
             curTok = cToken::tok_unknown;
-            if (tok == tok_identifier)
+            if (tok == lexer::l0token::tok_identifier)
                 curTok = cToken::tok_identifier;
-            else if (tok == tok_number)
+            else if (tok == lexer::l0token::tok_number)
                 curTok = cToken::tok_number;
-            else if (tok == tok_eof)
+            else if (tok == lexer::l0token::tok_eof)
                 curTok = cToken::tok_eof;
-            else if (tok == tok_other)
+            else if (tok == lexer::l0token::tok_other)
             {
                 curTok = find_cToken(identifierStr);
             }
