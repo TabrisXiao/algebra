@@ -40,7 +40,7 @@ namespace lgf::ast
         void inherit(lexer &l)
         {
             fs = l.fs;
-            lastTok = l.lastTok;
+            curTok = l.curTok;
             identifierStr = l.identifierStr;
             number = l.number;
             fs = &(l.get_input_stream());
@@ -48,7 +48,7 @@ namespace lgf::ast
         void set_input_stream(fiostream &fs)
         {
             this->fs = &fs;
-            lastTok = tok_eof;
+            curTok = tok_eof;
             identifierStr = "";
             number = 0;
         }
@@ -111,7 +111,7 @@ namespace lgf::ast
                     curChar = get_next_char();
                 } while (isdigit(curChar) || curChar == '.');
                 number = strtod(numStr.c_str(), nullptr);
-                lastTok = tok_number;
+                curTok = tok_number;
             }
             // Identifier: [a-zA-Z][a-zA-Z0-9_]*
             else if (isalpha(curChar))
@@ -121,7 +121,7 @@ namespace lgf::ast
                 {
                     identifierStr += curChar;
                 }
-                lastTok = tok_identifier;
+                curTok = tok_identifier;
             }
             else if (curChar == EOF)
             {
@@ -136,46 +136,46 @@ namespace lgf::ast
             else
             {
                 identifierStr = curChar;
-                lastTok = tok_other;
+                curTok = tok_other;
                 get_next_char();
             }
             while (isspace(curChar))
                 curChar = get_next_char();
-            return lastTok;
+            return curTok;
         }
 
         void parse(l0token tok)
         {
             get_next_l0token();
-            if (tok != lastTok)
+            if (tok != curTok)
             {
-                std::cerr << get_loc().print() << ": consuming an unexpected token." << std::endl;
+                std::cerr << loc().print() << ": consuming an unexpected token." << std::endl;
                 std::exit(EXIT_FAILURE);
             }
         }
         virtual void parse(std::string str)
         {
             get_next_l0token();
-            if (lastTok != tok_other && lastTok != tok_identifier)
+            if (curTok != tok_other && curTok != tok_identifier)
             {
-                std::cerr << get_loc().print() << ": consuming an string but got other token" << std::endl;
+                std::cerr << loc().print() << ": consuming an string but got other token" << std::endl;
                 std::exit(EXIT_FAILURE);
             }
             if (str != identifierStr)
             {
-                std::cerr << get_loc().print() << ": consuming string \"" << str << "\" but got: \"" << identifierStr << "\"." << std::endl;
+                std::cerr << loc().print() << ": consuming string \"" << str << "\" but got: \"" << identifierStr << "\"." << std::endl;
                 std::exit(EXIT_FAILURE);
             }
         }
-        l0token last_tok()
+        l0token cur_tok()
         {
-            return l0token(lastTok);
+            return l0token(curTok);
         }
 
-        fiostream::location get_loc() { return fs->get_loc(); }
+        fiostream::location loc() { return fs->get_loc(); }
 
         std::string get_string() { return identifierStr; }
-        int lastTok;
+        int curTok;
         // If the current Token is an identifier, this string contains the value.
         std::string identifierStr;
         // If the current Token is a number, this variable contains the value.
@@ -190,6 +190,7 @@ namespace lgf::ast
         {
             tok_identifier = -1,
             tok_number = -2,
+            tok_scope = -3,
             tok_eof = -100,
             tok_unknown = -999,
         };
@@ -198,6 +199,11 @@ namespace lgf::ast
         {
             if (str.size() == 1)
             {
+                if (str[0] == ':' && get_cur_char() == ':')
+                {
+                    get_next_token();
+                    return cToken::tok_scope;
+                }
                 return cToken(str[0]);
             }
             else
@@ -208,26 +214,26 @@ namespace lgf::ast
         virtual int get_next_token() override
         {
             auto tok = get_next_l0token();
-            lastTok = cToken::tok_unknown;
+            curTok = cToken::tok_unknown;
             if (tok == tok_identifier)
-                lastTok = cToken::tok_identifier;
+                curTok = cToken::tok_identifier;
             else if (tok == tok_number)
-                lastTok = cToken::tok_number;
+                curTok = cToken::tok_number;
             else if (tok == tok_eof)
-                lastTok = cToken::tok_eof;
+                curTok = cToken::tok_eof;
             else if (tok == tok_other)
             {
-                lastTok = find_cToken(identifierStr);
+                curTok = find_cToken(identifierStr);
             }
-            return lastTok;
+            return curTok;
         }
 
         void parse(cToken tok)
         {
             get_next_token();
-            if (tok != lastTok)
+            if (tok != curTok)
             {
-                std::cerr << get_loc().print() << ": consuming an unexpected token." << std::endl;
+                std::cerr << loc().print() << ": consuming an unexpected token." << std::endl;
                 std::exit(EXIT_FAILURE);
             }
         }
@@ -241,9 +247,9 @@ namespace lgf::ast
             {
                 auto tok = find_cToken(str);
                 get_next_token();
-                if (lastTok != tok)
+                if (curTok != tok)
                 {
-                    std::cerr << get_loc().print() << ": consuming an unexpected token." << std::endl;
+                    std::cerr << loc().print() << ": consuming an unexpected token." << std::endl;
                     std::exit(EXIT_FAILURE);
                 }
             }

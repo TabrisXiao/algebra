@@ -57,7 +57,17 @@ namespace lgf::codegen
             root->add("name", std::move(idnode));
             auto uid = std::make_unique<astNumber>(uid::uid_node);
             root->add("uid", std::move(uid));
-            parse_left_brace();
+            lx()->get_next_token();
+            if (cur_tok() == cLikeLexer::cToken(':'))
+            {
+                auto pid = parse_id();
+                root->add("parent", std::move(std::make_unique<astExpr>(pid)));
+                lx()->get_next_token();
+            }
+            else if (cur_tok() != cLikeLexer::cToken('{'))
+            {
+                THROW("Parse error: Expecting '{' or ':'");
+            }
             while (get_cur_char() != '}')
             {
                 auto key = parse_id();
@@ -68,6 +78,14 @@ namespace lgf::codegen
                 else if (key == "output")
                 {
                     parse_output();
+                }
+                else if (key == "property")
+                {
+                    parse_property();
+                }
+                else
+                {
+                    THROW("Parse error: Unknown key: " + key);
                 }
             }
             parse_right_brace();
@@ -96,7 +114,7 @@ namespace lgf::codegen
                 }
                 if (get_cur_char() == ',')
                     parse_comma();
-            } while (last_tok() == token(token(',')));
+            } while (cur_tok() == token(token(',')));
             parse_right_brace();
             root->add("input", std::move(ptr));
         }
@@ -108,6 +126,26 @@ namespace lgf::codegen
             parse_colon();
             auto id = parse_id();
             root->add("output", std::move(std::make_unique<astVar>(type, id)));
+        }
+        void parse_property()
+        {
+            THROW_WHEN(root->find("property").is_success(), "Parse error: Duplicate property.");
+            auto ptr = std::make_unique<astList>();
+            parse_equal();
+            parse_left_brace();
+            do
+            {
+                auto id = parse_id();
+                if (ptr->add(std::move(std::make_unique<astExpr>(id))).is_fail())
+                {
+                    THROW("Parse error: Duplicate property:" + id);
+                }
+            } while (lx()->get_next_token() == token(token(',')));
+            if (cur_tok() != token(token('}')))
+            {
+                THROW("Parse error: Expecting '}' at " + loc().print());
+            }
+            root->add("property", std::move(ptr));
         }
 
     private:

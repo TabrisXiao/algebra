@@ -33,7 +33,7 @@ namespace lgf::codegen
             // return true if error
             while (lx()->get_next_token() != ast::lexer::l0token::tok_eof)
             {
-                if (lx()->last_tok() == ast::lexer::l0token::tok_identifier)
+                if (lx()->cur_tok() == ast::lexer::l0token::tok_identifier)
                 {
                     // Parse identifier
                     std::string id = get_string();

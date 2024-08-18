@@ -54,7 +54,7 @@ namespace lgf::ast
     class astBlock : public astNode
     {
     public:
-        astBlock() : astNode(astType::block){};
+        astBlock() : astNode(astType::block) {};
         std::vector<std::unique_ptr<astNode>> &get_nodes()
         {
             return nodes;
@@ -71,7 +71,7 @@ namespace lgf::ast
     class astVar : public astNode
     {
     public:
-        astVar() : astNode(astType::variable){};
+        astVar() : astNode(astType::variable) {};
         astVar(const std::string &t, const std::string &n) : astNode(astType::variable), name(n), type(t) {}
         void set_name(const std::string &n) { name = n; }
         void set_type(const std::string &t) { type = t; }
@@ -86,7 +86,7 @@ namespace lgf::ast
     class astExpr : public astNode
     {
     public:
-        astExpr() : astNode(astType::expr){};
+        astExpr() : astNode(astType::expr) {};
         astExpr(const std::string &e) : astNode(astType::expr), id(e) {}
         void set_expr(const std::string &e) { id = e; }
         std::string get_expr() { return id; }
@@ -98,7 +98,7 @@ namespace lgf::ast
     class astNumber : public astNode
     {
     public:
-        astNumber() : astNode(astType::number){};
+        astNumber() : astNode(astType::number) {};
         template <typename T>
         astNumber(T val) : astNode(astType::number)
         {
@@ -122,7 +122,7 @@ namespace lgf::ast
     class astBinaryOp : public astNode
     {
     public:
-        astBinaryOp() : astNode(astType::call){};
+        astBinaryOp() : astNode(astType::call) {};
         astBinaryOpType get_op() { return op_type; }
         astNode *get_lhs() { return lhs; }
         astNode *get_rhs() { return rhs; }
@@ -135,7 +135,7 @@ namespace lgf::ast
     class astFuncDefine : public astNode
     {
     public:
-        astFuncDefine() : astNode(astType::define){};
+        astFuncDefine() : astNode(astType::define) {};
         std::string get_name() { return name; }
         astBlock &get_value() { return block; }
         void add_arg(std::unique_ptr<astNode> &&arg)
@@ -170,7 +170,7 @@ namespace lgf::ast
     class astDictionary : public astNode
     {
     public:
-        astDictionary() : astNode(astType::dict){};
+        astDictionary() : astNode(astType::dict) {};
         logicResult add(const std::string &key, std::unique_ptr<astNode> &&node)
         {
             if (contents.find(key) != contents.end())
@@ -222,11 +222,16 @@ namespace lgf::ast
     class astList : public astNode
     {
     public:
-        astList() : astNode(astType::list){};
+        astList() : astNode(astType::list) {};
         virtual ~astList() = default;
-        void add(std::unique_ptr<astNode> &&node)
+        logicResult add(std::unique_ptr<astNode> &&node)
         {
+            if (node == nullptr)
+            {
+                return logicResult::fail();
+            }
             nodes.push_back(std::move(node));
+            return logicResult::success();
         }
         size_t size() { return nodes.size(); }
         astNode *get(size_t idx)

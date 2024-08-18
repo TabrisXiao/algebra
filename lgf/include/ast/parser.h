@@ -88,9 +88,13 @@ namespace lgf::ast
         {
             return lex.get();
         }
-        int last_tok()
+        int cur_tok()
         {
-            return lex->last_tok();
+            return lex->cur_tok();
+        }
+        fiostream::location loc()
+        {
+            return lex->loc();
         }
 
     private:

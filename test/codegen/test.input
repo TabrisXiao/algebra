@@ -1,9 +1,12 @@
 
 
-module<node> addOp {
+module<node> addOp : mathOp {
     input = {
         variable: lhs,
         variable: rhs
     }
     output = variable: output
+    property = {
+        trivial
+    }
 }

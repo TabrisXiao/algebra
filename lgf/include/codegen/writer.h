@@ -48,12 +48,44 @@ namespace lgf::codegen
             os() << "class " << name << ": public node {\n";
             os().incr_indent_level();
             os() << "public:\n";
-            os().indent() << name << "(): node(\"" << name << "\") {}\n";
-            os().indent() << "virtual ~" << name << "() = default;\n";
+            write_property(name);
             write_build_func(name);
             os().decr_indent_level();
             os() << "};\n";
             return false;
+        }
+        void write_property(const std::string &n)
+        {
+            os().indent() << n << "(): node(\"" << n << "\")";
+
+            if (root->find("property").is_success())
+            {
+                os() << "\n";
+                os().indent() << "{\n";
+                os().incr_indent_level();
+                auto propInfo = root->get<ast::astList>("property");
+                for (auto &ptr : propInfo->get_content())
+                {
+                    auto prop = dynamic_cast<ast::astExpr *>(ptr.get())->get_expr();
+                    if (prop == "trivial")
+                    {
+                        os().indent() << "mark_status(eIdenticalRemovable);\n";
+                    }
+                    else
+                    {
+                        std::cerr << "Unknown property: " << prop << std::endl;
+                        exit(EXIT_FAILURE);
+                    }
+                }
+                os().decr_indent_level();
+                os().indent() << "}\n";
+            }
+            else
+            {
+                os() << " {}\n";
+            }
+
+            os().indent() << "virtual ~" << n << "() = default;\n";
         }
 
         void write_build_func(std::string name)
