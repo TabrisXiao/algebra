@@ -13,6 +13,76 @@
 #include "ast/context.h"
 namespace lgf::codegen
 {
+
+    class codegenParserBook
+    {
+    public:
+        codegenParserBook()
+        {
+            pmap["node"] = std::make_unique<moduleParser>();
+        }
+        ~codegenParserBook() = default;
+        moduleParser *get(const std::string &id)
+        {
+            if (pmap.find(id) == pmap.end())
+            {
+                return nullptr;
+            }
+            return pmap[id].get();
+        }
+        std::map<std::string, std::unique_ptr<moduleParser>> pmap;
+    };
+
+    class codegenParser : public lgf::ast::parser
+    {
+        using token = ast::cLikeLexer::cToken;
+
+    public:
+        codegenParser()
+        {
+            root = std::make_unique<ast::astDictionary>();
+            auto ptr = std::make_unique<ast::astList>();
+            list = dynamic_cast<ast::astList *>(ptr.get());
+            root->add("content", std::move(ptr));
+            load_lexer<ast::cLikeLexer>();
+        }
+        virtual ~codegenParser() = default;
+        bool parse(::ast::context &ctx)
+        {
+            this->ctx = &ctx;
+            // return true if error
+            while (lx()->get_next_token() != token::tok_eof)
+            {
+                if (lx()->cur_tok() == token::tok_identifier)
+                {
+                    // Parse identifier
+                    std::string id = get_string();
+                    if (id == "module")
+                    {
+                        parser_module();
+                    }
+                }
+                else
+                {
+                    // Parse error
+                    return true;
+                }
+            }
+            return false;
+        }
+        void parser_module()
+        {
+            auto id = parse_id();
+            auto tp = mmap.get(id);
+            THROW_WHEN(tp == nullptr, "Parse error: Can't find the template: " + id);
+            list->add(std::move(tp->parse(*ctx, get_input_stream())));
+        }
+        codegenParserBook mmap;
+        std::unique_ptr<ast::astDictionary> root;
+        ast::astList *list = nullptr;
+        ::ast::context *ctx;
+    };
+
     class lgfOpCodeGen
     {
     public:

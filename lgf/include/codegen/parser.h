@@ -1,70 +1,158 @@
 
 #ifndef LIBS_CODEGEN_PARSER_H
 #define LIBS_CODEGEN_PARSER_H
+#include <set>
+#include "ast/ast.h"
 #include "ast/parser.h"
 #include "ast/context.h"
-#include "modules.h"
 namespace lgf::codegen
 {
-    class codegenParserBook : public parserBook
+    class moduleParser : public ast::parser
     {
     public:
-        codegenParserBook()
-        {
-            pmap["node"] = std::make_unique<nodeParser>();
-        }
-    };
-
-    class codegenParser : public lgf::ast::parser
-    {
         using token = ast::cLikeLexer::cToken;
-
-    public:
-        codegenParser()
+        moduleParser() = default;
+        virtual ~moduleParser() = default;
+        token next_token()
         {
-            root = std::make_unique<ast::astDictionary>();
-            auto ptr = std::make_unique<ast::astList>();
-            list = dynamic_cast<ast::astList *>(ptr.get());
-            root->add("content", std::move(ptr));
-            load_lexer<ast::cLikeLexer>();
+            return token(lx()->get_next_token());
         }
-        virtual ~codegenParser() = default;
-        bool parse(::ast::context &ctx)
+
+        std::unique_ptr<ast::astModule> parse(::ast::context &c, ::utils::fiostream &fs)
         {
-            this->ctx = &ctx;
-            // return true if error
-            while (lx()->get_next_token() != token::tok_eof)
+            set_input_stream(fs);
+            return parse_module(c);
+        }
+
+        std::unique_ptr<ast::astDictionary> parse_dict()
+        {
+            // a dictionary doesn't allow duplicate keys
+            // the syntax is {key1: value1, key2: value2, key3: value3...}
+            auto node = std::make_unique<ast::astDictionary>(loc());
+            while (next_token() != token('}'))
             {
-                if (lx()->cur_tok() == token::tok_identifier)
+                if (cur_tok() != token::tok_identifier)
                 {
-                    // Parse identifier
-                    std::string id = get_string();
-                    if (id == "module")
-                    {
-                        parser_module();
-                    }
+                    THROW("Parse error: Expected identifier at " + loc().print());
+                }
+                auto key = get_string();
+                parse_colon();
+                auto tok = next_token();
+                if (tok == token('{'))
+                {
+                    node->add(key, std::move(parse_dict()));
+                }
+                else if (tok == token::tok_identifier)
+                {
+                    node->add(key, std::move(std::make_unique<ast::astExpr>(loc(), get_string())));
+                }
+                else if (tok == token('['))
+                {
+                    node->add(key, std::move(parse_list()));
+                }
+                else if (tok == token::tok_number)
+                {
+                    node->add(key, std::move(std::make_unique<ast::astNumber>(loc(), get_number())));
                 }
                 else
                 {
-                    // Parse error
-                    return true;
+                    THROW("Parse error: Unknown dictionatry item at " + loc().print());
                 }
             }
-            return false;
+            return std::move(node);
         }
-        void parser_module()
+
+        std::unique_ptr<ast::astList> parse_list()
         {
-            parse_less_than();
-            auto id = parse_id();
-            parse_greater_than();
-            auto tp = mmap.get(id);
-            THROW_WHEN(tp == nullptr, "Parse error: Can't find the template: " + id);
-            list->add(std::move(tp->parse(*ctx, get_input_stream())));
+            // a list allows duplicate items
+            // the syntax is [item1, item2, item3...]
+            auto node = std::make_unique<ast::astList>(loc());
+            while (next_token() != token(','))
+            {
+                if (cur_tok() == token(']'))
+                    break;
+                if (cur_tok() == token::tok_identifier)
+                {
+                    node->add(std::move(std::make_unique<ast::astExpr>(loc(), get_string())));
+                }
+                else if (cur_tok() == token::tok_number)
+                {
+                    node->add(std::move(std::make_unique<ast::astNumber>(loc(), get_number())));
+                }
+                else
+                {
+                    THROW("Parse error: Unknown list item at " + loc().print());
+                }
+            }
+            return std::move(node);
         }
-        codegenParserBook mmap;
-        std::unique_ptr<ast::astDictionary> root;
-        ast::astList *list = nullptr;
-        ::ast::context *ctx;
+
+        std::unique_ptr<ast::astList> parse_set()
+        {
+            // set is a list that can't have duplicate items
+            // the syntax is <item1, item2, item3...>
+            auto node = std::make_unique<ast::astList>(loc());
+            std::set<std::string> key;
+            while (next_token() != token(','))
+            {
+                if (cur_tok() == token('>'))
+                    break;
+                if (cur_tok() == token::tok_identifier)
+                {
+                    bool has = 0;
+                    for (auto &item : node->get_content())
+                    {
+                        if (item->get_kind() != ast::astType::expr)
+                            continue;
+                        auto expr = dynamic_cast<ast::astExpr *>(item.get())->get_expr();
+                        if (expr == get_string())
+                        {
+                            has = 1;
+                            THROW("Parse error: Duplicate item: " + expr + " at " + loc().print());
+                        }
+                    }
+                    node->add(std::move(std::make_unique<ast::astExpr>(loc(), get_string())));
+                }
+                else if (cur_tok() == token::tok_number)
+                {
+                    bool has = 0;
+                    for (auto &item : node->get_content())
+                    {
+                        if (item->get_kind() != ast::astType::number)
+                            continue;
+                        auto num = dynamic_cast<ast::astNumber *>(item.get())->get<double>();
+                        if (num == get_number())
+                        {
+                            has = 1;
+                            THROW("Parse error: Duplicate number: " + std::to_string(num) + " at " + loc().print());
+                        }
+                    }
+                    node->add(std::move(std::make_unique<ast::astNumber>(loc(), get_number())));
+                }
+                else
+                {
+                    THROW("Parse error: Unknown set item at " + loc().print());
+                }
+            }
+            return std::move(node);
+        }
+
+        std::unique_ptr<ast::astModule> parse_module(::ast::context &ctx)
+        {
+            // a module is a dictionary
+            // the syntax is module<attr1, attr2, attr3...> name {
+            // key1: value1, key2: value2, key3: value3...}
+            auto attrs = parse_set();
+            auto name = parse_id();
+            auto tok = next_token();
+
+            auto node = std::make_unique<ast::astModule>(loc(), name);
+            parse_left_brace();
+            auto ptr = parse_dict();
+            ptr->add("_attr_", std::move(attrs));
+            node->add_attr(std::move(ptr));
+            return std::move(node);
+        }
     };
 }
 #endif

@@ -1,13 +1,13 @@
 
 
-module<node> addOp  : mathOp {
-    ir_name = add
-    input = {
-        variable: lhs,
-        variable: rhs
+module<mathOp> addOp {
+    ir_name: add
+    input: {
+        lhs: variable,
+        rhs: variable
     }
-    output = variable: output
-    property = {
+    output: {output: variable}
+    property: <
         trivial
-    }
+    >
 }

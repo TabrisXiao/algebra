@@ -92,9 +92,13 @@ namespace lgf::ast
         {
             return lex->cur_tok();
         }
-        fiostream::location loc()
+        ::utils::textLocation loc()
         {
             return lex->loc();
+        }
+        double get_number()
+        {
+            return lex->get_number();
         }
 
     private:

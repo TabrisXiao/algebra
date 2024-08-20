@@ -11,7 +11,7 @@ using namespace utils;
 namespace lgf::ast
 {
 
-    struct location
+    struct textLocation
     {
         std::shared_ptr<std::string> file; ///< filename.
         int line;                          ///< line number.
@@ -171,8 +171,9 @@ namespace lgf::ast
         {
             return l0token(curTok);
         }
+        double get_number() { return number; }
 
-        fiostream::location loc() { return fs->get_loc(); }
+        ::utils::textLocation loc() { return fs->get_loc(); }
 
         std::string get_string() { return identifierStr; }
         int curTok;

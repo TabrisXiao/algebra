@@ -7,18 +7,19 @@
 #include "exception.h"
 namespace utils
 {
+    struct textLocation
+    {
+        std::shared_ptr<std::filesystem::path> path; ///< filename.
+        unsigned int line = 0, col = 0;
+        std::string print()
+        {
+            return path->string() + "(" + std::to_string(line) + ", " + std::to_string(col) + ")";
+        }
+    };
+
     class fiostream
     {
     public:
-        struct location
-        {
-            std::shared_ptr<std::filesystem::path> path; ///< filename.
-            unsigned int line = 0, col = 0;
-            std::string print()
-            {
-                return path->string() + "(" + std::to_string(line) + ", " + std::to_string(col) + ")";
-            }
-        };
         fiostream() = default;
         virtual ~fiostream() = default;
         void load_file(std::string filename)
@@ -46,7 +47,7 @@ namespace utils
                 buffer.clear();
             }
         }
-        location get_loc()
+        textLocation get_loc()
         {
             return loc;
         }
@@ -84,7 +85,7 @@ namespace utils
         std::string buffer;
         std::string::iterator cur;
         std::ifstream file;
-        location loc;
+        textLocation loc;
     };
 
     class cgstream
