@@ -224,11 +224,12 @@ namespace lgf::ast
             return logicResult::success();
         }
         size_t size() { return nodes.size(); }
-        astNode *get(size_t idx)
+        template <typename T>
+        T *get(size_t idx)
         {
             if (idx < nodes.size())
             {
-                return nodes[idx].get();
+                return dynamic_cast<T *>(nodes[idx].get());
             }
             return nullptr;
         }

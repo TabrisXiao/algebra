@@ -10,13 +10,17 @@ namespace utils
     public:
         cursive_map() = default;
         ~cursive_map() = default;
+        cursive_map(const C &content)
+        {
+            _content_ = content;
+        }
         void add(const K &key, const C &content)
         {
             if (_content_.find(key) != _content_.end())
             {
                 return;
             }
-            _content_[key] = content;
+            _cmap_[key] = cursive_map<K, C>(content);
         }
         bool has(const K &key)
         {
@@ -33,6 +37,14 @@ namespace utils
         C &get_value()
         {
             return _content_;
+        }
+        C &get_value(const K &key)
+        {
+            if (has(key))
+            {
+                return _cmap_[key].get_value();
+            }
+            throw std::runtime_error("get: invalid key!");
         }
         std::map<K, cursive_map<K, C>> &get_map()
         {

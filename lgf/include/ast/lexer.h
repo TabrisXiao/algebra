@@ -45,9 +45,9 @@ namespace lgf::ast
             number = l.number;
             fs = &(l.get_input_stream());
         }
-        void set_input_stream(fiostream &fs)
+        void set_input_stream(fiostream &f)
         {
-            this->fs = &fs;
+            fs = &f;
             curTok = tok_eof;
             identifierStr = "";
             number = 0;
@@ -181,7 +181,7 @@ namespace lgf::ast
         std::string identifierStr;
         // If the current Token is a number, this variable contains the value.
         double number;
-        fiostream *fs = nullptr;
+        fiostream *fs;
     };
 
     class cLikeLexer : public lexer

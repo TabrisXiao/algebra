@@ -1,9 +1,9 @@
 
 
-module<mathOp> addOp {
+module<node> addOp {
     ir_name: add
     input: {
-        lhs: variable,
+        lhs: variable
         rhs: variable
     }
     output: {output: variable}

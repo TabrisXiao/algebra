@@ -19,7 +19,7 @@ namespace lgf::codegen
     public:
         codegenParserBook()
         {
-            pmap["node"] = std::make_unique<moduleParser>();
+            pmap["module"] = std::make_unique<moduleParser>();
         }
         ~codegenParserBook() = default;
         moduleParser *get(const std::string &id)
@@ -40,16 +40,17 @@ namespace lgf::codegen
     public:
         codegenParser()
         {
-            root = std::make_unique<ast::astDictionary>();
-            auto ptr = std::make_unique<ast::astList>();
-            list = dynamic_cast<ast::astList *>(ptr.get());
-            root->add("content", std::move(ptr));
             load_lexer<ast::cLikeLexer>();
         }
         virtual ~codegenParser() = default;
+        void init(::ast::context &ctx)
+        {
+            this->ctx = &ctx;
+        }
         bool parse(::ast::context &ctx)
         {
             this->ctx = &ctx;
+            init(ctx);
             // return true if error
             while (lx()->get_next_token() != token::tok_eof)
             {
@@ -72,14 +73,17 @@ namespace lgf::codegen
         }
         void parser_module()
         {
-            auto id = parse_id();
-            auto tp = mmap.get(id);
-            THROW_WHEN(tp == nullptr, "Parse error: Can't find the template: " + id);
-            list->add(std::move(tp->parse(*ctx, get_input_stream())));
+            auto tp = mmap.get("module");
+            auto ptr = tp->parse(*ctx, get_input_stream());
+            auto name = ptr->get_name();
+            modules[name] = std::move(ptr);
+        }
+        std::map<std::string, std::unique_ptr<ast::astModule>> &get_modules()
+        {
+            return modules;
         }
         codegenParserBook mmap;
-        std::unique_ptr<ast::astDictionary> root;
-        ast::astList *list = nullptr;
+        std::map<std::string, std::unique_ptr<ast::astModule>> modules;
         ::ast::context *ctx;
     };
 
@@ -145,7 +149,7 @@ namespace lgf::codegen
                 std::exit(EXIT_FAILURE);
             }
             std::cout << "     \033[33m parsing finished, generating code... \033[0m" << std::endl;
-            if (wm.process(*p.root, os))
+            if (wm.process(p.get_modules(), os).is_fail())
             {
                 std::cerr << "Error: Code generation failed." << std::endl;
                 std::exit(EXIT_FAILURE);
@@ -154,7 +158,6 @@ namespace lgf::codegen
         }
 
     private:
-        ::utils::cgstream stream;
         ::utils::fiostream fs;
         ::utils::cgstream os;
         codegen::codegenParser p;

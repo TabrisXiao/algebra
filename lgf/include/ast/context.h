@@ -9,7 +9,8 @@
 #include <vector>
 namespace ast
 {
-    class context : public utils::cursive_map<std::string, std::vector<std::string>>
+    using scode = size_t;
+    class context : public utils::cursive_map<std::string, scode>
     {
     public:
         context() = default;
@@ -17,9 +18,12 @@ namespace ast
         void print()
         {
             utils::cgstream os;
+            os << "context: " << name << " {\n";
+            os.incr_indent_level();
             print_impl(*this, os);
+            os.decr_indent() << "}\n";
         }
-        void print_map(std::map<std::string, cursive_map<std::string, std::vector<std::string>>> &_map, cgstream &os)
+        void print_map(std::map<std::string, cursive_map<std::string, scode>> &_map, cgstream &os)
         {
             for (auto &entry : _map)
             {
@@ -29,12 +33,8 @@ namespace ast
                 os.decr_indent() << "}\n";
             }
         }
-        void print_impl(utils::cursive_map<std::string, std::vector<std::string>> &table, cgstream &os)
+        void print_impl(utils::cursive_map<std::string, scode> &table, cgstream &os)
         {
-            for (const auto &entry : table.get_value())
-            {
-                os.indent() << entry << "\n";
-            }
             print_map(table.get_map(), os);
         }
         std::string name;

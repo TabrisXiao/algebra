@@ -4,7 +4,6 @@
 #include <map>
 #include "utils/stream.h"
 #include "ast/ast.h"
-#include "uid.h"
 #include "lgf/utils.h"
 using namespace utils;
 namespace lgf::codegen
@@ -14,8 +13,8 @@ namespace lgf::codegen
     public:
         writer() = default;
         virtual ~writer() = default;
-        virtual bool run(ast::astDictionary *) = 0;
-        bool write(ast::astDictionary *r, cgstream &fs)
+        virtual logicResult run(ast::astModule *) = 0;
+        logicResult write(ast::astModule *r, cgstream &fs)
         {
             cg = &fs;
             return run(r);
@@ -41,34 +40,45 @@ namespace lgf::codegen
     public:
         nodeWriter() = default;
         virtual ~nodeWriter() = default;
-        virtual bool run(ast::astDictionary *r) override
+        virtual logicResult run(ast::astModule *r) override
         {
             root = r;
-            auto name = root->get<ast::astExpr>("name")->get_expr();
-            os() << "class " << name << ": public node {\n";
+            root_attr = root->get_attr();
+            auto parents = root_attr->get<ast::astList>("_inherit_");
+            std::string parent_str = "";
+            for (auto &ptr : parents->get_content())
+            {
+                auto parent = dynamic_cast<ast::astExpr *>(ptr.get())->get_expr();
+                parent_str = parent_str + "public " + parent + ", ";
+            }
+            parent_str = parent_str.substr(0, parent_str.size() - 2);
+            if (parent_str.size() > 0)
+                parent_str = ": " + parent_str;
+            auto name = root->get_name();
+            os() << "class " << name << parent_str + " {\n";
             os().incr_indent_level();
             os() << "public:\n";
             write_property(name);
             write_build_func(name);
             os().decr_indent_level();
             os() << "};\n";
-            return false;
+            return logicResult::success();
         }
         void write_property(const std::string &n)
         {
             auto alias = n;
-            if (root->find("ir_name").is_success())
+            if (root_attr->find("ir_name").is_success())
             {
-                alias = root->get<ast::astExpr>("ir_name")->get_expr();
+                alias = root_attr->get<ast::astExpr>("ir_name")->get_expr();
             }
             os().indent() << n << "(): node(\"" << alias << "\")";
 
-            if (root->find("property").is_success())
+            if (root_attr->find("property").is_success())
             {
                 os() << "\n";
                 os().indent() << "{\n";
                 os().incr_indent_level();
-                auto propInfo = root->get<ast::astList>("property");
+                auto propInfo = root_attr->get<ast::astList>("property");
                 for (auto &ptr : propInfo->get_content())
                 {
                     auto prop = dynamic_cast<ast::astExpr *>(ptr.get())->get_expr();
@@ -96,15 +106,15 @@ namespace lgf::codegen
         void write_build_func(std::string name)
         {
             std::string arg_str = "";
-            if (root->find("input").is_success())
+            if (root_attr->find("input").is_success())
             {
-                auto inputs = root->get<ast::astDictionary>("input");
+                auto inputs = root_attr->get<ast::astDictionary>("input");
                 auto &contents = inputs->get_contents();
                 for (auto &c : contents)
                 {
                     auto key = c.first;
                     auto value = c.second.get();
-                    auto type = dynamic_cast<ast::astVar *>(value)->get_type_id();
+                    auto type = dynamic_cast<ast::astExpr *>(value)->get_expr();
                     arg_type.push_back(type);
                     arg_str = arg_str + "node*" + " " + key + ", ";
                     arg_id.push_back(key);
@@ -112,12 +122,15 @@ namespace lgf::codegen
 
                 arg_str = arg_str.substr(0, arg_str.size() - 2);
             }
-            if (root->find("output").is_success())
+            if (root_attr->find("output").is_success())
             {
-                auto retop = root->get<ast::astVar>("output");
-                output_id = retop->get_name();
-                output_type = retop->get_type_id();
-                arg_str = "descriptor " + output_id + ", " + arg_str;
+                auto retop = root_attr->get<ast::astDictionary>("output");
+                for (auto &it : retop->get_contents())
+                {
+                    output_id = it.first;
+                    output_type = dynamic_cast<ast::astExpr *>(it.second.get())->get_expr();
+                    arg_str = "descriptor " + output_id + ", " + arg_str;
+                }
             }
             if (arg_str.size() > 0)
                 arg_str = ", " + arg_str;
@@ -138,7 +151,8 @@ namespace lgf::codegen
                 os().decr_indent() << "}\n\n";
             }
         }
-        ast::astDictionary *root;
+        ast::astModule *root;
+        ast::astDictionary *root_attr;
         std::vector<std::string> arg_type, arg_id;
         std::string output_id, output_type;
     };
@@ -148,42 +162,37 @@ namespace lgf::codegen
     public:
         writerManager()
         {
-            wmap[uid::uid_node] = std::make_unique<nodeWriter>();
+            wmap["node"] = std::make_unique<nodeWriter>();
+        }
+        std::string get_first_attr(ast::astModule *node)
+        {
+            auto attr = node->get_attr();
+            return attr->get<ast::astList>("_attr_")->get<ast::astExpr>(0)->get_expr();
         }
         virtual ~writerManager() = default;
-        void add_writer(size_t id, std::unique_ptr<writer> w)
+
+        writer *get_writer(const std::string &sid)
         {
-            wmap[id] = std::move(w);
-        }
-        writer *get_writer(size_t id)
-        {
-            if (wmap.find(id) == wmap.end())
+            if (wmap.find(sid) == wmap.end())
             {
                 return nullptr;
             }
-            return wmap[id].get();
+            return wmap[sid].get();
         }
-        bool process(ast::astDictionary &root, cgstream &fs)
+        logicResult process(std::map<std::string, std::unique_ptr<ast::astModule>> &m, cgstream &fs)
         {
-            cg = &fs;
-            auto list = root.get<ast::astList>("content");
-            for (auto &node : list->get_content())
+            for (auto &item : m)
             {
-                auto sm = dynamic_cast<ast::astDictionary *>(node.get());
-                auto uid = sm->get<astNumber>("uid")->get<uid::uid_t>();
-                auto w = get_writer(uid);
-                if (w != nullptr)
-                {
-                    if (w->write(sm, *cg))
-                        return true;
-                }
+                auto sm = dynamic_cast<ast::astModule *>(item.second.get());
+                auto w = get_writer(get_first_attr(sm));
+                if (w == nullptr || w->write(sm, fs).is_fail())
+                    return logicResult::fail();
             }
-            return false;
+            return logicResult::success();
         }
 
     private:
-        std::map<size_t, std::unique_ptr<writer>> wmap;
-        cgstream *cg;
+        std::map<std::string, std::unique_ptr<writer>> wmap;
     };
 
 } // namespace lgf::codegen

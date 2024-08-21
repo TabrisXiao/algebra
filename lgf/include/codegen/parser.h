@@ -11,7 +11,10 @@ namespace lgf::codegen
     {
     public:
         using token = ast::cLikeLexer::cToken;
-        moduleParser() = default;
+        moduleParser()
+        {
+            load_lexer<ast::cLikeLexer>();
+        };
         virtual ~moduleParser() = default;
         token next_token()
         {
@@ -49,6 +52,10 @@ namespace lgf::codegen
                 else if (tok == token('['))
                 {
                     node->add(key, std::move(parse_list()));
+                }
+                else if (tok == token('<'))
+                {
+                    node->add(key, std::move(parse_set()));
                 }
                 else if (tok == token::tok_number)
                 {
@@ -140,16 +147,29 @@ namespace lgf::codegen
         std::unique_ptr<ast::astModule> parse_module(::ast::context &ctx)
         {
             // a module is a dictionary
-            // the syntax is module<attr1, attr2, attr3...> name {
-            // key1: value1, key2: value2, key3: value3...}
+            // the syntax is module<attr1, attr2, attr3...> name : inherit1, inherit2, inherit3...
+            // { key1: value1, key2: value2, key3: value3...}
+            parse_less_than();
             auto attrs = parse_set();
             auto name = parse_id();
-            auto tok = next_token();
-
             auto node = std::make_unique<ast::astModule>(loc(), name);
-            parse_left_brace();
+            auto tok = next_token();
+            auto inherit = std::make_unique<ast::astList>(loc());
+            if (tok == token(':'))
+            {
+                while (next_token() == token(','))
+                {
+                    auto id = parse_id();
+                    inherit->add(std::move(std::make_unique<ast::astExpr>(loc(), id)));
+                }
+            }
+            else if (tok != token('{'))
+            {
+                THROW("Parse error: Expected '{' at " + loc().print());
+            }
             auto ptr = parse_dict();
             ptr->add("_attr_", std::move(attrs));
+            ptr->add("_inherit_", std::move(inherit));
             node->add_attr(std::move(ptr));
             return std::move(node);
         }
