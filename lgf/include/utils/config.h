@@ -38,7 +38,7 @@ namespace utils
                 }
                 else if (str.substr(0, 1) == "-")
                 {
-                    options[str.substr(1)] = "true";
+                    options[str.substr(1)] = "1";
                 }
                 else
                 {
@@ -53,16 +53,22 @@ namespace utils
             return options.find(key) != options.end();
         }
 
-        void load_input_file(const std::string &path, bool regular_files_only = true)
+        void load_input_file(std::string &path, bool regular_files_only = true)
         {
-            if (is_dir(path) && !regular_files_only)
+            if (!sfs::exists(path))
+            {
+                std::cerr << "Error: File or directory does not exist: " << path << std::endl;
+                std::exit(EXIT_FAILURE);
+            }
+            std::cout << path << " : " << is_dir(path) << ", " << regular_files_only << std::endl;
+            if (is_dir(path) && regular_files_only)
             {
                 std::cerr << "Error: Directory provided, but regular files only requested" << std::endl;
                 std::exit(EXIT_FAILURE);
             }
             else if (is_dir(path))
             {
-                for (const auto &entry : sfs::directory_iterator(path))
+                for (const auto &entry : sfs::recursive_directory_iterator(path))
                 {
                     if (entry.is_regular_file())
                     {
@@ -78,6 +84,18 @@ namespace utils
         bool is_dir(const std::string &path)
         {
             return sfs::is_directory(path);
+        }
+        void create_directories_if_not_exists(const std::string &path)
+        {
+            std::filesystem::path dir = sfs::path(path).parent_path();
+            if (!std::filesystem::exists(dir))
+            {
+                if (!std::filesystem::create_directories(dir))
+                {
+                    std::cerr << "Error: Failed to create directories " << path << std::endl;
+                    std::exit(EXIT_FAILURE);
+                }
+            }
         }
         std::vector<sfs::path> input_files;
         std::map<std::string, std::string> options;

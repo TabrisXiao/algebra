@@ -98,6 +98,7 @@ namespace lgf::codegen
         }
         void output_to_file(const std::string &filePath)
         {
+            output_path = filePath;
             os.live_stream_to_file(filePath);
         }
         bool search_file(const std::string &folderPath, const std::string &fileName)
@@ -154,7 +155,7 @@ namespace lgf::codegen
                 std::cerr << "Error: Code generation failed." << std::endl;
                 std::exit(EXIT_FAILURE);
             }
-            std::cout << "\033[32m[   Done  ] \033[0m" << std::endl;
+            std::cout << "\033[32m[   Done  ] \033[0m: generated to " << output_path << std::endl;
         }
 
     private:
@@ -163,6 +164,7 @@ namespace lgf::codegen
         codegen::codegenParser p;
         codegen::writerManager wm;
         ::ast::context ctx;
+        std::string output_path;
     };
 };
 
