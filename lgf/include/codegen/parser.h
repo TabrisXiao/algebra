@@ -157,13 +157,13 @@ namespace lgf::codegen
             auto inherit = std::make_unique<ast::astList>(loc());
             if (tok == token(':'))
             {
-                while (next_token() == token(','))
+                do
                 {
                     auto id = parse_id();
                     inherit->add(std::move(std::make_unique<ast::astExpr>(loc(), id)));
-                }
+                } while (next_token() == token(','));
             }
-            else if (tok != token('{'))
+            if (cur_tok() != token('{'))
             {
                 THROW("Parse error: Expected '{' at " + loc().print());
             }

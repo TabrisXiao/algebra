@@ -167,9 +167,9 @@ namespace lgf::ast
                 std::exit(EXIT_FAILURE);
             }
         }
-        l0token cur_tok()
+        int cur_tok()
         {
-            return l0token(curTok);
+            return curTok;
         }
         double get_number() { return number; }
 

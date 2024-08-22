@@ -40,8 +40,16 @@ namespace lgf::codegen
     public:
         nodeWriter() = default;
         virtual ~nodeWriter() = default;
+        void init()
+        {
+            arg_type.clear();
+            arg_id.clear();
+            output_id = "";
+            output_type = "";
+        }
         virtual logicResult run(ast::astModule *r) override
         {
+            init();
             root = r;
             root_attr = root->get_attr();
             auto parents = root_attr->get<ast::astList>("_inherit_");
@@ -61,7 +69,7 @@ namespace lgf::codegen
             write_property(name);
             write_build_func(name);
             os().decr_indent_level();
-            os() << "};\n";
+            os() << "};\n\n";
             return logicResult::success();
         }
         void write_property(const std::string &n)
