@@ -1,20 +1,62 @@
-#ifndef UTILS_STREAM_H
-#define UTILS_STREAM_H
+#ifndef AOC_STREAM_H
+#define AOC_STREAM_H
 #include <filesystem>
 #include <fstream>
 #include <memory>
 #include <sstream>
 #include "exception.h"
-namespace utils
+#include <map>
+#include <functional>
+namespace aoc
 {
-    struct textLocation
+
+    class stringBuf : public std::string
     {
-        std::shared_ptr<std::filesystem::path> path; ///< filename.
-        unsigned int line = 0, col = 0;
-        std::string print()
+    public:
+        stringBuf() = default;
+        ~stringBuf() = default;
+        stringBuf(const char *resource, size_t size)
         {
-            return path->string() + "(" + std::to_string(line) + ", " + std::to_string(col) + ")";
+            source = std::make_shared<std::string>(resource);
+            resize(size);
         }
+        std::shared_ptr<std::string> &get_source_path() { return source; }
+        const char *get_buffer_end_pointer()
+        {
+            return &(*this)[size()];
+        }
+
+    private:
+        std::shared_ptr<std::string>
+            source;
+    };
+
+    class bufferManager
+    {
+    public:
+        bufferManager() = default;
+        size_t create_buffer(const char *name, size_t size)
+        {
+            auto id = hasher(name);
+            if (buffers.find(id) != buffers.end())
+            {
+                // resolve hash conflict
+                id = hasher(name + std::to_string(size));
+            }
+            // check if the buffer already exists
+            THROW_WHEN(buffers.find(id) != buffers.end(), "Buffer already exists: " + std::string(name));
+            buffers[id] = stringBuf(name, size);
+            return id;
+        }
+        stringBuf &get_buffer(size_t id)
+        {
+            THROW_WHEN(buffers.find(id) == buffers.end(), "Buffer not found: " + std::to_string(id));
+            return buffers[id];
+        }
+
+    private:
+        std::map<size_t, stringBuf> buffers;
+        std::hash<std::string> hasher;
     };
 
     class fiostream
@@ -22,70 +64,24 @@ namespace utils
     public:
         fiostream() = default;
         virtual ~fiostream() = default;
-        void load_file(std::string filename)
+        void load_file_to_string_buffer(std::string filename, bufferManager &bm)
         {
-            loc.path = std::make_shared<std::filesystem::path>(std::filesystem::absolute(filename));
-            file.open(*loc.path.get());
-            THROW_WHEN(!file.is_open(), "fiostream error: Can't open the file: " + loc.path->string());
-            get_next_line();
-        }
-        std::filesystem::path get_file_path()
-        {
-            return *(loc.path.get());
-        }
-        virtual void get_next_line()
-        {
-            if (std::getline(file, buffer))
-            {
-                cur = buffer.begin();
+            auto path = std::filesystem::absolute(filename);
+            file.open(path);
+            THROW_WHEN(!file.is_open(), "fiostream error: Can't open the file: " + path.string());
 
-                loc.line++;
-                loc.col = 1;
-            }
-            else
-            {
-                buffer.clear();
-            }
-        }
-        textLocation get_loc()
-        {
-            return loc;
-        }
+            // calculate file size
+            file.seekg(0, std::ios::end);
+            std::size_t file_size = file.tellg();
+            file.seekg(0, std::ios::beg);
+            auto id = bm.create_buffer(path.string().c_str(), file_size);
+            auto &buf = bm.get_buffer(id);
 
-        char get_cur_char()
-        {
-            if (cur == buffer.end())
-            {
-                return EOF;
-            }
-            return *cur;
-        }
-
-        char get_next_char()
-        {
-            if (buffer.empty() || (cur + 1) == buffer.end())
-            {
-                get_next_line();
-                if (buffer.empty())
-                {
-                    return EOF;
-                }
-                return *cur;
-            }
-            loc.col++;
-            cur = cur + 1;
-            return *(cur);
-        }
-        bool is_eof()
-        {
-            return file.eof();
+            file.read(&buf[0], file_size);
         }
 
     private:
-        std::string buffer;
-        std::string::iterator cur;
         std::ifstream file;
-        textLocation loc;
     };
 
     class cgstream

@@ -1,5 +1,6 @@
 set(sources
     codegen.cpp 
+    CGParser.cpp
 )
 
 create_cpp_binary(

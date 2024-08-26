@@ -1,13 +1,13 @@
-#ifndef LGF_AST_TREE_H
-#define LGF_AST_TREE_H
+#ifndef AST_TREE_H
+#define AST_TREE_H
 #include <vector>
 #include <memory>
 #include <string>
 #include <map>
-#include "lgf/utils.h"
-#include "utils/stream.h"
-
-namespace lgf::ast
+#include "aoc/convention.h"
+#include "lexer.h"
+using namespace aoc;
+namespace ast
 {
     enum astType : uint16_t
     {
@@ -44,20 +44,19 @@ namespace lgf::ast
     {
     public:
         astNode() = default;
-        astNode(const ::utils::textLocation &l, astType k) : loc(l), kind(k) {}
+        astNode(const charLocation &l, const astType k) : loc(l), kind(k) {}
         virtual ~astNode() = default;
-        void set_kind(astType k) { kind = k; }
         astType get_kind() { return kind; }
 
     private:
-        astType kind;
-        ::utils::textLocation loc;
+        const astType kind;
+        charLocation loc;
     };
 
     class astBlock : public astNode
     {
     public:
-        astBlock(const ::utils::textLocation &loc) : astNode(loc, astType::block) {};
+        astBlock(const charLocation &loc) : astNode(loc, astType::block) {};
         std::vector<std::unique_ptr<astNode>> &get_nodes()
         {
             return nodes;
@@ -74,8 +73,8 @@ namespace lgf::ast
     class astVar : public astNode
     {
     public:
-        astVar(const ::utils::textLocation &loc) : astNode(loc, astType::variable) {};
-        astVar(const ::utils::textLocation &loc, const std::string &t, const std::string &n) : astNode(loc, astType::variable), name(n), type(t) {}
+        astVar(const charLocation &loc) : astNode(loc, astType::variable) {};
+        astVar(const charLocation &loc, const std::string &t, const std::string &n) : astNode(loc, astType::variable), name(n), type(t) {}
         void set_name(const std::string &n) { name = n; }
         void set_type(const std::string &t) { type = t; }
         std::string get_type_id() { return type; }
@@ -89,8 +88,8 @@ namespace lgf::ast
     class astExpr : public astNode
     {
     public:
-        astExpr(const ::utils::textLocation &loc) : astNode(loc, astType::expr) {};
-        astExpr(const ::utils::textLocation &loc, const std::string &e) : astNode(loc, astType::expr), id(e) {}
+        astExpr(const charLocation &loc) : astNode(loc, astType::expr) {};
+        astExpr(const charLocation &loc, const std::string &e) : astNode(loc, astType::expr), id(e) {}
         void set_expr(const std::string &e) { id = e; }
         std::string get_expr() { return id; }
 
@@ -101,9 +100,9 @@ namespace lgf::ast
     class astNumber : public astNode
     {
     public:
-        astNumber(const ::utils::textLocation &loc) : astNode(loc, astType::number) {};
+        astNumber(const charLocation &loc) : astNode(loc, astType::number) {};
         template <typename T>
-        astNumber(const ::utils::textLocation &loc, T val) : astNode(loc, astType::number)
+        astNumber(const charLocation &loc, T val) : astNode(loc, astType::number)
         {
             store(val);
         }
@@ -125,7 +124,7 @@ namespace lgf::ast
     class astBinaryOp : public astNode
     {
     public:
-        astBinaryOp(const ::utils::textLocation &loc) : astNode(loc, astType::call) {};
+        astBinaryOp(const charLocation &loc) : astNode(loc, astType::call) {};
         astBinaryOpType get_op() { return op_type; }
         astNode *get_lhs() { return lhs; }
         astNode *get_rhs() { return rhs; }
@@ -138,7 +137,7 @@ namespace lgf::ast
     class astFuncDefine : public astNode
     {
     public:
-        astFuncDefine(const ::utils::textLocation &loc) : astNode(loc, astType::define) {}
+        astFuncDefine(const charLocation &loc) : astNode(loc, astType::define) {}
         std::string get_name() { return name; }
         std::unique_ptr<astBlock> &get_value() { return block; }
         void add_arg(std::unique_ptr<astNode> &&arg)
@@ -160,7 +159,7 @@ namespace lgf::ast
     class astDictionary : public astNode
     {
     public:
-        astDictionary(const ::utils::textLocation &loc) : astNode(loc, astType::dict) {};
+        astDictionary(const charLocation &loc) : astNode(loc, astType::dict) {};
         logicResult add(const std::string &key, std::unique_ptr<astNode> &&node)
         {
             if (contents.find(key) != contents.end())
@@ -212,7 +211,7 @@ namespace lgf::ast
     class astList : public astNode
     {
     public:
-        astList(const ::utils::textLocation &loc) : astNode(loc, astType::list) {};
+        astList(const charLocation &loc) : astNode(loc, astType::list) {};
         virtual ~astList() = default;
         logicResult add(std::unique_ptr<astNode> &&node)
         {
@@ -245,10 +244,7 @@ namespace lgf::ast
     class astModule : public astNode
     {
     public:
-        astModule(const ::utils::textLocation &loc, const std::string &n) : astNode(loc, astType::module), name(n)
-        {
-            set_kind(astType::module);
-        };
+        astModule(const charLocation &loc, const std::string &n) : astNode(loc, astType::module), name(n) {}
         std::string get_name() { return name; }
         astDictionary *get_attr() { return attr.get(); }
         std::vector<std::unique_ptr<astBlock>> &get_blocks() { return blocks; }

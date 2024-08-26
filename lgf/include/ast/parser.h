@@ -1,109 +1,170 @@
 
-#ifndef LGF_AST_PARSER_H
-#define LGF_AST_PARSER_H
+#ifndef AST_PARSER_H
+#define AST_PARSER_H
 #include "lexer.h"
-namespace lgf::ast
+#include "aoc/convention.h"
+namespace ast
 {
-    class parser
+    class parserCore
     {
     public:
-        parser() = default;
-        virtual ~parser() = default;
-        parser(const parser &p_)
+        parserCore() = delete;
+        parserCore(lexer &lx_) : lx(lx_) {}
+        virtual ~parserCore() = default;
+
+        void emit_error(const std::string &msg)
         {
-            lex->set_input_stream(p_.get_input_stream());
+            throw std::runtime_error(lx.loc().print() + msg);
         }
-        template <typename T>
-        void load_lexer()
+        void emit_error_if(bool condition, const std::string &msg)
         {
-            lex = std::make_unique<T>();
+            if (condition)
+                emit_error(msg);
         }
-        void set_input_stream(fiostream &fs)
+
+        void consume(const token::kind k)
         {
-            lex->set_input_stream(fs);
+            if (curTok.is(k))
+            {
+                curTok = lx.lex_token();
+                return;
+            }
+            emit_error("consumed an unexpected token.");
         }
+
+        void consume()
+        {
+            emit_error_if(curTok.is(token::tok_eof), "parser reached to EOF.");
+            curTok = lx.lex_token();
+        }
+
+        aoc::logicResult try_consume(const token::kind k)
+        {
+            if (curTok.is(k))
+            {
+                consume(k);
+                return aoc::logicResult::success();
+            }
+            return aoc::logicResult::fail();
+        }
+
         void parse_less_than()
         {
-            lex->parse("<");
+            consume(token::kind('<'));
         }
         void parse_greater_than()
         {
-            lex->parse(">");
+            consume(token::kind('>'));
         }
         void parse_equal()
         {
-            lex->parse("=");
+            consume(token::kind('='));
         }
         void parse_semicolon()
         {
-            lex->parse(";");
+            consume(token::kind(';'));
         }
         void parse_comma()
         {
-            lex->parse(",");
+            consume(token::kind(','));
         }
         void parse_colon()
         {
-            lex->parse(":");
+            consume(token::kind(':'));
+        }
+        void parse_dot()
+        {
+            consume(token::kind('.'));
+        }
+        void parse_left_bracket()
+        {
+            consume(token::kind('['));
+        }
+        void parse_right_bracket()
+        {
+            consume(token::kind(']'));
         }
         void parse_left_brace()
         {
-            lex->parse("{");
+            consume(token::kind('{'));
         }
         void parse_right_brace()
         {
-            lex->parse("}");
+            consume(token::kind('}'));
         }
-        void parse_left_paren()
+        void parse_scope()
         {
-            lex->parse("(");
+            consume(token::tok_scope);
         }
-        void parse_right_paren()
+        void parse_div()
         {
-            lex->parse(")");
+            consume(token::kind('/'));
         }
-        void parse_star()
+        void parse_mul()
         {
-            lex->parse("*");
+            consume(token::kind('*'));
         }
-        char get_cur_char()
+        void parse_mod()
         {
-            return lex->get_cur_char();
+            consume(token::kind('%'));
         }
-        std::string get_string()
+        void parse_add()
         {
-            return lex->get_string();
+            consume(token::kind('+'));
         }
-        std::string parse_id()
+        void parse_sub()
         {
-            lex->parse(lexer::l0token::tok_identifier);
-            auto id = lex->get_string();
-            return id;
+            consume(token::kind('-'));
         }
-        fiostream &get_input_stream() const
+        void parse_and()
         {
-            return lex->get_input_stream();
+            consume(token::kind('&'));
         }
-        lexer *lx()
+        void parse_or()
         {
-            return lex.get();
+            consume(token::kind('|'));
         }
-        int cur_tok()
+        void parse_xor()
         {
-            return lex->cur_tok();
+            consume(token::kind('^'));
         }
-        ::utils::textLocation loc()
+        void parse_apostrophe()
         {
-            return lex->loc();
+            consume(token::kind('\''));
         }
-        double get_number()
+
+        aoc::stringRef parse_id()
         {
-            return lex->get_number();
+            emit_error_if(!curTok.is(token::tok_identifier), "Expecting an identifier.");
+            consume(token::tok_identifier);
+            return curTok.get_string();
+        }
+        lexer &get_lexer()
+        {
+            return lx;
+        }
+
+        charLocation loc()
+        {
+            return lx.loc();
+        }
+        aoc::stringRef parse_number()
+        {
+            emit_error_if(!curTok.is(token::tok_integer) && !curTok.is(token::tok_float), "Expecting a number.");
+            try_consume(token::tok_integer);
+            try_consume(token::tok_float);
+            return curTok.get_string();
+        }
+
+        token cur_tok()
+        {
+            return curTok;
         }
 
     private:
-        std::unique_ptr<lexer> lex;
+        lexer &lx;
+        token curTok;
     };
-} // namespace lgf::ast
+} // namespace compiler
 
 #endif

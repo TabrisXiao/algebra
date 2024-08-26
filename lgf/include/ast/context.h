@@ -4,26 +4,26 @@
 #include <map>
 #include <string>
 #include <iostream>
-#include "utils/object.h"
-#include "utils/stream.h"
+#include "aoc/object.h"
+#include "aoc/stream.h"
 #include <vector>
 namespace ast
 {
     using scode = size_t;
-    class context : public utils::cursive_map<std::string, scode>
+    class context : public aoc::cursive_map<std::string, scode>
     {
     public:
         context() = default;
         ~context() = default;
         void print()
         {
-            utils::cgstream os;
+            aoc::cgstream os;
             os << "context: " << name << " {\n";
             os.incr_indent_level();
             print_impl(*this, os);
             os.decr_indent() << "}\n";
         }
-        void print_map(std::map<std::string, cursive_map<std::string, scode>> &_map, cgstream &os)
+        void print_map(std::map<std::string, cursive_map<std::string, scode>> &_map, aoc::cgstream &os)
         {
             for (auto &entry : _map)
             {
@@ -33,7 +33,7 @@ namespace ast
                 os.decr_indent() << "}\n";
             }
         }
-        void print_impl(utils::cursive_map<std::string, scode> &table, cgstream &os)
+        void print_impl(aoc::cursive_map<std::string, scode> &table, aoc::cgstream &os)
         {
             print_map(table.get_map(), os);
         }

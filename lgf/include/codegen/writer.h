@@ -2,11 +2,12 @@
 #ifndef LGF_CODEGEN_WRITER_H
 #define LGF_CODEGEN_WRITER_H
 #include <map>
-#include "utils/stream.h"
+#include "aoc/stream.h"
 #include "ast/ast.h"
 #include "lgf/utils.h"
+#include "codegen/dependency.h"
 using namespace utils;
-namespace lgf::codegen
+namespace codegen
 {
     class writer
     {
@@ -116,7 +117,7 @@ namespace lgf::codegen
             std::string arg_str = "";
             if (root_attr->find("input").is_success())
             {
-                auto inputs = root_attr->get<ast::astDictionary>("input");
+                auto inputs = root_attr->get<::ast::astDictionary>("input");
                 auto &contents = inputs->get_contents();
                 for (auto &c : contents)
                 {
@@ -159,8 +160,8 @@ namespace lgf::codegen
                 os().decr_indent() << "}\n\n";
             }
         }
-        ast::astModule *root;
-        ast::astDictionary *root_attr;
+        ::ast::astModule *root;
+        ::ast::astDictionary *root_attr;
         std::vector<std::string> arg_type, arg_id;
         std::string output_id, output_type;
     };
@@ -187,22 +188,46 @@ namespace lgf::codegen
             }
             return wmap[sid].get();
         }
-        logicResult process(std::map<std::string, std::unique_ptr<ast::astModule>> &m, cgstream &fs)
+        void process(ast::astDictionary *ptr, cgstream &fs)
         {
-            for (auto &item : m)
+            process_context(ptr, fs);
+        }
+        std::string get_dict_type(ast::astDictionary *dict)
+        {
+            return dict->get<ast::astExpr>("_type_")->get_expr();
+        }
+        void process_context(ast::astDictionary *ptr, cgstream &fs)
+        {
+            THROW_WHEN(get_dict_type(ptr) != "context", "Expected context but got: " + get_dict_type(ptr));
+            auto content = ptr->get<ast::astDictionary>("_content_");
+            for (auto &it : content->get_contents())
             {
-                auto sm = dynamic_cast<ast::astModule *>(item.second.get());
-                auto w = get_writer(get_first_attr(sm));
-                if (w == nullptr || w->write(sm, fs).is_fail())
-                    return logicResult::fail();
+                auto subctx = dynamic_cast<ast::astDictionary *>(it.second.get());
+                if (!subctx)
+                {
+                    continue;
+                }
+                process_context(subctx, fs);
             }
-            return logicResult::success();
+            for (auto &it : content->get_contents())
+            {
+                auto module = dynamic_cast<ast::astModule *>(it.second.get());
+                if (!module)
+                {
+                    continue;
+                }
+                auto w = get_writer(get_first_attr(module));
+                THROW_WHEN(w == nullptr, "No writer for module: " + get_first_attr(module));
+                w->write(module, fs);
+            }
         }
 
     private:
-        std::map<std::string, std::unique_ptr<writer>> wmap;
+        std::map<std::string, std::unique_ptr<writer>>
+            wmap;
+        includeDependency deps;
     };
 
-} // namespace lgf::codegen
+} // namespace codegen
 
 #endif

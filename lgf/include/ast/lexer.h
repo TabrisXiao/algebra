@@ -1,260 +1,241 @@
 
-#ifndef LGF_AST_l0lexer_H
-#define LGF_AST_l0lexer_H
+#ifndef AST_LEXER_H
+#define AST_LEXER_H
 #include <memory>
 #include <string>
 #include <fstream>
 #include <filesystem>
-#include "utils/exception.h"
-#include "utils/stream.h"
-using namespace utils;
-namespace lgf::ast
-{
+#include "aoc/exception.h"
+#include "aoc/stream.h"
+#include "aoc/object.h"
 
-    struct textLocation
+namespace ast
+{
+    class charLocation
     {
-        std::shared_ptr<std::string> file; ///< filename.
-        int line;                          ///< line number.
-        int col;                           ///< column number.
+    public:
+        charLocation() = delete;
+        charLocation(unsigned int l, unsigned int c, std::shared_ptr<std::string> &p) : line(l), col(c), path(p) {}
+        ~charLocation() = default;
+        std::shared_ptr<std::string> path; ///< filename.
+        unsigned int line = 0, col = 0;
         std::string print()
         {
-            return (*file) + "(" + std::to_string(line) + ", " + std::to_string(col) + ")";
+            return *(path.get()) + "(" + std::to_string(line) + ", " + std::to_string(col) + ")";
         }
+    };
+
+    class token
+    {
+    public:
+        enum kind : int
+        {
+            tok_eof = -1,
+            tok_identifier = -2,
+            tok_integer = -3,
+            tok_float = -4,
+            tok_scope = -5,
+        };
+        token() = default;
+        token(kind k, aoc::stringRef &str) : _k(k), ref(str) {}
+        ~token() = default;
+
+        kind get_kind() const { return _k; }
+        aoc::stringRef get_ref() { return ref; }
+        std::string get_string() { return ref.data(); }
+        bool is(kind k) const { return _k == k; }
+        bool is_any(kind k1, kind k2) const { return is(k1) || is(k2); }
+
+        /// Return true if this token is one of the specified kinds.
+        template <typename... T>
+        bool is_any(kind k1, kind k2, kind k3, T... others) const
+        {
+            if (is(k1))
+                return true;
+            return is_any(k2, k3, others...);
+        }
+
+    private:
+        kind _k;
+        aoc::stringRef ref;
     };
 
     class lexer
     {
     public:
-        enum l0token : int
-        {
-            tok_eof = -1,
-            tok_identifier = -2,
-            tok_number = -3,
-            tok_other = -4,
-        };
         lexer() = default;
-        lexer(lexer &l)
+        lexer(aoc::stringBuf &buf)
         {
-            inherit(l);
+            load_stringBuf(buf);
         }
-        void inherit(lexer &l)
+        void load_stringBuf(aoc::stringBuf &buf)
         {
-            fs = l.fs;
-            curTok = l.curTok;
-            identifierStr = l.identifierStr;
-            number = l.number;
-            fs = &(l.get_input_stream());
+            curPtr = &buf[0];
+            lastLine = curPtr;
         }
-        void set_input_stream(fiostream &f)
+        void resetPointer(const char *ptr)
         {
-            fs = &f;
-            curTok = tok_eof;
-            identifierStr = "";
-            number = 0;
-        }
-        fiostream &get_input_stream() const
-        {
-            return *fs;
-        }
-        virtual ~lexer() = default;
-
-        static constexpr bool isalpha(unsigned ch)
-        {
-            return (ch | 32) - 'a' < 26;
+            curPtr = ptr;
         }
 
-        static constexpr bool isdigit(unsigned ch) { return (ch - '0') < 10; }
-
-        static constexpr bool isalnum(unsigned ch)
+        token lex_token()
         {
-            return isalpha(ch) || isdigit(ch);
-        }
-
-        static constexpr bool isgraph(unsigned ch) { return 0x20 < ch && ch < 0x7f; }
-
-        static constexpr bool islower(unsigned ch) { return (ch - 'a') < 26; }
-
-        static constexpr bool isupper(unsigned ch) { return (ch - 'A') < 26; }
-
-        static constexpr bool isspace(unsigned ch)
-        {
-            return ch == ' ' || (ch - '\t') < 5;
-        }
-
-        char get_next_char()
-        {
-            return fs->get_next_char();
-        }
-        char get_cur_char()
-        {
-            return fs->get_cur_char();
-        }
-
-        virtual int get_next_token()
-        {
-            return get_next_l0token();
-        }
-
-        int get_next_l0token()
-        {
-            auto curChar = get_cur_char();
-            // skip all space
-            while (isspace(curChar))
-                curChar = get_next_char();
-            // Number: [0-9] ([0-9.])*
-            if (isdigit(curChar))
+            while (true)
             {
-                std::string numStr;
-                do
+                const char *start = curPtr;
+                switch (*curPtr++)
                 {
-                    numStr += curChar;
-                    curChar = get_next_char();
-                } while (isdigit(curChar) || curChar == '.');
-                number = strtod(numStr.c_str(), nullptr);
-                curTok = tok_number;
-            }
-            // Identifier: [a-zA-Z][a-zA-Z0-9_]*
-            else if (isalpha(curChar))
-            {
-                identifierStr = curChar;
-                while (isalnum((curChar = l0token(get_next_char()))) || curChar == '_')
-                {
-                    identifierStr += curChar;
-                }
-                curTok = tok_identifier;
-            }
-            else if (curChar == EOF)
-            {
-                if (fs->is_eof())
-                    return tok_eof;
-                else
-                {
-                    curChar = get_next_char();
-                    return get_next_l0token();
-                }
-            }
-            else
-            {
-                identifierStr = curChar;
-                curTok = tok_other;
-                get_next_char();
-            }
-            while (isspace(curChar))
-                curChar = get_next_char();
-            return curTok;
-        }
 
-        void parse(l0token tok)
-        {
-            get_next_l0token();
-            if (tok != curTok)
-            {
-                std::cerr << loc().print() << ": consuming an unexpected token." << std::endl;
-                std::exit(EXIT_FAILURE);
-            }
-        }
-        virtual void parse(std::string str)
-        {
-            get_next_l0token();
-            if (curTok != tok_other && curTok != tok_identifier)
-            {
-                std::cerr << loc().print() << ": consuming an string but got other token" << std::endl;
-                std::exit(EXIT_FAILURE);
-            }
-            if (str != identifierStr)
-            {
-                std::cerr << loc().print() << ": consuming string \"" << str << "\" but got: \"" << identifierStr << "\"." << std::endl;
-                std::exit(EXIT_FAILURE);
-            }
-        }
-        int cur_tok()
-        {
-            return curTok;
-        }
-        double get_number() { return number; }
-
-        ::utils::textLocation loc() { return fs->get_loc(); }
-
-        std::string get_string() { return identifierStr; }
-        int curTok;
-        // If the current Token is an identifier, this string contains the value.
-        std::string identifierStr;
-        // If the current Token is a number, this variable contains the value.
-        double number;
-        fiostream *fs;
-    };
-
-    class cLikeLexer : public lexer
-    {
-    public:
-        enum cToken : int
-        {
-            tok_identifier = -1,
-            tok_number = -2,
-            tok_scope = -3,
-            tok_eof = -100,
-            tok_unknown = -999,
-        };
-        cLikeLexer() = default;
-        cToken find_cToken(std::string str)
-        {
-            if (str.size() == 1)
-            {
-                if (str[0] == ':' && get_cur_char() == ':')
-                {
-                    get_next_token();
-                    return cToken::tok_scope;
-                }
-                return cToken(str[0]);
-            }
-            else
-            {
-                return cToken::tok_unknown;
-            }
-        }
-        virtual int get_next_token() override
-        {
-            auto tok = get_next_l0token();
-            curTok = cToken::tok_unknown;
-            if (tok == lexer::l0token::tok_identifier)
-                curTok = cToken::tok_identifier;
-            else if (tok == lexer::l0token::tok_number)
-                curTok = cToken::tok_number;
-            else if (tok == lexer::l0token::tok_eof)
-                curTok = cToken::tok_eof;
-            else if (tok == lexer::l0token::tok_other)
-            {
-                curTok = find_cToken(identifierStr);
-            }
-            return curTok;
-        }
-
-        void parse(cToken tok)
-        {
-            get_next_token();
-            if (tok != curTok)
-            {
-                std::cerr << loc().print() << ": consuming an unexpected token." << std::endl;
-                std::exit(EXIT_FAILURE);
-            }
-        }
-        void parse(std::string str) override
-        {
-            if (str.size() == 1)
-            {
-                parse(cToken(str[0]));
-            }
-            else
-            {
-                auto tok = find_cToken(str);
-                get_next_token();
-                if (curTok != tok)
-                {
-                    std::cerr << loc().print() << ": consuming an unexpected token." << std::endl;
-                    std::exit(EXIT_FAILURE);
+                case ' ':
+                    continue;
+                case '\n':
+                case '\r':
+                case '\t':
+                    line++;
+                    lastLine = curPtr;
+                    continue;
+                case 0:
+                    // file end
+                    if (curPtr - 1 == buffer.get_buffer_end_pointer())
+                        return token(token::tok_eof, aoc::stringRef(curPtr - 1, 1));
+                    continue;
+                case ':':
+                    if (*curPtr == ':')
+                        return token(token::tok_scope, aoc::stringRef(curPtr, 2));
+                    return token(token::kind(':'), aoc::stringRef(curPtr, 1));
+                case '/':
+                    return token(token::kind('/'), aoc::stringRef(curPtr, 1));
+                case '}':
+                    return token(token::kind('}'), aoc::stringRef(curPtr, 1));
+                case '{':
+                    return token(token::kind('{'), aoc::stringRef(curPtr, 1));
+                case '[':
+                    return token(token::kind('['), aoc::stringRef(curPtr, 1));
+                case ']':
+                    return token(token::kind(']'), aoc::stringRef(curPtr, 1));
+                case ',':
+                    return token(token::kind(','), aoc::stringRef(curPtr, 1));
+                case ';':
+                    return token(token::kind(';'), aoc::stringRef(curPtr, 1));
+                case '.':
+                    return token(token::kind('.'), aoc::stringRef(curPtr, 1));
+                case '+':
+                    return token(token::kind('+'), aoc::stringRef(curPtr, 1));
+                case '-':
+                    return token(token::kind('-'), aoc::stringRef(curPtr, 1));
+                case '*':
+                    return token(token::kind('*'), aoc::stringRef(curPtr, 1));
+                case '%':
+                    return token(token::kind('%'), aoc::stringRef(curPtr, 1));
+                case '&':
+                    return token(token::kind('&'), aoc::stringRef(curPtr, 1));
+                case '|':
+                    return token(token::kind('|'), aoc::stringRef(curPtr, 1));
+                case '^':
+                    return token(token::kind('^'), aoc::stringRef(curPtr, 1));
+                case '<':
+                    return token(token::kind('<'), aoc::stringRef(curPtr, 1));
+                case '>':
+                    return token(token::kind('>'), aoc::stringRef(curPtr, 1));
+                case '=':
+                    return token(token::kind('='), aoc::stringRef(curPtr, 1));
+                case '!':
+                    return token(token::kind('!'), aoc::stringRef(curPtr, 1));
+                case '?':
+                    return token(token::kind('?'), aoc::stringRef(curPtr, 1));
+                case '~':
+                    return token(token::kind('~'), aoc::stringRef(curPtr, 1));
+                case '#':
+                    return token(token::kind('#'), aoc::stringRef(curPtr, 1));
+                case '@':
+                    return token(token::kind('@'), aoc::stringRef(curPtr, 1));
+                case '$':
+                    return token(token::kind('$'), aoc::stringRef(curPtr, 1));
+                case '\\':
+                    return token(token::kind('\\'), aoc::stringRef(curPtr, 1));
+                case '\'':
+                    return token(token::kind('\''), aoc::stringRef(curPtr, 1));
+                case '"':
+                    return token(token::kind('"'), aoc::stringRef(curPtr, 1));
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                    return lex_number();
+                default:
+                    if (isalpha(*start) || *start == '_')
+                        return lex_identifier();
+                    char c = *start;
+                    THROW("Unexpected character: " + std::string(1, c));
                 }
             }
         }
+
+        token lex_number()
+        {
+            THROW_WHEN(isdigit(*curPtr), "Char \"" + std::string(1, *curPtr) + "\" is not a digit.");
+            const char *start = curPtr;
+            while (isdigit(*curPtr))
+            {
+                curPtr++;
+            }
+            if (*curPtr != '.')
+                return token(token::tok_integer, aoc::stringRef(start, curPtr - start));
+            ++curPtr;
+            while (isdigit(*curPtr))
+            {
+                curPtr++;
+            }
+            if (*curPtr == 'e' || *curPtr == 'E')
+            {
+                if (isdigit(static_cast<unsigned char>(curPtr[1])) ||
+                    ((curPtr[1] == '-' || curPtr[1] == '+') &&
+                     isdigit(static_cast<unsigned char>(curPtr[2]))))
+                {
+                    curPtr += 2;
+                    while (isdigit(*curPtr))
+                        ++curPtr;
+                }
+            }
+            return token(token::tok_float, aoc::stringRef(start, curPtr - start));
+        }
+
+        token lex_identifier()
+        {
+            const char *start = curPtr - 1;
+            THROW_WHEN(isalpha(*start) || *start == '_', "Char \"" + std::string(1, *curPtr) + "\" is not a letter.");
+            while (isalnum(*curPtr) || *curPtr == '_')
+            {
+                curPtr++;
+            }
+            return token(token::tok_identifier, aoc::stringRef(start, curPtr - start));
+        }
+
+        charLocation loc()
+        {
+            return charLocation(line, curPtr - lastLine, buffer.get_source_path());
+        }
+
+        void skip_line()
+        {
+            while (*curPtr != '\n' && *curPtr != '\r')
+            {
+                curPtr++;
+            }
+            lastLine = curPtr;
+            line++;
+        }
+
+    private:
+        unsigned int line = 0;
+        aoc::stringBuf buffer;
+        const char *curPtr, *lastLine;
     };
 }
 

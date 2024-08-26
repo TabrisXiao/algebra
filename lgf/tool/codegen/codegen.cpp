@@ -1,84 +1,96 @@
 #include <iostream>
-#include "codegen/codegen.h"
+// #include "codegen.h"
 #include <optional>
-#include "utils/config.h"
+#include "aoc/app.h"
+#include "ast/lexer.h"
+#include "CGParser.h"
 
-class config_t : public utils::cppAppConfig
+class CGQueryInfo : public aoc::app::queryInfo
 {
 public:
-    config_t(int argc, char *argv[])
+    CGQueryInfo(const sfs::path &input, const sfs::path &output, size_t id = 0)
+        : input(input), output(output), qid(id) {}
+
+    size_t qid = 0; // represent different query types
+    sfs::path input, output;
+};
+
+class CGInterface : public aoc::app::oneTimeInterface
+{
+public:
+    CGInterface() = default;
+    ~CGInterface() = default;
+
+    virtual void parse_query(int narg, char *argv[])
     {
-        load_args(argc, argv);
-        parse_args();
+        std::map<std::string, std::string> options = parse_args(narg, argv);
+        THROW_WHEN(options.find("_1") == options.end(), "Error: No input file provided");
+        auto input = options["_1"];
+        auto output = options["_2"];
+
+        auto is_cursive = options.find("r") != options.end();
+        THROW_WHEN(sfs::is_directory(output) && !is_cursive, "Eorr: Output path must be a directory when using recursive run.");
+
+        THROW_WHEN(!sfs::exists(input), "Error: File does not exist: " + input);
+        auto fileList = get_file_list(aoc::stringRef(input));
+        if (options.find("h") != options.end())
+        {
+            std::cout << "Usage: codegen [options] <input_file> <output_file>" << std::endl;
+            std::cout << "Options:" << std::endl;
+            std::cout << "-h: Display this help message." << std::endl;
+            std::cout << "-r: Recursively search for files in the input directory." << std::endl;
+            std::exit(EXIT_SUCCESS);
+        }
+        for (auto &file : fileList)
+        {
+            auto ofile = create_output_file_path(file, input, output, ".h");
+            add_query<CGQueryInfo>(file, ofile);
+        }
     }
-    void parse_args()
+};
+
+class CGCore : public aoc::app::appleCore
+{
+public:
+    CGCore() : p(lex) {}
+    virtual void run(aoc::app::queryInfo *info) override
     {
-        parse_inputs();
-        if (!has("_1"))
-        {
-            std::cerr << "Error: No input file provided" << std::endl;
-            std::exit(EXIT_FAILURE);
-        }
-        if (has("r"))
-        {
-            recursive = true;
-            if (!has("_2"))
-            {
-                std::cerr << "Error: No output folder provided for recursive run." << std::endl;
-                std::exit(EXIT_FAILURE);
-            }
-        }
-        load_input_file(options["_1"], !recursive);
-        if (has("_2"))
-        {
-            output_path = options["_2"];
-            if (recursive && !sfs::is_directory(output_path) && std::filesystem::exists(output_path))
-            {
-                std::cerr << "Error: Output path must be a directory when using recursive run." << std::endl;
-                std::exit(EXIT_FAILURE);
-            }
-        }
+        auto query = dynamic_cast<CGQueryInfo *>(info);
+        auto input = query->input;
+        auto output = query->output;
+        auto id = io.read_file_to_stringBuf(input);
+        auto &buf = io.get_buffer(id);
+        lex.load_stringBuf(buf);
     }
-    std::string generate_output_path(const std::string ipath, const std::string opath, const std::string extension)
+
+    aoc::app::IOModule io;
+    ast::lexer lex;
+    CGParser p;
+};
+
+class codegenApp : public aoc::app::oneShotApp
+{
+public:
+    codegenApp()
     {
-        if (!recursive)
-        {
-            std::cerr << "Error: Recursive search not enabled." << std::endl;
-        }
-        auto path = (sfs::path(opath) / sfs::path(ipath).lexically_relative(options["_1"]).replace_extension(extension)).string();
-        create_directories_if_not_exists(path);
-        return path;
+        create_interface<CGInterface>();
+        create_backend<CGCore>();
     }
-    bool recursive = false;
-    sfs::path output_path = "";
+    virtual void init() override
+    {
+    }
+    ~codegenApp() = default;
+    virtual void process(aoc::app::appleCore *c, aoc::app::queryInfo *q) override
+    {
+        c->run(q);
+    }
 };
 
 int main(int argc, char *argv[])
 {
     // all possible options are started with a dash
-    config_t config(argc, argv);
-    if (config.has("h"))
-    {
-        std::cout << "Usage: codegen [options] <input_file> <output_file>" << std::endl;
-        std::cout << "Options:" << std::endl;
-        std::cout << "-r: Recursively search for input files from given path." << std::endl;
-        std::cout << "-h: Display this help message." << std::endl;
-        std::exit(EXIT_SUCCESS);
-    }
-    lgf::codegen::lgfOpCodeGen factory;
+    codegenApp cg;
+    cg.run(argc, argv);
 
-    for (auto &input : config.input_files)
-    {
-        auto ofile = config.output_path.string();
-        if (config.recursive)
-        {
-            ofile = config.generate_output_path(input.string(), config.output_path.string(), ".h");
-        }
-        if (!ofile.empty())
-        {
-            factory.output_to_file(ofile);
-        }
-        factory.run(input.string());
-    }
     return 0;
 }
