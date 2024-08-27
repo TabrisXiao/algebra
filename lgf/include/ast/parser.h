@@ -14,6 +14,7 @@ namespace ast
 
         void emit_error(const std::string &msg)
         {
+            // std::cerr << lx.loc().print() << msg << std::endl;
             throw std::runtime_error(lx.loc().print() + msg);
         }
         void emit_error_if(bool condition, const std::string &msg)
@@ -133,11 +134,12 @@ namespace ast
             consume(token::kind('\''));
         }
 
-        aoc::stringRef parse_id()
+        std::string parse_id()
         {
             emit_error_if(!curTok.is(token::tok_identifier), "Expecting an identifier.");
+            auto ref = curTok.get_string();
             consume(token::tok_identifier);
-            return curTok.get_string();
+            return ref.data();
         }
         lexer &get_lexer()
         {
@@ -148,12 +150,13 @@ namespace ast
         {
             return lx.loc();
         }
-        aoc::stringRef parse_number()
+        std::string parse_number()
         {
             emit_error_if(!curTok.is(token::tok_integer) && !curTok.is(token::tok_float), "Expecting a number.");
+            auto ref = curTok.get_string();
             try_consume(token::tok_integer);
             try_consume(token::tok_float);
-            return curTok.get_string();
+            return ref.data();
         }
 
         token cur_tok()

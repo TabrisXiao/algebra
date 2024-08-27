@@ -2,7 +2,7 @@
 #include "CGParser.h"
 using namespace ast;
 using kind_t = ast::token::kind;
-std::unique_ptr<ast::astDictionary> &&CGParser::parse_context()
+std::unique_ptr<ast::astDictionary> CGParser::parse_context()
 {
     // assuming key word 'context' is already parsed and the current char is '<' or a char.
     auto ctx = std::make_unique<ast::astDictionary>(loc());
@@ -22,7 +22,8 @@ std::unique_ptr<ast::astDictionary> &&CGParser::parse_context()
         if (key == "module")
         {
             auto module = parse_module();
-            content->add(module->get_name(), std::move(module));
+            auto name = module->get_name();
+            content->add(name, std::move(module));
         }
         else if (key == "context")
         {
@@ -32,16 +33,17 @@ std::unique_ptr<ast::astDictionary> &&CGParser::parse_context()
         }
         else
         {
-            emit_error("Unknown key word: " + key.data());
+            emit_error("Unknown key word: " + key);
         }
     }
     ctx->add("_content_", std::move(content));
     return std::move(ctx);
 }
 
-std::unique_ptr<ast::astDictionary> &&CGParser::parse()
+std::unique_ptr<ast::astDictionary> CGParser::parse()
 {
     // return true if error
+    consume();
     auto root = std::make_unique<ast::astDictionary>(loc());
     add_type("context", root.get());
     auto id = parse_id();
@@ -59,7 +61,7 @@ std::unique_ptr<ast::astDictionary> CGParser::parse_dict()
     // assuming the beginning of '{' is already parsed
     auto node = std::make_unique<ast::astDictionary>(loc());
     add_type("dict", node.get());
-    while (try_consume(kind_t('}')).is_fail())
+    do
     {
         auto key = parse_id();
         parse_colon();
@@ -67,27 +69,25 @@ std::unique_ptr<ast::astDictionary> CGParser::parse_dict()
         switch (tok.get_kind())
         {
         case kind_t('{'):
-            node->add(key.data(), std::move(parse_dict()));
+            node->add(key, std::move(parse_dict()));
             break;
         case kind_t::tok_identifier:
-            auto content = parse_id();
-            node->add(key.data(), std::move(std::make_unique<ast::astExpr>(loc(), content)));
+            node->add(key, std::move(std::make_unique<ast::astExpr>(loc(), parse_id())));
             break;
         case kind_t('['):
-            node->add(key.data(), std::move(parse_list()));
+            node->add(key, std::move(parse_list()));
             break;
         case kind_t('<'):
-            node->add(key.data(), std::move(parse_set()));
+            node->add(key, std::move(parse_set()));
             break;
         default:
             emit_error("Unknown dictionary item!");
         }
-        consume();
-    }
+    } while (try_consume(kind_t(',')).is_success());
     return std::move(node);
 }
 
-std::unique_ptr<ast::astList> &&CGParser::parse_list()
+std::unique_ptr<ast::astList> CGParser::parse_list()
 {
     // a list allows duplicate items
     // the syntax is [item1, item2, item3...]
@@ -115,7 +115,7 @@ std::unique_ptr<ast::astList> &&CGParser::parse_list()
     return std::move(node);
 }
 
-std::unique_ptr<ast::astList> &&CGParser::parse_set()
+std::unique_ptr<ast::astList> CGParser::parse_set()
 {
     // set is a list that can't have duplicate items
     // the syntax is <item1, item2, item3...>
@@ -124,49 +124,35 @@ std::unique_ptr<ast::astList> &&CGParser::parse_set()
     std::set<std::string> key;
     while (!cur_tok().is(kind_t(',')))
     {
-        if (cur_tok() == token('>'))
+        auto tok = cur_tok();
+        switch (tok.get_kind())
+        {
+        case kind_t('>'):
+            consume();
+            return std::move(node);
+        case kind_t::tok_identifier:
+            if (!check_if_duplicate(node, tok.get_string()))
+            {
+                node->add(std::move(std::make_unique<ast::astExpr>(loc(), tok.get_string())));
+            }
             break;
-        if (cur_tok() == token::tok_identifier)
-        {
-            bool has = 0;
-            for (auto &item : node->get_content())
+        case kind_t::tok_integer:
+        case kind_t::tok_float:
+            if (!check_if_duplicate(node, tok.get_string()))
             {
-                if (item->get_kind() != ast::astType::expr)
-                    continue;
-                auto expr = dynamic_cast<ast::astExpr *>(item.get())->get_expr();
-                if (expr == get_string())
-                {
-                    has = 1;
-                    THROW("Parse error: Duplicate item: " + expr + " at " + loc().print());
-                }
+                node->add(std::move(std::make_unique<ast::astExpr>(loc(), tok.get_string())));
             }
-            node->add(std::move(std::make_unique<ast::astExpr>(loc(), get_string())));
+            break;
+        default:
+            emit_error("Unknown set item!");
+            break;
         }
-        else if (cur_tok() == token::tok_number)
-        {
-            bool has = 0;
-            for (auto &item : node->get_content())
-            {
-                if (item->get_kind() != ast::astType::number)
-                    continue;
-                auto num = dynamic_cast<ast::astNumber *>(item.get())->get<double>();
-                if (num == get_number())
-                {
-                    has = 1;
-                    THROW("Parse error: Duplicate number: " + std::to_string(num) + " at " + loc().print());
-                }
-            }
-            node->add(std::move(std::make_unique<ast::astNumber>(loc(), get_number())));
-        }
-        else
-        {
-            THROW("Parse error: Unknown set item at " + loc().print());
-        }
+        consume();
     }
     return std::move(node);
 }
 
-std::unique_ptr<ast::astModule> &&codegen::CGParser::parse_module()
+std::unique_ptr<ast::astModule> CGParser::parse_module()
 {
     // a module is a dictionary
     // the syntax is module<attr1, attr2, attr3...> name : inherit1, inherit2, inherit3...
@@ -175,23 +161,21 @@ std::unique_ptr<ast::astModule> &&codegen::CGParser::parse_module()
     auto attrs = parse_set();
     auto name = parse_id();
     auto node = std::make_unique<ast::astModule>(loc(), name);
-    auto tok = next_token();
+    auto tok = cur_tok();
     auto inherit = std::make_unique<ast::astList>(loc());
-    if (tok == token(':'))
+    if (try_consume(kind_t(':')).is_success())
     {
         do
         {
             auto id = parse_id();
-            inherit->add(std::move(std::make_unique<ast::astExpr>(loc(), id)));
-        } while (next_token() == token(','));
+            inherit->add(std::move(std::make_unique<ast::astExpr>(loc(), id.data())));
+        } while (try_consume(kind_t(',')).is_success());
     }
-    if (cur_tok() != token('{'))
-    {
-        THROW("Parse error: Expected '{' at " + loc().print());
-    }
+    consume(kind_t('{'));
     auto ptr = parse_dict();
     ptr->add("_attr_", std::move(attrs));
     ptr->add("_inherit_", std::move(inherit));
     node->add_attr(std::move(ptr));
+
     return std::move(node);
 }

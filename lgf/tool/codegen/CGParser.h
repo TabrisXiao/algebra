@@ -13,13 +13,9 @@ public:
     using kind = ast::token::kind;
     CGParser(ast::lexer &l) : parserCore(l) {}
     virtual ~CGParser() = default;
-    std::unique_ptr<ast::astDictionary> &&parse();
+    std::unique_ptr<ast::astDictionary> parse();
 
-    std::unique_ptr<ast::astDictionary> &&parse_context();
-
-    std::unique_ptr<ast::astModule> &&parser_module()
-    {
-    }
+    std::unique_ptr<ast::astDictionary> parse_context();
 
     void add_type(std::string type, ast::astDictionary *dict)
     {
@@ -28,11 +24,26 @@ public:
 
     std::unique_ptr<ast::astDictionary> parse_dict();
 
-    std::unique_ptr<ast::astList> &&parse_list();
+    std::unique_ptr<ast::astList> parse_list();
 
-    std::unique_ptr<ast::astList> &&parse_set();
+    std::unique_ptr<ast::astList> parse_set();
 
-    std::unique_ptr<ast::astModule> &&parse_module();
+    std::unique_ptr<ast::astModule> parse_module();
+
+    bool check_if_duplicate(std::unique_ptr<ast::astList> &node, std::string &item)
+    {
+        for (auto &it : node->get_content())
+        {
+            if (it->get_kind() != ast::astType::expr)
+                continue;
+            auto expr = dynamic_cast<ast::astExpr *>(it.get())->get_expr();
+            if (expr == item)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
 };
 
 #endif

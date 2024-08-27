@@ -72,10 +72,21 @@ namespace ast
         {
             curPtr = &buf[0];
             lastLine = curPtr;
+            buffer = buf;
         }
         void resetPointer(const char *ptr)
         {
             curPtr = ptr;
+        }
+
+        void emit_error(const std::string &msg)
+        {
+            throw std::runtime_error(loc().print() + msg);
+        }
+        void emit_error_if(bool condition, const std::string &msg)
+        {
+            if (condition)
+                emit_error(msg);
         }
 
         token lex_token()
@@ -209,7 +220,7 @@ namespace ast
         token lex_identifier()
         {
             const char *start = curPtr - 1;
-            THROW_WHEN(isalpha(*start) || *start == '_', "Char \"" + std::string(1, *curPtr) + "\" is not a letter.");
+            emit_error_if(!isalpha(*start) && *start != '_', "Char \"" + std::string(1, *curPtr) + "\" is not a letter.");
             while (isalnum(*curPtr) || *curPtr == '_')
             {
                 curPtr++;
@@ -219,7 +230,7 @@ namespace ast
 
         charLocation loc()
         {
-            return charLocation(line, curPtr - lastLine, buffer.get_source_path());
+            return charLocation(line, size_t(curPtr) - size_t(lastLine), buffer.get_source_path());
         }
 
         void skip_line()

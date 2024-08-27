@@ -4,6 +4,9 @@
 #include "aoc/app.h"
 #include "ast/lexer.h"
 #include "CGParser.h"
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 class CGQueryInfo : public aoc::app::queryInfo
 {
@@ -60,7 +63,11 @@ public:
         auto output = query->output;
         auto id = io.read_file_to_stringBuf(input);
         auto &buf = io.get_buffer(id);
+
         lex.load_stringBuf(buf);
+        std::cout << "\033[33m[ Parsing ]: \033[0m " << input.string() << std::endl;
+        p.parse();
+        std::cout << "\032[33m[ Parsed input file    ]: \033[0m" << std::endl;
     }
 
     aoc::app::IOModule io;
@@ -80,14 +87,30 @@ public:
     {
     }
     ~codegenApp() = default;
-    virtual void process(aoc::app::appleCore *c, aoc::app::queryInfo *q) override
+    virtual void process_query(aoc::app::appleCore *c, aoc::app::queryInfo *q) override final
     {
-        c->run(q);
+        try
+        {
+            c->run(q);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error: " << e.what() << std::endl;
+        }
     }
 };
 
 int main(int argc, char *argv[])
 {
+    // Enable ANSI color in windows terminal
+#ifdef _WIN32
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    DWORD consoleMode;
+    GetConsoleMode(hConsole, &consoleMode);
+    consoleMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+    SetConsoleMode(hConsole, consoleMode);
+#endif
+
     // all possible options are started with a dash
     codegenApp cg;
     cg.run(argc, argv);

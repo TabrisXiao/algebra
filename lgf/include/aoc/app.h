@@ -164,17 +164,16 @@ namespace aoc::app
         {
             c = std::make_unique<T>(std::forward<ARGS>(args)...);
         }
-
+        virtual void process_query(appleCore *, queryInfo *) = 0;
         virtual void init() = 0;
         void run(int narg, char *argv[])
         {
             inter->parse_query(narg, argv);
             for (auto &it : inter->get_actions())
             {
-                process(c.get(), it.get());
+                process_query(c.get(), it.get());
             }
         }
-        virtual void process(appleCore *, queryInfo *) = 0;
 
     private:
         std::unique_ptr<oneTimeInterface> inter;
