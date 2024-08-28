@@ -4,6 +4,7 @@
 #include "aoc/app.h"
 #include "ast/lexer.h"
 #include "CGParser.h"
+#include "CGWriter.h"
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -65,14 +66,16 @@ public:
         auto &buf = io.get_buffer(id);
 
         lex.load_stringBuf(buf);
-        std::cout << "\033[33m[ Parsing ]: \033[0m " << input.string() << std::endl;
+        std::cout << "\033[33m[ Parsing ]: \033[0m " << input.string() << "  ...  ";
+        std::cout << "\033[32m finished. \033[0m" << std::endl;
         p.parse();
-        std::cout << "\032[33m[ Parsed input file    ]: \033[0m" << std::endl;
+        std::cout << "\033[33m[ writing ]: \033[0m " << output.string() << "  ...  ";
+        std::cout << "\033[32m finished. \033[0m" << std::endl;
     }
 
     aoc::app::IOModule io;
     ast::lexer lex;
-    CGParser p;
+    codegen::CGParser p;
 };
 
 class codegenApp : public aoc::app::oneShotApp

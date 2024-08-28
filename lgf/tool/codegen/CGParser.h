@@ -6,44 +6,47 @@
 #include "ast/parser.h"
 #include "ast/context.h"
 #include "ast/lexer.h"
-
-class CGParser : public ast::parserCore
+using namespace ast;
+namespace codegen
 {
-public:
-    using kind = ast::token::kind;
-    CGParser(ast::lexer &l) : parserCore(l) {}
-    virtual ~CGParser() = default;
-    std::unique_ptr<ast::astDictionary> parse();
-
-    std::unique_ptr<ast::astDictionary> parse_context();
-
-    void add_type(std::string type, ast::astDictionary *dict)
+    class CGParser : public ::ast::parserCore
     {
-        dict->add("_type_", std::move(std::make_unique<ast::astExpr>(loc(), type)));
-    }
+    public:
+        using kind = ::ast::token::kind;
+        CGParser(::ast::lexer &l) : parserCore(l) {}
+        virtual ~CGParser() = default;
+        std::unique_ptr<astContext> parse();
 
-    std::unique_ptr<ast::astDictionary> parse_dict();
+        std::unique_ptr<astContext> parse_context();
 
-    std::unique_ptr<ast::astList> parse_list();
-
-    std::unique_ptr<ast::astList> parse_set();
-
-    std::unique_ptr<ast::astModule> parse_module();
-
-    bool check_if_duplicate(std::unique_ptr<ast::astList> &node, std::string &item)
-    {
-        for (auto &it : node->get_content())
+        void add_type(std::string type, astDictionary *dict)
         {
-            if (it->get_kind() != ast::astType::expr)
-                continue;
-            auto expr = dynamic_cast<ast::astExpr *>(it.get())->get_expr();
-            if (expr == item)
-            {
-                return true;
-            }
+            dict->add("_type_", std::move(std::make_unique<astExpr>(loc(), type)));
         }
-        return false;
-    }
-};
+
+        std::unique_ptr<astDictionary> parse_dict();
+
+        std::unique_ptr<astList> parse_list();
+
+        std::unique_ptr<astList> parse_set();
+
+        std::unique_ptr<astModule> parse_module();
+
+        bool check_if_duplicate(std::unique_ptr<astList> &node, std::string &item)
+        {
+            for (auto &it : node->get_content())
+            {
+                if (it->get_kind() != astNode::expr)
+                    continue;
+                auto expr = dynamic_cast<astExpr *>(it.get())->string();
+                if (expr == item)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+    };
+}
 
 #endif

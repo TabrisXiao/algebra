@@ -1,267 +1,136 @@
-#ifndef AST_TREE_H
-#define AST_TREE_H
-#include <vector>
-#include <memory>
-#include <string>
+#ifndef AST_AST_H
+#define AST_AST_H
 #include <map>
-#include "aoc/convention.h"
-#include "lexer.h"
-using namespace aoc;
+#include <string>
+#include <memory>
+#include <vector>
+#include "ast/lexer.h"
 namespace ast
 {
-    enum astType : uint16_t
-    {
-        block = 1,
-        expr = 2,
-        number = 3,
-        call = 4,
-        define = 5,
-        module = 6,
-        variable = 7,
-        dict = 8,
-        list = 9,
-    };
-    enum astBinaryOpType : uint16_t
-    {
-        add = 1,
-        sub = 2,
-        mul = 3,
-        div = 4,
-        mod = 5,
-        and_ = 6,
-        or_ = 7,
-        xor_ = 8,
-        lshift = 9,
-        rshift = 10,
-        eq = 11,
-        ne = 12,
-        lt = 13,
-        gt = 14,
-        le = 15,
-        ge = 16,
-    };
+    using location = ::ast::charLocation;
     class astNode
     {
     public:
-        astNode() = default;
-        astNode(const charLocation &l, const astType k) : loc(l), kind(k) {}
+        enum kind
+        {
+            dict,
+            list,
+            expr,
+            module,
+            context
+        };
+        astNode(location &l, const kind k) : k_(k), loc(l) {}
         virtual ~astNode() = default;
-        astType get_kind() { return kind; }
+        kind get_kind() const { return k_; }
+        location get_loc() const { return loc; }
+        template <typename T>
+        T *as() { return dynamic_cast<T *>(this); }
 
     private:
-        const astType kind;
-        charLocation loc;
+        const kind k_;
+        location loc;
     };
 
-    class astBlock : public astNode
+    class listData
     {
     public:
-        astBlock(const charLocation &loc) : astNode(loc, astType::block) {};
-        std::vector<std::unique_ptr<astNode>> &get_nodes()
+        listData() = default;
+        virtual ~listData() = default;
+        void add(std::unique_ptr<astNode> ptr)
         {
-            return nodes;
+            data.push_back(std::move(ptr));
         }
-        void add_node(std::unique_ptr<astNode> node)
-        {
-            nodes.push_back(std::move(node));
-        }
+        template <typename T>
+        T *get() { return dynamic_cast<T *>(data.back().get()); }
+        std::vector<std::unique_ptr<astNode>> &get_content() { return data; }
 
     private:
-        std::vector<std::unique_ptr<astNode>> nodes;
+        std::vector<std::unique_ptr<astNode>> data;
     };
 
-    class astVar : public astNode
+    class astList : public astNode, public listData
     {
     public:
-        astVar(const charLocation &loc) : astNode(loc, astType::variable) {};
-        astVar(const charLocation &loc, const std::string &t, const std::string &n) : astNode(loc, astType::variable), name(n), type(t) {}
-        void set_name(const std::string &n) { name = n; }
-        void set_type(const std::string &t) { type = t; }
-        std::string get_type_id() { return type; }
-        std::string get_name() { return name; }
+        astList(location &lc) : astNode(lc, kind::list) {}
+    };
+
+    class dictData
+    {
+    public:
+        dictData() = default;
+        virtual ~dictData() = default;
+        void add(const std::string &key, std::unique_ptr<astNode> ptr)
+        {
+            data[key] = std::move(ptr);
+        }
+        template <typename T>
+        T *get(std::string key)
+        {
+            return dynamic_cast<T *>(data[key].get());
+        }
+        template <typename T>
+        T *get(const char *key)
+        {
+            return dynamic_cast<T *>(data[key].get());
+        }
+        std::map<std::string, std::unique_ptr<astNode>> &get_contents() { return data; }
+        bool has(const std::string &key) const { return data.find(key) != data.end(); }
 
     private:
-        std::string name;
-        std::string type;
+        std::map<std::string, std::unique_ptr<astNode>> data;
+    };
+
+    class astDictionary : public astNode, public dictData
+    {
+    public:
+        astDictionary(location l) : astNode(l, kind::dict) {}
     };
 
     class astExpr : public astNode
     {
     public:
-        astExpr(const charLocation &loc) : astNode(loc, astType::expr) {};
-        astExpr(const charLocation &loc, const std::string &e) : astNode(loc, astType::expr), id(e) {}
-        void set_expr(const std::string &e) { id = e; }
-        std::string get_expr() { return id; }
+        astExpr(location l, const std::string &expr) : astNode(l, kind::expr), expr_(expr) {}
+        std::string string() const { return expr_; }
 
     private:
-        std::string id = "";
+        std::string expr_;
     };
 
-    class astNumber : public astNode
+    class astModule : public astNode, public dictData
     {
     public:
-        astNumber(const charLocation &loc) : astNode(loc, astType::number) {};
-        template <typename T>
-        astNumber(const charLocation &loc, T val) : astNode(loc, astType::number)
+        astModule(location l, const char *_) : astNode(l, kind::module), name(_) {}
+        std::string get_name()
         {
-            store(val);
+            return name;
         }
-        template <typename T>
-        void store(T val)
-        {
-            value = static_cast<uint64_t>(val);
-        }
-        template <typename T>
-        T get()
-        {
-            return static_cast<T>(value);
-        }
+        astDictionary *attr(const char *key) { return dictData::get<astDictionary>(key); }
 
     private:
-        uint64_t value = 0;
+        const std::string name;
     };
 
-    class astBinaryOp : public astNode
+    class astContext : public astNode, public dictData
     {
     public:
-        astBinaryOp(const charLocation &loc) : astNode(loc, astType::call) {};
-        astBinaryOpType get_op() { return op_type; }
-        astNode *get_lhs() { return lhs; }
-        astNode *get_rhs() { return rhs; }
-
-    private:
-        astBinaryOpType op_type;
-        astNode *lhs, *rhs;
-    };
-
-    class astFuncDefine : public astNode
-    {
-    public:
-        astFuncDefine(const charLocation &loc) : astNode(loc, astType::define) {}
-        std::string get_name() { return name; }
-        std::unique_ptr<astBlock> &get_value() { return block; }
-        void add_arg(std::unique_ptr<astNode> &&arg)
+        astContext(location l) : astNode(l, kind::context) {}
+        astContext(location l, const char *_) : astNode(l, kind::context), name(_) {}
+        std::string get_name()
         {
-            args.push_back(std::move(arg));
+            return name;
         }
-        void add_ret(std::unique_ptr<astNode> &&r)
+        void set_name(std::string &n)
         {
-            ret = std::move(r);
+            name = n;
+        }
+        void set_name(const char *n)
+        {
+            name = n;
         }
 
     private:
-        std::string name;
-        std::vector<std::unique_ptr<astNode>> args;
-        std::unique_ptr<astNode> ret;
-        std::unique_ptr<astBlock> block;
+        std::string name = "";
     };
-
-    class astDictionary : public astNode
-    {
-    public:
-        astDictionary(const charLocation &loc) : astNode(loc, astType::dict) {};
-        logicResult add(const std::string &key, std::unique_ptr<astNode> &&node)
-        {
-            if (contents.find(key) != contents.end())
-            {
-                return logicResult::fail();
-            }
-            contents[key] = std::move(node);
-            return logicResult::success();
-        }
-        logicResult find(const std::string &key)
-        {
-            if (contents.find(key) == contents.end())
-            {
-                return logicResult::fail();
-            }
-            return logicResult::success();
-        }
-
-        astNode *get(const std::string &key)
-        {
-            if (contents.find(key) == contents.end())
-            {
-                return nullptr;
-            }
-            return contents[key].get();
-        }
-        template <typename T>
-        T *get(const std::string &key)
-        {
-            if (contents.find(key) == contents.end())
-            {
-                return nullptr;
-            }
-            return dynamic_cast<T *>(contents[key].get());
-        }
-        void erase(const std::string &key)
-        {
-            contents.erase(key);
-        }
-        std::map<std::string, std::unique_ptr<astNode>> &get_contents()
-        {
-            return contents;
-        }
-
-    private:
-        std::map<std::string, std::unique_ptr<astNode>> contents;
-    };
-
-    class astList : public astNode
-    {
-    public:
-        astList(const charLocation &loc) : astNode(loc, astType::list) {};
-        virtual ~astList() = default;
-        logicResult add(std::unique_ptr<astNode> &&node)
-        {
-            if (node == nullptr)
-            {
-                return logicResult::fail();
-            }
-            nodes.push_back(std::move(node));
-            return logicResult::success();
-        }
-        size_t size() { return nodes.size(); }
-        template <typename T>
-        T *get(size_t idx)
-        {
-            if (idx < nodes.size())
-            {
-                return dynamic_cast<T *>(nodes[idx].get());
-            }
-            return nullptr;
-        }
-        std::vector<std::unique_ptr<astNode>> &get_content()
-        {
-            return nodes;
-        }
-
-    private:
-        std::vector<std::unique_ptr<astNode>> nodes;
-    };
-
-    class astModule : public astNode
-    {
-    public:
-        astModule(const charLocation &loc, const std::string &n) : astNode(loc, astType::module), name(n) {}
-        std::string get_name() { return name; }
-        astDictionary *get_attr() { return attr.get(); }
-        std::vector<std::unique_ptr<astBlock>> &get_blocks() { return blocks; }
-        void add_block(std::unique_ptr<astBlock> &&block)
-        {
-            blocks.push_back(std::move(block));
-        }
-        void add_attr(std::unique_ptr<astDictionary> &&a)
-        {
-            attr = std::move(a);
-        }
-
-    private:
-        std::string name;
-        std::unique_ptr<astDictionary> attr;
-        std::vector<std::unique_ptr<astBlock>> blocks;
-    };
-}
+};
 
 #endif

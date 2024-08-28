@@ -18,7 +18,7 @@ namespace ast
         charLocation(unsigned int l, unsigned int c, std::shared_ptr<std::string> &p) : line(l), col(c), path(p) {}
         ~charLocation() = default;
         std::shared_ptr<std::string> path; ///< filename.
-        unsigned int line = 0, col = 0;
+        unsigned int line = 1, col = 1;
         std::string print()
         {
             return *(path.get()) + "(" + std::to_string(line) + ", " + std::to_string(col) + ")";
@@ -244,7 +244,7 @@ namespace ast
         }
 
     private:
-        unsigned int line = 0;
+        unsigned int line = 1;
         aoc::stringBuf buffer;
         const char *curPtr, *lastLine;
     };

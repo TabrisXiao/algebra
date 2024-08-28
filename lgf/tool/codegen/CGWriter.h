@@ -3,12 +3,30 @@
 #define LGF_CODEGEN_WRITER_H
 #include <map>
 #include "aoc/stream.h"
+#include "aoc/convention.h"
 #include "ast/ast.h"
-#include "lgf/utils.h"
 #include "codegen/dependency.h"
-using namespace utils;
+
+using namespace ast;
+using namespace aoc;
 namespace codegen
 {
+    class CGWriter
+    {
+    public:
+        CGWriter() = default;
+        virtual ~CGWriter() = default;
+        virtual logicResult write(ast::astModule *r, cgstream &fs) = 0;
+
+        std::string get_str_attr(astDictionary *ptr, const std::string &key)
+        {
+            return ptr->get<astExpr>(key)->string();
+        }
+        void write_context(astContext *ptr, cgstream &os);
+        void write_module(astModule *ptr, cgstream &os);
+        void write_dict(astDictionary *ptr, cgstream &os);
+        void write_list(astList *ptr, cgstream &os);
+    };
     class writer
     {
     public:
