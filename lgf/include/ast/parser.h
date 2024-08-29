@@ -15,7 +15,7 @@ namespace ast
         void emit_error(const std::string &msg)
         {
             // std::cerr << lx.loc().print() << msg << std::endl;
-            throw std::runtime_error(lx.loc().print() + ": " + msg);
+            throw std::runtime_error(lx.loc().print() + " Parse error: " + msg);
         }
         void emit_error_if(bool condition, const std::string &msg)
         {

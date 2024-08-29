@@ -24,6 +24,8 @@ namespace codegen
             dict->add("_type_", std::move(std::make_unique<astExpr>(loc(), type)));
         }
 
+        void parse_dict_data(dictData *);
+
         std::unique_ptr<astDictionary> parse_dict();
 
         std::unique_ptr<astList> parse_list();

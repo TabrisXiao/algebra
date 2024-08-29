@@ -4,6 +4,34 @@ using namespace ast;
 using kind_t = ast::token::kind;
 namespace codegen
 {
+    void CGParser::parse_dict_data(dictData *)
+    {
+        parse_left_brace();
+        while (try_consume(kind_t('}')).is_fail())
+        {
+            auto key = parse_id();
+            parse_colon();
+            switch (cur_tok().get_kind())
+            {
+            case kind_t('{'):
+                parse_dict_data(nullptr);
+                break;
+            case kind_t('['):
+                parse_list();
+                break;
+            case kind_t('<'):
+                parse_set();
+                break;
+            case kind_t::tok_identifier:
+                parse_id();
+                break;
+            default:
+                emit_error("Unknown dictionary item!");
+                break;
+            }
+        }
+        return;
+    }
     std::unique_ptr<astContext> CGParser::parse_context()
     {
         // assuming key word 'context' is already parsed and the current char is '<' or a char.
@@ -46,10 +74,7 @@ namespace codegen
         // return true if error
         consume();
         auto id = parse_id();
-        if (id != "context")
-        {
-            THROW("Parse error: 'context' missing at the beginning of " + loc().print());
-        }
+        emit_error_if(id != "context", "Context must be the first keyword!");
         auto root = std::make_unique<astContext>(loc());
         return std::move(parse_context());
     }
@@ -59,31 +84,7 @@ namespace codegen
         // a dictionary doesn't allow duplicate keys
         // the syntax is {key1: value1, key2: value2, key3: value3...}
         auto node = std::make_unique<astDictionary>(loc());
-        parse_left_brace();
-        add_type("dict", node.get());
-        do
-        {
-            auto key = parse_id();
-            parse_colon();
-            auto &tok = cur_tok();
-            switch (tok.get_kind())
-            {
-            case kind_t('{'):
-                node->add(key, std::move(parse_dict()));
-                break;
-            case kind_t::tok_identifier:
-                node->add(key, std::move(std::make_unique<astExpr>(loc(), parse_id())));
-                break;
-            case kind_t('['):
-                node->add(key, std::move(parse_list()));
-                break;
-            case kind_t('<'):
-                node->add(key, std::move(parse_set()));
-                break;
-            default:
-                emit_error("Unknown dictionary item!");
-            }
-        } while (try_consume(kind_t('}')).is_fail());
+        parse_dict_data(dynamic_cast<dictData *>(node.get()));
         return std::move(node);
     }
 
@@ -161,7 +162,7 @@ namespace codegen
 
         auto attrs = parse_set();
         auto name = parse_id();
-        auto node = std::make_unique<astModule>(loc(), name);
+        auto node = std::make_unique<astModule>(loc(), name.c_str());
         auto tok = cur_tok();
         auto inherit = std::make_unique<astList>(loc());
         if (try_consume(kind_t(':')).is_success())
@@ -173,8 +174,8 @@ namespace codegen
             } while (try_consume(kind_t(',')).is_success());
         }
         node->add("_attr_", std::move(attrs));
-        node->add("_inherit_", std::move(inherit));
-
+        node->add("_parent_", std::move(inherit));
+        parse_dict_data(dynamic_cast<dictData *>(node.get()));
         return std::move(node);
     }
 }

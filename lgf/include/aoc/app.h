@@ -60,7 +60,7 @@ namespace aoc::app
                 files.push_back(folder.data());
                 return files;
             }
-            for (const auto &entry : sfs::directory_iterator(folder.data()))
+            for (const auto &entry : sfs::recursive_directory_iterator(folder.data()))
             {
                 if (entry.is_regular_file())
                 {
@@ -76,7 +76,7 @@ namespace aoc::app
             // this function create a relative path from inputPath to ipath
             // and then append it to outputPath so that the output file
             // is in the same relative location as the input file
-            if (!sfs::is_directory(outputPath))
+            if (!sfs::is_directory(outputPath) && sfs::exists(outputPath))
                 return outputPath;
 
             auto path = sfs::path(outputPath) / sfs::path(ipath).lexically_relative(inputPath).replace_extension(extension);
@@ -93,47 +93,11 @@ namespace aoc::app
         std::vector<std::unique_ptr<queryInfo>> actions;
     };
 
-    class IOModule
+    class IOModule : public fiostream
     {
     public:
         IOModule() = default;
         ~IOModule() = default;
-
-        size_t read_file_to_stringBuf(const sfs::path &path)
-        {
-            if (!sfs::exists(path))
-            {
-                std::cerr << "Error: File does not exist: " << path << std::endl;
-                std::exit(EXIT_FAILURE);
-            }
-            std::ifstream file(path);
-            if (!file.is_open())
-            {
-                std::cerr << "Error: Failed to open file: " << path << std::endl;
-                std::exit(EXIT_FAILURE);
-            }
-            file.seekg(0, std::ios::end);
-            std::size_t file_size = file.tellg();
-            file.seekg(0, std::ios::beg);
-            auto id = bm.create_buffer(path.string().c_str(), file_size);
-            auto &buf = bm.get_buffer(id);
-
-            file.read(&buf[0], file_size);
-            return id;
-        }
-
-        stringBuf &get_buffer(size_t id)
-        {
-            return bm.get_buffer(id);
-        }
-
-        aoc::bufferManager &get_buffer_manager(size_t id)
-        {
-            return bm;
-        }
-
-    private:
-        aoc::bufferManager bm;
     };
 
     class appleCore

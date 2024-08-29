@@ -64,15 +64,16 @@ namespace ast
     {
     public:
         lexer() = default;
-        lexer(aoc::stringBuf &buf)
+        lexer(std::string loc_p, aoc::stringBuf &&buf)
         {
-            load_stringBuf(buf);
+            load_stringBuf(loc_p, std::move(buf));
         }
-        void load_stringBuf(aoc::stringBuf &buf)
+        void load_stringBuf(std::string loc_p, aoc::stringBuf &buf)
         {
-            curPtr = &buf[0];
+            locPath = std::make_shared<std::string>(loc_p);
+            curPtr = buf.begin();
             lastLine = curPtr;
-            buffer = buf;
+            buffer = std::move(buf);
         }
         void resetPointer(const char *ptr)
         {
@@ -107,7 +108,7 @@ namespace ast
                     continue;
                 case 0:
                     // file end
-                    if (curPtr - 1 == buffer.get_buffer_end_pointer())
+                    if (curPtr - 1 == buffer.end())
                         return token(token::tok_eof, aoc::stringRef(curPtr - 1, 1));
                     continue;
                 case ':':
@@ -230,7 +231,7 @@ namespace ast
 
         charLocation loc()
         {
-            return charLocation(line, size_t(curPtr) - size_t(lastLine), buffer.get_source_path());
+            return charLocation(line, size_t(curPtr) - size_t(lastLine), locPath);
         }
 
         void skip_line()
@@ -246,6 +247,7 @@ namespace ast
     private:
         unsigned int line = 1;
         aoc::stringBuf buffer;
+        std::shared_ptr<std::string> locPath;
         const char *curPtr, *lastLine;
     };
 }

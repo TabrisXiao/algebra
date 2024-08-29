@@ -9,54 +9,67 @@
 #include <functional>
 namespace aoc
 {
+    // messager plays a role that writing messages to the buffer it handles.
 
-    class stringBuf : public std::string
+    class stringBuf : public std::unique_ptr<std::string>
     {
     public:
         stringBuf() = default;
         ~stringBuf() = default;
-        stringBuf(const char *resource, size_t size)
+        stringBuf(stringBuf &&) noexcept = default;
+        stringBuf(std::string &&str) : std::unique_ptr<std::string>(std::make_unique<std::string>(std::move(str))) {}
+        stringBuf(size_t size) : std::unique_ptr<std::string>(std::make_unique<std::string>(size, 0)) {}
+        stringBuf &operator=(const stringBuf &) = delete;      // Disable copy assignment
+        stringBuf &operator=(stringBuf &&) noexcept = default; // Enable move assignment
+        size_t size() const
         {
-            source = std::make_shared<std::string>(resource);
-            resize(size);
+            return this->get()->size();
         }
-        std::shared_ptr<std::string> &get_source_path() { return source; }
-        const char *get_buffer_end_pointer()
+        const char *end()
         {
-            return &(*this)[size()];
+            return &(*get())[size()];
         }
-
-    private:
-        std::shared_ptr<std::string>
-            source;
+        char *begin()
+        {
+            return get()->data();
+        }
     };
 
-    class bufferManager
+    class stringBufferProducer
     {
     public:
-        bufferManager() = default;
-        size_t create_buffer(const char *name, size_t size)
+        stringBufferProducer() = default;
+        virtual ~stringBufferProducer() = default;
+        stringBufferProducer &operator<<(const std::string &str)
         {
-            auto id = hasher(name);
-            if (buffers.find(id) != buffers.end())
-            {
-                // resolve hash conflict
-                id = hasher(name + std::to_string(size));
-            }
-            // check if the buffer already exists
-            THROW_WHEN(buffers.find(id) != buffers.end(), "Buffer already exists: " + std::string(name));
-            buffers[id] = stringBuf(name, size);
-            return id;
+            ss << str;
+            return *this;
         }
-        stringBuf &get_buffer(size_t id)
+        size_t &indent_level() { return curIndentLevel; }
+        stringBufferProducer &indent()
         {
-            THROW_WHEN(buffers.find(id) == buffers.end(), "Buffer not found: " + std::to_string(id));
-            return buffers[id];
+            for (int i = 0; i < curIndentLevel; i++)
+                ss << "    ";
+            return *this;
+        }
+        stringBufferProducer &incr_indent()
+        {
+            curIndentLevel++;
+            return indent();
+        }
+        stringBufferProducer &decr_indent()
+        {
+            curIndentLevel--;
+            return indent();
+        }
+        stringBuf write_to_buffer()
+        {
+            return stringBuf(ss.str());
         }
 
     private:
-        std::map<size_t, stringBuf> buffers;
-        std::hash<std::string> hasher;
+        std::ostringstream ss;
+        size_t curIndentLevel = 0;
     };
 
     class fiostream
@@ -64,24 +77,37 @@ namespace aoc
     public:
         fiostream() = default;
         virtual ~fiostream() = default;
-        void load_file_to_string_buffer(std::string filename, bufferManager &bm)
+        stringBuf load_file_to_string_buffer(std::string filename)
         {
             auto path = std::filesystem::absolute(filename);
-            file.open(path);
-            THROW_WHEN(!file.is_open(), "fiostream error: Can't open the file: " + path.string());
+            ifs.open(path);
+            THROW_WHEN(!ifs.is_open(), "fiostream error: Can't open the file: " + path.string());
 
             // calculate file size
-            file.seekg(0, std::ios::end);
-            std::size_t file_size = file.tellg();
-            file.seekg(0, std::ios::beg);
-            auto id = bm.create_buffer(path.string().c_str(), file_size);
-            auto &buf = bm.get_buffer(id);
+            ifs.seekg(0, std::ios::end);
+            std::size_t file_size = ifs.tellg();
+            ifs.seekg(0, std::ios::beg);
+            auto &buf = stringBuf(file_size);
 
-            file.read(&buf[0], file_size);
+            ifs.read(buf.begin(), file_size);
+            return std::move(buf);
+        }
+        void write_string_buffer_to_file(const char *filename, stringBuf &buf)
+        {
+            auto path = std::filesystem::absolute(filename);
+            // create file if not exist
+            if (!std::filesystem::exists(path.parent_path()))
+            {
+                std::filesystem::create_directories(path.parent_path());
+            }
+            ofs.open(path);
+            THROW_WHEN(!ofs.is_open(), "fiostream error: Can't open the file: " + path.string());
+            ofs.write(buf.begin(), buf.size());
         }
 
     private:
-        std::ifstream file;
+        std::ifstream ifs;
+        std::ofstream ofs;
     };
 
     class cgstream

@@ -62,20 +62,21 @@ public:
         auto query = dynamic_cast<CGQueryInfo *>(info);
         auto input = query->input;
         auto output = query->output;
-        auto id = io.read_file_to_stringBuf(input);
-        auto &buf = io.get_buffer(id);
+        auto buf = io.load_file_to_string_buffer(input.string());
 
-        lex.load_stringBuf(buf);
-        std::cout << "\033[33m[ Parsing ]: \033[0m " << input.string() << "  ...  ";
-        std::cout << "\033[32m finished. \033[0m" << std::endl;
-        p.parse();
-        std::cout << "\033[33m[ writing ]: \033[0m " << output.string() << "  ...  ";
-        std::cout << "\033[32m finished. \033[0m" << std::endl;
+        lex.load_stringBuf(input.string(), buf);
+        std::cout << "\033[33m[ Parsing ]: \033[0m " << input.string() << "  ...  \n";
+        auto root = std::move(p.parse());
+
+        std::cout << "\033[33m[ writing ]: \033[0m  ...  \n";
+        io.write_string_buffer_to_file(output.string().c_str(), std::move(w.write(root.get())));
+        std::cout << "\033[32m[   Done  ] \033[0m: exported: " << output.string() << std::endl;
     }
 
     aoc::app::IOModule io;
     ast::lexer lex;
     codegen::CGParser p;
+    codegen::CGWriter w;
 };
 
 class codegenApp : public aoc::app::oneShotApp
