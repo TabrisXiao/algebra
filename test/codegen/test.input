@@ -1,8 +1,24 @@
 
-module<node> addOp {
-    input = {
-        variable: lhs,
-        variable: rhs
+module<node> addOp: mathOp {
+    ir_name: add
+    input: {
+        lhs: variable
+        rhs: variable
     }
-    output = variable: output
+    output: {output: variable}
+    property: <
+        trivial
+    >
+}
+
+module<node> multiplyOp {
+    ir_name: product
+    input: {
+        lhs: variable
+        rhs: variable
+    }
+    output: {output: variable}
+    property: <
+        trivial
+    >
 }
