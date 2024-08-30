@@ -45,7 +45,12 @@ namespace aoc
             ss << str;
             return *this;
         }
-        size_t &indent_level() { return curIndentLevel; }
+        void indent_level_up() { curIndentLevel++; }
+        void indent_level_down()
+        {
+            if (curIndentLevel > 0)
+                curIndentLevel--;
+        }
         stringBufferProducer &indent()
         {
             for (int i = 0; i < curIndentLevel; i++)
@@ -54,17 +59,21 @@ namespace aoc
         }
         stringBufferProducer &incr_indent()
         {
-            curIndentLevel++;
+            indent_level_up();
             return indent();
         }
         stringBufferProducer &decr_indent()
         {
-            curIndentLevel--;
+            indent_level_down();
             return indent();
         }
         stringBuf write_to_buffer()
         {
             return stringBuf(ss.str());
+        }
+        void clear()
+        {
+            ss.clear();
         }
 
     private:
@@ -90,6 +99,7 @@ namespace aoc
             auto &buf = stringBuf(file_size);
 
             ifs.read(buf.begin(), file_size);
+            ifs.close();
             return std::move(buf);
         }
         void write_string_buffer_to_file(const char *filename, stringBuf &buf)

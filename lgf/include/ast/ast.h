@@ -43,6 +43,7 @@ namespace ast
         template <typename T>
         T *get() { return dynamic_cast<T *>(data.back().get()); }
         std::vector<std::unique_ptr<astNode>> &get_content() { return data; }
+        size_t size() const { return data.size(); }
 
     private:
         std::vector<std::unique_ptr<astNode>> data;
@@ -73,7 +74,8 @@ namespace ast
         {
             return dynamic_cast<T *>(data[key].get());
         }
-        std::map<std::string, std::unique_ptr<astNode>> &get_contents() { return data; }
+        size_t size() const { return data.size(); }
+        std::map<std::string, std::unique_ptr<astNode>> &get_content() { return data; }
         bool has(const std::string &key) const { return data.find(key) != data.end(); }
 
     private:

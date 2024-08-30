@@ -28,9 +28,9 @@ namespace lgf
     public:
         // the first output value is dependency value used to store
         // the dependency inform that don't have value connections
-        node(std::string id = "op", graph *g = nullptr) : lgfObject(id)
+        node() = default;
+        node(std::string id, graph *g = nullptr) : lgfObject(id)
         {
-            _v_ = std::make_unique<value>();
             graph_ = g;
         };
         virtual ~node() = default;

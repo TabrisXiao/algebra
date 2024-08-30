@@ -70,6 +70,7 @@ namespace ast
         }
         void load_stringBuf(std::string loc_p, aoc::stringBuf &buf)
         {
+            buffer.release();
             locPath = std::make_shared<std::string>(loc_p);
             curPtr = buf.begin();
             lastLine = curPtr;

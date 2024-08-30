@@ -4,7 +4,7 @@ using namespace ast;
 using kind_t = ast::token::kind;
 namespace codegen
 {
-    void CGParser::parse_dict_data(dictData *)
+    void CGParser::parse_dict_data(dictData *ptr)
     {
         parse_left_brace();
         while (try_consume(kind_t('}')).is_fail())
@@ -14,16 +14,20 @@ namespace codegen
             switch (cur_tok().get_kind())
             {
             case kind_t('{'):
-                parse_dict_data(nullptr);
+            {
+                auto subdict = std::make_unique<astDictionary>(loc());
+                parse_dict_data(dynamic_cast<dictData *>(subdict.get()));
+                ptr->add(key, std::move(subdict));
                 break;
+            }
             case kind_t('['):
-                parse_list();
+                ptr->add(key, std::move(parse_list()));
                 break;
             case kind_t('<'):
-                parse_set();
+                ptr->add(key, std::move(parse_set()));
                 break;
             case kind_t::tok_identifier:
-                parse_id();
+                ptr->add(key, std::move(std::make_unique<astExpr>(loc(), parse_id())));
                 break;
             default:
                 emit_error("Unknown dictionary item!");
@@ -44,7 +48,7 @@ namespace codegen
         auto id = parse_id();
         ctx->set_name(id);
         parse_left_brace();
-        auto content = std::make_unique<astDictionary>(loc());
+        auto content = std::make_unique<astList>(loc());
         while (!cur_tok().is_any(kind_t('}'), kind_t::tok_eof))
         {
             auto key = parse_id();
@@ -52,13 +56,13 @@ namespace codegen
             {
                 auto module = parse_module();
                 auto name = module->get_name();
-                content->add(name, std::move(module));
+                content->add(std::move(module));
             }
             else if (key == "context")
             {
                 auto sub = parse_context();
                 auto name = sub->get<astExpr>("_name_")->string();
-                content->add(name, std::move(sub));
+                content->add(std::move(sub));
             }
             else
             {

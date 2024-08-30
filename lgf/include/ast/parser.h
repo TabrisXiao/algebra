@@ -5,12 +5,12 @@
 #include "aoc/convention.h"
 namespace ast
 {
-    class parserCore
+    class generalParser
     {
     public:
-        parserCore() = delete;
-        parserCore(lexer &lx_) : lx(lx_) {}
-        virtual ~parserCore() = default;
+        generalParser() = delete;
+        generalParser(lexer &lx_) : lx(lx_) {}
+        virtual ~generalParser() = default;
 
         void emit_error(const std::string &msg)
         {

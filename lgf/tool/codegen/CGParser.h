@@ -9,11 +9,11 @@
 using namespace ast;
 namespace codegen
 {
-    class CGParser : public ::ast::parserCore
+    class CGParser : public ::ast::generalParser
     {
     public:
         using kind = ::ast::token::kind;
-        CGParser(::ast::lexer &l) : parserCore(l) {}
+        CGParser(::ast::lexer &l) : generalParser(l) {}
         virtual ~CGParser() = default;
         std::unique_ptr<astContext> parse();
 

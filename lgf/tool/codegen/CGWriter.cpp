@@ -4,24 +4,25 @@
 void codegen::CGWriter::write_context(astContext *ptr)
 {
     auto name = ptr->get_name();
-    os.indent() << "namespace " << name << " {\n";
-    os.indent_level()++;
-    for (auto &it : ptr->get<astDictionary>("_content_")->get_contents())
+    os.indent() << "namespace " << name << "\n";
+    os.indent() << "{\n";
+    os.indent_level_up();
+    for (auto &it : ptr->get<astList>("_content_")->get_content())
     {
-        auto kind = it.second->get_kind();
+        auto kind = it->get_kind();
         switch (kind)
         {
         case astNode::context:
-            write_context(it.second->as<astContext>());
+            write_context(it->as<astContext>());
             break;
         case astNode::module:
-            write_module((it.second.get()->as<astModule>()));
+            write_module((it->as<astModule>()));
             break;
         case astNode::dict:
-            write_dict((it.second.get()->as<astDictionary>()));
+            write_dict((it->as<astDictionary>()));
             break;
         case astNode::list:
-            write_list((it.second.get()->as<astList>()));
+            write_list((it->as<astList>()));
             break;
         default:
             break;
@@ -32,22 +33,16 @@ void codegen::CGWriter::write_context(astContext *ptr)
 
 void codegen::CGWriter::write_module(astModule *ptr)
 {
-    auto name = ptr->get_name();
-    std::vector<std::unique_ptr<astNode>> *parents = nullptr;
-    std::string inheritStr = "";
-    if (ptr->has("_parent_"))
-    {
-        inheritStr = ": ";
-        parents = &(ptr->get<astList>("_parent_")->get_content());
-        for (auto &p : *parents)
-        {
-            inheritStr = inheritStr + "public " + p->as<astExpr>()->string() + ", ";
-        }
-        inheritStr = inheritStr.substr(0, inheritStr.size() - 2);
-    }
-    os.indent() << "class " << name << inheritStr << " {\n";
-    os.indent() << "};\n\n";
+    nodeTemplate a(ptr);
+    a.write(os);
     //
+}
+
+void codegen::CGWriter::write_op_builder(astModule *ptr)
+{
+    auto input = ptr->get<astDictionary>("input");
+    auto output = ptr->get<astExpr>("output");
+    auto name = ptr->get<astExpr>("ir_name");
 }
 void codegen::CGWriter::write_dict(astDictionary *ptr)
 {
