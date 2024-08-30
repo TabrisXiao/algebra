@@ -5,7 +5,6 @@
 #include "aoc/stream.h"
 #include "aoc/convention.h"
 #include "ast/ast.h"
-#include "codegen/dependency.h"
 
 using namespace ast;
 using namespace aoc;
