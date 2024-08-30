@@ -1,6 +1,6 @@
-
 #ifndef AST_LEXER_H
 #define AST_LEXER_H
+
 #include <memory>
 #include <string>
 #include <fstream>

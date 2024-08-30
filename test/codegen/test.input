@@ -1,5 +1,4 @@
 
-
 module<node> addOp: mathOp {
     ir_name: add
     input: {

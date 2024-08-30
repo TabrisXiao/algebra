@@ -102,6 +102,7 @@ public:
             std::cerr << "Error: " << e.what() << std::endl;
         }
     }
+
 };
 
 int main(int argc, char *argv[])
