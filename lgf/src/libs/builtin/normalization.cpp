@@ -20,7 +20,7 @@ namespace lgf
             {
                 if (h.is_coupled())
                 {
-                    auto node = h.get_dual_node();
+                    auto node = h.get_link_node();
                     remove_trivial_op(node);
                 }
             }
@@ -124,7 +124,7 @@ namespace lgf
             {
                 if (!h.is_coupled())
                     continue;
-                auto user = h.get_dual_node();
+                auto user = h.get_link_node();
                 if (user->is_deprecate() || user->is_explored() || !user->is_dependency_fullfilled())
                     continue;
                 if (user->get_status(eIdenticalRemovable))

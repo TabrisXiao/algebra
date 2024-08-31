@@ -28,9 +28,10 @@ namespace lgf
     public:
         // the first output value is dependency value used to store
         // the dependency inform that don't have value connections
-        node() = default;
+        node() { _v_ = std::make_unique<value>(); };
         node(std::string id, graph *g = nullptr) : lgfObject(id)
         {
+            _v_ = std::make_unique<value>();
             graph_ = g;
         };
         virtual ~node() = default;
@@ -81,7 +82,7 @@ namespace lgf
         void erase_input(node *n)
         {
             auto it = std::find_if(inputs.begin(), inputs.end(), [n](edge &e)
-                                   { return e.get_dual_node() == n; });
+                                   { return e.get_link_node() == n; });
             if (it == inputs.end())
                 return;
             inputs.erase(it);
@@ -186,7 +187,7 @@ namespace lgf
             {
                 if (!e.is_coupled())
                     continue;
-                res.push_back(e.get_dual_node());
+                res.push_back(e.get_link_node());
             }
             return res;
         }
@@ -199,7 +200,7 @@ namespace lgf
             {
                 if (!e.is_coupled())
                     continue;
-                res.push_back(e.get_dual_node());
+                res.push_back(e.get_link_node());
             }
             return res;
         }
@@ -208,7 +209,7 @@ namespace lgf
         {
             auto it = std::find_if(inputs.begin(), inputs.end(), [n](edge &e)
                                    { if( !e.is_coupled() ) return false;
-                                    return e.get_dual_node() == n; });
+                                    return e.get_link_node() == n; });
             if (it == inputs.end())
                 return;
             (*it).decouple();
@@ -226,7 +227,7 @@ namespace lgf
         {
             auto it = std::find_if(inputs.begin(), inputs.end(), [on](edge &e)
                                    { if( !e.is_coupled() ) return false;
-                                    return e.get_dual_node() == on; });
+                                    return e.get_link_node() == on; });
             if (it == inputs.end())
                 return;
             (*it).decouple();
@@ -246,7 +247,7 @@ namespace lgf
                 if (e.is_coupled())
                 {
                     // if the new node is a user of this node, skip it.
-                    if (e.get_dual_node() == newop)
+                    if (e.get_link_node() == newop)
                         continue;
                     e.update_node(newop);
                     newop->add_output_edge(std::move(e));
@@ -260,7 +261,7 @@ namespace lgf
                 throw std::runtime_error("input(size_t i): calling input index out of range");
 
             if (inputs[i].is_coupled())
-                return inputs[i].get_dual_node();
+                return inputs[i].get_link_node();
 
             // if the edge is not coupled, it means that this input is
             // no longer valid and need to be removed.
@@ -273,7 +274,7 @@ namespace lgf
             if (i >= users.size())
                 throw std::runtime_error("calling user index out of range");
             if (users[i].is_coupled())
-                return users[i].get_dual_node();
+                return users[i].get_link_node();
             // if the edge is not coupled, it means that this user is
             // no longer valid and need to be removed.
             users.erase(users.begin() + i);
@@ -335,7 +336,7 @@ namespace lgf
             {
                 if (!e.is_coupled())
                     continue;
-                p += e.get_dual_node()->get_value_sid() + ", ";
+                p += e.get_link_node()->get_value_sid() + ", ";
             }
             p.pop_back();
             p.pop_back();
@@ -353,7 +354,7 @@ namespace lgf
         //     std::vector<std::string> vec;
         //     for (auto i = 0; i < inputs.size(); i++)
         //     {
-        //         auto n = inputs[i].get_dual_node();
+        //         auto n = inputs[i].get_link_node();
         //         vec.push_back(n->get_uid());
         //     }
         //     if (bCommutable)
@@ -393,7 +394,7 @@ namespace lgf
             {
                 if (!e.is_coupled())
                     continue;
-                auto n = e.get_dual_node();
+                auto n = e.get_link_node();
                 if (n->is_explored() || n->is_deprecate())
                     continue;
                 return false;
@@ -497,7 +498,7 @@ namespace lgf
                     {
                         continue;
                     }
-                    auto vn = h.get_dual_node();
+                    auto vn = h.get_link_node();
                     if (vn->is_explored() || vn->is_deprecate() || !(vn->is_dependency_fullfilled()))
                         continue;
                     _vq.push(vn);

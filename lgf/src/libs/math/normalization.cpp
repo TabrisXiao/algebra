@@ -58,7 +58,7 @@ resultCode lgf::math::zeroRewriter::rewrite(painter &p, cstDeclOp *op)
     resultCode res;
     for (auto &h : op->get_user_handles())
     {
-        auto user = h.get_dual_node();
+        auto user = h.get_link_node();
         // if (user)
         //     std::cout << "user: " << user->represent() << std::endl;
         if (auto prod = dynamic_cast<productOp *>(user))
@@ -85,7 +85,7 @@ resultCode lgf::math::unitRewriter::rewrite(painter &p, cstDeclOp *op)
     resultCode res;
     for (auto &h : op->get_user_handles())
     {
-        auto user = h.get_dual_node();
+        auto user = h.get_link_node();
         if (auto prod = dynamic_cast<productOp *>(user))
         {
             prod->drop_input(op);

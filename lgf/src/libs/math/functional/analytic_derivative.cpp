@@ -32,7 +32,7 @@ lgf::resultCode lgf::math::ChainRuleRewriter::rewrite(painter &p, differentiateO
         {
             if (!h.is_coupled())
                 continue;
-            auto arg = h.get_dual_node();
+            auto arg = h.get_link_node();
             auto df = p.paint<differentiateOp>(arg);
             sum_args.push_back(df);
         }
@@ -45,7 +45,7 @@ lgf::resultCode lgf::math::ChainRuleRewriter::rewrite(painter &p, differentiateO
         std::vector<node *> sum_args;
         for (auto &h : func->get_input_handles())
         {
-            auto arg = h.get_dual_node();
+            auto arg = h.get_link_node();
             auto df = p.paint<differentiateOp>(arg);
             auto prod = p.paint<productOp>();
             for (auto &h1 : func->get_input_handles())
@@ -56,7 +56,7 @@ lgf::resultCode lgf::math::ChainRuleRewriter::rewrite(painter &p, differentiateO
                 }
                 else
                 {
-                    prod->register_input(h1.get_dual_node());
+                    prod->register_input(h1.get_link_node());
                 }
             }
             prod->set_value_desc(df->get_value_desc());
@@ -87,7 +87,7 @@ lgf::resultCode lgf::math::ChainRuleRewriter::rewrite(painter &p, differentiateO
         std::vector<node *> sum_args;
         for (auto &h : func->get_input_handles())
         {
-            auto arg = h.get_dual_node();
+            auto arg = h.get_link_node();
             auto Df = p.paint<partialDifferentiateOp>(func, arg);
             auto dx = p.paint<differentiateOp>(arg);
             auto product = p.paint<productOp>(Df, dx);
@@ -146,7 +146,7 @@ lgf::resultCode lgf::math::analyticFuncDerivativeRewriter::rewrite(painter &p, p
         {
             if (!h.is_coupled())
                 continue;
-            auto arg = h.get_dual_node();
+            auto arg = h.get_link_node();
             auto df = p.paint<partialDifferentiateOp>(arg, target);
             sum->replace_input_by(h, df);
         }
@@ -158,7 +158,7 @@ lgf::resultCode lgf::math::analyticFuncDerivativeRewriter::rewrite(painter &p, p
         std::vector<node *> sum_args;
         for (auto &h : func->get_input_handles())
         {
-            auto arg = h.get_dual_node();
+            auto arg = h.get_link_node();
             auto df = p.paint<partialDifferentiateOp>(arg, target);
             auto prod = p.paint<productOp>();
             for (auto &h1 : func->get_input_handles())

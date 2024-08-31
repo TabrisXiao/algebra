@@ -51,7 +51,18 @@ namespace lgf
 
         ~edge()
         {
-            decouple();
+            if (dual)
+            {
+                dual->break_edge();
+            }
+        }
+
+        // this function is only suppose to be called by its dual edge when it
+        // trying to delete this edge.
+        void break_edge()
+        {
+            dual = nullptr;
+            bundle->need_clean();
         }
 
         void update_bundle(edgeBundle *b)
@@ -75,7 +86,7 @@ namespace lgf
         void couple(edge &e)
         {
             if (dual)
-                dual->reset();
+                decouple();
             dual = &e;
             e.update_dual_edge(this);
         }
@@ -108,7 +119,7 @@ namespace lgf
             return _n;
         }
 
-        node *get_dual_node() const
+        node *get_link_node() const
         {
             if (!dual)
                 return nullptr;

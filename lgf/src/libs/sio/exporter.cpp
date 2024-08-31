@@ -12,7 +12,7 @@ namespace lgf::sio
         {
             for (auto &input : op->get_input_handles())
             {
-                res += process(input.get_dual_node()) + "\\cdot ";
+                res += process(input.get_link_node()) + "\\cdot ";
             }
             res = res.substr(0, res.size() - 6);
         }
@@ -21,7 +21,7 @@ namespace lgf::sio
             res += "(";
             for (auto &input : op->get_input_handles())
             {
-                res += process(input.get_dual_node()) + "+";
+                res += process(input.get_link_node()) + "+";
             }
             res.pop_back();
             res += ")";
@@ -106,7 +106,7 @@ namespace lgf::sio
         result += funcName + "(";
         for (auto &input : val->get_input_handles())
         {
-            result += process(input.get_dual_node()) + ",";
+            result += process(input.get_link_node()) + ",";
         }
         result.pop_back();
         return result + ")";

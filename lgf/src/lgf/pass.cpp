@@ -111,7 +111,7 @@ resultCode passBase::apply_reduce_once(painter &p, graph *g)
     // adding users of current op into the queue
     for (auto &h : top->get_user_handles())
     {
-      auto user = h.get_dual_node();
+      auto user = h.get_link_node();
       if (user->is_deprecate() || user->is_explored() || user->isa<identiferInterface>())
         continue;
       q.push(user);

@@ -202,7 +202,7 @@ namespace lgf
       newop->set_parent_graph(op->get_parent_graph());
       for (auto &h : op->get_input_handles())
       {
-        newop->register_input(h.get_dual_node());
+        newop->register_input(h.get_link_node());
       }
 
       op->replace_by(newop);
