@@ -5,6 +5,7 @@
 #include "ast/ast.h"
 #include "ast/parser.h"
 #include "ast/lexer.h"
+#include "CGContext.h"
 using namespace ast;
 namespace codegen
 {
@@ -14,24 +15,24 @@ namespace codegen
         using kind = ::ast::token::kind;
         CGParser(::ast::lexer &l) : generalParser(l) {}
         virtual ~CGParser() = default;
-        std::unique_ptr<astContext> parse();
+        std::unique_ptr<astContext> parse(CGContext *c);
 
-        std::unique_ptr<astContext> parse_context();
+        std::unique_ptr<astContext> parse_context(CGContext *c);
 
         void add_type(std::string type, astDictionary *dict)
         {
             dict->add("_type_", std::move(std::make_unique<astExpr>(loc(), type)));
         }
 
-        void parse_dict_data(dictData *);
+        void parse_dict_data(CGContext *ctx, dictData *);
 
-        std::unique_ptr<astDictionary> parse_dict();
+        std::unique_ptr<astDictionary> parse_dict(CGContext *c);
 
-        std::unique_ptr<astList> parse_list();
+        std::unique_ptr<astList> parse_list(CGContext *c);
 
-        std::unique_ptr<astList> parse_set();
+        std::unique_ptr<astList> parse_set(CGContext *c);
 
-        std::unique_ptr<astModule> parse_module();
+        std::unique_ptr<astModule> parse_module(CGContext *c);
 
         bool check_if_duplicate(std::unique_ptr<astList> &node, std::string &item)
         {

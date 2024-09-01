@@ -5,6 +5,7 @@
 #include "aoc/stream.h"
 #include "aoc/convention.h"
 #include "ast/ast.h"
+#include "CGContext.h"
 
 using namespace ast;
 using namespace aoc;
@@ -101,8 +102,9 @@ namespace codegen
     public:
         CGWriter() = default;
         virtual ~CGWriter() = default;
-        stringBuf write(ast::astContext *r)
+        stringBuf write(CGContext *c, ast::astContext *r)
         {
+            ctx = c;
             os.clear();
             write_context(r);
             return os.write_to_buffer();
@@ -120,6 +122,7 @@ namespace codegen
 
     private:
         stringBufferProducer os;
+        CGContext *ctx;
     };
 
 } // namespace codegen

@@ -5,6 +5,7 @@
 #include "ast/lexer.h"
 #include "CGParser.h"
 #include "CGWriter.h"
+#include "CGContext.h"
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -66,10 +67,13 @@ public:
 
         lex.load_stringBuf(input.string(), buf);
         std::cout << "\033[33m[ Parsing ]: \033[0m " << input.string() << "  ...  \n";
-        auto root = std::move(p.parse());
-
+        codegen::CGContext ctx;
+        auto root = std::move(p.parse(&ctx));
+        std::cout << "--------------------context ------------------\n";
+        ctx.print();
+        std::cout << "--------------------end ------------------\n";
         std::cout << "\033[33m[ writing ]: \033[0m  ...  \n";
-        io.write_string_buffer_to_file(output.string().c_str(), std::move(w.write(root.get())));
+        io.write_string_buffer_to_file(output.string().c_str(), std::move(w.write(&ctx, root.get())));
         std::cout << "\033[32m[   Done  ] \033[0m: exported: " << output.string() << std::endl;
     }
 
@@ -102,7 +106,6 @@ public:
             std::cerr << "Error: " << e.what() << std::endl;
         }
     }
-
 };
 
 int main(int argc, char *argv[])

@@ -4,7 +4,7 @@ using namespace ast;
 using kind_t = ast::token::kind;
 namespace codegen
 {
-    void CGParser::parse_dict_data(dictData *ptr)
+    void CGParser::parse_dict_data(CGContext *ctx, dictData *ptr)
     {
         parse_left_brace();
         while (try_consume(kind_t('}')).is_fail())
@@ -15,18 +15,26 @@ namespace codegen
             {
             case kind_t('{'):
             {
+                CGContext::CGCGuard guard(ctx, key, symbolInfo(symbolInfo::kind_t::region));
                 auto subdict = std::make_unique<astDictionary>(loc());
-                parse_dict_data(dynamic_cast<dictData *>(subdict.get()));
+                parse_dict_data(ctx, dynamic_cast<dictData *>(subdict.get()));
                 ptr->add(key, std::move(subdict));
                 break;
             }
             case kind_t('['):
-                ptr->add(key, std::move(parse_list()));
+            {
+                CGContext::CGCGuard guard(ctx, key, symbolInfo(symbolInfo::kind_t::region));
+                ptr->add(key, std::move(parse_list(ctx)));
                 break;
+            }
             case kind_t('<'):
-                ptr->add(key, std::move(parse_set()));
+            {
+                CGContext::CGCGuard guard(ctx, key, symbolInfo(symbolInfo::kind_t::region));
+                ptr->add(key, std::move(parse_set(ctx)));
                 break;
+            }
             case kind_t::tok_identifier:
+                ctx->create_var(key);
                 ptr->add(key, std::move(std::make_unique<astExpr>(loc(), parse_id())));
                 break;
             default:
@@ -36,31 +44,32 @@ namespace codegen
         }
         return;
     }
-    std::unique_ptr<astContext> CGParser::parse_context()
+    std::unique_ptr<astContext> CGParser::parse_context(CGContext *ctx)
     {
         // assuming key word 'context' is already parsed and the current char is '<' or a char.
-        auto ctx = std::make_unique<astContext>(loc());
+        auto context = std::make_unique<astContext>(loc());
         if (cur_tok().is(kind_t('<')))
         {
-            auto attrs = parse_set();
-            ctx->add("_attr_", std::move(attrs));
+            auto attrs = parse_set(ctx);
+            context->add("_attr_", std::move(attrs));
         }
         auto id = parse_id();
-        ctx->set_name(id);
+        context->set_name(id);
         parse_left_brace();
+        CGContext::CGCGuard guard(ctx, id, symbolInfo(symbolInfo::kind_t::context));
         auto content = std::make_unique<astList>(loc());
         while (!cur_tok().is_any(kind_t('}'), kind_t::tok_eof))
         {
             auto key = parse_id();
             if (key == "module")
             {
-                auto module = parse_module();
+                auto module = parse_module(ctx);
                 auto name = module->get_name();
                 content->add(std::move(module));
             }
             else if (key == "context")
             {
-                auto sub = parse_context();
+                auto sub = parse_context(ctx);
                 auto name = sub->get<astExpr>("_name_")->string();
                 content->add(std::move(sub));
             }
@@ -69,30 +78,30 @@ namespace codegen
                 emit_error("Unknown key word: " + key);
             }
         }
-        ctx->add("_content_", std::move(content));
-        return std::move(ctx);
+        context->add("_content_", std::move(content));
+        return std::move(context);
     }
 
-    std::unique_ptr<astContext> CGParser::parse()
+    std::unique_ptr<astContext> CGParser::parse(CGContext *ctx)
     {
         // return true if error
         consume();
         auto id = parse_id();
         emit_error_if(id != "context", "Context must be the first keyword!");
         auto root = std::make_unique<astContext>(loc());
-        return std::move(parse_context());
+        return std::move(parse_context(ctx));
     }
 
-    std::unique_ptr<astDictionary> CGParser::parse_dict()
+    std::unique_ptr<astDictionary> CGParser::parse_dict(CGContext *ctx)
     {
         // a dictionary doesn't allow duplicate keys
         // the syntax is {key1: value1, key2: value2, key3: value3...}
         auto node = std::make_unique<astDictionary>(loc());
-        parse_dict_data(dynamic_cast<dictData *>(node.get()));
+        parse_dict_data(ctx, dynamic_cast<dictData *>(node.get()));
         return std::move(node);
     }
 
-    std::unique_ptr<astList> CGParser::parse_list()
+    std::unique_ptr<astList> CGParser::parse_list(CGContext *ctx)
     {
         // a list allows duplicate items
         // the syntax is [item1, item2, item3...]
@@ -121,7 +130,7 @@ namespace codegen
         return std::move(node);
     }
 
-    std::unique_ptr<astList> CGParser::parse_set()
+    std::unique_ptr<astList> CGParser::parse_set(CGContext *ctx)
     {
         // set is a list that can't have duplicate items
         // the syntax is <item1, item2, item3...>
@@ -158,17 +167,18 @@ namespace codegen
         return std::move(node);
     }
 
-    std::unique_ptr<astModule> CGParser::parse_module()
+    std::unique_ptr<astModule> CGParser::parse_module(CGContext *ctx)
     {
         // a module is a dictionary
         // the syntax is module<attr1, attr2, attr3...> name : inherit1, inherit2, inherit3...
         // { key1: value1, key2: value2, key3: value3...}
 
-        auto attrs = parse_set();
+        auto attrs = parse_set(ctx);
         auto name = parse_id();
         auto node = std::make_unique<astModule>(loc(), name.c_str());
         auto tok = cur_tok();
         auto inherit = std::make_unique<astList>(loc());
+        CGContext::CGCGuard guard(ctx, name, symbolInfo(symbolInfo::kind_t::module));
         if (try_consume(kind_t(':')).is_success())
         {
             do
@@ -177,9 +187,10 @@ namespace codegen
                 inherit->add(std::move(std::make_unique<astExpr>(loc(), id.data())));
             } while (try_consume(kind_t(',')).is_success());
         }
+
         node->add("_attr_", std::move(attrs));
         node->add("_parent_", std::move(inherit));
-        parse_dict_data(dynamic_cast<dictData *>(node.get()));
+        parse_dict_data(ctx, dynamic_cast<dictData *>(node.get()));
         return std::move(node);
     }
 }

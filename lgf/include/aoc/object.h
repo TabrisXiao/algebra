@@ -21,11 +21,7 @@ namespace aoc
             {
                 _cmap_ = std::map<K, cursive_map<K, C>>();
             }
-            if (_content_.find(key) != _content_.end())
-            {
-                return;
-            }
-            _cmap_[key] = cursive_map<K, C>(content);
+            _cmap_.value()[key] = cursive_map<K, C>(content);
         }
         bool has(const K &key)
         {
@@ -33,13 +29,13 @@ namespace aoc
             {
                 return false;
             }
-            return _cmap_.find(key) != _cmap_.end();
+            return _cmap_.value().find(key) != _cmap_.value().end();
         }
         cursive_map<K, C> &get(const K &key)
         {
             if (has(key))
             {
-                return _cmap_[key];
+                return _cmap_.value().at(key);
             }
             throw std::runtime_error("get: invalid key!");
         }
@@ -51,7 +47,7 @@ namespace aoc
         {
             if (_cmap_.has_value())
             {
-                return _cmap_;
+                return _cmap_.value();
             }
             throw std::runtime_error("get_map: map doesn't exists!");
         }
