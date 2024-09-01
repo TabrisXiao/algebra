@@ -73,6 +73,7 @@ namespace lgf
     private:
         std::shared_ptr<detial_t> detail;
     };
+
 }
 
 #endif

@@ -2,6 +2,7 @@
 #ifndef LGF_ATTRIBUTE_H
 #define LGF_ATTRIBUTE_H
 #include "object.h"
+#include <map>
 namespace lgf
 {
     class attrBase : public lgfObject
@@ -55,5 +56,109 @@ namespace lgf
     public:
         std::vector<attribute> data;
     };
+
+    class attrContainer
+    {
+    public:
+        attrContainer() = default;
+        virtual ~attrContainer() = default;
+        attribute get_attr(sid_t id)
+        {
+            if (dict_attr.find(id) == dict_attr.end())
+            {
+                return attribute();
+            }
+            return dict_attr[id];
+        }
+        void add_attr(sid_t id, attribute att)
+        {
+            dict_attr[id] = att;
+        }
+        bool has(sid_t id)
+        {
+            return dict_attr.find(id) != dict_attr.end();
+        }
+
+        std::map<sid_t, attribute> &get_dict()
+        {
+            return dict_attr;
+        }
+        std::map<sid_t, attribute> dict_attr;
+    };
+
+    class intAttr : public singleData<int>
+    {
+    public:
+        intAttr(int t) : singleData<int>("integer", t) {}
+        virtual sid_t represent()
+        {
+            return std::to_string(get_data());
+        }
+    };
+
+    class F32Attr : public singleData<float>
+    {
+    public:
+        F32Attr(float t) : singleData<float>("float32", t) {}
+        virtual sid_t represent()
+        {
+            return std::to_string(get_data());
+        }
+    };
+    class stringAttr : public singleData<std::string>
+    {
+    public:
+        stringAttr(std::string t) : singleData<std::string>("string", t) {}
+        virtual sid_t represent()
+        {
+            return get_data();
+        }
+    };
+
+    class arraAttr : public attrBase
+    {
+    public:
+        arraAttr(std::vector<attribute> t) : attrBase("array"), data(t) {}
+        virtual sid_t represent()
+        {
+            sid_t res = "[";
+            for (auto &d : data)
+            {
+                res += d.represent();
+                res += ", ";
+            }
+            res.pop_back();
+            res.pop_back();
+            res += "]";
+            return res;
+        }
+        std::vector<attribute> data;
+    };
+
+    template <typename T>
+    class enumAttr : attrBase
+    {
+    public:
+        enumAttr(sid_t id) : attrBase(id) {}
+        enumAttr(sid_t id, T t) : attrBase(id), data(t) {}
+        virtual ~enumAttr() = default;
+        T value() { return data; }
+        bool operator==(const enumAttr<T> &rhs) const
+        {
+            return data == rhs.value();
+        }
+        bool operator!=(const enumAttr<T> &rhs) const
+        {
+            return data != rhs.value();
+        }
+        static enumAttr<T> get(T t)
+        {
+            return enumAttr<T>(t);
+        }
+
+    private:
+        T data;
+    };
+
 }
 #endif

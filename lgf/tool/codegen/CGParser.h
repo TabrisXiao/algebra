@@ -4,7 +4,6 @@
 #include <set>
 #include "ast/ast.h"
 #include "ast/parser.h"
-#include "ast/context.h"
 #include "ast/lexer.h"
 using namespace ast;
 namespace codegen

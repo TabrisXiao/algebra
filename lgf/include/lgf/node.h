@@ -1,21 +1,23 @@
 
 #ifndef node_H_
 #define node_H_
-#include "object.h"
-#include "edge.h"
-#include "value.h"
-#include "context.h"
+#include <memory>
+#include <algorithm>
 #include <unordered_set>
 #include <queue>
 #include <map>
 #include <set>
 #include <string>
+
+#include "object.h"
+#include "edge.h"
+#include "value.h"
+#include "context.h"
 #include "printer.h"
 #include "global.h"
 #include "utils/exception.h"
-#include <memory>
-#include <algorithm>
 #include "utils.h"
+#include "attribute.h"
 
 // logic graph frameworks
 namespace lgf
@@ -23,7 +25,7 @@ namespace lgf
     class graph;
 
     typedef size_t id_t;
-    class node : public lgfObject
+    class node : public lgfObject, public attrContainer
     {
     public:
         // the first output value is dependency value used to store

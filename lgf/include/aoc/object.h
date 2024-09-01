@@ -2,7 +2,7 @@
 #define AOC_OBJECTS_H
 #include <map>
 #include <string>
-
+#include <optional>
 namespace aoc
 {
     template <typename K, typename C>
@@ -17,6 +17,10 @@ namespace aoc
         }
         void add(const K &key, const C &content)
         {
+            if (!_cmap_.has_value())
+            {
+                _cmap_ = std::map<K, cursive_map<K, C>>();
+            }
             if (_content_.find(key) != _content_.end())
             {
                 return;
@@ -25,6 +29,10 @@ namespace aoc
         }
         bool has(const K &key)
         {
+            if (!_cmap_.has_value())
+            {
+                return false;
+            }
             return _cmap_.find(key) != _cmap_.end();
         }
         cursive_map<K, C> &get(const K &key)
@@ -39,22 +47,22 @@ namespace aoc
         {
             return _content_;
         }
-        C &get_value(const K &key)
-        {
-            if (has(key))
-            {
-                return _cmap_[key].get_value();
-            }
-            throw std::runtime_error("get: invalid key!");
-        }
         std::map<K, cursive_map<K, C>> &get_map()
         {
-            return _cmap_;
+            if (_cmap_.has_value())
+            {
+                return _cmap_;
+            }
+            throw std::runtime_error("get_map: map doesn't exists!");
+        }
+        bool has_map()
+        {
+            return _cmap_.has_value();
         }
 
     private:
         C _content_;
-        std::map<K, cursive_map<K, C>> _cmap_;
+        std::optional<std::map<K, cursive_map<K, C>>> _cmap_;
     };
 
     class stringRef
