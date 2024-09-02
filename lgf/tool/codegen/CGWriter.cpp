@@ -7,7 +7,14 @@ void codegen::CGWriter::write_context(astContext *ptr)
     os.indent() << "namespace " << name << "\n";
     os.indent() << "{\n";
     os.indent_level_up();
-    for (auto &it : ptr->get<astList>("_content_")->get_content())
+    write_content(ptr->get<astList>("_content_"));
+    os.decr_indent()
+        << "} // namespace " << name << "\n";
+}
+
+void codegen::CGWriter::write_content(astList *ptr)
+{
+    for (auto &it : ptr->get_content())
     {
         auto kind = it->get_kind();
         switch (kind)
@@ -28,7 +35,6 @@ void codegen::CGWriter::write_context(astContext *ptr)
             break;
         }
     }
-    os.decr_indent() << "}\n // namespace " << name << "\n";
 }
 
 void codegen::CGWriter::write_module(astModule *ptr)

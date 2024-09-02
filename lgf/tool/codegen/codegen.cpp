@@ -6,6 +6,7 @@
 #include "CGParser.h"
 #include "CGWriter.h"
 #include "CGContext.h"
+#include "CGCompiler.h"
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -13,11 +14,11 @@
 class CGQueryInfo : public aoc::app::queryInfo
 {
 public:
-    CGQueryInfo(const sfs::path &input, const sfs::path &output, size_t id = 0)
-        : input(input), output(output), qid(id) {}
+    CGQueryInfo(const sfs::path &input, const sfs::path &base_folder, const sfs::path &output, size_t id = 0)
+        : input(input), output(output), base(base_folder), qid(id) {}
 
     size_t qid = 0; // represent different query types
-    sfs::path input, output;
+    sfs::path input, output, base;
 };
 
 class CGInterface : public aoc::app::oneTimeInterface
@@ -49,38 +50,32 @@ public:
         for (auto &file : fileList)
         {
             auto ofile = create_output_file_path(file, input, output, ".h");
-            add_query<CGQueryInfo>(file, ofile);
+            add_query<CGQueryInfo>(file, input, ofile);
         }
     }
 };
 
-class CGCore : public aoc::app::appleCore
+class CGCore : public aoc::app::appleCore, public codegen::CGCompiler
 {
 public:
-    CGCore() : p(lex) {}
+    CGCore() {}
     virtual void run(aoc::app::queryInfo *info) override
     {
         auto query = dynamic_cast<CGQueryInfo *>(info);
         auto input = query->input;
         auto output = query->output;
-        auto buf = io.load_file_to_string_buffer(input.string());
+        if (sfs::is_directory(query->base))
+        {
+            include(query->base);
+        }
+        else
+        {
+            include(query->base.parent_path());
+        }
 
-        lex.load_stringBuf(input.string(), buf);
-        std::cout << "\033[33m[ Parsing ]: \033[0m " << input.string() << "  ...  \n";
-        codegen::CGContext ctx;
-        auto root = std::move(p.parse(&ctx));
-        std::cout << "--------------------context ------------------\n";
-        ctx.print();
-        std::cout << "--------------------end ------------------\n";
-        std::cout << "\033[33m[ writing ]: \033[0m  ...  \n";
-        io.write_string_buffer_to_file(output.string().c_str(), std::move(w.write(&ctx, root.get())));
-        std::cout << "\033[32m[   Done  ] \033[0m: exported: " << output.string() << std::endl;
+        compile(input, output);
+        pop_back_inlcude();
     }
-
-    aoc::app::IOModule io;
-    ast::lexer lex;
-    codegen::CGParser p;
-    codegen::CGWriter w;
 };
 
 class codegenApp : public aoc::app::oneShotApp

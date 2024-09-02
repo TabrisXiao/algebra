@@ -6,6 +6,7 @@
 #include "ast/parser.h"
 #include "ast/lexer.h"
 #include "CGContext.h"
+#include <filesystem>
 using namespace ast;
 namespace codegen
 {
@@ -16,6 +17,7 @@ namespace codegen
         CGParser(::ast::lexer &l) : generalParser(l) {}
         virtual ~CGParser() = default;
         std::unique_ptr<astContext> parse(CGContext *c);
+        void parse_file(CGContext *c, astContext *root);
 
         std::unique_ptr<astContext> parse_context(CGContext *c);
 

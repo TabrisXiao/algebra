@@ -106,7 +106,8 @@ namespace codegen
         {
             ctx = c;
             os.clear();
-            write_context(r);
+            auto content = r->get<astList>("_content_");
+            write_content(content);
             return os.write_to_buffer();
         }
 
@@ -114,6 +115,7 @@ namespace codegen
         {
             return ptr->get<astExpr>(key)->string();
         }
+        void write_content(astList *ptr);
         void write_op_builder(astModule *ptr);
         void write_context(astContext *ptr);
         void write_module(astModule *ptr);

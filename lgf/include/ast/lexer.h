@@ -75,6 +75,7 @@ namespace ast
             curPtr = buf.begin();
             lastLine = curPtr;
             buffer = std::move(buf);
+            line = 1;
         }
         void resetPointer(const char *ptr)
         {

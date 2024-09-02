@@ -58,7 +58,7 @@ namespace codegen
         parse_left_brace();
         CGContext::CGCGuard guard(ctx, id, symbolInfo(symbolInfo::kind_t::context));
         auto content = std::make_unique<astList>(loc());
-        while (!cur_tok().is_any(kind_t('}'), kind_t::tok_eof))
+        while (try_consume(kind_t('}')).is_fail())
         {
             auto key = parse_id();
             if (key == "module")
@@ -80,16 +80,6 @@ namespace codegen
         }
         context->add("_content_", std::move(content));
         return std::move(context);
-    }
-
-    std::unique_ptr<astContext> CGParser::parse(CGContext *ctx)
-    {
-        // return true if error
-        consume();
-        auto id = parse_id();
-        emit_error_if(id != "context", "Context must be the first keyword!");
-        auto root = std::make_unique<astContext>(loc());
-        return std::move(parse_context(ctx));
     }
 
     std::unique_ptr<astDictionary> CGParser::parse_dict(CGContext *ctx)

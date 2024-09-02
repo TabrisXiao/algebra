@@ -10,7 +10,7 @@
 namespace aoc
 {
     // messager plays a role that writing messages to the buffer it handles.
-
+    namespace sfs = std::filesystem;
     class stringBuf : public std::unique_ptr<std::string>
     {
     public:
@@ -90,7 +90,7 @@ namespace aoc
     public:
         fiostream() = default;
         virtual ~fiostream() = default;
-        stringBuf load_file_to_string_buffer(std::string filename)
+        stringBuf load_file_to_string_buffer(sfs::path filename)
         {
             auto path = std::filesystem::absolute(filename);
             ifs.open(path);
@@ -117,6 +117,7 @@ namespace aoc
             ofs.open(path);
             THROW_WHEN(!ofs.is_open(), "fiostream error: Can't open the file: " + path.string());
             ofs.write(buf.begin(), buf.size());
+            ofs.close();
         }
 
     private:

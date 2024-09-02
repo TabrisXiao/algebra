@@ -10,6 +10,10 @@ namespace ast
     public:
         generalParser() = delete;
         generalParser(lexer &lx_) : lx(lx_) {}
+        void reset()
+        {
+            curTok = lx.lex_token();
+        }
         virtual ~generalParser() = default;
 
         void emit_error(const std::string &msg)
