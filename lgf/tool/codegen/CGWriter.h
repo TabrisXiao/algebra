@@ -6,6 +6,7 @@
 #include "aoc/convention.h"
 #include "ast/ast.h"
 #include "CGContext.h"
+#include "dependency.h"
 
 using namespace ast;
 using namespace aoc;
@@ -15,7 +16,7 @@ namespace codegen
     class nodeTemplate
     {
     public:
-        nodeTemplate(astModule *m)
+        nodeTemplate(astModule *m, dependencyMap *dp)
         {
             name = m->get_name();
             parents = m->get<astList>("_parent_");
@@ -25,6 +26,7 @@ namespace codegen
             for (auto &it : parents->get_content())
             {
                 inheritStr = inheritStr + "public " + str(it.get()) + ", ";
+                dp->include(str(it.get()).c_str());
             }
             if (inheritStr.size() == 0)
             {
@@ -102,18 +104,46 @@ namespace codegen
     public:
         CGWriter() = default;
         virtual ~CGWriter() = default;
-        stringBuf write(CGContext *c, ast::astContext *r)
+        std::vector<stringBuf> convert(CGContext *c, ast::astContext *r, dependencyMap *dep, std::string base)
         {
+            baseStr = base;
+            depTable = dep;
             ctx = c;
+            depTable = dep;
             os.clear();
+            osHeader.clear();
+            dep->flush();
             auto content = r->get<astList>("_content_");
             write_content(content);
-            return os.write_to_buffer();
+
+            std::vector<stringBuf> ret;
+            ret.push_back(get_headers(r));
+            ret.push_back(os.write_to_buffer());
+            return ret;
         }
 
         std::string get_str_attr(astDictionary *ptr, const std::string &key)
         {
             return ptr->get<astExpr>(key)->string();
+        }
+        stringBuf get_headers(ast::astContext *root)
+        {
+            std::string str = "";
+            auto import = root->get<astList>("_import_");
+            if (import)
+            {
+                for (auto &it : import->get_content())
+                {
+                    str = str + "#include \"" + baseStr + "/" + it->as<astExpr>()->string() + "\"\n";
+                }
+                std::replace(str.begin(), str.end(), '\\', '/');
+            }
+            for (auto &it : depTable->get())
+            {
+                str = str + "#include \"" + it + "\"\n";
+            }
+            depTable->flush();
+            return stringBuf(std::move(str));
         }
         void write_content(astList *ptr);
         void write_op_builder(astModule *ptr);
@@ -123,8 +153,10 @@ namespace codegen
         void write_list(astList *ptr);
 
     private:
-        stringBufferProducer os;
+        stringBufferProducer os, osHeader;
         CGContext *ctx;
+        dependencyMap *depTable;
+        std::string baseStr;
     };
 
 } // namespace codegen

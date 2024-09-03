@@ -14,11 +14,11 @@
 class CGQueryInfo : public aoc::app::queryInfo
 {
 public:
-    CGQueryInfo(const sfs::path &input, const sfs::path &base_folder, const sfs::path &output, size_t id = 0)
-        : input(input), output(output), base(base_folder), qid(id) {}
+    CGQueryInfo(const sfs::path &input, const sfs::path &base_folder, const sfs::path &output, const sfs::path &obase, size_t id = 0)
+        : input(input), output(output), inputBase(base_folder), outputBase(obase), qid(id) {}
 
     size_t qid = 0; // represent different query types
-    sfs::path input, output, base;
+    sfs::path input, output, inputBase, outputBase;
 };
 
 class CGInterface : public aoc::app::oneTimeInterface
@@ -50,7 +50,7 @@ public:
         for (auto &file : fileList)
         {
             auto ofile = create_output_file_path(file, input, output, ".h");
-            add_query<CGQueryInfo>(file, input, ofile);
+            add_query<CGQueryInfo>(file, input, ofile, output);
         }
     }
 };
@@ -64,16 +64,13 @@ public:
         auto query = dynamic_cast<CGQueryInfo *>(info);
         auto input = query->input;
         auto output = query->output;
-        if (sfs::is_directory(query->base))
+        auto inputBase = query->inputBase;
+        if (!sfs::is_directory(query->inputBase))
         {
-            include(query->base);
+            inputBase = query->inputBase.parent_path();
         }
-        else
-        {
-            include(query->base.parent_path());
-        }
-
-        compile(input, output);
+        include(inputBase);
+        compile(input, output, query->outputBase);
         pop_back_inlcude();
     }
 };

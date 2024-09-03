@@ -29,7 +29,7 @@ namespace lgf
         virtual std::string represent() { return get_sid() + " " + name; }
     };
 
-    class declOp : public node, public normalizer, public identiferInterface
+    class declOp : public node, public normalizer, public identifier
     {
     public:
         declOp() : node("declOp") {}
@@ -93,7 +93,7 @@ namespace lgf
 
     //----------------------------------------
 
-    class cstDeclOp : public lgf::node, public identiferInterface
+    class cstDeclOp : public lgf::node, public identifier
     {
     public:
         cstDeclOp() { mark_status(eIdenticalRemovable); };

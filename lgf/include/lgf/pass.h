@@ -58,11 +58,11 @@ namespace lgf
         }
     };
 
-    class identiferInterface
+    class identifier
     {
     public:
-        identiferInterface() = default;
-        virtual ~identiferInterface() = default;
+        identifier() = default;
+        virtual ~identifier() = default;
         symbolID get_uid_for_tree(node *op)
         {
             std::string id = op->get_sid();
@@ -70,7 +70,7 @@ namespace lgf
             std::vector<std::string> vec;
             for (auto i = 0; i < op->get_input_size(); i++)
             {
-                if (auto n = dynamic_cast<identiferInterface *>(op->input(i)))
+                if (auto n = dynamic_cast<identifier *>(op->input(i)))
                     vec.push_back(n->get_uid().value());
             }
             if (op->is_commutable())
@@ -97,9 +97,9 @@ namespace lgf
         // static function can be used to test if two nodes are equivalent.
         static bool is_equivalent(node *a, node *b)
         {
-            if (auto ia = dynamic_cast<identiferInterface *>(a))
+            if (auto ia = dynamic_cast<identifier *>(a))
             {
-                if (auto ib = dynamic_cast<identiferInterface *>(b))
+                if (auto ib = dynamic_cast<identifier *>(b))
                 {
                     return ia->get_uid() == ib->get_uid();
                 }

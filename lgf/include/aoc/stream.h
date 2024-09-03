@@ -106,7 +106,7 @@ namespace aoc
             ifs.close();
             return std::move(buf);
         }
-        void write_string_buffer_to_file(const char *filename, stringBuf &buf)
+        void write_string_buffer_to_file(const char *filename, std::vector<stringBuf> &bufChain)
         {
             auto path = std::filesystem::absolute(filename);
             // create file if not exist
@@ -116,7 +116,10 @@ namespace aoc
             }
             ofs.open(path);
             THROW_WHEN(!ofs.is_open(), "fiostream error: Can't open the file: " + path.string());
-            ofs.write(buf.begin(), buf.size());
+            for (auto &buf : bufChain)
+            {
+                ofs.write(buf.begin(), buf.size());
+            }
             ofs.close();
         }
 

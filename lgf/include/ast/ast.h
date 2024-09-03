@@ -18,7 +18,8 @@ namespace ast
             list,
             expr,
             module,
-            context
+            context,
+            import,
         };
         astNode(location &l, const kind k) : k_(k), loc(l) {}
         virtual ~astNode() = default;
@@ -42,7 +43,13 @@ namespace ast
             data.push_back(std::move(ptr));
         }
         template <typename T>
-        T *get() { return dynamic_cast<T *>(data.back().get()); }
+        T *get(size_t i = 0)
+        {
+            if (i < data.size())
+                dynamic_cast<T *>(data[i].get());
+            else
+                return nullptr;
+        }
         std::vector<std::unique_ptr<astNode>> &get_content() { return data; }
         size_t size() const { return data.size(); }
 

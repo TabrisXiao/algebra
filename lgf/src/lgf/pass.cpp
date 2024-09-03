@@ -80,7 +80,7 @@ resultCode passBase::apply_reduce_once(painter &p, graph *g)
   std::queue<node *> q;
   for (auto op : g->get_nodes())
   {
-    if (op->is_deprecate() || op->get_input_size() != 0 || dynamic_cast<identiferInterface *>(op) == nullptr)
+    if (op->is_deprecate() || op->get_input_size() != 0 || dynamic_cast<identifier *>(op) == nullptr)
       continue;
     q.push(op);
   }
@@ -100,7 +100,7 @@ resultCode passBase::apply_reduce_once(painter &p, graph *g)
     {
       if (op == top || op->is_deprecate() || op->get_sid() != id)
         continue;
-      auto cuid = op->dyn_cast<identiferInterface>()->get_uid();
+      auto cuid = op->dyn_cast<identifier>()->get_uid();
       if (cuid == id)
       {
         p.replace_op(op, top);
@@ -112,7 +112,7 @@ resultCode passBase::apply_reduce_once(painter &p, graph *g)
     for (auto &h : top->get_user_handles())
     {
       auto user = h.get_link_node();
-      if (user->is_deprecate() || user->is_explored() || user->isa<identiferInterface>())
+      if (user->is_deprecate() || user->is_explored() || user->isa<identifier>())
         continue;
       q.push(user);
     }

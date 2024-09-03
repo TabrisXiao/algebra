@@ -8,7 +8,7 @@
 namespace lgf::math
 {
 
-    class mathOp : public node, public identiferInterface
+    class mathOp : public node, public identifier
     {
     public:
         mathOp(sid_t name) : node(name) { mark_status(eIdenticalRemovable); }

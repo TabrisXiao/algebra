@@ -16,8 +16,6 @@ namespace codegen
         using kind = ::ast::token::kind;
         CGParser(::ast::lexer &l) : generalParser(l) {}
         virtual ~CGParser() = default;
-        std::unique_ptr<astContext> parse(CGContext *c);
-        void parse_file(CGContext *c, astContext *root);
 
         std::unique_ptr<astContext> parse_context(CGContext *c);
 

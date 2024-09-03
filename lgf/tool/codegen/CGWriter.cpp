@@ -39,9 +39,14 @@ void codegen::CGWriter::write_content(astList *ptr)
 
 void codegen::CGWriter::write_module(astModule *ptr)
 {
-    nodeTemplate a(ptr);
-    a.write(os);
-    //
+    auto list = ptr->get<astList>("_attr_");
+    auto mtype = list->get<astExpr>()->string();
+    if (mtype == "node")
+    {
+        depTable->include("node");
+        nodeTemplate a(ptr, depTable);
+        a.write(os);
+    }
 }
 
 void codegen::CGWriter::write_op_builder(astModule *ptr)
