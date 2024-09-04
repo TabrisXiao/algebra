@@ -138,6 +138,20 @@ namespace ast
             consume(token::kind('\''));
         }
 
+        std::string parse_literal_until(std::string c)
+        {
+            curTok = lx.read_literal_upto(c);
+            // std::cout << "------cur str: " << curTok.get_string() << std::endl;
+            auto str = curTok.get_string();
+            consume();
+            return str;
+        }
+
+        char get_cur_char()
+        {
+            return lx.get_cur_char();
+        }
+
         std::string parse_id()
         {
             emit_error_if(!curTok.is(token::tok_identifier), "Expecting an identifier.");

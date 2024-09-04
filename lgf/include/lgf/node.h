@@ -40,7 +40,7 @@ namespace lgf
         virtual std::string represent()
         {
             printer p;
-            p << value_rep() << " = " << get_sid() << ": " << inputs_sid();
+            p << value_rep() << " = " << get_sid() << ": " << default_inputs_represent() << default_attr_represent();
             return p.dump();
         }
 
@@ -387,7 +387,7 @@ namespace lgf
 
         void set_parent_graph(graph *g) { graph_ = g; }
 
-        virtual std::string inputs_sid();
+        virtual std::string default_inputs_represent();
 
         bool is_dependency_fullfilled()
         {

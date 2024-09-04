@@ -35,10 +35,25 @@ namespace ast
             tok_integer = -3,
             tok_float = -4,
             tok_scope = -5,
+            tok_literal = -6, // a special token for holding string literal
         };
         token() = default;
         token(kind k, aoc::stringRef &str) : _k(k), ref(str) {}
         ~token() = default;
+        bool operator==(const token &rhs) const
+        {
+            if (_k != rhs._k)
+                return false;
+            if (_k == tok_identifier)
+                return ref == rhs.ref;
+            if (_k == tok_integer || _k == tok_float)
+                return ref == rhs.ref;
+            return true;
+        }
+        bool operator!=(const token &rhs) const
+        {
+            return !(*this == rhs);
+        }
 
         kind get_kind() const { return _k; }
         aoc::stringRef get_ref() { return ref; }
@@ -90,6 +105,31 @@ namespace ast
         {
             if (condition)
                 emit_error(msg);
+        }
+
+        token read_literal_upto(std::string check)
+        {
+            const char *start = curPtr;
+            char c = check[0];
+            while (*curPtr != 0)
+            {
+                if (*curPtr == '\n' || *curPtr == '\r')
+                {
+                    line++;
+                    lastLine = curPtr;
+                }
+                if (*curPtr == c)
+                {
+                    if (std::strncmp(curPtr, check.c_str(), check.size()) == 0)
+                    {
+                        curPtr += check.size();
+                        return token(token::tok_literal, aoc::stringRef(start, curPtr - start));
+                    }
+                }
+                curPtr++;
+            }
+            emit_error("no match found for literal: " + check);
+            return token(token::tok_eof, aoc::stringRef());
         }
 
         token lex_token()
@@ -234,6 +274,11 @@ namespace ast
         charLocation loc()
         {
             return charLocation(line, size_t(curPtr) - size_t(lastLine), locPath);
+        }
+
+        char get_cur_char()
+        {
+            return *curPtr;
         }
 
         void skip_line()

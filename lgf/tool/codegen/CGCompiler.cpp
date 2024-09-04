@@ -19,7 +19,13 @@ std::unique_ptr<astContext> codegen::CGCompiler::parse(CGContext *ctx, sfs::path
 void codegen::CGCompiler::parse_file(CGContext *ctx, CGParser *p, astContext *root)
 {
     p->reset();
+    auto id = p->parse_id();
+    if (id != "uid")
+    {
+        p->emit_error("Expecting UID at beginning of file");
+    }
     auto content = root->get<astList>("_content_");
+    content->add(std::make_unique<astExpr>(p->loc(), p->parse_id()));
     while (!p->cur_tok().is(kind_t::tok_eof))
     {
         auto id = p->parse_id();
@@ -61,7 +67,7 @@ sfs::path codegen::CGCompiler::parse_import(CGContext *ctx, CGParser *parser)
     }
     lexer newlex;
     auto buffer = load_file_to_string_buffer(fp.string());
-    newlex.load_stringBuf(p.string(), buffer);
+    newlex.load_stringBuf(fp.string(), buffer);
     include(fp.parent_path());
     CGParser np(newlex);
 

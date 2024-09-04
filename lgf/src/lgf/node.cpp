@@ -9,7 +9,7 @@ void value::print() { global::stream::getInstance() << represent() << "\n"; };
 
 //////////////////////////////////////////////////////
 
-std::string node::inputs_sid()
+std::string node::default_inputs_represent()
 {
     if (get_input_size() == 0)
         return "";

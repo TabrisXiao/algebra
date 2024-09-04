@@ -79,6 +79,22 @@ namespace lgf
             return dict_attr.find(id) != dict_attr.end();
         }
 
+        std::string default_attr_represent()
+        {
+            std::string res = "";
+            if (dict_attr.empty())
+                return res;
+            for (auto &d : dict_attr)
+            {
+                res += d.first + ": ";
+                res += d.second.represent();
+                res += ", ";
+            }
+            res.substr(0, res.size() - 2);
+            res = "{" + res + "}";
+            return res;
+        }
+
         std::map<sid_t, attribute> &get_dict()
         {
             return dict_attr;

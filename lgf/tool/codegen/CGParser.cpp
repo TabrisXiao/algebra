@@ -44,6 +44,52 @@ namespace codegen
         }
         return;
     }
+
+    void CGParser::parse_module_region(CGContext *ctx, dictData *ptr)
+    {
+        parse_left_brace();
+        while (try_consume(kind_t('}')).is_fail())
+        {
+            auto key = parse_id();
+            parse_colon();
+            if (key == "define")
+            {
+                ptr->add("_extra_", std::move(parse_literal()));
+                continue;
+            }
+            switch (cur_tok().get_kind())
+            {
+            case kind_t('{'):
+            {
+                CGContext::CGCGuard guard(ctx, key, symbolInfo(symbolInfo::kind_t::region));
+                auto subdict = std::make_unique<astDictionary>(loc());
+                parse_dict_data(ctx, dynamic_cast<dictData *>(subdict.get()));
+                ptr->add(key, std::move(subdict));
+                break;
+            }
+            case kind_t('['):
+            {
+                CGContext::CGCGuard guard(ctx, key, symbolInfo(symbolInfo::kind_t::region));
+                ptr->add(key, std::move(parse_list(ctx)));
+                break;
+            }
+            case kind_t('<'):
+            {
+                CGContext::CGCGuard guard(ctx, key, symbolInfo(symbolInfo::kind_t::region));
+                ptr->add(key, std::move(parse_set(ctx)));
+                break;
+            }
+            case kind_t::tok_identifier:
+                ctx->create_var(key);
+                ptr->add(key, std::move(std::make_unique<astExpr>(loc(), parse_id())));
+                break;
+            default:
+                emit_error("Unknown dictionary item!");
+                break;
+            }
+        }
+        return;
+    }
     std::unique_ptr<astContext> CGParser::parse_context(CGContext *ctx)
     {
         // assuming key word 'context' is already parsed and the current char is '<' or a char.
@@ -180,7 +226,26 @@ namespace codegen
 
         node->add("_attr_", std::move(attrs));
         node->add("_parent_", std::move(inherit));
-        parse_dict_data(ctx, dynamic_cast<dictData *>(node.get()));
+        parse_module_region(ctx, dynamic_cast<dictData *>(node.get()));
         return std::move(node);
     }
+}
+
+std::unique_ptr<astExpr> codegen::CGParser::parse_literal()
+{
+    parse_less_than();
+    if (!cur_tok().is(kind_t('{')))
+    {
+        emit_error("Token '{' missing!");
+    }
+    std::string str = parse_literal_until("}>");
+
+    str = str.substr(0, str.size() - 2);
+    char lastChar = str[str.size() - 1];
+    while (lastChar == ' ' || lastChar == '\n' || lastChar == '\t')
+    {
+        str.pop_back();
+        lastChar = str[str.size() - 1];
+    }
+    return std::make_unique<astExpr>(loc(), str);
 }

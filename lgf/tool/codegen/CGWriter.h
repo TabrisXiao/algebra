@@ -23,6 +23,7 @@ namespace codegen
             args = m->get<astDictionary>("input");
             output = m->get<astExpr>("output");
             alias = m->get<astExpr>("ir_name");
+            extra = m->get<astExpr>("_extra_");
             for (auto &it : parents->get_content())
             {
                 inheritStr = inheritStr + "public " + str(it.get()) + ", ";
@@ -88,6 +89,12 @@ namespace codegen
             os.decr_indent() << "}\n";
             // -----------
 
+            // extra definition goes here
+            if (extra)
+            {
+                os << extra->string() << "\n";
+            }
+
             os.decr_indent() << "};\n";
         }
 
@@ -98,6 +105,7 @@ namespace codegen
         astDictionary *args;
         astExpr *output = nullptr;
         astList *parents;
+        astExpr *extra = nullptr;
     };
     class CGWriter
     {
@@ -114,10 +122,19 @@ namespace codegen
             osHeader.clear();
             dep->flush();
             auto content = r->get<astList>("_content_");
+            std::string uid;
+            for (auto &ptr : content->get_content())
+            {
+                if (ptr->get_kind() != astNode::expr)
+                    continue;
+                uid = ptr->as<astExpr>()->string();
+            }
+            if (uid.size() == 0)
+                std::runtime_error("UID guard not found!");
             write_content(content);
-
+            os << "#endif // " << uid << "\n";
             std::vector<stringBuf> ret;
-            ret.push_back(get_headers(r));
+            ret.push_back(get_headers(r, uid));
             ret.push_back(os.write_to_buffer());
             return ret;
         }
@@ -126,9 +143,9 @@ namespace codegen
         {
             return ptr->get<astExpr>(key)->string();
         }
-        stringBuf get_headers(ast::astContext *root)
+        stringBuf get_headers(ast::astContext *root, std::string uid)
         {
-            std::string str = "";
+            std::string str = "#ifndef " + uid + "\n#define " + uid + "\n";
             auto import = root->get<astList>("_import_");
             if (import)
             {

@@ -34,6 +34,10 @@ namespace codegen
 
         std::unique_ptr<astModule> parse_module(CGContext *c);
 
+        void parse_module_region(CGContext *ctx, dictData *ptr);
+
+        std::unique_ptr<astExpr> parse_literal();
+
         bool check_if_duplicate(std::unique_ptr<astList> &node, std::string &item)
         {
             for (auto &it : node->get_content())
