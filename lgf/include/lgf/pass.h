@@ -115,8 +115,8 @@ namespace lgf
         virtual ~passBase() = default;
         // the return value is not defined yet.
         virtual resultCode run() = 0;
-        graph *get_graph() { return g; }
-        void set_work_graph(graph *op) { g = op; }
+        region *get_region() { return g; }
+        void set_work_region(region *op) { g = op; }
         // addRewriter will create a rewriter using the arguments;
         template <typename T, typename... ARGS>
         void add_rewriter(ARGS... arg)
@@ -125,35 +125,35 @@ namespace lgf
             rewriters.push_back(std::move(ptr));
         }
 
-        resultCode apply_reduce_once(painter &p, graph *g);
+        resultCode apply_reduce_once(painter &p, region *g);
 
-        resultCode apply_rewriter_once(painter &p, graph *g);
-        resultCode apply_rewriter_greedy(painter &p, graph *g);
+        resultCode apply_rewriter_once(painter &p, region *g);
+        resultCode apply_rewriter_greedy(painter &p, region *g);
 
-        resultCode apply_rewriter_and_reduce_greedy(painter &p, graph *g);
+        resultCode apply_rewriter_and_reduce_greedy(painter &p, region *g);
 
-        resultCode walk_apply_rewriter_once(painter &p, graph *g, bool deepwalk = 0);
+        resultCode walk_apply_rewriter_once(painter &p, region *g, bool deepwalk = 0);
 
         // Translation is a special method to apply rewriters,
-        // It walk only once through a graph in the dependency order
+        // It walk only once through a region in the dependency order
         // and apply all the applicable rewriters to the ops.
         // So this method is only safe for the case that all rewriters
         // are order free.
-        bool translation(painter &p, graph *g);
+        bool translation(painter &p, region *g);
 
     public:
         std::vector<std::unique_ptr<rewriterBase>> rewriters;
         std::string _pass_name;
         bool rewriteHappen = 0;
-        graph *g = nullptr;
+        region *g = nullptr;
     };
 
     class passManager
     {
     public:
         passManager() = default;
-        passManager(graph *op) { reg = op; }
-        void set_work_region(graph *op) { reg = op; }
+        passManager(region *op) { reg = op; }
+        void set_work_region(region *op) { reg = op; }
         void enable_print_after_pass() { bPrintAfterPass = 1; }
         void enable_print_before_pass() { bPrintBeforePass = 1; }
         void set_log_level(int level = 0)
@@ -183,8 +183,8 @@ namespace lgf
                 bPrintForEachStep = 1;
             }
         }
-        void init(graph *op) { reg = op; }
-        void validation(graph *g);
+        void init(region *op) { reg = op; }
+        void validation(region *g);
 
         void run()
         {
@@ -221,11 +221,11 @@ namespace lgf
             }
         }
 
-        void add_pass(std::unique_ptr<passBase> ps, graph *g = nullptr)
+        void add_pass(std::unique_ptr<passBase> ps, region *g = nullptr)
         {
             if (!g)
                 g = reg;
-            ps->set_work_graph(dynamic_cast<graph *>(g));
+            ps->set_work_region(dynamic_cast<region *>(g));
             passes.push_back(std::move(ps));
         }
         void flush()
@@ -239,7 +239,7 @@ namespace lgf
         bool bPrintInitialIR = 0;
         bool bPrintFinalIR = 0;
         bool bPrintForEachStep = 0;
-        graph *reg = nullptr;
+        region *reg = nullptr;
         std::string name = "";
     };
 

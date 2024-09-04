@@ -2,10 +2,10 @@
 #include "lgf/pass.h"
 using namespace lgf;
 
-resultCode passBase::apply_rewriter_once(painter &p, graph *g)
+resultCode passBase::apply_rewriter_once(painter &p, region *g)
 {
   resultCode result;
-  p.goto_graph(g);
+  p.goto_region(g);
   for (auto ptr = rewriters.begin(); ptr != rewriters.end(); ptr++)
   {
     std::vector<node *> nodes = g->get_nodes();
@@ -18,7 +18,7 @@ resultCode passBase::apply_rewriter_once(painter &p, graph *g)
       result.add((*ptr).get()->execute(p, node));
       if (node->is_deprecate())
         continue;
-      if (auto subg = dynamic_cast<graph *>(node))
+      if (auto subg = dynamic_cast<region *>(node))
       {
         result.add(apply_rewriter_once(p, subg));
       }
@@ -28,7 +28,7 @@ resultCode passBase::apply_rewriter_once(painter &p, graph *g)
 }
 //---------------------------------------------------
 
-resultCode passBase::apply_rewriter_greedy(painter &p, graph *g)
+resultCode passBase::apply_rewriter_greedy(painter &p, region *g)
 {
   auto result = apply_rewriter_once(p, g);
   g->clean();
@@ -52,10 +52,10 @@ resultCode passBase::apply_rewriter_greedy(painter &p, graph *g)
 }
 //---------------------------------------------------
 
-resultCode passBase::walk_apply_rewriter_once(painter &p, graph *g,
+resultCode passBase::walk_apply_rewriter_once(painter &p, region *g,
                                               bool deepWalk)
 {
-  p.goto_graph(g);
+  p.goto_region(g);
   resultCode result;
   g->walk(
       [&](node *op)
@@ -72,10 +72,10 @@ resultCode passBase::walk_apply_rewriter_once(painter &p, graph *g,
 }
 
 //---------------------------------------------------
-resultCode passBase::apply_reduce_once(painter &p, graph *g)
+resultCode passBase::apply_reduce_once(painter &p, region *g)
 {
   resultCode result;
-  p.goto_graph(g);
+  p.goto_region(g);
   g->assign_id();
   std::queue<node *> q;
   for (auto op : g->get_nodes())
@@ -94,7 +94,7 @@ resultCode passBase::apply_reduce_once(painter &p, graph *g)
       continue;
     auto id = top->get_sid();
 
-    // checking if current op has the same uid with the rest nodes in the graph.
+    // checking if current op has the same uid with the rest nodes in the region.
     // if so, replace the later op by current op.
     for (auto op : g->get_nodes())
     {
@@ -122,7 +122,7 @@ resultCode passBase::apply_reduce_once(painter &p, graph *g)
 }
 
 //---------------------------------------------------
-resultCode passBase::apply_rewriter_and_reduce_greedy(painter &p, graph *g)
+resultCode passBase::apply_rewriter_and_reduce_greedy(painter &p, region *g)
 {
   auto result = apply_rewriter_once(p, g);
   result.add(apply_reduce_once(p, g));
@@ -148,7 +148,7 @@ resultCode passBase::apply_rewriter_and_reduce_greedy(painter &p, graph *g)
 }
 
 //---------------------------------------------------
-bool passBase::translation(painter &p, graph *g)
+bool passBase::translation(painter &p, region *g)
 {
   g->walk(
       [&](node *op)
@@ -165,14 +165,14 @@ bool passBase::translation(painter &p, graph *g)
 }
 //---------------------------------------------------
 
-void passManager::validation(graph *g)
+void passManager::validation(region *g)
 {
   auto nodes = g->get_nodes();
   for (auto &node : nodes)
   {
     if (node->is_deprecate())
       continue;
-    if (auto subg = dynamic_cast<graph *>(node))
+    if (auto subg = dynamic_cast<region *>(node))
     {
       validation(subg);
     }

@@ -25,7 +25,7 @@ namespace lgf::math
       p.replace_op(op, op->input(0));
       return resultCode::success();
     }
-    auto g = op->get_parent_graph();
+    auto g = op->get_parent_region();
 
     // g->print();
     result.add(flatten_same_type_inputs<productOp>(op));

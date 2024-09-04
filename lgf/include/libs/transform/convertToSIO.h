@@ -89,7 +89,7 @@ namespace lgf::transform
         convertToSIOPass() : passBase("convertToSIOPass") {}
         virtual resultCode run() final
         {
-            painter p(get_graph());
+            painter p(get_region());
             add_rewriter<convertCstToSIO>();
             add_rewriter<convertToSIORewriter<lgf::declOp, sio::symbolOp>>();
             add_rewriter<convertToSIORewriter<lgf::math::sumOp, sio::sumOp>>();
@@ -103,7 +103,7 @@ namespace lgf::transform
             add_rewriter<convertToSIORewriter<math::partialDifferentiateOp, sio::partialD>>();
             add_rewriter<convertToSIORewriter<math::differentiateOp, sio::differentialOp>>();
 
-            return apply_rewriter_greedy(p, get_graph());
+            return apply_rewriter_greedy(p, get_region());
         }
     };
 

@@ -13,22 +13,22 @@ namespace lgf
         normalizationPass(const char *name = "normalization") : passBase(name) {}
         virtual resultCode run()
         {
-            painter p(get_graph());
+            painter p(get_region());
             add_rewriter<normalizeRewriter>();
-            // remove_unused_ops(get_graph());
-            remove_identical_ops(p, get_graph());
-            resultCode code = apply_rewriter_greedy(p, get_graph());
-            remove_unused_ops(get_graph());
-            remove_identical_ops(p, get_graph());
-            get_graph()->clean();
+            // remove_unused_ops(get_region());
+            remove_identical_ops(p, get_region());
+            resultCode code = apply_rewriter_greedy(p, get_region());
+            remove_unused_ops(get_region());
+            remove_identical_ops(p, get_region());
+            get_region()->clean();
             return code;
         }
 
         void remove_trivial_op(node *op);
 
-        void remove_unused_ops(graph *g);
+        void remove_unused_ops(region *g);
 
-        bool remove_identical_ops(painter p, graph *g);
+        bool remove_identical_ops(painter p, region *g);
     };
 
     std::unique_ptr<passBase>

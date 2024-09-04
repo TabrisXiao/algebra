@@ -19,10 +19,10 @@
 #include "utils.h"
 #include "attribute.h"
 
-// logic graph frameworks
+// logic region frameworks
 namespace lgf
 {
-    class graph;
+    class region;
 
     typedef size_t id_t;
     class node : public lgfObject, public attrContainer
@@ -31,10 +31,10 @@ namespace lgf
         // the first output value is dependency value used to store
         // the dependency inform that don't have value connections
         node() { _v_ = std::make_unique<value>(); };
-        node(std::string id, graph *g = nullptr) : lgfObject(id)
+        node(std::string id, region *g = nullptr) : lgfObject(id)
         {
             _v_ = std::make_unique<value>();
-            graph_ = g;
+            reg = g;
         };
         virtual ~node() = default;
         virtual std::string represent()
@@ -348,7 +348,7 @@ namespace lgf
         bool is_commutable() { return bCommutable; }
         void set_commutable(bool a) { bCommutable = a; }
 
-        // this function only valid for tree structure graph.
+        // this function only valid for tree structure region.
         // std::string get_uid()
         // {
         //     std::string id = get_sid();
@@ -383,9 +383,9 @@ namespace lgf
                 return code;
         }
 
-        graph *get_parent_graph() { return graph_; }
+        region *get_parent_region() { return reg; }
 
-        void set_parent_graph(graph *g) { graph_ = g; }
+        void set_parent_region(region *g) { reg = g; }
 
         virtual std::string default_inputs_represent();
 
@@ -421,47 +421,47 @@ namespace lgf
         {
             return status.bit_check(s);
         }
+        // create
+        void create_region(int n = 1);
+        region &get_region(int i = 0)
+        {
+            if (i >= regions.size())
+                throw std::runtime_error("get_region: index out of range");
+            return regions[i];
+        }
+        std::vector<region> &get_regions() { return regions; }
+        size_t get_region_size() { return regions.size(); }
+
+        void set_context(LGFContext *c) { ctx = c; }
+        LGFContext *get_context() { return ctx; }
 
     private:
         std::unique_ptr<value> _v_;
+        std::vector<region> regions;
         // this function is used to determine if this node contained
         // a region. If an op contained a region, it should override
         // this function.
-        // virtual graph* getSubgraph(){ return nullptr;}
+        // virtual region* getSubregion(){ return nullptr;}
         bool bExplored = 0;
         bool bCommutable = 0;
         // this is a member used to remove the node efficiently.
-        // Should be used solely for removing process in graph.
+        // Should be used solely for removing process in region.
         bool bDeprecate = 0;
         // this status is added for customized usage.
         bitCode<size_t> status;
         edgeBundle inputs;
         edgeBundle users;
-        graph *graph_ = nullptr;
+        LGFContext *ctx = nullptr;
+        region *reg = nullptr;
     };
 
-    class graph : public node
+    class region
     {
     public:
-        graph() = default;
-
-        graph(std::string id, graph *pg = nullptr)
-            : node(id, pg) {}
-
-        virtual void print() override;
-
-        virtual std::string represent() override { return ""; }
-
-        // return how many nodes graph contained
+        region(node *p) : parent(p) {};
+        // return how many nodes region contained
         size_t get_node_size() { return nodes.size(); }
-
-        LGFContext &get_context() { return ctx; }
-
-        // note that this function will not take care of the inputs and users
-        // replacement. It only replace the node in the nodes container.
-        void replace_node(node *old, node *new_op);
-
-        // A breadth-first walk function that is graph modification safe.
+        // A breadth-first walk function that is region modification safe.
         // Call the callable at the begining of visiting each vertex.
         // The callable should return void.
         // The fn will be executed on each node at most once.
@@ -508,7 +508,7 @@ namespace lgf
 
                 if (deepWalk)
                 {
-                    if (auto g = dynamic_cast<graph *>(v))
+                    if (auto g = dynamic_cast<region *>(v))
                     {
                         g->walk(fn, 1);
                     }
@@ -522,12 +522,7 @@ namespace lgf
             clean();
             return;
         }
-
-        graph *get_graph() { return dynamic_cast<graph *>(this); }
-
-        virtual void print_graph(int &id_start);
-
-        void assign_id(int n = 0);
+        virtual void print();
         std::vector<node *>::iterator insert_after(node *op, node *new_op)
         {
             auto iter = std::find(nodes.begin(), nodes.end(), op);
@@ -541,17 +536,27 @@ namespace lgf
                 return nodes.insert(iter + 1, new_op);
             }
         }
-
+        // note that this function will not take care of the inputs and users
+        // replacement. It only replace the node in the nodes container.
+        void replace_node(node *old, node *new_op);
+        virtual void print_region(int &id_start);
         // clean will remove all nodes marked as is_deprecate;
         // return 0 if no ops got removed. Otherwise return 1;
         bool clean();
-
         std::vector<node *> &get_nodes() { return nodes; }
+        void assign_id(int n = 0);
+        node *get_parent() { return parent; }
+        void reset_walk_status()
+        {
+            for (auto &n : nodes)
+            {
+                n->reset_walk_status();
+            }
+        }
 
     private:
         std::vector<node *> nodes;
-        LGFContext ctx;
-        // how many nodes contained in this graph
+        node *parent = nullptr;
     };
 
 }

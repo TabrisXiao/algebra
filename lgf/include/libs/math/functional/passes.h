@@ -27,13 +27,13 @@ namespace lgf::math
     CalculusPass() : passBase("CalculusPass") {}
     virtual resultCode run() final
     {
-      painter p(get_graph());
+      painter p(get_region());
       add_rewriter<ChainRuleRewriter>();
       add_rewriter<analyticFuncDerivativeRewriter>();
       add_rewriter<unitRewriter>();
       add_rewriter<zeroRewriter>();
       add_rewriter<normalizeRewriter>();
-      auto result = apply_rewriter_greedy(p, get_graph());
+      auto result = apply_rewriter_greedy(p, get_region());
       return result;
     }
   };

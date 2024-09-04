@@ -31,20 +31,23 @@ namespace lgf
         }
     }
 
-    void normalizationPass::remove_unused_ops(graph *g)
+    void normalizationPass::remove_unused_ops(region *g)
     {
         for (auto &op : g->get_nodes())
         {
-            if (auto subg = dynamic_cast<graph *>(op))
+            if (op->get_region_size() != 0)
             {
-                remove_unused_ops(subg);
+                for (auto &reg : op->get_regions())
+                {
+                    remove_unused_ops(&reg);
+                }
             }
             else
                 remove_trivial_op(op);
         }
     }
 
-    bool normalizationPass::remove_identical_ops(painter p, graph *g)
+    bool normalizationPass::remove_identical_ops(painter p, region *g)
     {
         // using breadth first walk to remove identical ops
         // to avoid the case that replace of the early ops makes the later

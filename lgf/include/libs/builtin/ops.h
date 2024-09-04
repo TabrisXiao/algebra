@@ -13,10 +13,13 @@ namespace lgf
         eIdenticalRemovable = 1,
     };
 
-    class moduleOp : public graph
+    class moduleOp : public node
     {
     public:
-        moduleOp() : graph("module") {}
+        moduleOp() : node("module")
+        {
+            create_region();
+        }
         ~moduleOp() {}
         static moduleOp *build(LGFContext *ctx, sid_t id)
         {
@@ -245,7 +248,7 @@ namespace lgf
         }
     };
 
-    class funcDefineOp : public graph
+    class funcDefineOp : public node
     {
     public:
         class funcArgOp : public node
@@ -262,7 +265,7 @@ namespace lgf
             }
         };
 
-        funcDefineOp() : graph("define func:")
+        funcDefineOp() : node("define func:")
         {
             mark_status(eNonTrivial);
         }

@@ -44,11 +44,11 @@ namespace lgi
 
     lgf::painter &get_painter() { return p; }
     lgf::LGFContext &get_context() { return ctx; }
-    void print() { g.print(); }
+    void print() { module.print(); }
 
     void compile()
     {
-      pm.set_work_region(&g);
+      pm.set_work_region(&(module.get_region(0)));
       pm.add_pass(lgf::math::createCalculusPass());
       // pm.add_pass(lgf::createAlgebraNormalizationPass());
       pm.name = "compile";
@@ -63,8 +63,8 @@ namespace lgi
       pm.name = "export";
       pm.add_pass(lgf::transform::createConvertToSIOPass());
       pm.run();
-      lgf::sio::export2latex ex(&g);
-      g.assign_id();
+      lgf::sio::export2latex ex(&(module.get_region(0)));
+      module.get_region(0).assign_id();
       ex.run_on_op();
     }
 
@@ -74,10 +74,10 @@ namespace lgi
     canvas()
     {
       p.set_context(&ctx);
-      p.goto_graph(&g);
+      p.goto_region(&(module.get_region(0)));
     }
     inline static canvas *gcanvas = nullptr;
-    lgf::moduleOp g;
+    lgf::moduleOp module;
     lgf::LGFContext ctx;
     lgf::painter p;
     lgf::passManager pm;

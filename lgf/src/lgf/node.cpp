@@ -41,9 +41,17 @@ size_t node::get_input_size()
     return inputs.size();
 }
 
+void node::create_region(int n)
+{
+    for (auto i = 0; i < n; i++)
+    {
+        regions.emplace_back(region(this));
+    }
+}
+
 //////////////////////////////////////////////////////
 
-void graph::replace_node(node *old, node *new_op)
+void region::replace_node(node *old, node *new_op)
 {
     auto iter = std::find(nodes.begin(), nodes.end(), old);
     if (iter == nodes.end())
@@ -51,10 +59,10 @@ void graph::replace_node(node *old, node *new_op)
     *iter = new_op;
 }
 
-void graph::print()
+void region::print()
 {
     global::stream::getInstance().printIndent();
-    std::string code = represent();
+    std::string code = "";
     // add space if the represent is not empty
     // {} no reprsent, shoudn't have space
     // module {}, have represent "module", should have space
@@ -64,12 +72,12 @@ void graph::print()
     global::stream::getInstance() << code;
     int id = 0;
     if (nodes.size() != 0)
-        print_graph(id);
+        print_region(id);
     global::stream::getInstance() << "\n";
 }
 //---------------------------------------------------
 
-void graph::print_graph(int &id_start)
+void region::print_region(int &id_start)
 {
     global::stream::getInstance() << "{\n";
     global::stream::getInstance().incrIndentLevel();
@@ -85,7 +93,7 @@ void graph::print_graph(int &id_start)
     global::stream::getInstance() << "}";
 }
 
-void graph::assign_id(int n0)
+void region::assign_id(int n0)
 {
     int n = n0;
     walk([&n](node *op)
@@ -96,7 +104,7 @@ void graph::assign_id(int n0)
 }
 //---------------------------------------------------
 
-bool graph::clean()
+bool region::clean()
 {
     bool check = 0;
     for (auto iter = nodes.begin(); iter != nodes.end();)
@@ -108,9 +116,12 @@ bool graph::clean()
             check = 1;
             delete op;
         }
-        else if (auto g = dynamic_cast<graph *>(op))
+        else if (op->get_region_size() != 0)
         {
-            check = g->clean();
+            for (auto &reg : op->get_regions())
+            {
+                check = reg.clean();
+            }
             iter++;
         }
         else

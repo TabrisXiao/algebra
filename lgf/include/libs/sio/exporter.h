@@ -12,11 +12,11 @@ namespace lgf::sio
     class exporterBase
     {
     public:
-        exporterBase(graph *g_) : g(g_) {}
+        exporterBase(region *g_) : g(g_) {}
 
         virtual std::string process(node *val) = 0;
 
-        void run(graph *entry);
+        void run(region *entry);
         void run() { run(g); }
 
         template <typename opTy>
@@ -36,17 +36,17 @@ namespace lgf::sio
         }
 
         global::stream &os = global::stream::getInstance();
-        graph *g = nullptr;
+        region *g = nullptr;
     };
 
     class export2latex : public exporterBase
     {
     public:
-        export2latex(graph *g_) : exporterBase(g_) {}
+        export2latex(region *g_) : exporterBase(g_) {}
 
         virtual std::string process(node *val) final;
         std::string simp_func_expression(node *val);
-        void run(graph *entry){};
+        void run(region *entry){};
         void run() { run(g); }
         void run_on_op()
         {

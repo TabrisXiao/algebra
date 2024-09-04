@@ -8,7 +8,7 @@
 #include <memory.h>
 #include <unordered_set>
 
-// abstract node graph
+// abstract node region
 
 namespace lgf
 {
@@ -22,13 +22,13 @@ namespace lgf
   public:
     struct paintPoint
     {
-      graph *g = nullptr;
+      region *reg = nullptr;
       std::vector<node *> *nodes = nullptr;
       std::vector<node *>::iterator iter = std::vector<node *>::iterator();
 
       bool is_invalid()
       {
-        if (g == nullptr || nodes == nullptr)
+        if (reg == nullptr || nodes == nullptr)
           return true;
         if (iter < nodes->begin() || iter > nodes->end())
           return true;
@@ -36,47 +36,47 @@ namespace lgf
       }
     };
     painter() = default;
-    painter(graph *g)
+    painter(region *g)
         : point({g, &(g->get_nodes()), g->get_nodes().end()}),
-          ctx(&(g->get_context())) {}
+          ctx(g->get_parent()->get_context()) {}
     painter(painter &p) : point(p.get_paintPoint()), ctx(p.get_context()) {}
     ~painter() {}
     void set_context(LGFContext *ctx_) { ctx = ctx_; }
 
-    void set_paintPoint_to_graph_begin()
+    void set_paintPoint_to_region_begin()
     {
-      point.iter = point.g->get_nodes().begin();
+      point.iter = point.reg->get_nodes().begin();
     }
     void set_paintPoint_before(node *op)
     {
-      point.g = op->get_parent_graph();
-      auto &vec = point.g->get_nodes();
+      point.reg = op->get_parent_region();
+      auto &vec = point.reg->get_nodes();
       point.iter = std::find(vec.begin(), vec.end(), op);
       if (point.iter != vec.begin())
         point.iter--;
     }
     void set_paintPoint_after(node *op)
     {
-      point.g = op->get_parent_graph();
-      auto &vec = point.g->get_nodes();
+      point.reg = op->get_parent_region();
+      auto &vec = point.reg->get_nodes();
       point.iter = std::find(vec.begin(), vec.end(), op);
       if (point.iter != vec.end())
         point.iter++;
     }
 
-    void set_paintPoint_at(graph *g, std::vector<node *> *vec,
+    void set_paintPoint_at(region *g, std::vector<node *> *vec,
                            std::vector<node *>::iterator iter)
     {
-      point.g = g;
+      point.reg = g;
       point.nodes = vec;
       point.iter = iter;
     }
 
     void reset_paintPoint()
     {
-      if (!point.g)
+      if (!point.reg)
         return;
-      point.iter = point.g->get_nodes().end();
+      point.iter = point.reg->get_nodes().end();
     }
 
     template <typename obj>
@@ -99,10 +99,10 @@ namespace lgf
     obj *paint(ARGS... args)
     {
       THROW_WHEN(point.is_invalid(), "paint point is invalid!")
-      // CHECK_CONDITION(point.g!=nullptr, "No graph associated to the painter!");
+      // CHECK_CONDITION(point.reg!=nullptr, "No region associated to the painter!");
       auto op = sketch<obj>(args...);
-      // add to graph
-      op->set_parent_graph(point.g);
+      // add to region
+      op->set_parent_region(point.reg);
       point.iter = point.nodes->insert(point.iter, op) + 1;
       return op;
     }
@@ -112,8 +112,8 @@ namespace lgf
     {
       THROW_WHEN(point.is_invalid(), "paint point is invalid!")
       auto op = sketch<obj>();
-      // add to graph
-      op->set_parent_graph(point.g);
+      // add to region
+      op->set_parent_region(point.reg);
       point.iter = point.nodes->insert(point.iter, op) + 1;
       return op;
     }
@@ -129,7 +129,7 @@ namespace lgf
       // There's no input for op1 so we can just replace
       // them directly
       op1->replace_by(op2);
-      auto &nodes = point.g->get_nodes();
+      auto &nodes = point.reg->get_nodes();
       auto iter = std::find(nodes.begin(), nodes.end(), op1);
       (*iter) = op2;
       op1->erase();
@@ -138,13 +138,13 @@ namespace lgf
     void replace_op(node *op1, node *op2)
     {
       // the replace function assume that both ops are in
-      // the same graph
+      // the same region
       if (op1 == op2)
         return;
 
-      if (op2->get_parent_graph() && op2->get_parent_graph() != point.g)
+      if (op2->get_parent_region() && op2->get_parent_region() != point.reg)
       {
-        throw std::runtime_error("replace_op: ops are in different graphs!");
+        throw std::runtime_error("replace_op: ops are in different regions!");
       }
       // because the op1 is gonna replaced by op2, so
       // we assume that op1 can't be used by op2
@@ -163,7 +163,7 @@ namespace lgf
 
       if (iter != point.nodes->end() && !keepOrigOp)
       {
-        if (op2->get_parent_graph() != point.g)
+        if (op2->get_parent_region() != point.reg)
         {
           *iter = op2;
         }
@@ -171,14 +171,14 @@ namespace lgf
       }
       else
       {
-        if (op2->get_parent_graph() != point.g)
+        if (op2->get_parent_region() != point.reg)
           point.iter = point.nodes->insert(iter + 1, op2) + 1;
         if (!keepOrigOp)
         {
           op1->erase();
         }
       }
-      op2->set_parent_graph(point.g);
+      op2->set_parent_region(point.reg);
     }
 
     template <typename obj, typename... ARGS>
@@ -199,7 +199,7 @@ namespace lgf
     targetOp *isomorphic_rewrite(origOp *op)
     {
       auto newop = new targetOp();
-      newop->set_parent_graph(op->get_parent_graph());
+      newop->set_parent_region(op->get_parent_region());
       for (auto &h : op->get_input_handles())
       {
         newop->register_input(h.get_link_node());
@@ -207,35 +207,35 @@ namespace lgf
 
       op->replace_by(newop);
 
-      auto &nodes = op->get_parent_graph()->get_nodes();
+      auto &nodes = op->get_parent_region()->get_nodes();
       auto iter = std::find(nodes.begin(), nodes.end(), op);
       *iter = newop;
       op->erase();
       return newop;
     }
 
-    void goto_graph(graph *reg_)
+    void goto_region(region *reg_)
     {
-      point.g = reg_;
+      point.reg = reg_;
       point.nodes = &(reg_->get_nodes());
       point.iter = point.nodes->end();
     }
 
     paintPoint get_paintPoint() { return point; }
 
-    void gotoParentGraph()
-    {
-      if (!point.g)
-        return;
-      goto_graph(point.g->get_parent_graph());
-    }
+    // void gotoParentregion()
+    // {
+    //   if (!point.reg)
+    //     return;
+    //   goto_region(point.reg->get_parent_region());
+    // }
 
-    graph *get_parent_graph()
-    {
-      if (!point.g)
-        return nullptr;
-      return point.g->get_parent_graph();
-    }
+    // region *get_parent_region()
+    // {
+    //   if (!point.reg)
+    //     return nullptr;
+    //   return point.reg->get_parent_region();
+    // }
 
     LGFContext *get_context() { return ctx; }
     paintPoint point;
