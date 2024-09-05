@@ -16,6 +16,10 @@ namespace codegen
     class nodeTemplate
     {
     public:
+        enum property_kind
+        {
+            p_region = 1,
+        };
         nodeTemplate(astModule *m, dependencyMap *dp)
         {
             name = m->get_name();
@@ -24,18 +28,23 @@ namespace codegen
             output = m->get<astExpr>("output");
             alias = m->get<astExpr>("ir_name");
             extra = m->get<astExpr>("_extra_");
+            auto proNode = m->get<astList>("property");
+            if (proNode)
+            {
+                for (auto &it : proNode->get_content())
+                {
+                    auto str = it->as<astExpr>()->string();
+                    if (str == "region")
+                    {
+                        properties.push_back(p_region);
+                    }
+                }
+            }
+
             for (auto &it : parents->get_content())
             {
-                inheritStr = inheritStr + "public " + str(it.get()) + ", ";
+                inheritStr = inheritStr + ", public ::lgf::" + str(it.get());
                 dp->include(str(it.get()).c_str());
-            }
-            if (inheritStr.size() == 0)
-            {
-                inheritStr = "public node";
-            }
-            else
-            {
-                inheritStr = inheritStr.substr(0, inheritStr.size() - 2);
             }
 
             if (output)
@@ -72,7 +81,7 @@ namespace codegen
             os.incr_indent() << name << "() = default;\n\n";
             os.decr_indent() << "public:\n";
             // create build function
-            os.incr_indent() << "static " << name << " *build(LGFContext *ctx" << inputArgStr << outputArgStr << ") \n";
+            os.incr_indent() << "static " << name << " *build(::lgf::LGFContext *ctx" << inputArgStr << outputArgStr << ") \n";
             os.indent() << "{\n";
             os.incr_indent() << "auto op = new " << name << "();\n";
             if (args)
@@ -84,6 +93,10 @@ namespace codegen
             if (alias)
             {
                 os.indent() << "op->set_sid(\"" << alias->string() << "\");\n";
+            }
+            if (has_property(p_region))
+            {
+                os.indent() << "op->create_region();\n";
             }
             os.indent() << "return op;\n";
             os.decr_indent() << "}\n";
@@ -97,8 +110,12 @@ namespace codegen
 
             os.decr_indent() << "};\n";
         }
+        bool has_property(property_kind kind)
+        {
+            return std::find(properties.begin(), properties.end(), kind) != properties.end();
+        }
 
-        std::string inheritStr = "";
+        std::string inheritStr = "public ::lgf::node";
         std::string outputArgStr, inputArgStr;
         std::string name;
         astExpr *alias;
@@ -106,6 +123,7 @@ namespace codegen
         astExpr *output = nullptr;
         astList *parents;
         astExpr *extra = nullptr;
+        std::vector<property_kind> properties;
     };
     class CGWriter
     {
