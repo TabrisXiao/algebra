@@ -14,24 +14,25 @@ namespace codegen
         CGCompiler() = default;
         ~CGCompiler() = default;
 
-        void compile(sfs::path input, sfs::path output, sfs::path projectBase)
+        void compile(sfs::path input, sfs::path output, sfs::path ibase, sfs::path obase)
         {
             CGContext ctx;
-            auto basePathStr = projectBase.filename().string();
+            inputBase = ibase;
+            outputBase = obase;
             std::cout << "\033[33m[ Parsing ]: \033[0m " << input.string() << "  ...  \n";
             auto root = std::move(parse(&ctx, input));
             std::cout << "\033[33m[ writing ]: \033[0m  ...  \n";
             CGWriter w;
             ctx.print();
-            auto obuffer = w.convert(&ctx, root.get(), &depMap, basePathStr);
+            auto obuffer = w.convert(&ctx, root.get(), &depMap, outputBase.string());
             write_string_buffer_to_file(output.string().c_str(), obuffer);
             std::cout << "\033[32m[   Done  ] \033[0m: exported: " << output.string() << std::endl;
         }
 
         std::unique_ptr<astContext> parse(CGContext *ctx, sfs::path input);
-        sfs::path parse_import(CGContext *c, CGParser *p);
+        sfs::path parse_import(CGContext *c, CGParser *p, sfs::path baseFolder);
 
-        void parse_file(CGContext *c, CGParser *p, astContext *root);
+        void parse_file(CGContext *c, CGParser *p, astContext *root, sfs::path baseFolder);
         void include(sfs::path p)
         {
             includes.push_back(p);
@@ -56,6 +57,7 @@ namespace codegen
     private:
         std::vector<sfs::path> includes;
         dependencyMap depMap;
+        sfs::path inputBase, outputBase;
     };
 }
 

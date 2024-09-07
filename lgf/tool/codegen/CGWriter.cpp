@@ -48,6 +48,12 @@ void codegen::CGWriter::write_module(astModule *ptr)
         nodeTemplate a(ctx, ptr, depTable);
         a.write(os);
     }
+    else if (mtype == "attr")
+    {
+        depTable->include("attr");
+        attrTemplate a(ctx, ptr, depTable);
+        a.write(os);
+    }
 }
 
 void codegen::CGWriter::write_op_builder(astModule *ptr)

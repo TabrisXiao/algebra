@@ -23,6 +23,7 @@ create_cpp_library(
     ${sources}
     INCLUDES
     ${PROJECT_SOURCE_DIR}/lgf/include/
+    ${PROJECT_SOURCE_DIR}/lgf/include/libs/generated/
     LINK_LIBS
     lgf_core
     COPTS ${COMPILER_OPTIONS}

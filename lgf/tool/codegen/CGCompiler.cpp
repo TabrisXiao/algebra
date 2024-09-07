@@ -11,12 +11,12 @@ std::unique_ptr<astContext> codegen::CGCompiler::parse(CGContext *ctx, sfs::path
     root->set_name("_root_");
     root->add("_import_", std::move(std::make_unique<astList>(parser.loc())));
     root->add("_content_", std::move(std::make_unique<astList>(parser.loc())));
-    parse_file(ctx, &parser, root.get());
+    parse_file(ctx, &parser, root.get(), inputBase);
     includes.pop_back();
     return std::move(root);
 }
 
-void codegen::CGCompiler::parse_file(CGContext *ctx, CGParser *p, astContext *root)
+void codegen::CGCompiler::parse_file(CGContext *ctx, CGParser *p, astContext *root, sfs::path baseFolder)
 {
     p->reset();
     CGContext::CGCGuard guard(ctx);
@@ -43,7 +43,9 @@ void codegen::CGCompiler::parse_file(CGContext *ctx, CGParser *p, astContext *ro
         else if (id == "import")
         {
             auto importNode = root->get<astList>("_import_");
-            importNode->add(std::make_unique<astExpr>(p->loc(), parse_import(ctx, p).string()));
+            auto path = parse_import(ctx, p, inputBase);
+            auto rel = path.lexically_relative(inputBase).replace_extension(".h");
+            importNode->add(std::make_unique<astExpr>(p->loc(), rel.string()));
         }
         else
         {
@@ -52,7 +54,7 @@ void codegen::CGCompiler::parse_file(CGContext *ctx, CGParser *p, astContext *ro
     }
 }
 
-sfs::path codegen::CGCompiler::parse_import(CGContext *ctx, CGParser *parser)
+sfs::path codegen::CGCompiler::parse_import(CGContext *ctx, CGParser *parser, sfs::path baseFolder)
 {
     std::filesystem::path p = "";
     do
@@ -74,8 +76,8 @@ sfs::path codegen::CGCompiler::parse_import(CGContext *ctx, CGParser *parser)
 
     astContext temp(parser->loc());
     temp.add("_content_", std::move(std::make_unique<astList>(parser->loc())));
-    parse_file(ctx, &np, &temp);
+    parse_file(ctx, &np, &temp, baseFolder);
     includes.pop_back();
     p.replace_extension(".h");
-    return p;
+    return fp;
 }

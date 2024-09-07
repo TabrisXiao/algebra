@@ -14,11 +14,14 @@
 class CGQueryInfo : public aoc::app::queryInfo
 {
 public:
-    CGQueryInfo(const sfs::path &input, const sfs::path &base_folder, const sfs::path &output, const sfs::path &obase, size_t id = 0)
-        : input(input), output(output), inputBase(base_folder), outputBase(obase), qid(id) {}
+    CGQueryInfo(const sfs::path &ibase, const sfs::path &obase, const sfs::path &input, const sfs::path &output, size_t id = 0)
+        : input(input), output(output), outputBase(obase), inputBase(ibase), qid(id)
+    {
+    }
 
     size_t qid = 0; // represent different query types
-    sfs::path input, output, inputBase, outputBase;
+    // TODO: need add srcBase support
+    sfs::path input, output, inputBase, outputBase, includeBase, srcBase;
 };
 
 class CGInterface : public aoc::app::oneTimeInterface
@@ -43,14 +46,14 @@ public:
         {
             std::cout << "Usage: codegen [options] <input_file> <output_file>" << std::endl;
             std::cout << "Options:" << std::endl;
-            std::cout << "-h: Display this help message." << std::endl;
-            std::cout << "-r: Recursively search for files in the input directory." << std::endl;
+            std::cout << "-h:       Display this help message." << std::endl;
+            std::cout << "-r:       Recursively search for files in the input directory." << std::endl;
             std::exit(EXIT_SUCCESS);
         }
         for (auto &file : fileList)
         {
             auto ofile = create_output_file_path(file, input, output, ".h");
-            add_query<CGQueryInfo>(file, input, ofile, output);
+            add_query<CGQueryInfo>(input, output, file, ofile);
         }
     }
 };
@@ -70,7 +73,7 @@ public:
             inputBase = query->inputBase.parent_path();
         }
         include(inputBase);
-        compile(input, output, query->outputBase);
+        compile(input, output, query->inputBase, query->outputBase);
         pop_back_inlcude();
     }
 };

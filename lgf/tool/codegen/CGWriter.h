@@ -12,8 +12,53 @@ using namespace ast;
 using namespace aoc;
 namespace codegen
 {
+    class templateBase
+    {
+    public:
+        templateBase(CGContext *c, astModule *m, dependencyMap *dp)
+        {
+            dep = dp;
+            module = m;
+            ctx = c;
+            name = m->get_name();
+        }
+        std::string str(astNode *ptr)
+        {
+            return dynamic_cast<astExpr *>(ptr)->string();
+        }
+        virtual void write(stringBufferProducer &os) = 0;
+        std::string name;
+        CGContext *ctx;
+        astModule *module;
+        dependencyMap *dep;
+        astList *parents;
+    };
 
-    class nodeTemplate
+    class attrTemplate : public templateBase
+    {
+    public:
+        attrTemplate(CGContext *ctx, astModule *m, dependencyMap *dp) : templateBase(ctx, m, dp)
+        {
+            parents = m->get<astList>("_parent_");
+            for (auto &it : parents->get_content())
+            {
+                inheritStr = inheritStr + ", public ::lgf::" + str(it.get());
+                dp->include(str(it.get()).c_str());
+            }
+        }
+        virtual void write(stringBufferProducer &os) final
+        {
+            os.indent() << "class " << name << " : " << inheritStr << "\n";
+            os.indent() << "{\n";
+            os.indent() << "public:\n";
+            os.incr_indent() << name << "() = default;\n";
+            os.decr_indent() << "};\n";
+        }
+
+        std::string inheritStr = "public ::lgf::attribute";
+    };
+
+    class nodeTemplate : public templateBase
     {
     public:
         class argID
@@ -24,9 +69,8 @@ namespace codegen
         {
             p_region = 1,
         };
-        nodeTemplate(CGContext *ctx, astModule *m, dependencyMap *dp)
+        nodeTemplate(CGContext *ctx, astModule *m, dependencyMap *dp) : templateBase(ctx, m, dp)
         {
-            name = m->get_name();
             parents = m->get<astList>("_parent_");
             args = m->get<astDictionary>("input");
             output = m->get<astExpr>("output");
@@ -88,7 +132,7 @@ namespace codegen
         {
             return dynamic_cast<astExpr *>(ptr)->string();
         }
-        void write(stringBufferProducer &os)
+        virtual void write(stringBufferProducer &os) final
         {
             os.indent() << "class " << name << " : " << inheritStr << "\n";
             os.indent() << "{\n";
@@ -156,7 +200,6 @@ namespace codegen
 
         std::string inheritStr = "public ::lgf::node";
         std::string outputArgStr, inputArgStr;
-        std::string name;
         astExpr *alias;
         std::vector<std::string> argDesc;
         std::vector<std::string> argAttr;
@@ -212,7 +255,7 @@ namespace codegen
             {
                 for (auto &it : import->get_content())
                 {
-                    str = str + "#include \"" + baseStr + "/" + it->as<astExpr>()->string() + "\"\n";
+                    str = str + "#include \"" + it->as<astExpr>()->string() + "\"\n";
                 }
                 std::replace(str.begin(), str.end(), '\\', '/');
             }
