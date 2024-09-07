@@ -27,6 +27,10 @@ namespace ast
         location get_loc() const { return loc; }
         template <typename T>
         T *as() { return dynamic_cast<T *>(this); }
+        void emit_error(const std::string &msg)
+        {
+            throw std::runtime_error(loc.print() + msg);
+        }
 
     private:
         const kind k_;

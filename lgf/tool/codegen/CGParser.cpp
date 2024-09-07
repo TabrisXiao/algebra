@@ -34,9 +34,11 @@ namespace codegen
                 break;
             }
             case kind_t::tok_identifier:
-                ctx->create_var(key);
+            {
+                ctx->create_symbol(key);
                 ptr->add(key, std::move(std::make_unique<astExpr>(loc(), parse_id())));
                 break;
+            }
             default:
                 emit_error("Unknown dictionary item!");
                 break;
@@ -80,7 +82,7 @@ namespace codegen
                 break;
             }
             case kind_t::tok_identifier:
-                ctx->create_var(key);
+                ctx->create_symbol(key);
                 ptr->add(key, std::move(std::make_unique<astExpr>(loc(), parse_id())));
                 break;
             default:
@@ -210,11 +212,30 @@ namespace codegen
         // { key1: value1, key2: value2, key3: value3...}
 
         auto attrs = parse_set(ctx);
+        auto module_type = attrs->get<astExpr>()->string();
         auto name = parse_id();
         auto node = std::make_unique<astModule>(loc(), name.c_str());
         auto tok = cur_tok();
         auto inherit = std::make_unique<astList>(loc());
-        CGContext::CGCGuard guard(ctx, name, symbolInfo(symbolInfo::kind_t::module));
+        symbolInfo::kind_t module_t;
+
+        if (module_type == "attr")
+        {
+            module_t = symbolInfo::kind_t::attr;
+        }
+        else if (module_type == "node")
+        {
+            module_t = symbolInfo::kind_t::node;
+        }
+        else if (module_type == "desc")
+        {
+            module_t = symbolInfo::kind_t::desc;
+        }
+        else
+        {
+            emit_error("Unknown module type: " + module_type);
+        }
+        CGContext::CGCGuard guard(ctx, name, symbolInfo(module_t));
         if (try_consume(kind_t(':')).is_success())
         {
             do

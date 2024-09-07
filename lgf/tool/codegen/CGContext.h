@@ -15,11 +15,12 @@ namespace codegen
         enum kind_t
         {
             unknown = 0,
-            module = 1,
+            node = 1,
             attr = 2,
-            context = 3,
-            variable = 4,
-            region = 5 // like dict, list or set
+            desc = 3,
+            context = 4,
+            symbol = 5,
+            region = 6 // like dict, list or set
         };
         symbolInfo() = default;
         symbolInfo(size_t c) : stype(c) {}
@@ -27,14 +28,16 @@ namespace codegen
         {
             switch (stype)
             {
-            case module:
-                return "module";
+            case node:
+                return "node";
             case attr:
                 return "attr";
+            case desc:
+                return "desc";
             case context:
                 return "context";
-            case variable:
-                return "variable";
+            case symbol:
+                return "symbol";
             case region:
                 return "region";
             default:
@@ -50,6 +53,14 @@ namespace codegen
         class CGCGuard
         {
         public:
+            CGCGuard(CGContext *ctx) : _ctx_(ctx)
+            {
+                _ctx_->goto_root_table();
+            }
+            CGCGuard(CGContext *ctx, std::string key) : _ctx_(ctx)
+            {
+                _ctx_->enter(key);
+            }
             CGCGuard(CGContext *ctx, std::string key, symbolInfo info) : _ctx_(ctx)
             {
                 _ctx_->create_and_enter(key, info);
@@ -64,6 +75,12 @@ namespace codegen
         {
         }
         ~CGContext() = default;
+
+        void reset()
+        {
+            _stack_ = {&_table_};
+        }
+
         void print()
         {
             aoc::stringBufferProducer os;
@@ -90,9 +107,10 @@ namespace codegen
         {
             for (auto &entry : _stack_)
             {
-                if (entry->has(name))
+                auto item = entry->get(name);
+                if (item)
                 {
-                    return &(entry->get(name).get_value());
+                    return &(entry->get(name)->get_value());
                 }
             }
             return nullptr;
@@ -110,13 +128,15 @@ namespace codegen
 
         void create_and_enter(std::string key, symbolInfo &info)
         {
-            if (get_current_table()->has(key))
+            auto ptr = get_current_table()->get(key);
+            if (ptr != nullptr)
             {
-                std::runtime_error("create_and_enter: key already exists!");
+                _stack_.push_back(ptr);
+                return;
             }
             create_table(key, info);
-            auto ptr = &(get_current_table()->get(key));
-            _stack_.push_back(ptr);
+            auto nptr = get_current_table()->get(key);
+            _stack_.push_back(nptr);
         }
 
         void enter(std::string key)
@@ -125,7 +145,7 @@ namespace codegen
             {
                 std::runtime_error("enter: key doesn't exists!");
             }
-            auto ptr = &(get_current_table()->get(key));
+            auto ptr = get_current_table()->get(key);
             _stack_.push_back(ptr);
         }
 
@@ -144,9 +164,19 @@ namespace codegen
             create_and_enter(key, info);
         }
 
-        void create_module_table(std::string key)
+        void create_node_table(std::string key)
         {
-            symbolInfo info(symbolInfo::module);
+            symbolInfo info(symbolInfo::node);
+            create_and_enter(key, info);
+        }
+        void create_attr_table(std::string key)
+        {
+            symbolInfo info(symbolInfo::attr);
+            create_and_enter(key, info);
+        }
+        void create_desc_table(std::string key)
+        {
+            symbolInfo info(symbolInfo::desc);
             create_and_enter(key, info);
         }
 
@@ -155,16 +185,21 @@ namespace codegen
             symbolInfo info(symbolInfo::attr);
             create_table(key, info);
         }
-        void create_var(std::string key)
+        void create_symbol(std::string key)
         {
-            symbolInfo info(symbolInfo::variable);
+            symbolInfo info(symbolInfo::symbol);
             create_table(key, info);
+        }
+
+        void goto_root_table()
+        {
+            _stack_.push_back(&_table_);
         }
 
         std::string name;
         aoc::cursive_map<std::string, symbolInfo> _table_;
         std::vector<aoc::cursive_map<std::string, symbolInfo> *> _stack_ = {&_table_};
     };
-} // namespace ast
+} // namespace codegen
 
 #endif

@@ -19,6 +19,7 @@ std::unique_ptr<astContext> codegen::CGCompiler::parse(CGContext *ctx, sfs::path
 void codegen::CGCompiler::parse_file(CGContext *ctx, CGParser *p, astContext *root)
 {
     p->reset();
+    CGContext::CGCGuard guard(ctx);
     auto id = p->parse_id();
     if (id != "uid")
     {
@@ -73,7 +74,6 @@ sfs::path codegen::CGCompiler::parse_import(CGContext *ctx, CGParser *parser)
 
     astContext temp(parser->loc());
     temp.add("_content_", std::move(std::make_unique<astList>(parser->loc())));
-
     parse_file(ctx, &np, &temp);
     includes.pop_back();
     p.replace_extension(".h");

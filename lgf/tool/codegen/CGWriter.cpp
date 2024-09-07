@@ -4,6 +4,7 @@
 void codegen::CGWriter::write_context(astContext *ptr)
 {
     auto name = ptr->get_name();
+    CGContext::CGCGuard guard(ctx, name);
     os.indent() << "namespace " << name << "\n";
     os.indent() << "{\n";
     os.indent_level_up();
@@ -44,7 +45,7 @@ void codegen::CGWriter::write_module(astModule *ptr)
     if (mtype == "node")
     {
         depTable->include("node");
-        nodeTemplate a(ptr, depTable);
+        nodeTemplate a(ctx, ptr, depTable);
         a.write(os);
     }
 }

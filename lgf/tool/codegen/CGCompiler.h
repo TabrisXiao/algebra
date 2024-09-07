@@ -22,7 +22,7 @@ namespace codegen
             auto root = std::move(parse(&ctx, input));
             std::cout << "\033[33m[ writing ]: \033[0m  ...  \n";
             CGWriter w;
-            // ctx.print();
+            ctx.print();
             auto obuffer = w.convert(&ctx, root.get(), &depMap, basePathStr);
             write_string_buffer_to_file(output.string().c_str(), obuffer);
             std::cout << "\033[32m[   Done  ] \033[0m: exported: " << output.string() << std::endl;

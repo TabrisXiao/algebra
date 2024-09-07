@@ -19,6 +19,7 @@ namespace ast
         ~charLocation() = default;
         std::shared_ptr<std::string> path; ///< filename.
         unsigned int line = 1, col = 1;
+        charLocation(const charLocation &loc) : line(loc.line), col(loc.col), path(loc.path) {}
         std::string print()
         {
             return *(path.get()) + "(" + std::to_string(line) + ", " + std::to_string(col) + ")";

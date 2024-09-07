@@ -16,11 +16,15 @@ namespace codegen
     class nodeTemplate
     {
     public:
+        class argID
+        {
+            std::string name, type;
+        };
         enum property_kind
         {
             p_region = 1,
         };
-        nodeTemplate(astModule *m, dependencyMap *dp)
+        nodeTemplate(CGContext *ctx, astModule *m, dependencyMap *dp)
         {
             name = m->get_name();
             parents = m->get<astList>("_parent_");
@@ -57,21 +61,32 @@ namespace codegen
             {
                 auto argName = arg.first;
                 auto argType = str(arg.second.get());
-                inputArgStr = inputArgStr + ", node *" + argName;
+                auto info = ctx->get_info(argType);
+                if (!info)
+                {
+                    arg.second->emit_error("Type not found: " + argType);
+                }
+                std::string type = "node *";
+                if (info->stype == symbolInfo::attr)
+                {
+                    type = "attribute ";
+                    argAttr.push_back(argName);
+                }
+                else if (info->stype == symbolInfo::desc)
+                {
+                    argChain += argName + ", ";
+                    argDesc.push_back(argName);
+                }
+                else
+                {
+                    arg.second->emit_error("Invalid type for input: " + argType);
+                }
+                inputArgStr = inputArgStr + ", " + type + argName;
             }
         }
         std::string str(astNode *ptr)
         {
             return dynamic_cast<astExpr *>(ptr)->string();
-        }
-        std::string make_arg_chain()
-        {
-            std::string argStr = "";
-            for (auto &arg : args->get_content())
-            {
-                argStr = argStr + arg.first + ", ";
-            }
-            return argStr.substr(0, argStr.size() - 2);
         }
         void write(stringBufferProducer &os)
         {
@@ -84,9 +99,17 @@ namespace codegen
             os.incr_indent() << "static " << name << " *build(::lgf::LGFContext *ctx" << inputArgStr << outputArgStr << ") \n";
             os.indent() << "{\n";
             os.incr_indent() << "auto op = new " << name << "();\n";
-            if (args)
+            if (argChain.size() > 0)
             {
-                os.indent() << "op->register_input(" << make_arg_chain() << ");\n";
+                argChain = argChain.substr(0, argChain.size() - 2);
+                os.indent() << "op->register_input(" << argChain << ");\n";
+            }
+            if (argAttr.size() > 0)
+            {
+                for (auto &it : argAttr)
+                {
+                    os.indent() << "op->add_attr(\"" << it << "\", " << it << ");\n";
+                }
             }
             if (output)
                 os.indent() << "op->set_value_desc(output_type);\n";
@@ -101,6 +124,22 @@ namespace codegen
             os.indent() << "return op;\n";
             os.decr_indent() << "}\n";
             // -----------
+            // arg function:
+            if (argDesc.size() > 0)
+            {
+                int i = 0;
+                for (auto &it : argDesc)
+                {
+                    os.indent() << "node *" << it << "() { return input(" << std::to_string(i++) << "); }\n";
+                }
+            }
+            if (argAttr.size() > 0)
+            {
+                for (auto &it : argAttr)
+                {
+                    os.indent() << "attribute " << it << "() { return get_attr(\"" << it << "\"); }\n";
+                }
+            }
 
             // extra definition goes here
             if (extra)
@@ -119,7 +158,10 @@ namespace codegen
         std::string outputArgStr, inputArgStr;
         std::string name;
         astExpr *alias;
+        std::vector<std::string> argDesc;
+        std::vector<std::string> argAttr;
         astDictionary *args;
+        std::string argChain = "";
         astExpr *output = nullptr;
         astList *parents;
         astExpr *extra = nullptr;
@@ -135,6 +177,7 @@ namespace codegen
             baseStr = base;
             depTable = dep;
             ctx = c;
+            ctx->reset();
             depTable = dep;
             os.clear();
             osHeader.clear();

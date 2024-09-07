@@ -31,13 +31,18 @@ namespace aoc
             }
             return _cmap_.value().find(key) != _cmap_.value().end();
         }
-        cursive_map<K, C> &get(const K &key)
+        cursive_map<K, C> *get(const K &key)
         {
-            if (has(key))
+            if (!_cmap_.has_value())
             {
-                return _cmap_.value().at(key);
+                return nullptr;
             }
-            throw std::runtime_error("get: invalid key!");
+            auto it = _cmap_.value().find(key);
+            if (it != _cmap_.value().end())
+            {
+                return &(it->second);
+            }
+            return nullptr;
         }
         C &get_value()
         {
