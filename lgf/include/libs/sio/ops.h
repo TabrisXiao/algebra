@@ -2,7 +2,7 @@
 #define MATH_SIO_OPS_H
 #include "lgf/node.h"
 #include "libs/builtin/builtin.h"
-#include "libs/math/algebra/algebra.h"
+#include "libs/math/ops.h"
 
 namespace lgf::sio
 {

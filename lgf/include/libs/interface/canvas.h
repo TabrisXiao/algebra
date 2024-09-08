@@ -5,7 +5,7 @@
 #include "lgf/painter.h"
 #include "libs/builtin/builtin.h"
 #include "libs/sio/exporter.h"
-#include "libs/math/functional/passes.h"
+#include "libs/math/passes.h"
 #include "libs/transform/convertToSIO.h"
 
 namespace lgi

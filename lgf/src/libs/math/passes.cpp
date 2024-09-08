@@ -1,4 +1,4 @@
-#include "libs/math/functional/passes.h"
+#include "libs/math/passes.h"
 
 std::unique_ptr<lgf::passBase> lgf::math::createCalculusPass()
 {

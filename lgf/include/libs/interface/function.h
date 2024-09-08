@@ -4,7 +4,7 @@
 
 #include "canvas.h"
 #include "libs/builtin/builtin.h"
-#include "libs/math/functional/functional.h"
+#include "libs/math/ops.h"
 #include "variable.h"
 
 namespace lgi::math

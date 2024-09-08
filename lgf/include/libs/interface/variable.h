@@ -3,7 +3,7 @@
 #define LGF_INTERFACE_VAR_H
 #include "canvas.h"
 #include "libs/builtin/builtin.h"
-#include "libs/math/algebra/algebra.h"
+#include "libs/math/ops.h"
 #include "libs/sio/ops.h"
 
 namespace lgi::math

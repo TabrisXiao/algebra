@@ -2,7 +2,7 @@
 #include <map>
 #include <string>
 #include "lgf/value.h"
-#include "libs/math/algebra/algebra.h"
+#include "libs/math/ops.h"
 using namespace lgf;
 
 void pr(descriptor d)

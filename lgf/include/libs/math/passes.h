@@ -2,8 +2,7 @@
 #ifndef LGF_FUNCTIONAL_ANALYSIS_PASSES_H
 #define LGF_FUNCTIONAL_ANALYSIS_PASSES_H
 #include "lgf/pass.h"
-#include "libs/math/algebra/algebra.h"
-#include "libs/math/normalization.h"
+#include "normalization.h"
 #include "ops.h"
 namespace lgf::math
 {

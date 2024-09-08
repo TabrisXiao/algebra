@@ -4,7 +4,7 @@
 #define TRANSFORM_CONVERT_TO_SIO_H
 
 #include "libs/builtin/ops.h"
-#include "libs/math/algebra/algebra.h"
+#include "libs/math/ops.h"
 #include "libs/sio/sio.h"
 #include "lgf/pass.h"
 
@@ -15,7 +15,7 @@ namespace lgf::transform
     class convertToSIORewriter : public rewriter<origOp>
     {
     public:
-        convertToSIORewriter(std::string funcName = "") : funcName(funcName){};
+        convertToSIORewriter(std::string funcName = "") : funcName(funcName) {};
         virtual descriptor convert_desc(LGFContext *ctx, descriptor desc)
         {
             return desc;

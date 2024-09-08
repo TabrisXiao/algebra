@@ -1,6 +1,6 @@
 
-#include "libs/math/functional/passes.h"
-#include "libs/math/algebra/desc.h"
+#include "libs/math/passes.h"
+#include "libs/math/desc.h"
 
 lgf::resultCode lgf::math::ChainRuleRewriter::rewrite(painter &p, differentiateOp *op)
 {

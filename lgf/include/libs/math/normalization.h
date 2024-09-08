@@ -2,7 +2,7 @@
 #ifndef TRANSFORM_ALGEBRA_SIMPLIFICATION_PASS
 #define TRANSFORM_ALGEBRA_SIMPLIFICATION_PASS
 #include "libs/builtin/passes.h"
-#include "libs/math/algebra/ops.h"
+#include "ops.h"
 namespace lgf::math
 {
 

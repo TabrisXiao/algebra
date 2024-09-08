@@ -5,7 +5,7 @@
 #include "lgf/pass.h"
 #include "desc.h"
 
-namespace lgf
+namespace lgf::math
 {
     template <typename T>
     resultCode flatten_same_type_inputs(node *op)

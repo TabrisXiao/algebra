@@ -7,11 +7,10 @@ file(GLOB_RECURSE headers
 set(
     sources
     builtin/normalization.cpp
-    math/algebra/ops.cpp
+    math/ops.cpp
     math/normalization.cpp
-    math/functional/ops.cpp
-    math/functional/passes.cpp
-    math/functional/analytic_derivative.cpp
+    math/passes.cpp
+    math/analytic_derivative.cpp
     SIO/exporter.cpp
 )
 
