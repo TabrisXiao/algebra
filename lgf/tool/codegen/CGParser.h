@@ -28,6 +28,8 @@ namespace codegen
 
         std::unique_ptr<astDictionary> parse_dict(CGContext *c);
 
+        std::unique_ptr<astList> parse_context_content(CGContext *ctx);
+
         std::unique_ptr<astList> parse_list(CGContext *c);
 
         std::unique_ptr<astList> parse_set(CGContext *c);
@@ -53,6 +55,7 @@ namespace codegen
             return false;
         }
     };
+
 }
 
 #endif

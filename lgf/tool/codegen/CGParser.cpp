@@ -92,19 +92,9 @@ namespace codegen
         }
         return;
     }
-    std::unique_ptr<astContext> CGParser::parse_context(CGContext *ctx)
+    std::unique_ptr<astList> CGParser::parse_context_content(CGContext *ctx)
     {
-        // assuming key word 'context' is already parsed and the current char is '<' or a char.
-        auto context = std::make_unique<astContext>(loc());
-        if (cur_tok().is(kind_t('<')))
-        {
-            auto attrs = parse_set(ctx);
-            context->add("_attr_", std::move(attrs));
-        }
-        auto id = parse_id();
-        context->set_name(id);
         parse_left_brace();
-        CGContext::CGCGuard guard(ctx, id, symbolInfo(symbolInfo::kind_t::context));
         auto content = std::make_unique<astList>(loc());
         while (try_consume(kind_t('}')).is_fail())
         {
@@ -126,6 +116,31 @@ namespace codegen
                 emit_error("Unknown key word: " + key);
             }
         }
+        return std::move(content);
+    }
+    std::unique_ptr<astContext> CGParser::parse_context(CGContext *ctx)
+    {
+        // assuming key word 'context' is already parsed and the current char is '<' or a char.
+        auto context = std::make_unique<astContext>(loc());
+
+        if (cur_tok().is(kind_t('<')))
+        {
+            auto attrs = parse_set(ctx);
+            context->add("_attr_", std::move(attrs));
+        }
+        auto id = parse_id();
+        context->set_name(id);
+        CGContext::CGCGuard guard(ctx, id, symbolInfo(symbolInfo::kind_t::context));
+
+        // to resolve the case scope1::scope2::scope3 ...
+        if (try_consume(kind_t::tok_scope).is_success())
+        {
+            auto content = std::make_unique<astList>(loc());
+            content->add(std::move(parse_context(ctx)));
+            context->add("_content_", std::move(content));
+            return std::move(context);
+        }
+        auto content = parse_context_content(ctx);
         context->add("_content_", std::move(content));
         return std::move(context);
     }

@@ -53,6 +53,7 @@ namespace codegen
         class CGCGuard
         {
         public:
+            CGCGuard() = default;
             CGCGuard(CGContext *ctx) : _ctx_(ctx)
             {
                 _ctx_->goto_root_table();
@@ -67,7 +68,8 @@ namespace codegen
             }
             ~CGCGuard()
             {
-                _ctx_->back_to_previous_table();
+                if (_ctx_)
+                    _ctx_->back_to_previous_table();
             }
             CGContext *_ctx_ = nullptr;
         };

@@ -156,7 +156,10 @@ namespace ast
                     continue;
                 case ':':
                     if (*curPtr == ':')
+                    {
+                        curPtr++;
                         return token(token::tok_scope, aoc::stringRef(curPtr, 2));
+                    }
                     return token(token::kind(':'), aoc::stringRef(curPtr, 1));
                 case '/':
                     return token(token::kind('/'), aoc::stringRef(curPtr, 1));
