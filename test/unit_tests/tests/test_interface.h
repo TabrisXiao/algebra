@@ -20,6 +20,8 @@ namespace test_body
       y.latex();
       auto dy = d(y);
       dy.latex();
+      auto iy = integral(dy, x, 0, 1);
+      iy.latex();
       canvas::get()
           .get_pass_manager()
           .set_log_level(2);

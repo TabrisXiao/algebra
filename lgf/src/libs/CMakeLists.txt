@@ -11,6 +11,7 @@ set(
     math/normalization.cpp
     math/passes.cpp
     math/analytic_derivative.cpp
+    math/analytic_Riemann_integral.cpp
     SIO/exporter.cpp
 )
 

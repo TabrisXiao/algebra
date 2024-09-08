@@ -20,6 +20,13 @@ namespace lgf::math
     virtual resultCode rewrite(painter &p, partialDifferentiateOp *op);
   };
 
+  class ReimannIntegralRewriter : public rewriter<RiemannIntegralOp>
+  {
+  public:
+    ReimannIntegralRewriter() = default;
+    virtual resultCode rewrite(painter &p, RiemannIntegralOp *op) override;
+  };
+
   class CalculusPass : public passBase
   {
   public:
@@ -27,6 +34,7 @@ namespace lgf::math
     virtual resultCode run() final
     {
       painter p(get_region());
+      add_rewriter<ReimannIntegralRewriter>();
       add_rewriter<ChainRuleRewriter>();
       add_rewriter<analyticFuncDerivativeRewriter>();
       add_rewriter<unitRewriter>();

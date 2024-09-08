@@ -277,6 +277,29 @@ namespace lgf::math
         int order = 1;
     };
 
+    class approachOp : public mathOp
+    {
+    private:
+        approachOp() : mathOp("approach") {}
+
+    public:
+        static approachOp *build(LGFContext *ctx, node *func, node *var, node *val)
+        {
+            auto op = new approachOp();
+            op->register_input(func, var, val);
+            op->set_value_desc(func->get_value_desc());
+            return op;
+        }
+        node *func() { return input(0); }
+        node *var() { return input(1); }
+        node *val() { return input(2); }
+        virtual sid_t represent() override
+        {
+            auto res = value_rep() + " = " + get_sid() + ": " + func()->get_value_sid() + " w.r.t. " + var()->get_value_sid() + " -> " + val()->get_value_sid();
+            return res;
+        }
+    };
+
     class differentiateOp : public mathOp
     {
     public:
