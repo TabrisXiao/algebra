@@ -1,12 +1,44 @@
 
-#ifndef LGF_LIB_ALGEBRA_UTIL_H
-#define LGF_LIB_ALGEBRA_UTIL_H
+#ifndef LGF_LIB_MATH_UTIL_H
+#define LGF_LIB_MATH_UTIL_H
 #include "lgf/node.h"
 #include "lgf/pass.h"
+#include "libs/builtin/ops.h"
 #include "desc.h"
 
 namespace lgf::math
 {
+    inline node *create_real_constant(painter &p, double val)
+    {
+        auto attr = attribute::get<realNumberData>(realNumberData::real, val);
+        auto desc = descriptor::get<realNumber>();
+        return p.paint<cstDeclOp>(desc, attr);
+    }
+
+    inline node *create_real_pi(painter &p)
+    {
+        auto attr = attribute::get<realNumberData>(realNumberData::pi);
+        auto desc = descriptor::get<realNumber>();
+        return p.paint<cstDeclOp>(desc, attr);
+    }
+
+    inline node *create_real_e(painter &p)
+    {
+        auto attr = attribute::get<realNumberData>(realNumberData::e);
+        auto desc = descriptor::get<realNumber>();
+        return p.paint<cstDeclOp>(desc, attr);
+    }
+
+    inline bool is_cst_number(node *n, realNumberData val)
+    {
+        auto cst = n->dyn_cast<cstDeclOp>();
+        if (!cst)
+        {
+            return false;
+        }
+        auto data = cst->value();
+    }
+
     template <typename T>
     resultCode flatten_same_type_inputs(node *op)
     {

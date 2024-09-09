@@ -49,6 +49,46 @@ void node::create_region(int n)
     }
 }
 
+bool node::is_isomorphic(node *n)
+{
+    if (n == this)
+        return true;
+    if (n->get_input_size() != get_input_size() || get_dict().size() != n->get_dict().size())
+        return false;
+
+    if (inputs.size() != 0)
+    {
+        // check attributes
+
+        for (auto &attr : get_dict())
+        {
+            auto pattr = n->get_attr(attr.first);
+            if (pattr.is_null())
+                return false;
+            if (attr.second.represent() != pattr.represent())
+                return false;
+        }
+        // check if the inputs are isomorphic
+
+        for (auto i = 0; i < inputs.size(); i++)
+        {
+            auto node = inputs[i].get_link_node();
+            auto dnode = n->inputs[i].get_link_node();
+            // in case hit a loop.
+            if (node == n || dnode == this)
+                return false;
+            if (!node->is_isomorphic(dnode))
+                return false;
+        }
+    }
+    else
+    {
+        if (represent() != n->represent())
+            return false;
+    }
+    return true;
+}
+
 //////////////////////////////////////////////////////
 
 void region::replace_node(node *old, node *new_op)

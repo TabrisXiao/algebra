@@ -28,9 +28,10 @@ namespace lgf::sio
             {
                 if (!dynamic_cast<opTy *>(node))
                     continue;
-                os << "\n --- \n";
+                os << " --- \n";
                 os << process(node->input());
                 node->erase();
+                os << "\n";
             }
             os << "\n--------- end ---------\n\n";
         }
@@ -46,7 +47,7 @@ namespace lgf::sio
 
         virtual std::string process(node *val) final;
         std::string simp_func_expression(node *val);
-        void run(region *entry){};
+        void run(region *entry) {};
         void run() { run(g); }
         void run_on_op()
         {

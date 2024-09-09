@@ -61,7 +61,10 @@ namespace lgf
                 detail = obj.detail;
             return *this;
         }
-        detial_t &value() { return *detail; }
+        detial_t &value()
+        {
+            return *(detail.get());
+        }
         detial_t *ptr() { return detail.get(); }
         template <typename U>
         U *dyn_cast()

@@ -372,6 +372,8 @@ namespace lgf
         //     return id;
         // }
 
+        bool is_isomorphic(node *n);
+
         std::string get_op_represent()
         {
             // get representation of this node after the first "="

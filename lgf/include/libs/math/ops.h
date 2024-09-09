@@ -181,16 +181,16 @@ namespace lgf::math
     {
     public:
         funcPowerOp() : elemFuncOp("power") {}
-        static funcPowerOp *build(LGFContext *ctx, node *x, double n)
+        static funcPowerOp *build(LGFContext *ctx, node *x, attribute power)
         {
             auto op = new funcPowerOp();
             op->register_input(x);
-            op->set_power(n);
+            op->add_attr("power", power);
             op->set_value_desc(x->get_value_desc());
             return op;
         }
-        void set_power(double n) { p = n; }
-        double power() { return p; }
+        void set_power(attribute p) { add_attr("power", p); }
+        float power() { return attr("power").dyn_cast<F32Attr>()->get_data(); }
         double p = 1;
         virtual sid_t represent() override
         {

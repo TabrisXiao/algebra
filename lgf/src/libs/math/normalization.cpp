@@ -13,15 +13,15 @@ bool is_unit(node *op)
     auto real = op->get_value_desc().dyn_cast<realNumber>();
     if (real)
     {
-        if (auto data = cst->get_data_attr().dyn_cast<realNumberData>())
+        if (auto data = cst->value().dyn_cast<realNumberData>())
         {
             return data->is_unit();
         }
-        else if (auto fp32 = cst->get_data_attr().dyn_cast<float32Data>())
+        else if (auto fp32 = cst->value().dyn_cast<float32Data>())
         {
             return fp32->get_data() == 1.0;
         }
-        else if (auto i32 = cst->get_data_attr().dyn_cast<int32Data>())
+        else if (auto i32 = cst->value().dyn_cast<int32Data>())
         {
             return i32->get_data() == 1;
         }
@@ -39,7 +39,7 @@ bool is_zero(node *op)
     auto real = op->get_value_desc().dyn_cast<realNumber>();
     if (real)
     {
-        auto data = cst->get_data_attr().dyn_cast<realNumberData>();
+        auto data = cst->value().dyn_cast<realNumberData>();
         if (!data)
         {
             return false;

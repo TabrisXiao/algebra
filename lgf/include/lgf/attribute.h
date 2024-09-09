@@ -26,7 +26,7 @@ namespace lgf
         {
             if (is_null())
                 throw std::runtime_error("attribute: Invalid attribute!");
-            return value().represent();
+            return ptr()->represent();
         }
         template <typename T>
         inline static attribute get()
@@ -77,6 +77,10 @@ namespace lgf
         bool has(sid_t id)
         {
             return dict_attr.find(id) != dict_attr.end();
+        }
+        attribute attr(sid_t id)
+        {
+            return get_attr(id);
         }
 
         std::string default_attr_represent()

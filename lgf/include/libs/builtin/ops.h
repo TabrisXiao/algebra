@@ -100,33 +100,29 @@ namespace lgf
     {
     public:
         cstDeclOp() { mark_status(eIdenticalRemovable); };
-        static cstDeclOp *build(LGFContext *ctx, descriptor &data, attribute &val)
+        static cstDeclOp *build(LGFContext *ctx, descriptor &data, attribute &value)
         {
             auto op = new cstDeclOp();
             op->set_value_desc(data);
-            op->set_data(val);
+            op->add_attr("value", value);
             return op;
         }
         virtual std::string represent()
         {
             printer p;
             p << value_rep() << " = "
-              << "Constant: " << value_desc_rep();
-            if (!data.is_null())
-            {
-                p << " = " << data.represent();
-            }
+              << "Constant: " << value_desc_rep() << " = " << value().represent();
+
             return p.dump();
         }
         void set_data(attribute val)
         {
-            data = val;
+            add_attr("value", val);
         }
-        attribute &get_data_attr()
+        attribute &value()
         {
-            return data;
+            return get_attr("value");
         }
-        attribute data;
     };
 
     class returnOp : public node
