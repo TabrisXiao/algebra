@@ -119,7 +119,7 @@ namespace lgf
         {
             add_attr("value", val);
         }
-        attribute &value()
+        attribute value()
         {
             return get_attr("value");
         }

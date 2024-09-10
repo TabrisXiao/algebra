@@ -6,7 +6,6 @@
 #include "libs/builtin/builtin.h"
 #include "libs/sio/exporter.h"
 #include "libs/math/passes.h"
-#include "libs/transform/convertToSIO.h"
 
 namespace lgi
 {
@@ -61,7 +60,6 @@ namespace lgi
     {
       pm.flush();
       pm.name = "export";
-      pm.add_pass(lgf::transform::createConvertToSIOPass());
       pm.run();
       lgf::sio::export2latex ex(&(module.get_region(0)));
       module.get_region(0).assign_id();

@@ -53,6 +53,7 @@ namespace lgf::sio
         {
             exporterBase::run_on_op<latexExportOp>();
         }
+        std::string get_cst_represent(cstDeclOp *cst);
     };
 } // namespace lgf::sio
 
