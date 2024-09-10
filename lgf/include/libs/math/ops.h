@@ -277,15 +277,15 @@ namespace lgf::math
         int order = 1;
     };
 
-    class approachOp : public mathOp
+    class limitOp : public mathOp
     {
     private:
-        approachOp() : mathOp("approach") {}
+        limitOp() : mathOp("limit") {}
 
     public:
-        static approachOp *build(LGFContext *ctx, node *func, node *var, node *val)
+        static limitOp *build(LGFContext *ctx, node *func, node *var, node *val)
         {
-            auto op = new approachOp();
+            auto op = new limitOp();
             op->register_input(func, var, val);
             op->set_value_desc(func->get_value_desc());
             return op;
@@ -295,7 +295,7 @@ namespace lgf::math
         node *val() { return input(2); }
         virtual sid_t represent() override
         {
-            auto res = value_rep() + " = " + get_sid() + ": " + func()->get_value_sid() + " w.r.t. " + var()->get_value_sid() + " -> " + val()->get_value_sid();
+            auto res = value_rep() + " = " + get_sid() + ": " + func()->get_value_sid() + " for " + var()->get_value_sid() + " -> " + val()->get_value_sid();
             return res;
         }
     };

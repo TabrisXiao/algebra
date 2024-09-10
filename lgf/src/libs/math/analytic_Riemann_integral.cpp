@@ -62,8 +62,8 @@ namespace lgf::math
             {
                 // integrate the derivative of a function
                 auto candi = func->input();
-                auto up = p.paint<lgf::math::approachOp>(candi, target, op->get_upper_bound());
-                auto down = p.paint<lgf::math::approachOp>(candi, target, op->get_lower_bound());
+                auto up = p.paint<lgf::math::limitOp>(candi, target, op->get_upper_bound());
+                auto down = p.paint<lgf::math::limitOp>(candi, target, op->get_lower_bound());
                 auto ng = p.paint<lgf::math::negativeOp>(down);
                 p.replace_op<sumOp>(op, up, ng);
                 return resultCode::success();
