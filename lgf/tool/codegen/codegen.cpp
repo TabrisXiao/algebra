@@ -64,12 +64,12 @@ public:
         auto output = query->output;
         auto buf = io.load_file_to_string_buffer(input.string());
 
-        lex.load_stringBuf(input.string(), buf);
+        lex.load_stringBuf(input.string(), std::move(buf));
         std::cout << "\033[33m[ Parsing ]: \033[0m " << input.string() << "  ...  \n";
         auto root = std::move(p.parse());
 
         std::cout << "\033[33m[ writing ]: \033[0m  ...  \n";
-        io.write_string_buffer_to_file(output.string().c_str(), std::move(w.write(root.get())));
+        io.write_string_buffer_to_file(output.string().c_str(), w.write(root.get()));
         std::cout << "\033[32m[   Done  ] \033[0m: exported: " << output.string() << std::endl;
     }
 
@@ -102,7 +102,6 @@ public:
             std::cerr << "Error: " << e.what() << std::endl;
         }
     }
-
 };
 
 int main(int argc, char *argv[])

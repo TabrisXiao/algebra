@@ -64,7 +64,11 @@ namespace aoc
         // stringRef(const char *p) : ptr(p), size(std::strlen(p)) {}
         stringRef(const char *p, size_t s) : ptr(p), size(s) {}
         stringRef(const std::string &s) : ptr(s.data()), size(s.size()) {}
-        std::string data()
+        const char *data() const
+        {
+            return ptr;
+        }
+        std::string deepcopy()
         {
             return std::string(ptr, size);
         }

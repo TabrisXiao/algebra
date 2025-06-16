@@ -37,7 +37,7 @@ namespace ast
             tok_scope = -5,
         };
         token() = default;
-        token(kind k, aoc::stringRef &str) : _k(k), ref(str) {}
+        token(kind k, const aoc::stringRef &str) : _k(k), ref(str) {}
         ~token() = default;
 
         kind get_kind() const { return _k; }
@@ -68,7 +68,7 @@ namespace ast
         {
             load_stringBuf(loc_p, std::move(buf));
         }
-        void load_stringBuf(std::string loc_p, aoc::stringBuf &buf)
+        void load_stringBuf(std::string loc_p, aoc::stringBuf &&buf)
         {
             buffer.release();
             locPath = std::make_shared<std::string>(loc_p);
