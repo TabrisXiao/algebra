@@ -52,7 +52,7 @@ namespace aoc::app
             }
             return options;
         }
-        std::vector<sfs::path> get_file_list(stringRef &folder)
+        std::vector<sfs::path> get_file_list(const stringRef &folder)
         {
             std::vector<sfs::path> files;
             if (sfs::is_regular_file(folder.data()))

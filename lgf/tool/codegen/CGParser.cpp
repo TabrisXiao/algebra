@@ -100,7 +100,7 @@ namespace codegen
         auto node = std::make_unique<astList>(loc());
         while (!cur_tok().is(kind_t(',')))
         {
-            auto &tok = cur_tok();
+            auto tok = cur_tok();
             switch (tok.get_kind())
             {
             case kind_t(']'):

@@ -25,11 +25,11 @@ namespace aoc
         {
             return this->get()->size();
         }
-        const char *end()
+        const char *end() const
         {
             return &(*get())[size()];
         }
-        char *begin()
+        char *begin() const
         {
             return get()->data();
         }
@@ -96,13 +96,13 @@ namespace aoc
             ifs.seekg(0, std::ios::end);
             std::size_t file_size = ifs.tellg();
             ifs.seekg(0, std::ios::beg);
-            auto &buf = stringBuf(file_size);
+            auto buf = stringBuf(file_size);
 
             ifs.read(buf.begin(), file_size);
             ifs.close();
             return std::move(buf);
         }
-        void write_string_buffer_to_file(const char *filename, stringBuf &buf)
+        void write_string_buffer_to_file(const char *filename, const stringBuf &buf)
         {
             auto path = std::filesystem::absolute(filename);
             // create file if not exist

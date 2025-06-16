@@ -20,7 +20,7 @@ namespace ast
             module,
             context
         };
-        astNode(location &l, const kind k) : k_(k), loc(l) {}
+        astNode(const location &l, const kind k) : k_(k), loc(l) {}
         virtual ~astNode() = default;
         kind get_kind() const { return k_; }
         location get_loc() const { return loc; }
@@ -53,7 +53,7 @@ namespace ast
     class astList : public astNode, public listData
     {
     public:
-        astList(location &lc) : astNode(lc, kind::list) {}
+        astList(const location &lc) : astNode(lc, kind::list) {}
     };
 
     class dictData

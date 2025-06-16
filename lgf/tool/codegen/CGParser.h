@@ -34,7 +34,7 @@ namespace codegen
 
         std::unique_ptr<astModule> parse_module();
 
-        bool check_if_duplicate(std::unique_ptr<astList> &node, std::string &item)
+        bool check_if_duplicate(std::unique_ptr<astList> &node, const std::string &item)
         {
             for (auto &it : node->get_content())
             {
