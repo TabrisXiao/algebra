@@ -4,14 +4,13 @@ set(sources
     #tests/test_aog.h
 )
 create_cpp_binary(
-    NAME unit_tests
+    NAME test_poc
     SRCS 
     ${sources}
 
     LINK_LIBS
-    lgf_lib
     lgf_graph_core
+    lgf_qft
     INCLUDES
-    ${PROJECT_SOURCE_DIR}/test/include/
     COPTS ${COMPILER_OPTIONS}
 )

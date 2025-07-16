@@ -27,3 +27,5 @@ create_cpp_library(
     lgf_core
     COPTS ${COMPILER_OPTIONS}
 )
+
+add_subdirectory(qft)

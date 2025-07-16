@@ -1,4 +1,6 @@
 add_subdirectory(lgf)
+add_subdirectory(utils)
+add_subdirectory(graph)
 add_subdirectory(libs)
 #add_subdirectory(codegen)
 #add_subdirectory(compiler)

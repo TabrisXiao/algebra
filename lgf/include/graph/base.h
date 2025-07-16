@@ -1,0 +1,82 @@
+
+#ifndef LGF_BASE_H_
+#define LGF_BASE_H_
+#include <memory>
+#include <string>
+
+namespace lgfc
+{
+    typedef std::string sid_t;
+    class base
+    {
+    public:
+        base() = default;
+        base(sid_t id) : sid(id) {}
+        sid_t get_sid() const { return sid; }
+        void set_sid(sid_t id) { sid = id; }
+        bool set_sid_if_null(sid_t id)
+        {
+            if (sid.empty())
+            {
+                sid = id;
+                return 1;
+            }
+            return 0;
+        }
+        template <typename... T>
+        bool isa()
+        {
+            return (dynamic_cast<T *>(this) || ...);
+        }
+        template <typename T>
+        T *dyn_cast()
+        {
+            return dynamic_cast<T *>(this);
+        }
+
+        virtual sid_t represent() = 0;
+
+    protected:
+        sid_t sid = "";
+    };
+
+    // bitCode is a template object to encode type tag into binary type:
+    //
+
+    // objectHandle is a template object to wrap any classes.
+    // it resolve the class slicing problem by using shared_ptr to store the content.
+    // The objectHandle object can be assigned to another objectHandle object.
+    template <typename detial_t>
+    class objectHandle
+    {
+    public:
+        objectHandle() = default;
+        objectHandle(std::shared_ptr<detial_t> &obj) : detail(obj) {}
+        objectHandle(const objectHandle &obj) : detail(obj.detail) {}
+        void assign(const std::shared_ptr<detial_t> &obj) { detail = obj; }
+        bool is_null() const { return detail == nullptr; }
+        objectHandle<detial_t> &operator=(const objectHandle &obj)
+        {
+            if (!obj.is_null())
+                detail = obj.detail;
+            return *this;
+        }
+        detial_t &value()
+        {
+            return *(detail.get());
+        }
+        detial_t *ptr() { return detail.get(); }
+        template <typename U>
+        U *dyn_cast()
+        {
+            auto p = dynamic_cast<U *>(detail.get());
+            return p;
+        }
+
+    private:
+        std::shared_ptr<detial_t> detail;
+    };
+
+}
+
+#endif
